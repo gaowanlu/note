@@ -13,6 +13,7 @@
     * [🕵 第4章 表达式](c++/yu-yan-ji-chu/di-yi-bu-fen-c++-ji-chu/di-4-zhang-biao-da-shi.md)
     * [🥬 第5章 语句](c++/yu-yan-ji-chu/di-yi-bu-fen-c++-ji-chu/di-5-zhang-yu-ju.md)
     * [😝 第6章 函数](c++/yu-yan-ji-chu/di-yi-bu-fen-c++-ji-chu/di-6-zhang-han-shu.md)
+    * [🥂 第7章 类](c++/yu-yan-ji-chu/di-yi-bu-fen-c++-ji-chu/di-7-zhang-lei.md)
 * [并发编程](c++/bing-fa-bian-cheng/README.md)
   * [第1章 你好并发世界](c++/bing-fa-bian-cheng/di-1-zhang-ni-hao-bing-fa-shi-jie.md)
 * [3D游戏编程](c++/3d-you-xi-bian-cheng.md)
