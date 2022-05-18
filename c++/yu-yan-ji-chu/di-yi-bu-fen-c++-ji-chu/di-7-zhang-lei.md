@@ -366,4 +366,135 @@ int main(int argc, char **argv)
     func();                   // delete String ptr memory
     return 0;
 }
+
 ```
+
+
+
+### 访问控制与封装
+
+目前位置，我们并没有方法禁止某些情况不能访问到类内部的某些方法或者属性。C++语言中，我们使用访问说明符加强类的封装性。
+
+* private 的成员可以被类内的成员函数访问，但是不能被使用该类的代码访问到，private实现了隐藏细节暴露接口即封装的一部分
+* public 的成员在整个程序内可被访问，public成员定义类的接口
+
+```cpp
+//example12.cpp
+#include <iostream>
+using namespace std;
+struct Person
+{
+private:
+    int age;
+
+public:
+    Person() = default;
+    Person(int age)
+    {
+        this->age = age;
+    }
+    int getAge()
+    {
+        return this->age;
+    }
+    void setAge(int age)
+    {
+        this->age = age;
+    }
+};
+
+int main(int argc, char **argv)
+{
+    Person person(19);
+    person.setAge(20);
+    cout << person.getAge() << endl; // 20
+    // person.age;//error 访问不到
+    return 0;
+}
+```
+
+### class与struct关键字
+
+我们一直在使用struct也就是结构体，但是我们将其称为类，有点奇怪，其实C++支持关键词struct,而支持struct是因为要兼容C代码
+
+二者的区别是，如果没有声明private或者public，class默认为private而struct默认为public
+
+```cpp
+//example13.cpp
+#include <iostream>
+using namespace std;
+class Dog
+{
+    int age;
+
+public:
+    void setAge(int age)
+    {
+        this->age = age;
+    }
+    int getAge()
+    {
+        return this->age;
+    }
+};
+struct Cat
+{
+    int age;
+};
+int main(int argc, char **argv)
+{
+    Dog dog;
+    Cat cat;
+    // dog.age;//访问不到
+    cat.age = 1;
+    dog.setAge(1);
+    cout << cat.age << endl;      // 1
+    cout << dog.getAge() << endl; // 1
+    return 0;
+}
+```
+
+### 友员
+
+有些函数并不是类的成员方法，但是我们仍然想要允许它访问类的私有成员，这种情况我们可以将这个函数定义为类的友元函数。
+
+```cpp
+//example14.cpp
+#include <iostream>
+using namespace std;
+class Dog
+{
+    int age;
+    friend void printDog(Dog &dog);
+
+public:
+    auto setAge(int age) -> void
+    {
+        this->age = age;
+    }
+    auto getAge() -> int
+    {
+        return this->age;
+    }
+};
+
+void printDog(Dog &dog)
+{
+    cout << dog.age << endl; //可以访问私有成员
+}
+int main(int argc, char **argv)
+{
+    Dog dog;
+    dog.setAge(1);
+    // dog.age;
+    printDog(dog); // 1
+    return 0;
+}
+```
+
+一般来说、最好在类定义开始或结束前的位置集中声明友元。
+
+### 封装的益处
+
+* 确保用户代码不会无意间破坏封装对象的状态
+* 被封装的类具体实现细节可以随时改变，指向外部提供public的接口，而无须调整接口代码
