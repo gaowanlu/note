@@ -1,3 +1,9 @@
+---
+cover: >-
+  https://images.unsplash.com/photo-1493238792000-8113da705763?crop=entropy&cs=srgb&fm=jpg&ixid=MnwxOTcwMjR8MHwxfHNlYXJjaHw5fHxjYXJ8ZW58MHx8fHwxNjUyMjU0MzI0&ixlib=rb-1.2.1&q=85
+coverY: 0
+---
+
 # 🥂 第7章 类
 
 ## 第7章 类
