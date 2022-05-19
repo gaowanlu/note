@@ -504,3 +504,564 @@ int main(int argc, char **argv)
 
 * 确保用户代码不会无意间破坏封装对象的状态
 * 被封装的类具体实现细节可以随时改变，指向外部提供public的接口，而无须调整接口代码
+
+
+
+### 类的其他特性
+
+### 类内的typedef与using
+
+在类的内部可以使用typedef与using以至于只在类内有效，对外不隐藏细节
+
+* private别名不能做public方法的参数与返回值
+* 可以在public方法内使用private别名
+* 同理不能定义private别名的public属性
+* 而private则没有限制可以使用public与private别名
+
+```cpp
+//example15.cpp
+#include <iostream>
+#include <string>
+#include <vector>
+using namespace std;
+class Person
+{
+public:
+    typedef std::string String;
+    using StrSize = std::string::size_type;
+    void setName(String name)
+    {
+        this->name = name;
+        this->name_size = name.size();
+    }
+    StrSize name_size;
+    // mList list();//error mList is private
+    // void printList(mList list);//error
+
+private:
+    using mList = std::vector<int>;
+    String name;
+    mList list;
+};
+int main(int argc, char **argv)
+{
+    Person person;
+    person.setName("gaowanlu");
+    cout << person.name_size << endl; // 8
+    // String str = "";//error: 'String' was not declared in this scope
+    Person::String str = "name";
+    cout << str << endl;
+    return 0;
+}
+```
+
+### 内联方法
+
+共有三种情况
+
+* 隐式内联
+* 显式内联
+* 声明不指定内联、定义时指定为内联
+
+```cpp
+//example16.cpp
+#include <iostream>
+#include <string>
+using namespace std;
+class Person
+{
+public:
+    Person(int age, string name) : age(age), name(name)
+    {
+    }
+    string getName() const //隐式内联
+    {
+        return this->name;
+    }
+    inline int getAge() //显式内联
+    {
+        return this->age;
+    }
+    void setAge(int age); //可在定义出指定内联
+
+private:
+    int age;
+    string name;
+};
+
+//定义时指定为内联
+inline void Person::setAge(int age)
+{
+    this->age = age;
+}
+
+int main(int argc, char **argv)
+{
+    Person person(18, "gaowanlu");
+    cout << person.getName() << endl; // gaowanlu
+    cout << person.getAge() << endl;  // 18
+    person.setAge(19);
+    cout << person.getAge() << endl; // 19
+    return 0;
+}
+```
+
+虽然不需要在声明和定义处同时说明inline，但是那样是合法的，不过最好只在类的外部定义的地方说明inline,这样使得其更加容易理解。
+
+### 方法重载
+
+和函数的从在一样，类的方法也可以进行重载\
+其概念与函数的重载基本相同，如参数与类型的区别、匹配过程等
+
+```cpp
+//example17.cpp
+#include <iostream>
+#include <string>
+using namespace std;
+
+class Person
+{
+private:
+    int age;
+    string name;
+
+public:
+    void set(int age, string name);
+    void set(string name, int age);
+    int getAge()
+    {
+        return this->age;
+    }
+    string getName()
+    {
+        return this->name;
+    }
+    void print()
+    {
+        cout << "age " << age << " name " << name << endl;
+    }
+};
+
+void Person::set(int age, string name)
+{
+    this->age = age;
+    this->name = name;
+}
+
+void Person::set(string name, int age)
+{
+    this->set(age, name);
+}
+
+int main(int argc, char **argv)
+{
+    Person person;
+    person.set(string("gaowanlu"), 18);
+    person.print(); // age 18 name gaowanlu
+    person.set(19, string("gaowanlu"));
+    person.print(); // age 19 name gaowanlu
+    return 0;
+}
+```
+
+### 可变数据成员mutable
+
+对于结构体而言，如果一个结构体变量为const，则它的属性也是不可变的
+
+```cpp
+//example18.cpp
+#include <iostream>
+#include <string>
+using namespace std;
+struct Person
+{
+    int age;
+    string name;
+};
+int main(int argc, char **argv)
+{
+    Person person;
+    person.age = 19; // mutable
+    const Person he;
+    // he.age = 19; // error: assignment of member 'Person::age' in read-only object
+    return 0;
+}
+```
+
+但是有些情况下，即使结构体变量是const的，但是我们想允许更改其某些内部属性、则使用mutable\
+要注意的是cosnt对象实例不能访问非const方法
+
+```cpp
+//example19.cpp
+#include <iostream>
+#include <string>
+using namespace std;
+class Person
+{
+private:
+    mutable int age; // mutable属性必须被初始化
+
+public:
+    // mutable int age;
+    Person() = default;
+    Person(int age) : age(age) {}
+    string name;
+    void setAge(int _age) const; // const成员函数也可以改变mutable成员值
+    int getAge() const
+    {
+        return this->age;
+    }
+    int addAge() const
+    {
+        this->age++;
+        return this->age;
+    }
+};
+
+void Person::setAge(int _age) const
+{
+    age = _age;
+}
+
+int main(int argc, char **argv)
+{
+    Person person;
+    person.setAge(19);
+    const Person she(19); // const实例不允许访问非const方法
+    // mutable
+    she.setAge(19);
+    cout << person.getAge() << " " << she.getAge() << endl;
+    cout << she.addAge() << endl; // 20
+    return 0;
+}
+```
+
+### 类数据成员的初始值
+
+C++11可以直接在类内设置初始值
+
+```cpp
+//example20.cpp
+#include <iostream>
+#include <vector>
+#include <string>
+using namespace std;
+class Person
+{
+public:
+    int age = 19;
+    string name = "gaowanlu";
+    vector<string> parents = {"father", "mother"};
+};
+
+int main(int argc, char **argv)
+{
+    Person person;
+    cout << person.name << endl; // gaownalu
+    return 0;
+}
+```
+
+### 返回\*this的成员函数
+
+关于this的返回，常用的有返回\*this，this
+
+```cpp
+//example21.cpp
+#include <iostream>
+#include <string>
+using namespace std;
+class Person
+{
+public:
+    int age;
+    Person copy()
+    {
+        return *this;
+    }
+    Person &self()
+    {
+        return *this;
+    }
+    Person *ptr()
+    {
+        return this;
+    }
+};
+
+int main(int argc, char **argv)
+{
+    Person person;
+    person.age = 19;
+    Person person1 = person.copy();
+    person1.age = 18;
+    cout << person.age << " " << person1.age << endl; // 19 18
+    Person &person_ = person.self();
+    person_.age = 18;
+    cout << person.age << endl; // 18
+    Person *ptr = person.ptr();
+    if (ptr == &person_)
+    {
+        cout << "get ptr success" << endl; // get ptr success
+    }
+}
+```
+
+### 从const成员函数返回\*this
+
+从const成员函数返回\*this,则返回的新对象是const的
+
+```cpp
+//example22.cpp
+#include <iostream>
+using namespace std;
+class Person
+{
+public:
+    mutable int age = 0;
+    Person getConstCopy() const
+    {
+        return *this;
+    }
+    const Person &getConstSelf() const
+    {
+        return *this;
+    }
+};
+int main(int argc, char **argv)
+{
+    Person person;
+    person.age = 19;
+    Person person1 = person.getConstCopy(); //相当于一个const的对象赋值给person1
+
+    const Person person2; // const对象 其内部的属性必须全部被初始化
+    Person person3 = person2.getConstCopy();
+    cout << person3.age << endl; // 0
+    person3.age = 19;
+
+    const Person &self = person2.getConstSelf();
+    self.age = 18;
+    cout << person2.age << endl; // 18
+
+    // Person &person4 = person1.getConstSelf();
+    // binding reference of type 'Person&' to 'const Person' discards qualifiers
+    return 0;
+}
+```
+
+### 基于const的重载
+
+当对象是const时使用const方法、非const对象使用非const方法
+
+```cpp
+//example23.cpp
+#include <iostream>
+#include <string>
+using namespace std;
+class Person
+{
+public:
+    Person(int age) : age(age) {}
+    const Person &print() const
+    {
+        cout << age << " const Person &print() const" << endl;
+        return *this;
+    }
+    Person &print()
+    {
+        cout << age << " Person &print()" << endl;
+        return *this;
+    }
+
+private:
+    int age;
+};
+int main(int argc, char **argv)
+{
+    Person person1(1);
+    person1.print();         // 1 Person &print()
+    person1.print().print(); // 1 Person &print() 1 Person &print()
+    const Person person2 = person1;
+    person2.print();         // 1 const Person &print() const
+    person2.print().print(); // 1 const Person &print() const 1 const Person &print() const
+    return 0;
+}
+```
+
+### 类类型
+
+不同的类对象之间是不能直接相互赋值的，因为就像一个自行车要赋值给汽车类型
+
+### 类声明
+
+类的声明同理向，函数一样可以进行前向声明，然再声明的后面定义类
+
+```cpp
+class Person;
+int main(int argc,char**argv){
+    Person person;
+    return 0;
+}
+class Person{
+public:
+    int age;
+}
+```
+
+### 类之间的友元关系
+
+```cpp
+//example24.cpp
+#include <iostream>
+using namespace std;
+class Person
+{
+    friend class Room;
+
+private:
+    int age;
+    void setAge(int age)
+    {
+        this->age = age;
+    }
+
+public:
+    Person(int age) : age(age) {}
+    Person() = default;
+};
+
+class Room //在Room内的方法可以访问Person的私有内容
+{
+public:
+    Person person;
+    int getHostAge()
+    {
+        person.setAge(19);
+        return person.age;
+    }
+};
+
+int main(int argc, char **argv)
+{
+    Room room;
+    cout << room.getHostAge() << endl; // 19
+    return 0;
+}
+```
+
+### 其他类的函数成员作友元
+
+有时不需要指定某个类全部方法可以访问、支持我们为某个类的特定的方法设置友元关系\
+这个功能有些鸡肋，一下面的例子不允许在Room内定义Person类型的属性，因为无定义因为
+
+* 首先定义Room类，其中声明getHostAge函数，但不能定义它，在getHostAge使用Room成员之前必须先声明Person
+* 定义Person,包括getHostAge友元声明
+* 最后定义getHostAge，此时才可以使用Person的成员
+
+```cpp
+//example25.cpp
+#include <iostream>
+using namespace std;
+
+class Person;
+
+class Room
+{
+public:
+    int getHostAge(Person &person); //在Room内的此方法可以访问Person的私有内容
+};
+
+class Person
+{
+    friend int Room::getHostAge(Person &person);
+
+private:
+    int age;
+    void setAge(int age)
+    {
+        this->age = age;
+    }
+
+public:
+    Person(int age) : age(age) {}
+    Person() = default;
+};
+
+int Room::getHostAge(Person &person)
+{
+    person.setAge(19);
+    return person.age;
+}
+
+int main(int argc, char **argv)
+{
+    Room room;
+    Person person;
+    cout << room.getHostAge(person) << endl; // 19
+    return 0;
+}
+```
+
+太鸡肋了，尽量不要用、但要知道有这么回事
+
+### 函数重载与友元
+
+如上面的例子
+
+```cpp
+friend int Room::getHostAge(Person &person);
+//只是对 int Room::getHostAge(Person &person); 声明了友元
+//如果想要将getHostAge的其他重载形式也作为友元则需要为每条重载声明友元
+```
+
+### 友元声明和作用域
+
+在声明友元时，并不需要其函数在friend之前声明，但是在此函数被使用之前必须被声明。
+
+```cpp
+//example26.cpp
+#include <iostream>
+using namespace std;
+
+class Person
+{
+    friend int func(Person &ptr);
+
+public:
+    Person()
+    {
+        // func(*this); 在此之前func()没有被声明，因此不能使用
+    }
+    void a();
+    void b();
+
+private:
+    int age;
+};
+
+void Person::a()
+{
+    // func(*this);  在此之前func()没有被声明，因此不能使用
+}
+
+int func(Person &ptr);
+
+void Person::b()
+{
+    func(*this); //在此之前已经声明了func
+}
+
+int func(Person &ptr)
+{
+    ptr.age = 11;
+    return ptr.age;
+}
+
+int main(int argc, char **argv)
+{
+    Person person;
+    person.b();                   //由person.b 内掉用 func 操纵age
+    cout << func(person) << endl; // 11
+    return 0;
+}
+```
