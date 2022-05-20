@@ -1,4 +1,10 @@
-# 图的存储与基本操作
+---
+cover: >-
+  https://images.unsplash.com/photo-1603584173870-7f23fdae1b7a?crop=entropy&cs=tinysrgb&fm=jpg&ixid=MnwxOTcwMjR8MHwxfHNlYXJjaHw4fHxzdXBlciUyMGNhcnxlbnwwfHx8fDE2NTMwNjM5ODc&ixlib=rb-1.2.1&q=80
+coverY: 0
+---
+
+# 🚲 图的存储与基本操作
 
 ## 图的存储与基本操作
 
