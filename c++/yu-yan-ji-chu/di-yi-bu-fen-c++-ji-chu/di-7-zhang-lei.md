@@ -1065,3 +1065,186 @@ int main(int argc, char **argv)
     return 0;
 }
 ```
+
+
+
+### 类的作用域
+
+一个类就是一个作用域，每个类都会定义它自己的作用域，在类的作用域之外，普通的数据和函数成员只能由对象、引用、指针使用成员访问运算符来访问，对于类类型成员则使用作用域运算符。
+
+```cpp
+//example27.cpp
+#include <iostream>
+using namespace std;
+class Person
+{
+private:
+    int age;
+
+public:
+    struct Info
+    {
+        int age;
+        void print()
+        {
+            cout << "Info:: age=" << age << endl;
+        }
+    };
+
+    Person(int age) : age(age) {}
+    Person() = default;
+    Info setAddAge(int num);
+    int getAge();
+};
+
+Person::Info Person::setAddAge(int num)
+{
+    this->age += num;
+    Info info;
+    info.age = num;
+    return info;
+}
+
+int main(int argc, char **argv)
+{
+    Person person(18);
+    Person::Info info = person.setAddAge(1);
+    info.print(); // Info:: age=1
+    return 0;
+}
+```
+
+### 名字查找与类的作用域
+
+目前我们写的程序，名字查找的规则为
+
+* 首先，在名字所在的块中寻找其声明语句，只考虑在名字的使用之前出现的声明
+* 如果没找到，继续查找外层作用域
+* 如果最终没有找到匹配的声明，则程序报错
+
+对于类内部的成员函数而言，解析其中名字的方式与上面有不同之处
+
+* 首先先编译成员的声明
+* 知道类全部可见后才编译函数体
+
+也就出现我们可以在任何方法内使用类的任何属性，不管声明的顺序，因为先编译成员声明，后编译函数体
+
+```cpp
+//example28.cpp
+#include <iostream>
+using namespace std;
+int age = 666;
+class Person
+{
+private:
+    int age;
+
+public:
+    Person(int age) : age(age) //这里会现在Person块作用域内找变量声明age
+    {
+    }
+    void setAge(int age);
+    int getAge();
+};
+
+void Person::setAge(int age)
+{
+    this->age = age;
+}
+
+int Person::getAge()
+{
+    return age; //现在Person class块作用域内找age声明
+}
+
+int main(int argc, char **argv)
+{
+    Person person(19);
+    cout << person.getAge() << endl; // 19
+    cout << age << endl;             // 666
+    return 0;
+}
+```
+
+### 不能重复typedef与using
+
+如果在类的外部已经进行了typedef某个类型别名，则不能在类的内部重复typedef某个名称
+
+```cpp
+//example29.cpp
+#include <iostream>
+using namespace std;
+typedef int Age;
+class Person
+{
+public:
+    Person(Age age) : age(age) {}
+    int getAge()
+    {
+        return age;
+    }
+
+private:
+    // typedef int Age;//Perosn使用了外部的Age,则不能在此作用域重新重复typedef
+    Age age;
+};
+//因为Person内已经使用了外层作用域的Age,则不能在类中重新定义该名字
+//但有些编译器仍然允许顺利编译
+int main(int argc, char **argv)
+{
+    Person person(19);
+    cout << person.getAge() << endl; // 19
+    return 0;
+}
+```
+
+### 成员定义中的普通块作用域
+
+* 首先在成员函数内查找该名字的声明，只有在函数使用之前出现的声明才被考虑
+* 如果在成员函数内没有找到，则在类内继续查找。这时的类的所有成员都可以被考虑
+* 如果类内也没找到该名字的声明，在成员函数定义之前的作用域内继续查找
+
+```cpp
+//example30.cpp
+#include <iostream>
+using namespace std;
+void print();
+class Person
+{
+private:
+    void print();
+
+public:
+    void excute(bool flag);
+};
+
+void Person::excute(bool flag)
+{
+    if (flag)
+    {
+        print();
+        //现在if内找
+        //再在excute内找
+        //再在Person内找 找到了
+        //执行Person::print
+    }
+}
+
+void Person::print()
+{
+    cout << "Person::print" << endl;
+}
+
+void print()
+{
+    cout << "hello world" << endl;
+}
+int main(int argc, char **argv)
+{
+    Person person;
+    person.excute(true); // Person::print
+    return 0;
+}
+```
+
+> 但是在实际编码中，我们想要调用对象的内部成员，尽量使用this关键词访问，那样我们直接明了的看出是调用内部成员
