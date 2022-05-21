@@ -1248,3 +1248,420 @@ int main(int argc, char **argv)
 ```
 
 > 但是在实际编码中，我们想要调用对象的内部成员，尽量使用this关键词访问，那样我们直接明了的看出是调用内部成员
+
+### 构造函数再探
+
+如果没在构造函数的初始值列表中显式地初始化成员，则成员将在构造函数体之前执行默认初始化
+
+```cpp
+//example31.cpp
+#include <iostream>
+#include <string>
+using namespace std;
+class Person
+{
+public:
+    string name;
+    Person()
+    {
+        cout << name << endl;
+    }
+};
+int main(int argc, char **argv)
+{
+    Person person; //输出空字符串
+    return 0;
+}
+//也就是说在执行构造函数前，属性进行了默认初始化
+```
+
+### 构造函数初始化const属性
+
+如果class内有const属性，我们知道const变量必须被定义时初始化，否则就不能再被更改，但是对象内怎么进行初始化呢，我们不想令其为常量，我们想要传参进行初始化，就要使用构造函数初始化列表
+
+```cpp
+//example32.cpp
+#include <iostream>
+#include <string>
+using namespace std;
+class Person
+{
+public:
+    const string name;
+    Person(string name) : name(name)
+    {
+    }
+};
+int main(int argc, char **argv)
+{
+    Person person("gaowanlu");
+    cout << person.name << endl; // gaowanlu
+    return 0;
+}
+```
+
+下面这种方式是错误的
+
+```cpp
+Person(string name){
+    this->name=name;
+}
+```
+
+因为在执行构造函数前，const string name被初始化为空字符串，进而在构造函数中已经不能改变其值了
+
+> 如果成员属性是const、引用，或者属于某种未提供默认构造函数的类类型，我们必须通过构造函数初始列表为这些成员提供初始值
+
+### 初始化列表初始化顺序
+
+构造函数初始化列表只说明用于初始化成员的值，而不限定初始化的具体执顺序\
+成员初始化顺序与它们在类中定义出现顺序一致
+
+```cpp
+//example33.cpp
+#include <iostream>
+using namespace std;
+class Edge
+{
+public:
+    int i;
+    int j;
+    Edge(int val) : j(val), i(j)
+    {
+    }
+};
+int main(int argc, char **argv)
+{
+    Edge edge(2);
+    cout << edge.i << endl; //乱码
+    cout << edge.j << endl; // 2
+    //因为在初始化列表时先执行了i(j) 后执行 j(val)
+    return 0;
+}
+```
+
+> 在我们实际书写中，初始化列表的顺序与属性定义顺序一致
+
+### 默认实参与构造函数
+
+如果一个构造函数为所有参数都提供了默认实参，则它实际上也定义了默认的无参构造函数
+
+```cpp
+//example34.cpp
+#include <iostream>
+using namespace std;
+class Person
+{
+public:
+    unsigned age;
+    Person(int age = 1) : age(age)
+    {
+    }
+};
+int main(int argc, char **argv)
+{
+    Person person;
+    cout << person.age << endl; // 1
+}
+```
+
+### 委托构造函数
+
+啥是委托构造函数，是C++11的新增特性，一个委托构造函数使用它所属类的其他构造函数执行自己的初始化过程，或者说它把自己的一些职责委托给了其他构造函数，在构造函数初始化列表调用其他构造函数
+
+```cpp
+//example35.cpp
+#include <iostream>
+using namespace std;
+class Person
+{
+public:
+    const unsigned age;
+    Person() : Person(19)
+    {
+        cout << "Person() : Person(19)" << endl;
+    }
+    Person(int age) : age(age)
+    {
+        cout << "Person(int age) : age(age)" << endl;
+    }
+};
+int main(int argc, char **argv)
+{
+    Person person;
+    // Person(int age) : age(age)
+    // Person() : Person(19)
+    cout << person.age << endl; // 19
+    return 0;
+}
+```
+
+### 默认构造函数的作用
+
+来看一个有趣的例子
+
+```cpp
+//example36.cpp
+#include <iostream>
+using namespace std;
+class Person
+{
+public:
+    Person(int age, string name)
+    {
+    }
+};
+struct A
+{
+    Person person;
+};
+int main(int argc, char **argv)
+{
+    A a; // error A内的person不能被构造，缺少默认构造函数
+    return 0;
+}
+```
+
+这种问题怎么解决呢，使用默认构造函数
+
+```cpp
+//example37.cpp
+#include <iostream>
+using namespace std;
+class Person
+{
+public:
+    Person(int age = 19, string name = "gaowanlu")
+    {
+    }
+};
+struct A
+{
+    Person person;
+};
+int main(int argc, char **argv)
+{
+    A a;
+    return 0;
+}
+```
+
+### 使用默认构造函数
+
+在使用默认构造函数时，不要闹笑话
+
+```cpp
+Person person();//这是使用默认构造函数吗
+//这是声明了一个函数person空参数，返回Person类型数据
+```
+
+正确方式
+
+```cpp
+Person person;
+```
+
+### 转换构造函数
+
+也就是我们可以利用构造函数指定为此类对象赋值，赋值等号右边可以为哪些类型，并且还可以在构造函数内进行一系列操作
+
+```cpp
+//example38.cpp
+#include <iostream>
+using namespace std;
+class Person
+{
+private:
+    int age;
+
+public:
+    Person(int age) : age(age)
+    {
+        cout << this->age << endl;
+    }
+    Person() = default;
+    int getAge()
+    {
+        return age;
+    }
+};
+
+void print(Person person)
+{
+    cout << person.getAge() << endl;
+}
+
+int main(int argc, char **argv)
+{
+    Person person = 19; // 19
+    person = 18;        // 18
+    person = 1.33;      // 1
+    person = '1';       // 49
+    print(1);           // 1
+    //编译器只会自动地执行一步类型转换
+    return 0;
+}
+```
+
+### explicit抑制转换构造函数
+
+有个一个参数的构造函数我们不想让他具有转换构造函数的特性，在列内函数生命或者定义的时候加上 explicit即可，explicit只能在类内使用，成员函数在类外定义是不能使用explicit
+
+```cpp
+//example39.cpp
+#include <iostream>
+using namespace std;
+class Person
+{
+private:
+    int age;
+
+public:
+    explicit Person(int age);
+    Person() = default;
+};
+
+Person::Person(int age) : age(age)
+{
+    cout << this->age << endl;
+}
+
+int main(int argc, char **argv)
+{
+    // Person person = 19; // error 不存在从 "int" 转换到 "Person" 的适当构造函数
+    Person person(19); // 19
+    return 0;
+}
+```
+
+explicit其实时抑制了隐式转换构造函数，我们仍然可是使用显式调用构造函数来进行转换。
+
+```cpp
+void print(Person person){
+}
+print(Person(1));
+```
+
+### 标准库有显式构造函数的类
+
+标准库中有些类有单参数的构造函数
+
+* 接收一个单参数的const char\*的string构造函数，不是explicit的
+
+```cpp
+//以至于我们可以这样对其直接赋值或者初始化
+string str1("hello");
+string str2="hello";
+```
+
+* 接收一个容量参数的vector构造函数是explicit的
+
+```cpp
+vector<int> vec(10);//10个int
+```
+
+### 聚合类
+
+什么是聚合类？聚合类使得用户可以直接访问其成员，并且具有特殊的初始化语法形式
+
+聚合条件
+
+* 所有成员都是public
+* 没有定义任何构造函数
+* 没有类内初始值
+* 没有基类，没有virtual函数
+
+```cpp
+//example40.cpp
+#include <iostream>
+using namespace std;
+struct Person
+{
+    int age;
+    string name;
+    void print()
+    {
+        cout << "age " << age << endl;
+        cout << "name " << name << endl;
+    }
+};
+int main(int argc, char **argv)
+{
+    Person person = {19, "gaowanlu"};
+    person.print();
+    // age 19
+    // name gaowanlu
+    return 0;
+}
+```
+
+列表参数值的顺序必须和类内属性定义顺序严格相同
+
+### 字面量常量类
+
+我们定义的类的实例也可以是字面值
+
+数据成员都是字面值类型的聚合类是字面值常量类，如果不是聚合类，但复合下述要求，也是字面值常量类
+
+* 数据成员都必须是字面值类型
+* 类必须至少含有一个constexpr构造函数
+* 如果一个数据成员含有类内初始值，则内置类型成员的初始化值必须是一个常量表达式，或者如果成员属于某种类类型，则初始值必须使用成员自己的constexpr构造函数
+* 类必须使用析构函数的默认定义，该成员负责销毁类的对象
+
+### constexpr构造函数
+
+constexpr构造函数必须初始化所有数据成员\
+constexpr的对象可以调用const的方法，如果此方法有返回值，则返回值的类型必须为constexpr
+
+```cpp
+//example41.cpp
+#include <iostream>
+using namespace std;
+
+class Debug
+{
+public:
+    constexpr Debug(bool b = true) : hw(b), io(b), other(b)
+    {
+    }
+    constexpr Debug(bool h, bool i, bool o) : hw(h), io(i), other(o)
+    {
+    }
+    //除了构造函数其他方法如果返回constexpr则为const函数
+    constexpr bool any() const
+    {
+        return hw || io || other;
+    }
+    void set_hw(bool h)
+    {
+        hw = h;
+    }
+    void set_io(bool i)
+    {
+        io = i;
+    }
+    void set_other(bool o)
+    {
+        other = o;
+    }
+
+private:
+    bool hw;
+    bool io;
+    bool other;
+};
+
+int main(int argc, char **argv)
+{
+    constexpr Debug debug(false);
+    // debug是const的又是constexpr
+    cout << (debug.any() ? "true" : "false") << endl; // false
+    // debug.set_hw(false);//debug是constexpr不允许调用非const方法
+    //编译时会直接展开debug.any()
+    Debug d = debug;
+    d.set_hw(true);                                   //非constexpr实例可以调用非const方法
+    cout << (d.any() ? "true" : "false") << endl;     // true
+    cout << (debug.any() ? "true" : "false") << endl; // false
+    return 0;
+}
+```
