@@ -1665,3 +1665,109 @@ int main(int argc, char **argv)
     return 0;
 }
 ```
+
+### 类的静态成员
+
+有时候类需要它的一些成员与类本身直接相关，而不是与对象保持联系，也就是说类的静态成员属于类而非类的实例
+
+### 声明静态成员
+
+在静态方法中不能使用this，同理static方法不能是const的,对于类的实例对象可以通过成员访问符对静态成员进行访问
+
+```cpp
+//example42.cpp
+#include <iostream>
+#include <string>
+using namespace std;
+
+class Person{
+public:
+    static int age;//static属性声明
+    Person()=default;
+    static void className(){
+        cout<<"Person"<<endl;
+    }
+private:
+    string name;
+};
+
+//static属性定义与初始化
+int Person::age;
+
+int main(int argc, char **argv)
+{
+    Person person1;
+    Person person2;
+    Person::age=18;
+    cout<<Person::age<<endl;//18
+    person1.className();//Person
+    person2.className();//Person
+    cout<<person1.age<<endl;//18
+    person1.age=19;
+    cout<<Person::age<<endl;//19
+    cout<<person2.age<<endl;//19
+    return 0;
+}
+```
+
+### 静态属性的类内初始化
+
+上面我们对于类的静态属性，在类中声明，在外部定义。通常情况下静态属性不应在类内部初始化，但const静态成员成员可以类内初始化，不过要求初始值其是constexpr
+
+静态成员可以做普通成员不能做到的事情，如可以使用不完全类型作为属性类型，即声明这个类型时，这个类型还没有被编译器扫描完，也就是类型不完全
+
+```cpp
+//example43.cpp
+#include<iostream>
+#include<string>
+using namespace std;
+
+class Person{
+public:
+    static const unsigned age=19;
+    static constexpr int weight=75;
+    static const string name;
+    static Person* ptr;//静态成员可以是不完全类型
+    Person* person;//指针成员可以为不完全类型
+    //Person personInstance;//数据成员必须是完全类型
+};
+
+Person* Person::ptr=nullptr;
+const string Person::name="gaownanlu";
+
+int main(int argc,char**argv){
+    Person person;
+    cout<<Person::age<<endl;
+    cout<<Person::weight<<endl;
+    cout<<Person::name<<endl;
+    Person::ptr=&person;
+    cout<<Person::ptr->name<<endl;//gaowanlu
+    return 0;
+}
+```
+
+### 静态属性做默认实参
+
+静态属性可以作为方法的默认实参，而普通属性不可以因为普通属性属于对象本身而非类
+
+```cpp
+//example44.cpp
+#include<iostream>
+using namespace std;
+
+class Person{
+public:
+    int age;
+    Person(int age=defaultAge):age(age){
+        cout<<this->age<<endl;
+    }
+private:
+    static const int defaultAge=19;
+};
+
+int main(int argc,char**argv){
+    Person person1;//19
+    Person person2;//19
+    return 0;
+}
+```
