@@ -216,3 +216,107 @@ int main(int argc,char**argv){
    return 0;
 }
 ```
+
+### 文件输入输出
+
+三种流对象支持对文件的内容操作，ifstream从一个文件读取数据，ofstream向一个给定文件写入数据，以及fstream可以读写给定文件
+
+![fstream特有的操作](<../../../.gitbook/assets/屏幕截图 2022-05-24 071451.jpg>)
+
+### 使用文件流对象
+
+```cpp
+//example10.iofile
+hello world
+```
+
+输入流的创建、文件打开与关闭
+
+```cpp
+//example10.cpp
+#include<iostream>
+#include<string>
+#include<fstream>
+using namespace std;
+int main(int argc,char**argv){
+    //构造一个ifstream并打开给定文件
+    ifstream m_instream("./example10.iofile");
+    //或
+    // ifstream m_instream;
+    // m_instream.open("./example10.iofile");
+    if(m_instream.fail()||!m_instream.good()){
+        cout << "file open failed" << endl;
+        return 0;
+    }
+
+    string str;
+    m_instream>>str;
+    cout <<str.size()<<":"<< str << endl;//5:hello
+    m_instream >> str;
+    
+    cout <<str.size()<<":"<< str << endl;//5:world
+    m_instream >> str;
+
+    m_instream.seekg(0);//
+    getline(m_instream,str);
+    cout << str.size()<<":"<<str << endl;//5:world
+
+    //关闭输入流
+    if(m_instream.is_open()){
+        m_instream.close();
+    }
+    return 0;
+}
+```
+
+### fstream 自动构造和析构
+
+对于fstream对象不论是栈内存对象，还是堆内存对象，当他们的离开作用域的是否，fstream的析构函数会被调用，此时close会自动调用
+
+### 文件模式
+
+![文件模式](<../../../.gitbook/assets/屏幕截图 2022-05-24 074028.jpg>)
+
+只有当out被设定才能设定trunc模式\
+如果trunc没有被设定，可以设定app模式，在app模式即使没有显示指定out模式，文件总能以输出模式被打开\
+默认情况下，即使没有指定trunc，以out模式打开的文件会被截断，为了保留以out模式打开的文件的内容，必须同时指定app模式，这样才会将数据追加到末尾或同时指定in\
+ate和binary模式可用于任何类型的文件流对象
+
+默认文件模式
+
+`ifstream默认使用in模式、ofstream默认使用out模式、fstream默认使用in|out模式`
+
+```cpp
+//example11.cpp
+#include<iostream>
+#include<fstream>
+using namespace std;
+int main(int argc,char**argv){
+    fstream m_stream;
+    //当example11.iofile不存在时会自动创建一个空文件
+    m_stream.open("./example11.iofile",fstream::app|fstream::in);//追加且可写
+    if(m_stream.fail()){
+        return -1;
+    }
+    string str="hello world\n";
+    m_stream << str;//写到文件中去
+    //m_stream.write(char*,sizt_t);
+
+    m_stream.seekg(0,ios::beg);//更改读指针的位置
+
+    // m_stream.seekp(0,ios::end);//更改写指针的位置
+    // m_stream.tellp();
+
+    //cout << m_stream.tellg() << endl;
+
+    //m_stream.peek()!=EOF//返回文件流中的第一个字符，但并不是提取该字符。
+    cout << m_stream.eof() << endl;//0
+    while(m_stream.good()&&!m_stream.eof()){//下一个字符不是EOF
+        getline(m_stream, str);
+        cout << str<<"\n";
+    }
+    cout << m_stream.eof() << endl;
+    m_stream.close();
+    return 0;
+}
+```
