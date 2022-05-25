@@ -18,6 +18,7 @@
     * [🥰 第8章 IO库](c++/yu-yan-ji-chu/di-er-bu-fen-c++-biao-zhun-ku/di-8-zhang-io-ku.md)
 * [并发编程](c++/bing-fa-bian-cheng/README.md)
   * [第1章 你好并发世界](c++/bing-fa-bian-cheng/di-1-zhang-ni-hao-bing-fa-shi-jie.md)
+  * [第2章 线程管理](c++/bing-fa-bian-cheng/di-2-zhang-xian-cheng-guan-li.md)
 * [3D游戏编程](c++/3d-you-xi-bian-cheng.md)
 * [网络编程](c++/wang-luo-bian-cheng.md)
 
