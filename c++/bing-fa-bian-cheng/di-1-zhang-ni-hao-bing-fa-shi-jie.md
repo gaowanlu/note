@@ -1,5 +1,6 @@
 ---
 description: Get Start!
+coverY: 0
 ---
 
 # 第1章 你好并发世界

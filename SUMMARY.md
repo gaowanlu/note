@@ -97,5 +97,5 @@
   * [😄 单变量微积分](qi-ta/qi-ta/dan-bian-liang-wei-ji-fen.md)
   * [🥰 多变量微积分](qi-ta/qi-ta/duo-bian-liang-wei-ji-fen.md)
   * [😎 线性代数](qi-ta/qi-ta/xian-xing-dai-shu/README.md)
-    * [矩阵的基本运算](qi-ta/qi-ta/xian-xing-dai-shu/ju-zhen-de-ji-ben-yun-suan.md)
+    * [😆 矩阵的基本运算](qi-ta/qi-ta/xian-xing-dai-shu/ju-zhen-de-ji-ben-yun-suan.md)
   * [🤖 概率论与数理统计](qi-ta/qi-ta/gai-shuai-lun-yu-shu-li-tong-ji.md)
