@@ -320,3 +320,88 @@ int main(int argc,char**argv){
     return 0;
 }
 ```
+
+### string流
+
+sstream头文件定义了三个支持内存IO，可以向string写入数据，从string读取数据，就像string是一个IO流一样
+
+`istringstream`从string读取数据，`ostringstream`向string写入数据，而头文件`stringstream`既可以从string读数据写可以写数据，同理这些类也继承iostream,可以使用iostream，istream,ostream相关的操作
+
+![stringstream特有的操作](<../../../.gitbook/assets/屏幕截图 2022-05-25 234638.jpg>)
+
+### 使用istringstream
+
+字符串输入流，即从流中读取数据
+
+```cpp
+//example12.cpp
+#include<iostream>
+#include<sstream>
+using namespace std;
+int main(int argc,char**argv){
+    string str="hello world";
+    istringstream m_istringstream(str);//拷贝一份str作为输入流使用
+    string temp;
+    m_istringstream >> temp;//从流中读取数据
+    cout << temp << endl;//hello
+    cout << m_istringstream.eof() << endl;//0
+    m_istringstream >> temp;//从流中读取数据
+    cout << temp << endl;//world
+    cout << m_istringstream.eof() << endl;//1
+    return 0;
+}
+```
+
+### 使用ostringstream
+
+字符串输出流，即向字符串流写数据
+
+```cpp
+//example13.cpp
+#include<iostream>
+#include<sstream>
+using namespace std;
+int main(int argc,char**argv){
+    string str = "hello world";
+    ostringstream m_ostringstream(str);
+    m_ostringstream << " c++";
+    string temp;
+    temp=m_ostringstream.str();
+    cout << temp << endl;//c++o world
+    m_ostringstream << "hello c++";
+    //返回流保存的string的拷贝
+    cout << m_ostringstream.str() << endl;//c++hello c++
+    return 0;
+}
+```
+
+### 使用stringstream
+
+stringstream综合了istringstream与ostringstream的功能特性
+
+```cpp
+//example14.cpp
+#include<iostream>
+#include<sstream>
+using namespace std;
+int main(int argc,char**argv){
+    stringstream stream;
+    stream << "hello world";//向流写入内容
+
+    cout << stream.str() << endl;//hello world
+
+    string temp;
+    stream >> temp;//从流中读取内容
+
+    cout << stream.eof() << endl;//0
+    cout << temp << endl;//hello
+    
+    stream >> temp;//从流中读取内容
+    
+    cout << temp << endl;//world
+    cout << stream.eof() << endl;//1
+    return 0;
+}
+```
+
+不要慌，在此学习的内容不是文件操作，如果从C语言来学C++我们的思想要逐渐学习面向对象的思想，C++向我们提供了强大的IO流的操作的封装，这使得开发更加便捷，使用得当代码也能得到较好的维护性
