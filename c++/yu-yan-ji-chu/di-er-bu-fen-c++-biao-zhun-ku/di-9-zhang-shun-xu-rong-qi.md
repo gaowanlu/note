@@ -132,7 +132,7 @@ list<int>::value_type num = 9;//int num
 list<int>::pointer ptr;//int *ptr
 ```
 
-#### const\_pointer
+### const\_pointer
 
 容器存储类型const指针类型
 
