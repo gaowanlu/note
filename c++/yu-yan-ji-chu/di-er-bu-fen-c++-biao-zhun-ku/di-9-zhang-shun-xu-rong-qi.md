@@ -206,7 +206,7 @@ while (const_reverse_iter!=vec.crend())
 
 主要要掌握容器的构造函数的相关重载，以及赋值拷贝等特性
 
-![rongq](<../../../.gitbook/assets/屏幕截图 2022-05-27 233201.jpg>)
+![容器定义和初始化](<../../../.gitbook/assets/屏幕截图 2022-05-27 233201.jpg>)
 
 在前面的构造函数内容中我们已经过实践，可以进行复习与在此学习
 
@@ -270,6 +270,8 @@ int main(int argc,char**argv){
 ```
 
 ### 赋值与swap
+
+![容器赋值运算](<../../../.gitbook/assets/屏幕截图 2022-05-27 235933.jpg>)
 
 ```cpp
 //example7.cpp
