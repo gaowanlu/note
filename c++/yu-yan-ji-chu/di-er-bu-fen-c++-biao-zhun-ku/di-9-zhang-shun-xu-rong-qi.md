@@ -12,11 +12,17 @@ coverY: 0
 
 ### 顺序容器概述
 
+![顺序容器类型](<../../../.gitbook/assets/屏幕截图 2022-05-26 114318.jpg>)
+
 如list、forward\_list是链式存储结构，而vector、deque、array、string为顺序存储结构，在增删改等操作上它们会有不同的特性
 
 ### 构造函数
 
+容器是C++对数据结构的一种封装，器本质是面向对象的设计，掌握相关的构造是一件理所当然的事情
+
 ### 默认构造
+
+默认构造相关的空容器
 
 ```cpp
 //example1.cpp
@@ -25,6 +31,8 @@ vector<int> m_vector;
 ```
 
 ### 拷贝构造
+
+将m\_vector拷贝一份到m\_vector\_copy
 
 ```cpp
 //example1.cpp
@@ -112,6 +120,9 @@ const引用
 list<int>::const_reference m_const_list_reference = *(m_list.begin());//const int &m_const_list_reference
 //m_const_list_reference = 888;
 //error:: readonly
+for(vector<int>::const_reference item:m_list){//迭代器for循环
+    cout << item << endl;//1 2 3
+}
 ```
 
 ### value\_type
@@ -137,7 +148,7 @@ list<int>::pointer ptr;//int *ptr
 容器存储类型const指针类型
 
 ```cpp
-//example3.cpp
+/i/example3.cpp
 list<int>::const_pointer const_ptr;//const int *const_ptr
 ```
 
@@ -190,3 +201,148 @@ while (const_reverse_iter!=vec.crend())
     const_reverse_iter++;
 }
 ```
+
+### 容器定义和初始化
+
+主要要掌握容器的构造函数的相关重载，以及赋值拷贝等特性
+
+![rongq](<../../../.gitbook/assets/屏幕截图 2022-05-27 233201.jpg>)
+
+在前面的构造函数内容中我们已经过实践，可以进行复习与在此学习
+
+### 存储不同类型元素的容器的转换
+
+是没有这样的转换的，如将vector\<int>转换为vector\<float>,C++中并没有相关的直接操作，但是允许我们使用迭代器范围方式初始化，迭代器相关元素类型必须有相关的构造函数
+
+```cpp
+//example5.cpp
+#include<iostream>
+#include<vector>
+using namespace std;
+int main(int argc,char**argv){
+    vector<int> vec1{1, 2, 3};
+    //vector<float> vec2(vec1);//没有相关构造函数
+    vector<float> vec2(vec1.begin(), vec1.end());//可以用迭代器进行初始化
+    int num=float(*vec1.begin());//背后可以使用元素类型的构造函数
+    cout << num << endl;//1
+
+    //string与char*
+    const char *str1 = "hello";
+    const char *str2 = "world";
+    vector<const char *> str_vec = {str1, str2};
+    vector<string> string_vec(str_vec.begin(),str_vec.end());//可以用迭代器进行初始化
+    string str(*str_vec.begin());//背后可以使用元素类型的构造函数
+    cout << str << endl;//hello
+
+    return 0;
+}
+```
+
+### 标准库array
+
+array具有固定大小
+
+除了C风格的数组之外，C++提供了array类型，其也是一种顺序容器
+
+```cpp
+//example6.cpp
+#include<iostream>
+#include<array>
+using namespace std;
+int main(int argc,char**argv){
+    //一维array
+    array<int, 10> m_array;
+    m_array[0] = 1;
+    cout << m_array[0] << endl;
+    //二维array
+    array<array<int, 10>, 10> matrix;
+    matrix[0][0] = 1;
+    cout << matrix[0][0] << endl;//1
+
+    //同理可以具有容器的特性
+    array<array<int, 10>, 10>::size_type size=matrix.size();//size_type
+    array<array<int, 10>, 10> copy = matrix;//拷贝构造
+    array<array<int, 10>, 10>::iterator iter = matrix.begin();//迭代器等
+    cout << (*iter)[0] << endl;//1
+
+    return 0;
+}
+```
+
+### 赋值与swap
+
+```cpp
+//example7.cpp
+vector<int> vec1 = {1, 2, 3};
+vector<int> vec2 = {3, 2, 1};
+//c1=c2
+vec2 = vec1;//拷贝
+print_vec(vec1,"vec1");//vec1:1 2 3
+print_vec(vec2, "vec2");//vec2:1 2 3
+
+//c={a,b,c...}通过列表赋值
+vec1 = {4, 5, 6,7};
+print_vec(vec1, "vec1");//vec1:4 5 6 7
+
+//swap(c1,c2) 交换两容器的内容
+swap(vec1,vec2);
+print_vec(vec1,"vec1");//vec1:1 2 3
+print_vec(vec2, "vec2");//vec2:4 5 6 7
+
+//assign操作不适用于关联容器和array
+vec1.assign({8,9,10});//列表assign
+vec1.assign(vec2.begin(), vec2.end());//迭代器assign
+vec1.assign(10, 999);//赋值为10个999
+```
+
+### 容器大小操作
+
+容器具有成员函数size,其返回类型为相应容器的size\_type,以及empty成员函数
+
+```cpp
+//example8.cpp
+vector<int> vec1 {1, 2, 3};
+string str1 = "123";
+vector<int>::size_type vec1_size = vec1.size();
+string::size_type str1_size = str1.size();
+cout << "vec1_size " << vec1_size << endl;//vec1_size 3
+cout << "str1_size " << str1_size << endl;//str1_size 3
+cout << str1.empty() << endl;//0
+cout << vec1.empty() << endl;//0
+```
+
+### 容器与关系运算符
+
+容器之间也可以使用<、>、==关系运算符进行比较运算
+
+运算规则与string的关系运算类似
+
+1、如果两个容器具有相同大小且所有元素都两两对应相等，则者两个容器相等，否则两个容器不等\
+2、如果两个容器大小不同，但较小容器中每个元素都等于较大容器中的对应元素，则较小容器小于较大容器\
+3、如果两个容器都不是另一个容器的前缀子序列，则它们的比较结果取决于第一个不相等的元素的比较结果
+
+```cpp
+//example9.cpp
+int arr1[10]{1, 2, 3, 4, 5};
+int arr2[10]{1, 2, 3, 4, 5};
+cout << (arr1 == arr2) << endl;//0
+//为什么 本质上比较的是头地址哦，忘了的话要去复习数组章节了
+
+//==
+array<int, 5>array1{1, 2, 3, 4, 5};
+array<int, 5>array2{1, 2, 3, 4, 5};
+cout << (array1 == array2) << endl;//1
+
+vector<int> vec1 = {1, 1, 2, 3};
+vector<int> vec2 = {
+    1,
+    1,
+    3,
+    1
+};
+cout << (vec1 == vec2) << endl;//0
+cout << (vec1 <= vec2) << endl;//1
+cout << (vec1 > vec2) << endl;//0
+```
+
+> 容器的关系运算符依赖于元素的关系运算符，只有容器的元素支持关系运算时，容器整体才可以进行关系运算
