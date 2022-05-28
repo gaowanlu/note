@@ -348,3 +348,120 @@ cout << (vec1 > vec2) << endl;//0
 ```
 
 > 容器的关系运算符依赖于元素的关系运算符，只有容器的元素支持关系运算时，容器整体才可以进行关系运算
+
+### 顺序容器操作
+
+主要包括增删改查等操作
+
+### 向顺序容器添加元素
+
+向容器内添加元素的有多种方式，不同的容器也有相应的约束以及仅有的特性
+
+![向顺序容器添加元素的操作](<../../../.gitbook/assets/屏幕截图 2022-05-28 133030.jpg>)
+
+### push\_back
+
+在尾部创建一个值为t的元素返回void,除了array和forward\_list之外，每个顺序容器都支持push\_back
+
+```cpp
+//example10.cpp
+list<int> m_list = {1, 2, 3};
+vector<int> m_vector = {1, 2, 3};
+m_list.push_back(4);
+m_list.push_back(4);
+//forward_list不支持push_back
+```
+
+### push\_front
+
+在前面添加元素
+
+```cpp
+//example12.cpp
+//list forward_list deque容器支持push_front
+list<int> m_list = {1, 2, 3};
+m_list.push_front(0);
+for(auto&item:m_list){
+    cout << item << endl;//0 1 2 3
+}
+```
+
+### insert
+
+在指定位置添加新的元素,vector、deque、list、string都支持insert，forward\_list提供了特殊版本的insert
+
+* 在容器中的特定位置添加元素
+
+```cpp
+//example14.cpp
+list<int> m_list = {1, 2, 3};
+m_list.insert(m_list.begin(), 0);//添加到begin()的前面
+m_list.insert(m_list.end(), 4);//添加到end前面
+for(auto&item:m_list){
+    cout << item << endl;//0 1 2 3 4
+}
+```
+
+* 插入范围内元素
+
+```cpp
+//example14.cpp
+//插入范围内元素
+vector<int> vec1 = {1, 2, 3};
+vector<int> vec2 = {};
+
+//insert(iter,num,element)
+vec2.insert(vec2.begin(), 3, 0);
+for(auto&item:vec2){
+    cout << item << endl;//0 0 0 
+}
+//迭代器范围
+vec2.insert(vec2.begin(),vec1.begin(),vec1.end());
+for(auto&item:vec2){
+    cout << item << endl;//1 2 3 0 0 0 
+}
+//列表insert
+auto iter=vec2.insert(vec2.begin(), {777, 888, 999});
+for(auto&item:vec2){
+    cout << item << endl;//777 888 999 1 2 3 0 0 0 
+}
+//新标准中insert返回插入元素中的第一个元素的迭代器
+cout << *iter << endl;//777
+```
+
+### emplace
+
+emplace主要有三种，emplace、emplace\_back、emplace\_front分别对应insert、push\_back、push\_front,二者的区别是后者直接拷贝到容器内，前者则是将参数传递给元素类型的构造函数
+
+```cpp
+//example15.cpp
+class Person{
+public:
+    int age;
+    string name;
+    Person() = default;
+    Person(int age,string name):age(age),name(name){
+
+    }
+};
+//emplace 与 insert 异曲同工
+m_list.emplace(m_list.begin(), 19, "she");
+```
+
+### emplace\_front
+
+```cpp
+//example13.cpp
+m_list.emplace_front(19,"she");
+m_list.emplace_front();//使用默认构造函数
+```
+
+### emplace\_back
+
+```cpp
+//example11.cpp
+list<Person> m_list;
+//创建临时变量 push_back其拷贝后的副本
+m_list.push_back(Person(19,"gaowanlu"));
+m_list.emplace_back(19,"she");//传递元素构造参数
+```
