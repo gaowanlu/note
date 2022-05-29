@@ -465,3 +465,154 @@ list<Person> m_list;
 m_list.push_back(Person(19,"gaowanlu"));
 m_list.emplace_back(19,"she");//传递元素构造参数
 ```
+
+### 访问元素
+
+![在顺序容器中访问元素的操作](<../../../.gitbook/assets/屏幕截图 2022-05-29 112914.jpg>)
+
+### at(n)
+
+适用于string、vector、deque、array ,下标访问越界时将会抛出out\_of\_range异常
+
+```cpp
+//example16.cpp
+string str = "hello";
+char &ch = str.at(0);
+ch = 'p';
+cout << str << endl;//pello
+```
+
+### back()
+
+back不适用于forward\_list ，当容器为空时，函数行为没有定义将会卡住
+
+```cpp
+vector<int> vec1 = {1, 2, 3, 4};
+int &last_el = vec1.back();//最后一个元素的引用
+```
+
+### front()
+
+返回第一个元素的引用 ，当容器为空时，函数行为没有定义将会卡住
+
+```cpp
+int &first = vec1.front();
+```
+
+### c\[n]
+
+当容器为空时，函数行为没有定义将会卡住
+
+```cpp
+int &num = vec1[0];
+num = 999;
+cout << vec1[0] << endl;//999
+```
+
+### 删除元素
+
+删除元素会改变容器的大小，标准库提供的删除操作不支持array
+
+![顺序容器的删除操作](<../../../.gitbook/assets/屏幕截图 2022-05-29 114149.jpg>)
+
+### pop\_front和pop\_back
+
+pop\_front()为删除首元素，pop\_back为删除尾元素，vector与string不支持push\_front与pop\_front,forward\_list不支持pop\_back,同时不能对一个空容器操作
+
+```cpp
+//example17.cpp
+list<int> m_list = {1, 2, 3, 8, 9, 4};
+print_list(m_list);//1 2 3 8 9 4
+m_list.pop_front();
+print_list(m_list);//2 3 8 9 4
+m_list.pop_back();
+print_list(m_list);//2 3 8 9
+```
+
+### erase从容器内部删除一个元素
+
+erase返回指向删除的元素之后位置的迭代器
+
+```cpp
+//example17.cpp
+print_list(m_list);//2 3 8 9
+m_list.erase((++m_list.begin()));
+print_list(m_list);//2 8 9
+```
+
+### erase删除多个元素
+
+```cpp
+//example17.cpp
+print_list(m_list);//2 8 9
+auto iter = m_list.begin();
+iter++;
+m_list.erase(iter,m_list.end());
+cout << "erase all" << endl;
+print_list(m_list);//2
+```
+
+### clear清除所有元素
+
+```cpp
+//example17.cpp
+//清除全部元素
+print_list(m_list);//2
+m_list.clear();
+print_list(m_list);//nothing
+//等价于
+m_list.erase(m_list.begin(), m_list.end());
+```
+
+### 特殊的forward\_list操作
+
+forward\_list就是我们在数据结构中所学习的单向链表，因此就有了对于forward\_list中插入或者元素删除的特殊操作
+
+![在forward\_list中插入或删除元素的操作](<../../../.gitbook/assets/屏幕截图 2022-05-29 142535.jpg>)
+
+### before\_begin与cbefore\_begin
+
+```cpp
+//example18.cpp
+//获取链表头结点
+forward_list<int>::iterator head = m_list.before_begin();
+const auto head1 = m_list.cbefore_begin();
+```
+
+### insert\_after与emplace\_after
+
+```cpp
+//example18.cpp
+m_list.insert_after(head1,0);//值插入
+m_list.insert_after(head, 3, 666);//重复值插入
+forward_list<int> m_list_1 = {6, 7, 8};
+m_list.insert_after(head1,m_list_1.begin(),m_list.end());//迭代器范围插入
+m_list.insert_after(head1, {8, 8, 9});//列表插入
+m_list.emplace_after(head1, 19.4);//构造函数插入
+for(auto&item:m_list){
+    cout << item << " ";
+    //19 8 8 9 6 7 8 666 666 666 0 1 2 3
+}
+cout << endl;
+```
+
+### erase\_after
+
+同理分为，删除一个指定位置的元素，与迭代器范围内的元素
+
+```cpp
+//example18.cpp
+//erase_after
+forward_list<int> m_list_2={1,2,3,4,5,6};
+m_list_2.erase_after(m_list_2.begin());
+for(auto&item:m_list_2){
+    cout << item<<",";//1,3,4,5,6,
+}
+cout << endl;
+//删除(begin,end)之间的元素
+m_list_2.erase_after(m_list_2.begin(), m_list_2.end());
+for(auto&item:m_list_2){
+    cout << item<<",";//1,
+}
+cout << endl;
+```
