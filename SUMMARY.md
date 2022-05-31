@@ -68,6 +68,7 @@
     * [🚁 图的应用](shu-ju-jie-gou-yu-suan-fa/shu-ju-jie-gou/di-6-zhang-tu/tu-de-ying-yong.md)
   * [😆 第7章 查找](shu-ju-jie-gou-yu-suan-fa/shu-ju-jie-gou/di-7-zhang-cha-zhao/README.md)
     * [🥲 顺序查找](shu-ju-jie-gou-yu-suan-fa/shu-ju-jie-gou/di-7-zhang-cha-zhao/shun-xu-cha-zhao.md)
+    * [折半查找](shu-ju-jie-gou-yu-suan-fa/shu-ju-jie-gou/di-7-zhang-cha-zhao/zhe-ban-cha-zhao.md)
   * [第8章 排序](shu-ju-jie-gou-yu-suan-fa/shu-ju-jie-gou/di-8-zhang-pai-xu.md)
   * [第9章 高级数据结构](shu-ju-jie-gou-yu-suan-fa/shu-ju-jie-gou/di-9-zhang-gao-ji-shu-ju-jie-gou.md)
 
