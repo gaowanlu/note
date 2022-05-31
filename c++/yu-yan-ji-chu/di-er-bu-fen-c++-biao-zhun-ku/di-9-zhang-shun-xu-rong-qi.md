@@ -874,3 +874,169 @@ cout << m_vec.capacity() << endl;//100
 ```
 
 > 只有执行insert操作size与capacity相等，或者调用resize或reserve时给定的大小超过当前capacity,vector才可能重新分配内存空间，分配多少取决于编译器的具体实现
+
+### 额外的string操作
+
+C字符串与string之间的操作
+
+![构造string的其他方法](<../../../.gitbook/assets/屏幕截图 2022-05-31 223118.jpg>)
+
+```cpp
+//example23.cpp
+const char *c_str = "hello world";
+
+string str1(c_str, 3);
+cout << str1 << endl;//hel
+
+//string str2(str1, 4);//卡住因为str1中没有4个字符
+//cout << str2 << endl;
+
+string str3(c_str, 0, 7);
+cout << str3 << endl;//hello w
+//从下标0开始 向后7个字符
+```
+
+### substr操作
+
+用于截取子串
+
+![子字符串操作](<../../../.gitbook/assets/屏幕截图 2022-05-31 223714.jpg>)
+
+```cpp
+//example24.cpp
+string str1 = "hello world";
+//s.substr(pos,n) 
+
+//从下标4开始后面的字符
+cout << str1.substr(4) << endl;//o world
+
+//从下标4开始后面的4个字符
+cout << str1.substr(4, 4) << endl;//o wo
+
+//n过长则到字符串末尾但pos超出范围则会抛出out_of_range异常
+cout << str1.substr(4, 100) << endl;//o wo
+
+try{
+    cout << str1.substr(100, 9) << endl;
+}catch(out_of_range error){
+    cout <<"ERROR "<< error.what() << endl;
+    //ERROR basic_string::substr: __pos (which is 100) > this->siz() (which is 11)
+}
+```
+
+### 改变string的其他方法
+
+包括insert、erase、assign以及string特有的append与replace等操作
+
+下面只是对于string特殊的操作，string同样有顺序容器的接口如insert的各种插入形式，需要结合前面的接口进行学习，下面有列举replace与insert的重载表格可以参考对比
+
+![修改string的操作](<../../../.gitbook/assets/屏幕截图 2022-05-31 225113.jpg>)
+
+### string.insert(pos,args)
+
+string的insert居然有7个重载，怎么记忆？别做梦了，记住怎么可能，有些功能不是只有利用不同的insert的才能解决问题，熟记自己喜欢且常用的insert进行记忆，在闲暇之余多尝试其他api，慢慢经验丰富时结合IDE的提示，才能发挥好的作用
+
+```cpp
+//example25.cpp
+string str1 = "hello world";
+const char *c_str = "you";
+    
+//在下标2前插入c_str
+str1.insert(2,c_str);//c_str是一个指针哦
+cout << str1 << endl;//heyoullo world
+
+//在下标str1.size()前插入5个感叹号
+str1.insert(str1.size(), 5, '!');
+cout << str1 << endl;//heyoulo world!!!!!
+
+//限制下标范围
+string str2 = "ABCDEF";
+string str3 = "YOU";
+str3.insert(0,str2,1,2);//str2下标1开始2个字符插入str3下标0前面
+cout << str3 << endl;//BCYOU
+
+//迭代器
+string str4 = "ABCDEF";
+str4.insert(str4.begin()++,3,'r');
+cout << str4 << endl;//rrrABCDEF
+```
+
+### string.erase(pos,len)
+
+用于删除字符串中的部分片段
+
+```cpp
+//example26.cpp
+string str1 = "abcdefgh";
+
+//从下标0开始删除2个字符
+str1.erase(0,2);
+cout << str1 << endl;//cdefgh
+
+//删除从下标3之后的字符
+str1.erase(3);
+cout << str1 << endl;//cde
+
+//使用迭代器 删除某个迭代器位置的字符
+str1.erase(++str1.begin());
+cout << str1 << endl;//ce
+```
+
+### string.assign(args)
+
+用于对字符串赋值,string的assign高达8个重载，我们自己把握着用IDE慢慢研究吧
+
+```cpp
+//example27.cpp
+string str1 = "abced";
+string str2;
+str2.assign(str1.c_str(),4);//前4个字符
+cout << str2 << endl;//abce
+
+str2.assign(str1);
+cout << str2 << endl;//abced
+
+str2.assign(str1.c_str());
+cout << str2 << endl;//abced
+```
+
+### string.append(args)
+
+append即在原字符串末尾添加内容，其是insert的简写版本,append有约6个重载
+
+```cpp
+//example28.cpp
+string str1 = "hello";
+str1.insert(str1.size(),"io");
+cout << str1 << endl;//helloio
+
+str1 = "hello";
+str1.append("io");
+cout << str1 << endl;//helloio
+```
+
+### string.replace(range,ergs)
+
+其是erase与insert的简写，即用新的字符串替换原来位置的子字符串，replace约有14个重载
+
+```cpp
+//example29.cpp
+string str1 = "abcdef";
+//将cd替换为cc
+str1.erase(2,2);
+str1.insert(2,"cc");
+cout << str1 << endl;//abccef
+
+str1 = "abcdef";
+str1.replace(2,2,"cc");//从下标2开始替换2个字符
+cout << str1 << endl;//abccef
+
+str1 = "abcdef";
+//替换迭代器范围[start,end)内的字符
+str1.replace(str1.begin(),str1.begin()+2,"oo");
+cout << str1 << endl;//oocdef
+```
+
+### 改变string的多种重载函数
+
+可见其每个方法的重载非常多，要多探究
