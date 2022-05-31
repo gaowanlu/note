@@ -1,3 +1,9 @@
+---
+cover: >-
+  https://images.unsplash.com/photo-1651535075305-614480988127?crop=entropy&cs=tinysrgb&fm=jpg&ixid=MnwxOTcwMjR8MHwxfHJhbmRvbXx8fHx8fHx8fDE2NTM5NTcyNTk&ixlib=rb-1.2.1&q=80
+coverY: 0
+---
+
 # 🥲 顺序查找
 
 ## 顺序查找

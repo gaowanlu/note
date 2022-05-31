@@ -1,4 +1,10 @@
-# 折半查找
+---
+cover: >-
+  https://images.unsplash.com/photo-1652811230783-fa08dec5e21b?crop=entropy&cs=tinysrgb&fm=jpg&ixid=MnwxOTcwMjR8MHwxfHJhbmRvbXx8fHx8fHx8fDE2NTM5NTcyNTk&ixlib=rb-1.2.1&q=80
+coverY: 0
+---
+
+# 😍 折半查找
 
 ## 折半查找
 
