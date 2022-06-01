@@ -895,3 +895,93 @@ cout << str1 << endl;//oocdef
 ### 改变string的多种重载函数
 
 可见其每个方法的重载非常多，要多探究
+
+### string搜索操作
+
+string类提供了6各不同的搜索函数、每个函数都有4个重载
+
+![string搜索操作](<../../../.gitbook/assets/屏幕截图 2022-06-01 231700.jpg>)
+
+### string.find
+
+查找s中第一次出现的位置,有四种重载
+
+```cpp
+//example30.cpp
+string str = "abcdefg";
+std::size_t pos=str.find("cdef");
+cout << pos << endl;//2
+//没有搜索到返回string::npos
+cout << (string::npos==str.find("rre")) << endl;//1
+```
+
+### string.rfind
+
+查找s中args最后一次出现的位置,有四种重载
+
+```cpp
+//example30.cpp
+//string.rfind
+str = "abcdefgggg";
+cout << str.rfind("gg") << endl;//8
+```
+
+### string.find\_first\_of
+
+在s中查找任意一个字符第一次出现的位置,有四种重载
+
+```cpp
+//example30.cpp
+//string.find_first_of
+str = "abcdefhgcb";
+cout << str.find_first_of("de") << endl;//3
+```
+
+### string.find\_last\_of
+
+在s中查找任意一个字符最后一次出现的位置,有四种重载
+
+```cpp
+//example30.cpp
+//string.find_last_of
+str = "abcdefhgcb";
+cout << str.find_last_of("gec")<<endl;//8
+```
+
+### string.find\_first\_not\_of
+
+在s中查找第一个不在args中的字符,有四种重载
+
+```cpp
+//example30.cpp
+//string.find_first_not_of
+str = "abcdefhgcb";
+cout << str.find_first_not_of("acde") << endl;//1
+```
+
+### string.find\_last\_not\_of
+
+在s中查找最后一个不再args中的字符,有四种重载
+
+```cpp
+//example30.cpp
+//string.find_last_not_of
+str = "abcdefhgcb";
+cout << str.find_last_not_of("gcfb") << endl;//6 h
+```
+
+### compare函数
+
+类似于C语言中的strcmp，同样等于、大于、小于情况分别返回0、整数、负数
+
+![compare的几种参数形式](<../../../.gitbook/assets/屏幕截图 2022-06-01 233504.jpg>)
+
+```cpp
+//example31.cpp
+string str = "abcdef";
+cout << str.compare("bcde") << endl;//-1
+cout << str.compare("aabcd") << endl;//1
+cout << str.compare("abcdef") << endl;//0
+```
+
+其重载可以在使用时进行翻阅，用得次数多个自然就记住了
