@@ -985,3 +985,183 @@ cout << str.compare("abcdef") << endl;//0
 ```
 
 其重载可以在使用时进行翻阅，用得次数多个自然就记住了
+
+### 数值转换
+
+新标准库引入了多个函数，可以实现数值数据与标准库string之间的转换
+
+![string和数值之间的转换](<../../../.gitbook/assets/屏幕截图 2022-06-02 154255.jpg>)
+
+### to\_string
+
+将数字转换为字符串
+
+```cpp
+//example32.cpp
+int num1 = 11;
+cout << to_string(num1)<<endl;
+unsigned num2 = 22;
+cout << to_string(num2) << endl;//低于int则会进行提升
+string str = to_string(45.66);
+cout << str << endl;//45.660000
+```
+
+### stoi
+
+字符串转int
+
+```cpp
+//example32.cpp
+//stoi
+int num3 = stoi("2343", 0, 10);
+cout << num3 << endl;//2343
+```
+
+### stol
+
+字符串转long
+
+```cpp
+//example32.cpp
+//stol
+long num4 = stol("-4354", 0, 10);
+cout << num4 << endl;//-4354
+```
+
+### stoul
+
+字符串转unsigned long
+
+```cpp
+//example32.cpp
+//stoul
+unsigned long num5 = stoul("342");
+cout << num5 << endl;//342
+```
+
+### stoll
+
+字符串转long long
+
+```cpp
+//example32.cpp
+//stoll
+long long num6 = stoull("48374384");
+cout << num6 << endl;//48374384
+```
+
+### stoull
+
+字符串转unsigned long long
+
+```cpp
+//example32.cpp
+//stoull
+unsigned long long num7 = stoull("784378");
+cout << num7 << endl;//784378
+```
+
+### stof
+
+字符串转float
+
+```cpp
+//example32.cpp
+//stof
+float num8 = stof("43.542");
+cout << num8 << endl;//43.542
+```
+
+### stod
+
+字符串转double
+
+```cpp
+//example32.cpp
+//stod
+double num9 = stod("45.232");
+cout << num9 << endl;//45.232
+```
+
+### stold
+
+字符串转long double
+
+```cpp
+//example32.cpp
+//stold
+long double num10 = stold("8439.543");
+cout << num10 << endl;//8439.54
+```
+
+### 容器适配器
+
+适配器是啥，学过数据结构，例如栈和队列它们都有不同的实现方式，比如顺序栈、链栈，顺序队列、链队列等等，标准库中我们们提供了stack、queue、priority\_queue适配器，这是一个通用概念
+
+![所有容器适配器都支持的操作和类型](<../../../.gitbook/assets/屏幕截图 2022-06-02 160547.jpg>)
+
+### 定义一个适配器
+
+默认情况下，stack和queue是基于deque实现的，priority\_queue是在vector之上实现的
+
+* `stack`要求push\_back、pop\_back和back操作，因此可以用除了array、forward\_list之外的任何容器构造
+* `queue`要求back、push\_back、front、push\_front，可以构造于list或deque之上，但不能基于vector构造
+* `priority_queue`除了front、push\_back、pop\_back操作之外还要求随机访问能力，则可以构造于vector、deque之上
+
+```cpp
+//example33.cpp
+deque<int> deq = {1, 2, 3};
+//之间使用stack
+stack<int> stk(deq);
+//在vector上实现空栈
+stack<int, vector<int>> int_stack_base_vector;
+stack<string, vector<string>> string_stack_base_vector;
+```
+
+### stack
+
+![栈的特殊操作](<../../../.gitbook/assets/屏幕截图 2022-06-02 161843.jpg>)
+
+```cpp
+//example34.cpp
+stack < int, vector<int>> m_stack({1,2,3});
+cout << m_stack.top() << endl;//3
+m_stack.pop();
+m_stack.push(5);//将5压入栈顶
+while(!m_stack.empty()){
+    //栈顶元素
+    cout << m_stack.top() << " ";//5 2 1
+    //弹出栈顶元素
+    m_stack.pop();
+}
+```
+
+### queue与priority\_queue
+
+![队列的特殊操作](<../../../.gitbook/assets/屏幕截图 2022-06-02 162001.jpg>)
+
+priority\_queue允许为队列中的元素建立优先级，新加入的元素会被安排在所有优先级比它低的已有元素之前，默认情况下，标准库在元素类型上使用`<`运算符来确定优先级 ，也就是谁越大谁优先级就越高，到后面还会详细学习，先不要慌
+
+```cpp
+//example34.cpp
+//queue
+queue<int> m_queue({1,2,3});
+m_queue.push(4);
+while(!m_queue.empty()){
+    cout << m_queue.front() <<" ";//1 2 3 4
+    m_queue.pop();
+}
+cout << endl;
+
+//priority_queue
+priority_queue<int> m_priority_queue;
+m_priority_queue.push(1);
+m_priority_queue.push(2);
+m_priority_queue.push(3);
+m_priority_queue.push(4);
+while(!m_priority_queue.empty()){
+    cout << m_priority_queue.top() <<" ";//4 3 2 1
+    m_priority_queue.pop();
+}
+cout << endl;
+```
