@@ -17,6 +17,7 @@
   * [💎 第二部分 C++标准库](c++/yu-yan-ji-chu/di-er-bu-fen-c++-biao-zhun-ku/README.md)
     * [🥰 第8章 IO库](c++/yu-yan-ji-chu/di-er-bu-fen-c++-biao-zhun-ku/di-8-zhang-io-ku.md)
     * [🏭 第9章 顺序容器](c++/yu-yan-ji-chu/di-er-bu-fen-c++-biao-zhun-ku/di-9-zhang-shun-xu-rong-qi.md)
+    * [🥳 第10章 泛型算法](c++/yu-yan-ji-chu/di-er-bu-fen-c++-biao-zhun-ku/di-10-zhang-fan-xing-suan-fa.md)
 * [并发编程](c++/bing-fa-bian-cheng/README.md)
   * [第1章 你好并发世界](c++/bing-fa-bian-cheng/di-1-zhang-ni-hao-bing-fa-shi-jie.md)
   * [第2章 线程管理](c++/bing-fa-bian-cheng/di-2-zhang-xian-cheng-guan-li.md)
