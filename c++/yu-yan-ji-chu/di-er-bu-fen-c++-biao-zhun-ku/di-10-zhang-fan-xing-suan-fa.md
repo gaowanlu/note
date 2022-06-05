@@ -1,4 +1,6 @@
 ---
+cover: >-
+  https://images.unsplash.com/photo-1653212373184-0acac93dbb3e?crop=entropy&cs=tinysrgb&fm=jpg&ixid=MnwxOTcwMjR8MHwxfHJhbmRvbXx8fHx8fHx8fDE2NTQzOTAwOTE&ixlib=rb-1.2.1&q=80
 coverY: 0
 ---
 
@@ -174,15 +176,79 @@ replace\_copy为也是replace，只不过不再原序列内修改，而是修改
 
 ```cpp
 //example8.cpp
-    vector<int> vec1 = {};
-    vector<int> vec2 = {3, 4, 5, 4, 5, 3, 2};
-    // replace到vec1序列中
-    replace_copy(vec2.cbegin(), vec2.cend(), back_inserter(vec1), 4, 444);
-    for (auto &item : vec1)
-    {
-        cout << item << " "; // 3 444 5 444 5 3 2
-    }
-    cout << endl;
+vector<int> vec1 = {};
+vector<int> vec2 = {3, 4, 5, 4, 5, 3, 2};
+// replace到vec1序列中
+replace_copy(vec2.cbegin(), vec2.cend(), back_inserter(vec1), 4, 444);
+for (auto &item : vec1)
+{
+    cout << item << " "; // 3 444 5 444 5 3 2
+}
+cout << endl;
 ```
 
 此时vec2并没有被改变，vec1包含vec2的一份拷贝，然后进行了replace
+
+### 重排容器元素的算法
+
+最常用的就是sort进行对数字序列进行排序
+
+### sort与unique
+
+用于消除重复项
+
+```cpp
+//example9.cpp
+vector<int> vec = {1, 2, 3, 4, 1, 2, 3, 4};
+//排序
+sort(vec.begin(), vec.end());
+printVec(vec); // 1 1 2 2 3 3 4 4
+//使用unique重新排列返回夫重复序列的下一个位置
+auto end_unique = unique(vec.begin(), vec.end());
+auto iter = vec.begin();
+while (iter != end_unique)
+{
+    cout << *iter << " "; // 1 2 3 4
+    iter++;
+}
+cout << endl;
+//使用erase删除重复项
+vec.erase(end_unique, vec.end());
+printVec(vec); // 1 2 3 4
+```
+
+### 定制操作
+
+如果有学过java或者javascript，都知道java有一种定义接口对其实现内部类或者使用lambda表达式，javascript则是传递函数或者使用箭头函数，比如它们中的sort都提供了函数传递的机制，在C++中也是有这种功能的
+
+### sort自定义比较函数
+
+```cpp
+//example10.cpp
+//将s1想象为前面的元素s2为后面的，像排序后满足怎样的性质，就return什么
+//此处为后面的长度大于前面的长度
+bool shortCompare(const string &s1, const string &s2)
+{
+    return s1.length() < s2.length();
+}
+
+int main(int argc, char **argv)
+{
+    vector<string> vec = {"dscss", "aaaaaa", "ll"};
+    printVec(vec); // dscss aaaaaa ll
+    sort(vec.begin(), vec.end(), shortCompare);
+    printVec(vec); // ll dscss aaaaaa
+    return 0;
+}
+```
+
+### stable\_sort稳定排序算法
+
+```cpp
+//example10.cpp
+//stable_sort
+vec = {"dscss", "aaaaaa", "ll"};
+printVec(vec); // dscss aaaaaa ll
+stable_sort(vec.begin(), vec.end(), shortCompare);
+printVec(vec); // ll dscss aaaaaa
+```
