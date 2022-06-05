@@ -72,6 +72,7 @@
     * [😍 折半查找](shu-ju-jie-gou-yu-suan-fa/shu-ju-jie-gou/di-7-zhang-cha-zhao/zhe-ban-cha-zhao.md)
     * [😜 分块查找](shu-ju-jie-gou-yu-suan-fa/shu-ju-jie-gou/di-7-zhang-cha-zhao/fen-kuai-cha-zhao.md)
     * [😝 二叉查找树](shu-ju-jie-gou-yu-suan-fa/shu-ju-jie-gou/di-7-zhang-cha-zhao/er-cha-cha-zhao-shu.md)
+    * [🥳 散列表](shu-ju-jie-gou-yu-suan-fa/shu-ju-jie-gou/di-7-zhang-cha-zhao/san-lie-biao.md)
   * [第8章 排序](shu-ju-jie-gou-yu-suan-fa/shu-ju-jie-gou/di-8-zhang-pai-xu.md)
   * [第9章 高级数据结构](shu-ju-jie-gou-yu-suan-fa/shu-ju-jie-gou/di-9-zhang-gao-ji-shu-ju-jie-gou.md)
 
