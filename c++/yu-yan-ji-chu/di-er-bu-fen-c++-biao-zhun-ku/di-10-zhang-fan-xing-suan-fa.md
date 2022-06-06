@@ -244,6 +244,8 @@ int main(int argc, char **argv)
 
 ### stable\_sort稳定排序算法
 
+不知道排序算法的稳定性？好好去学下数据结构吧！
+
 ```cpp
 //example10.cpp
 //stable_sort
@@ -251,4 +253,156 @@ vec = {"dscss", "aaaaaa", "ll"};
 printVec(vec); // dscss aaaaaa ll
 stable_sort(vec.begin(), vec.end(), shortCompare);
 printVec(vec); // ll dscss aaaaaa
+```
+
+
+
+### lambda表达式
+
+形式 `[capture list](parameter list)->return type{function body}`
+
+```cpp
+//example11.cpp
+auto f1 = []() -> int{ return 42; };
+auto f2 = []{ return 42; };
+cout << f1() << endl; // 42
+cout << f2() << endl; // 42
+```
+
+### 向lambda传递参数
+
+```cpp
+//example12.cpp
+vector<string> vec = {"sdcs", "nvfkdl", "acndf"};
+printVec(vec); // sdcs nvfkdl acndf
+sort(vec.begin(), vec.end(), [](const string &s1, const string &s2) -> bool
+     { return s1.length() < s2.length(); });
+printVec(vec); // sdcs acndf nvfkdl
+```
+
+### 使用捕获列表
+
+在javascript中因为有this的指向，在箭头函数内部可以使用定义它时外部的作用域的变量，C++也能实现功能，就是使用捕获列表
+
+```cpp
+//example13.cpp
+int count = 0, sum = 1, k = 100;
+auto f = [count, sum]()
+{
+    cout << count << " " << sum << endl;
+    // count = 3;//error count readonly
+    // cout << k << endl; // error: 'k' is not captured
+};
+f(); // 0 1
+count++;
+f(); // 0 1 可见捕获列表只是只拷贝
+```
+
+### find\_if
+
+查找第一个满足条件的元素
+
+```cpp
+//example14.cpp
+vector<int> vec = {1, 2, 3, 7, 5, 6};
+auto target = find_if(vec.begin(), vec.end(), [](const int &item) -> bool
+                      { return item >= 6; });
+if (target != vec.end()) //找到了满足要求的元素的位置的迭代器
+{
+    cout << *target << endl; // 7
+}
+```
+
+### for\_each算法
+
+遍历算法
+
+```cpp
+//example15.cpp
+vector<int> vec = {1, 2, 3, 4, 5, 6};
+for_each(vec.begin(), vec.end(), [](int &item) -> void
+         { cout << item << " ";item++; });
+cout << endl; // 1 2 3 4 5 6
+
+for_each(vec.begin(), vec.end(), [](int &item) -> void
+         { cout << item << " "; });
+cout << endl; // 2 3 4 5 6 7
+```
+
+### lambda捕获和返回
+
+捕获分为值捕获与引用捕获
+
+![lambda捕获列表](<../../../.gitbook/assets/屏幕截图 2022-06-06 095133.jpg>)
+
+```cpp
+//example16.cpp
+int count = 0;
+//值捕获 也就是值拷贝到捕获列表的变量
+auto f1 = [count]()
+{
+    cout << count << endl;
+    // count = 999; readonly
+};
+//引用捕获
+auto f2 = [&count]() -> void
+{
+    cout << count << endl;
+    count++;
+};
+f1();                  // 0
+f2();                  // 0
+cout << count << endl; // 1
+//编译器自动推断 都使用引用型
+auto f3 = [&]() -> void
+{
+    count = 666;
+};
+```
+
+### mutable可变lambda
+
+刚才我们发现在lambda表达式函数体内部不能修改值捕获的变量的值，使用mutable使得值捕获的值可以改变
+
+```cpp
+//example17.cpp
+int i, j, k;
+i = j = k = 0;
+auto f1 = [i, j, k]() mutable -> void
+{
+    i = j = k = 999;
+    cout << i << " " << j << " " << k << endl; // 999 999 999
+};
+f1();
+cout << i << " " << j << " " << k << endl; // 0 0 0
+```
+
+### transform
+
+将所在位置修改为lambda表达式返回的内容
+
+前两个参数为遍历的范围，第三个参数为将transform后的值从哪里开始存储
+
+```cpp
+//example18.cpp
+transform(vec.begin(), vec.end(), vec.begin(), [](int item) -> int{
+    if(item>=4){
+        return 666;
+    }
+    return item; 
+});
+printVec(vec); // 1 2 3 666 666
+```
+
+### count\_if
+
+统计满足条件的元素个数
+
+```cpp
+//example18.cpp
+printVec(vec); // 1 2 3 666 666
+// count_if
+int sum = count_if(vec.begin(), vec.end(), [](int &item) -> bool
+                   { return item >= 666; });
+cout << sum << endl; // 2
 ```
