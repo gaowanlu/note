@@ -406,3 +406,106 @@ int sum = count_if(vec.begin(), vec.end(), [](int &item) -> bool
                    { return item >= 666; });
 cout << sum << endl; // 2
 ```
+
+### lambda参数绑定
+
+对于lambda表达式，如果一个lammbda的捕获列表为空，且经常使用，如sort算法提供的比较函数，这事往往提供函数比提供lambda表达式开发起来更为方便
+
+### 标准库bind函数
+
+bind函数接受一个可调用对象，返回一个新的可调用对象\
+`newCallable=bind(callable,arg_list)`callable为可调用对象，arg\_list是逗号分隔的参数列表，当调用newCallable时，newCallable会调用callable
+
+```cpp
+//example19.cpp
+int big(const int &a, const int &b)
+{
+    return a > b ? a : b;
+}
+
+int main(int argc, char **argv)
+{
+    int a = 1, b = 2;
+    auto big_func = bind(big, a, b);
+    cout << big_func() << endl; // 2
+    return 0;
+}
+```
+
+### std::placeholders::\_n
+
+用于bind传递参数列表时，保留与跳过特定的参数
+
+```cpp
+//example20.cpp
+bool check(string &str, string::size_type size)
+{
+    return str.size() >= size;
+}
+
+int main(int argc, char **argv)
+{
+    vector<string> vec = {"vd", "fdvd", "vfdvgfbf", "fvddv"};
+    auto iter = find_if(vec.begin(), vec.end(), bind(check, placeholders::_1, 6));
+    // bind返回一个以string&str为参数且返回bool类型的可执行对象，且调用check时传递给size的实参为6
+    cout << *iter << endl; // vfdvgfbf
+    return 0;
+}
+```
+
+### bind参数列表顺序
+
+总之bind的参数列表参数是与callable参数一一对应的，且用placeholders使用newCallable的形参参数作为其调用callable时的实参
+
+```cpp
+//example21.cpp
+void func(int a, int b, int c, int d)
+{
+    cout << "a " << a << endl;
+    cout << "b " << b << endl;
+    cout << "c " << c << endl;
+    cout << "d " << d << endl;
+}
+
+int main(int argc, char **argv)
+{
+    int a = 1, b = 2;
+    auto func1 = bind(func, a, placeholders::_1, b, placeholders::_2);
+    // a1 b3 c2 d4
+    func1(3, 4); // func(1,_1,2,_2) 即 func(1,3,2,4)
+    //调换placeholders
+    auto func2 = bind(func, a, placeholders::_2, b, placeholders::_1);
+    func2(3, 4); // a1 b4 c2 d3
+    return 0;
+}
+```
+
+### bind引用参数
+
+其实就是在bind中使用引用捕获，默认bind参数列表的值绑定是拷贝而不是引用，要实现引用参数的绑定则要使用`ref函数`,如果并不改变其值，可以使用`cref函数`绑定const类型的引用\
+如果bind的callable的参数有引用变量参数，bind的参数列表是不能直接进行绑定的
+
+```cpp
+//example22.cpp
+void func(int &a, int &b, int &c, int &d)
+{
+    cout << "a " << a << endl;
+    cout << "b " << b << endl;
+    cout << "c " << c << endl;
+    cout << "d " << d << endl;
+}
+
+int main(int argc, char **argv)
+{
+    int a = 1, b = 2, c = 3, d = 4;
+    auto func1 = bind(func, a, placeholders::_1, b, placeholders::_2);
+    func1(c, d);
+    a = 666, b = 666;
+    func1(c, d); //并不会输出666
+    //为什么因为其使用了拷贝，而不是绑定引用
+    auto func2 = bind(func, ref(a), placeholders::_1, ref(b), placeholders::_2);
+    a = 777, b = 777;
+    func2(c, d); //可以使用实时的a与b的值
+    return 0;
+}
+```
