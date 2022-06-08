@@ -509,3 +509,110 @@ int main(int argc, char **argv)
     return 0;
 }
 ```
+
+### 再探迭代器
+
+除了我们知道的容器迭代器之外，还有几个特殊的迭代器
+
+* `插入迭代器(insert iterator)`:这些迭代器被绑定到一个容器上，可用来向容器插入元素
+* `流迭代器(stream iterator)`:被绑定在输入或输出流上，可用来遍历所关联的IO流
+* `反向迭代器(reverse iterator)`:这些迭代器向后而不是向前移动，除了forward\_list之外的标准容器都有反向迭代器
+* `移动迭代器(move iterator)`:这些专用的迭代器不是拷贝其中的元素，而是移动它们
+
+### 插入迭代器back\_inserter、front\_inserter、inserter
+
+![插入迭代器操作](<../../../.gitbook/assets/屏幕截图 2022-06-08 110947.jpg>)
+
+插入迭代器有三种
+
+* back\_inserter 创建一个push\_back的迭代器
+* front\_inserter 创建一个使用push\_front的迭代器
+* inserter 创建一个使用insert的迭代器，函数接收第二个参数是容器元素的迭代器，元素将会被插入到给定迭代器前面
+
+```cpp
+//example23.cpp
+vector<int> vec = {1, 2, 3};
+// back_inserter
+auto back = back_inserter(vec);
+*back = 4;
+printVec(vec); // 1 2 3 4
+list<int> m_list = {1, 2, 3};
+// front_inserter
+auto front = front_inserter(m_list); // vector没有push_front操作
+*front = 0;
+printVec(m_list); // 0 1 2 3
+// insert
+auto inser = inserter(m_list, m_list.end());
+*inser = 4;
+printVec(m_list); // 0 1 2 3 4
+```
+
+泛型算法与迭代器的配和
+
+```cpp
+//example24.cpp
+//泛型算法与迭代器配和
+vector<int> vec1;
+copy(vec.begin(), vec.end(), back_inserter(vec1));
+printVec(vec1); // 1 2 3 4
+
+list<int> m_list1;
+copy(vec.begin(), vec.end(), front_inserter(m_list1));
+printVec(m_list1); // 4 3 2 1
+```
+
+### iostream迭代器
+
+iostream虽然不是容器，但标准库定义了相关迭代器，istream\_iterator读取输入流、ostream\_iterator像一个输出流写数据
+
+### istream\_iterator操作
+
+![istream\_iterator操作](<../../../.gitbook/assets/屏幕截图 2022-06-08 114104.jpg>)
+
+```cpp
+//example24.cpp
+istream_iterator<int> int_iter(cin);
+istream_iterator<int> eof;
+vector<int> vec;
+while (int_iter != eof)
+{
+    vec.push_back(*int_iter);
+    int_iter++;
+}
+printVec(vec);
+// input 1 2 3 4 5 g
+// output 1 2 3 4 5
+return 0;
+```
+
+使用迭代器范围初始化vector以及利用迭代器范围使用泛型算法
+
+```cpp
+//example26.cpp
+istream_iterator<int> eof;
+istream_iterator<int> int_iter1(cin);
+int sum = accumulate(int_iter1, eof, 0);
+cout << sum << endl;
+// input 1 2 3 4 5 g
+// output 15
+```
+
+### ostream\_iterator操作
+
+![ostream\_iterator操作](<../../../.gitbook/assets/屏幕截图 2022-06-08 131557.jpg>)
+
+```cpp
+//example27.cpp
+ostream_iterator<string> out(cout);
+out = "hello1";
+out = "hello2";
+out = "hello3";
+out = "hello4"; // hello1hello2hello3hello4
+cout << endl;
+ostream_iterator<int> out1(cout, "\n");
+out1 = 1; // 1\n
+out1 = 2; // 2\n
+
+vector<int> vec = {1, 2, 3, 4};
+copy(vec.begin(), vec.end(), out1); // 1\n2\n3\n4
+```
