@@ -616,3 +616,64 @@ out1 = 2; // 2\n
 vector<int> vec = {1, 2, 3, 4};
 copy(vec.begin(), vec.end(), out1); // 1\n2\n3\n4
 ```
+
+### 反向迭代器
+
+反向迭代器就是++移动到上一个元素，--移动到下一个元素，除了forward\_list之外，其他的容器都支持反向迭代器，可以通过调用rbegin、rend、crbegin、crend成员函数获得反向迭代器
+
+![比较cbegin、cend、crbegin、crend](<../../../.gitbook/assets/屏幕截图 2022-06-09 080145.jpg>)
+
+### rbegin、rend、cbegin、crend
+
+```cpp
+//example28.cpp
+vector<int> vec = {1, 2, 3, 4, 5};
+//倒序遍历
+auto iter = vec.rbegin();
+while (iter != vec.crend())
+{
+    cout << *iter << " ";
+    iter++;
+}
+cout << endl;
+//正序遍历
+iter = vec.rend();
+while (true)
+{
+    iter--;
+    cout << *iter << " "; // 1 2 3 4 5
+    if (iter == vec.crbegin())
+    {
+        break;
+    }
+}
+cout << endl;
+```
+
+### reverse\_iterator.base获取普通迭代器
+
+![反向迭代器和普通迭代器间的关系](<../../../.gitbook/assets/屏幕截图 2022-06-09 082211.jpg>)
+
+重点：关键点在于`[str.crbegin(),rcomma)`的范围与`[rcomma.base(),str.cend())`的范围相同，所以.base()是返回反向迭代器的下一个位置的普通迭代器
+
+看一个有趣的例子
+
+```cpp
+//example29.cpp
+string str = "hi,hello,world";
+auto iter = find(str.cbegin(), str.cend(), ',');
+if (iter != str.end())
+{
+    cout << string(str.cbegin(), iter) << endl; // hi
+}
+//如果找最后一个单词呢
+std::string::const_reverse_iterator target = find(str.crbegin(), str.crend(), ',');
+if (target != str.crend())
+{
+    cout << *target << endl;                       //,
+    cout << *target.base() << endl;                // w
+    cout << string(str.crbegin(), target) << endl; // dlrow
+    //调用reverse_iterator.base()获得普通迭代器
+    cout << string(target.base(), str.cend()) << endl; // world
+}
+```
