@@ -677,3 +677,212 @@ if (target != str.crend())
     cout << string(target.base(), str.cend()) << endl; // world
 }
 ```
+
+### 迭代器类别
+
+![迭代器类别](<../../../.gitbook/assets/屏幕截图 2022-06-10 095931.jpg>)
+
+与容器类似，一些操作所有迭代器都支持，另外一些只有特定类别的迭代器才支持，如ostream\_iterator只支持递增、解引用、赋值，vector、string、deque的迭代器另外还支持递减、关系、算数运算
+
+### 输入迭代器(input iterator)
+
+用于读取序列中的元素，输入迭代器必须支持
+
+1、用于比较两个迭代器是否相等和不相等(==、!=)\
+2、用于推进迭代器的前置和后置递增运算(++)\
+3、用于读取元素的解引用运算符(\*)，解引用只会出现在赋值运算符的右侧\
+4、箭头运算符，->,等价于(\*iter).member
+
+输入迭代器只能用于单遍扫描算法，算法find和accumulate要求输入迭代器，而istream\_iterator是一种输入迭代器
+
+### 输出迭代器(output iterator)
+
+输入迭代器的补集，只写不读
+
+1、用于推进迭代器的前置和后置递增运算(++)\
+2、解引用运算符(\*),只出现在赋值运算符的左侧(也就是只能读取元素，不能写)
+
+输出迭代器只能用于单遍扫描算法，例如copy函数的第三个参数就是输出迭代器，ostream\_iterator类型也是输出迭代器
+
+### 前向迭代器(forward iterator)
+
+可以读写元素，只能沿序列一个方向移动，支持所有输入和输出迭代器操作，可以多次读写同一个元素，算法replace要求前向迭代器，forward\_list上的迭代器是前向迭代器
+
+### 双向迭代器(bidirectional iterator)
+
+可以正向/反向读写序列元素，支持所有前向迭代器之外，还支持递减运算符(--),算法reverse要求双向迭代器，除forward\_list之外，能提供双向迭代器
+
+### 随机访问迭代器(random-access iterator)
+
+1、用于比较两个迭代器相对位置的关系运算符(<、<=、>和>=)\
+2、迭代器和一个整数值的加减运算(+、+=、-、-=)，计算结果是迭代器在序列中前进或后退给定整数个元素的位置\
+3、用于两个迭代器上的减法运算符(-),得到两个迭代器的距离\
+4、下标运算符(iter\[n]),与\*(iter\[n])等价
+
+算法sort要求随机访问迭代器，array、deque、string、vector的迭代器都是随机访问迭代器，用于访问内置数组元素的指针也是
+
+### 算法形参模式
+
+```cpp
+alg(beg,end,other,args);
+alg(beg,end,dest,other,args);
+alg(beg,end,beg2,other,args);
+alg(beg,end,beg2,end2,other,args);
+```
+
+`alg`是算法的名字，`end`表示算法所操作的输入范围，`dest`、`beg2`、`end2`,都是迭代器参数，如果需要则承担指定目的位置和第二个范围的角色
+
+### 接收单个目标迭代器的算法
+
+dest参数是一个表示算法可以写入的目的位置的迭代器，算法假设，按其需要写入数据，不管写入多少个元素都是安全的
+
+### 接收第二个输入序列的算法
+
+如果算法接收beg、end2，则两个迭代器表示第二个范围，\[beg,end)、\[beg2,end2)表示的第二个范围\
+只接受单独的beg2,将beg2作为第二个输入范围中的首元素，此范围的结束位置未指定，这些算法假定从beg2开始的范围与beg、end表示的范围至少一样大，如equal函数
+
+### 可提供自定义谓词的算法
+
+如unque的使用
+
+```cpp
+//example30.cpp
+vector<int> vec = {1, 2, 3, 3, 4, 4};
+auto iter = unique(vec.begin(), vec.end());
+auto beg = vec.begin();
+while (beg != iter)
+{
+    cout << *beg << " "; // 1 2 3 4
+    beg++;
+}
+cout << endl;
+//提供谓词
+vec = {1, 2, 3, 3, 4, 4};
+iter = unique(vec.begin(), vec.end(), [](int &a, int &b) -> bool
+              { return (a == b); });
+beg = vec.begin();
+while (beg != iter)
+{
+    cout << *beg << " "; // 1 2 3 4
+    beg++;
+}
+cout << endl;
+```
+
+### find\_if函数
+
+find函数第三个函数为val，而find\_if第三个参数为pred函数
+
+```cpp
+//example31.cpp
+struct Person
+{
+    int age;
+    int height;
+};
+
+int main(int argc, char **argv)
+{
+    vector<Person> vec;
+    for (int i = 0; i < 10; i++)
+    {
+        Person person;
+        person.age = i;
+        person.height = i;
+        vec.push_back(person);
+    }
+    // find_if
+    auto iter = find_if(vec.begin(), vec.end(), [](Person &item) -> bool
+                        { return (item.age == 3); });
+    if (iter != vec.end())
+    {
+        // height: 3 age: 3
+        cout << "height: " << iter->height << " age: " << iter->age << endl;
+    }
+    return 0;
+}
+```
+
+### reverse与reverse\_copy
+
+用于反转指定范围的元素
+
+```cpp
+//example32.cpp
+vector<int> vec = {1, 2, 3, 4, 5};
+reverse(vec.begin(), vec.end());
+printVec(vec); // 5 4 3 2 1
+vector<int> vec_copy;
+reverse_copy(vec.begin(), vec.end(), back_inserter(vec_copy));
+printVec(vec_copy); // 1 2 3 4 5
+```
+
+### remove\_if与remove\_copy\_if
+
+用于删除满足指定条件的元素
+
+```cpp
+//example33.cpp
+// remove_if
+vector<int> vec = {1, 2, 3, 4, 5};
+auto iter = remove_if(vec.begin(), vec.end(), [](int &item) -> bool
+                      { return (item <= 2); }); //移除小于等于2的元素
+auto beg = vec.begin();
+while (beg != iter)
+{
+    cout << *beg << " "; // 3 4 5
+    beg++;
+}
+cout << endl;
+// remove_copy_if
+vec = {1, 2, 3, 4, 5};
+vector<int> vec_copy;
+remove_copy_if(vec.begin(), vec.end(), back_inserter(vec_copy), [](int &item) -> bool{ return item <= 2; });
+printVec(vec);      // 1 2 3 4 5
+printVec(vec_copy); // 3 4 5
+```
+
+### list与forward\_list特定算法
+
+学过数据结构知道的是，有些算法对于顺序容器非常好操作，对于非顺序结构则需做出特殊的处理操作，如list和forward\_list就不能进行随机访问，它们拥有独特的sort、merge、remove、reverse、unique。
+
+例
+
+![list和forward\_list成员函数版本的算法](<../../../.gitbook/assets/屏幕截图 2022-06-10 144906.jpg>)
+
+```cpp
+//example34.cpp
+// unique
+list<int> m_list = {1, 2, 3, 3, 3, 6, 6, 6, 6, 7};
+printVec(m_list); // 1 2 3 3 3 6 6 6 6 7
+m_list.unique();  //删除同一个值得连续拷贝
+printVec(m_list); // 1 2 3 6 7
+// merge
+list<int> m_list1 = {1, 2, 3, 4, 5};
+list<int> m_list2 = {1, 2, 3, 4};
+m_list1.merge(m_list2);
+printVec(m_list1); // 1 1 2 2 3 3 4 4 5
+printVec(m_list2); //
+```
+
+### list与forward\_list的splice成员
+
+链表类型还定义了splice算法，用于将链表的一部分移动到另一个链表上去，此算法为链表数据结构特有的，并不是完全的泛型算法
+
+![list和forward\_list的splice成员函数的参数](<../../../.gitbook/assets/屏幕截图 2022-06-10 145928.jpg>)
+
+```cpp
+//example35.cpp
+// list用 splice
+list<int> m_list1 = {1, 2, 3, 4, 5};
+list<int> m_list2 = {6, 7, 8, 9};
+m_list1.splice(++m_list1.begin(), m_list2); //在指定迭代器前添加
+printVec(m_list1);                          // 1 6 7 8 9 2 3 4 5
+printVec(m_list2);                          //
+// forward_list用 splice_after
+forward_list<int> m_forwardlist1 = {1, 2, 3, 4, 5};
+forward_list<int> m_forwardlist2 = {6, 7, 8, 9};
+m_forwardlist1.splice_after(++m_forwardlist1.begin(), m_forwardlist2); //在指定迭代器后添加
+printVec(m_forwardlist1);                                              // 1 2 6 7 8 9 3 4 5
+printVec(m_forwardlist2);                                              //
+```
