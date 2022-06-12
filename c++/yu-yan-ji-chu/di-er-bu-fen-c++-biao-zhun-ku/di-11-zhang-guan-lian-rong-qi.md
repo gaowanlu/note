@@ -111,3 +111,99 @@ for (auto &item : m_map)
     // aaa vvv
 }
 ```
+
+### 关键字类型要求
+
+对于有序容器，map、multimap、set、multiset，关键字类型要求必须定义元素比较方法，默认情况下，标准库使用关键字类型的<运算符来比较两个关键字\
+算法允许自定义比较操作，与之类似也可以提供自定义的操作代替关键字上的<运算符
+
+比较函数必须满足以下条件
+
+* 两个关键字不能同时“小于等于”对方
+* 如果K1“小于等于”K2，且K2“小于等于”K3，则K1必须“小于等于”K3
+* 如果存在两个关键字，任何一个都不“小于等于”另外一个，则称者是“等价”的，且等价具有传递性
+
+### 自定义关键字比较函数
+
+形如
+
+* `map<keyType,valueType,函数指针类型>name(函数指针值);`
+* `set<keyType,函数指针类型>name(函数指针值);`
+
+```cpp
+//example5.cpp
+struct Person
+{
+    int age;
+    string name;
+};
+
+//关键字比较函数必须满足上面比较函数的条件
+bool comparePerson(const Person &a, const Person &b)
+{
+    return a.age < b.age && a.name < b.name;
+}
+
+int main(int argc, char **argv)
+{
+    // decltype(comparePerson) * 为函数指针
+    map<Person, int, bool (*)(const Person &a, const Person &b)> m_map(comparePerson);
+    // 或者使用decltype
+    // map<Person, int, decltype(comparePerson) *> m_map(comparePerson);
+    Person person1;
+    person1.age = 19;
+    person1.name = "gaowanlu";
+    m_map[person1] = 99999;
+    auto val = m_map[person1];
+    cout << val << endl; // 99999
+    return 0;
+}
+```
+
+### pair类型
+
+pair的标准库类型，定义在utility头文件中\
+一个piar保存两个数据成员，类似容器piar是一个用来生成特定类型的模板，大致可以认为是一个键值对
+
+![pair上的操作](<../../../.gitbook/assets/屏幕截图 2022-06-12 112841.jpg>)
+
+```cpp
+//example6.cpp
+//空初始化
+pair<string, int> m_pair1;
+
+//列表初始化
+pair<int, string> m_pair2{999, "gaowanlu"};
+cout << m_pair2.first << " " << m_pair2.second << endl; // 999 gaowanlu
+
+pair<int, string> m_pair4 = {999, "gaowanlu"};
+cout << m_pair4.first << " " << m_pair4.second << endl; // 999 gaowanlu
+
+//构造函数初始化
+pair<string, int> m_pair3("gaowanlu", 888);
+cout << m_pair3.first << " " << m_pair3.second << endl; // gaowanlu 888
+
+//使用make_piar
+m_pair4 = make_pair(888, "hello");
+
+//赋值
+m_pair4.first = 666;
+m_pair4.second = "gaowanlu";
+cout << m_pair4.first << " " << m_pair4.second << endl; // 666 gaowanlu
+
+// <、>、<=、>=比较pair
+pair<int, int> m_pair5(2, 3);
+pair<int, int> m_pair6(4, 3);
+//当first与second同时满足才返回true
+cout << (m_pair5 < m_pair6) << endl;  // 1
+cout << (m_pair5 <= m_pair6) << endl; // 1
+cout << (m_pair5 > m_pair6) << endl;  // 0
+cout << (m_pair5 >= m_pair6) << endl; // 0
+
+// ==比较pair
+m_pair5 = make_pair(4, 3);
+cout << (m_pair5 == m_pair6) << endl; // 1
+
+// !=比较piar
+cout << (m_pair5 != m_pair6) << endl; // 0
+```
