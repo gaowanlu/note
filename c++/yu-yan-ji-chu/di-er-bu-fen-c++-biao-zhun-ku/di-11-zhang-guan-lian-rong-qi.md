@@ -207,3 +207,123 @@ cout << (m_pair5 == m_pair6) << endl; // 1
 // !=比较piar
 cout << (m_pair5 != m_pair6) << endl; // 0
 ```
+
+### key\_type、mapped\_type、value\_type操作
+
+![关联容器额外的类型别名](<../../../.gitbook/assets/屏幕截图 2022-06-13 091547.jpg>)
+
+只有map类型(unordered\_map、unordered\_multimap、multimap和map)才定义了mapped\_type
+
+```cpp
+//example7.cpp
+#include <iostream>
+#include <utility>
+#include <set>
+#include <map>
+using namespace std;
+int main(int argc, char **argv)
+{
+    // set value_type与key_type
+    set<string>::value_type v1; // td::string
+    set<string>::key_type v2;   // std::string
+    // map key_type value_type mapped_type
+    map<string, int>::value_type v3;  // std::pair<const std::string, int>
+    map<string, int>::key_type v4;    // std::string
+    map<string, int>::mapped_type v5; // int
+    return 0;
+}
+```
+
+### 关联容器迭代器
+
+重点：set迭代器解引用返回const引用，map迭代器解引用返回pair的引用，但pair的first类型是const的，也就是我们只能用迭代器修改second不能修改first
+
+```cpp
+//example8.cpp
+set<string> m_set = {"aaa", "bbb", "ccc"};
+map<string, int> m_map = {{"aaa", 111}, {"bbb", 222}, {"ccc", 333}};
+auto set_iter = m_set.begin(); // std::set<std::string>::iterator
+while (set_iter != m_set.end())
+{
+    cout << *set_iter++ << endl; // aaa bbb ccc
+    // set的迭代器是const的
+    //*set_iter = "dscs";//*set_iter返回的是 const string&
+}
+auto map_iter = m_map.begin(); // std::map<std::string, int>::iterator
+while (map_iter != m_map.end())
+{
+    // map_iter->first = "dscs"; //因为解引用返回的是 std::pair<const std::string, int> &
+    map_iter->second++;
+    cout << map_iter->first << " " << map_iter->second << endl;
+    // aaa 112
+    // bbb 223
+    // ccc 334
+    map_iter++;
+}
+```
+
+### 关联容器和泛型算法
+
+一般不对关联容器使用泛型算法，关键字是const着意味着不能使用修改或重排容器元素的算法，因为这类算法要向元素写入值，而set的元素是const的，map中元素是pair但first是const的
+
+关联容器只用于只读元素的算法，例如泛型算法find查找为顺序查找，而关联容器的特定的find则是进行hash查找，会比泛型算法的find快很多，还可以利用泛型copy算法将元素拷贝
+
+```cpp
+//example9.cpp
+map<string, int> m_map = {{"aaa", 111}, {"bbb", 222}, {"ccc", 333}};
+// copy到vector
+vector<pair<string, int>> vec;
+copy(m_map.begin(), m_map.end(), back_inserter(vec));
+cout << vec.size() << endl; // 3
+// copy到新的map
+map<string, int> m_map_copy;
+copy(m_map.begin(), m_map.end(), inserter(m_map_copy, m_map_copy.end()));
+for (auto &item : m_map_copy)
+{
+    cout << item.first << " " << item.second << endl;
+    // aaa 111
+    // bbb 222
+    // ccc 333
+}
+```
+
+### 添加元素
+
+![关联容器insert操作](<../../../.gitbook/assets/屏幕截图 2022-06-13 095858.jpg>)
+
+```cpp
+//example10.cpp
+map<string, int> m_map;
+m_map.insert({"hello", 3});
+m_map.insert(make_pair("aaa", 6));
+m_map.insert(pair<string, int>("bbb", 2));
+auto res = m_map.insert(map<string, int>::value_type("ccc", 3));
+if (res.second) //插入成功
+{
+    map<string, int>::iterator iter = res.first;
+    cout << iter->first << " " << iter->second << endl; // ccc 3
+}
+m_map.emplace("ddd", 4);                   //背后使用构造函数int(4)
+cout << m_map.find("ddd")->second << endl; // 4
+
+set<string> m_set;
+m_set.insert("aaa");
+m_set.insert({"aaa", "bbb", "ccc"});
+m_set.insert(string("ddd"));
+m_set.emplace("hello");       //背后调用构造函数string("hello")
+cout << m_set.size() << endl; // 4
+```
+
+### 向multiset或multimap添加元素
+
+知道二者可以存储多个相同的关键字,insert返回void不像map或者set一样返回一个pair
+
+```cpp
+//example11.cpp
+multimap<string, int> m_map;
+multiset<string> m_set;
+m_map.insert({{"aaa", 111}, {"aaa", 222}});
+m_set.insert({"aaa", "ccc", "ccc"});
+cout << m_map.size() << endl; // 2
+cout << m_set.size() << endl; // 3
+```
