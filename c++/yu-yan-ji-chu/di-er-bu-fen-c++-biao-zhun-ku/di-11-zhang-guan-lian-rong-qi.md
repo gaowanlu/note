@@ -327,3 +327,253 @@ m_set.insert({"aaa", "ccc", "ccc"});
 cout << m_map.size() << endl; // 2
 cout << m_set.size() << endl; // 3
 ```
+
+### 删除元素
+
+关联容器的erase定义了三个版本
+
+![从关联容器删除元素](<../../../.gitbook/assets/屏幕截图 2022-06-14 101514.jpg>)
+
+```cpp
+//example12.cpp
+//使用关键字
+map<string, int> m_map = {{"aaa", 111}, {"bbb", 222}, {"ccc", 333}};
+set<string> m_set = {"aaa", "bbb", "ccc", "ddd"};
+printMap(m_map); //<aaa,111>  <bbb,222>  <ccc,333>
+printSet(m_set); // aaa bbb ccc ddd
+size_t count = m_map.erase("aaa");
+cout << count << endl; // 1 被删除1个
+printMap(m_map);
+count = m_set.erase("ccc");
+cout << count << endl; // 1
+printSet(m_set);
+
+//使用迭代器指定删除的元素位置
+m_set.erase(m_set.cbegin());
+printSet(m_set); // bbb ddd
+
+//使用迭代器范围
+m_set.erase(m_set.cbegin(), m_set.end());
+printSet(m_set); //
+```
+
+### map的下标操作
+
+map、uordered\_map有下标操作，而multimap与unordered\_multimap没有下标操作，因为一个关键词可对应多个值
+
+![map和unordered\_map的下标操作](<../../../.gitbook/assets/屏幕截图 2022-06-14 103133.jpg>)
+
+```cpp
+//example13.cpp
+map<string, int> m_map = {{"aaa", 111}, {"bbb", 222}, {"ccc", 333}};
+printMap(m_map); // <aaa,111>  <bbb,222>  <ccc,333>
+m_map["aaa"] = 4;
+printMap(m_map); // <aaa,4>  <bbb,222>  <ccc,333>
+
+//下标赋值没有的关键字则创建新的元素
+m_map["ddd"] = 444;
+printMap(m_map); // <aaa,4>  <bbb,222>  <ccc,333>  <ddd,444>
+
+//如果k不再c内，添加一个关键字为k的元素并对值初始化
+cout << m_map["eee"] << endl; // 0
+printMap(m_map);
+// <aaa,4>  <bbb,222>  <ccc,333>  <ddd,444>  <eee,0>
+
+// at方法有检查机制，如果k不在c内则抛出out_of_range异常
+int &val = m_map.at("bbb");
+cout << val << endl; // 222
+try
+{
+    m_map.at("fff");
+}
+catch (std::out_of_range e)
+{
+    // RUNTIME ERROR:: map::at
+    cout << "RUNTIME ERROR:: " << e.what() << endl;
+}
+```
+
+### find、count、lower\_bound、upper\_bound、equal\_range访问元素
+
+主要为根据关键字查找元素的操作，在multimap与multiset中相同关键字的元素总是相邻存放
+
+![在一个关联容器中查找元素的操作](<../../../.gitbook/assets/屏幕截图 2022-06-14 104235.jpg>)
+
+```cpp
+//example14.cpp
+multimap<int, string> m_map{{111, "aaa"}, {222, "bbb"}, {444, "ddd"}, {222, "ccc"}};
+printMap(m_map); // <111,aaa>  <222,bbb>  <222,ccc>  <444,ddd>
+    
+// count方法
+cout << m_map.count(222) << endl; // 2
+
+// find方法
+auto res = m_map.find(222);
+int size = 0, count = m_map.count(222);
+while (size < count && res != m_map.cend())
+{
+    //<222,bbb> <222,ccc>
+    cout << "<" << res->first << "," << res->second << ">" << endl;
+    res++;
+    size++;
+}
+// lower_bound方法
+//返回第一个关键字不小于333的迭代器
+res = m_map.lower_bound(333);
+cout << "<" << res->first << "," << res->second << ">" << endl; //<444,ddd>
+
+// upper_bound方法
+//返回第一个关键字大于100的迭代器
+res = m_map.upper_bound(100);
+cout << "<" << res->first << "," << res->second << ">" << endl; //<111,aaa>
+
+// equal_range方法
+auto range = m_map.equal_range(222); //返回区间[bengin,end)
+res = range.first;
+while (res != range.second)
+{
+    cout << "<" << res->first << "," << res->second << ">" << endl;
+    //<222,bbb> <222,ccc>
+    res++;
+}
+```
+
+### 无序容器
+
+无序是C++11的新标准，新标准定义了4个无序关联容器，这些容器不是使用比较运算符来组织元素，而是使用哈希函数和关键字类型的==运算符\
+无序容器在关键字杂乱无章的情况下效率更高
+
+四种无序容器
+
+* unordered\_set
+* unordered\_map
+* unordered\_multimap
+* unordered\_multiset
+
+### 使用无序容器
+
+```cpp
+//example15.cpp
+unordered_map<string, int> m_map = {{"aaa", 111}, {"bbb", 222}, {"ccc", 333}};
+for (auto &item : m_map)
+{
+    //<ccc,333> <bbb,222> <aaa,111>
+    cout << "<" << item.first << "," << item.second << "> ";
+}
+cout << endl;
+//可见存放顺序不是有序的
+```
+
+### 管理无序容器
+
+无序容器的存放原理为，无序容器有多个桶，每个桶存放0个或多个元素，先对关键字进行hash然后找到对应的桶，在桶内存放要存放的元素，在访问元素时也是同样的原理
+
+![无序容器管理操作](<../../../.gitbook/assets/屏幕截图 2022-06-14 111352.jpg>)
+
+### 桶接口
+
+```cpp
+//example16.cpp
+unordered_map<string, int> m_map = {{"aaa", 111}, {"bbb", 222}, {"ccc", 333}};
+// bucket_count 正在使用的桶的数目
+cout << m_map.bucket_count() << endl; // 3
+// max_bucket_count 容器能容纳的最多的桶的数量
+cout << m_map.max_bucket_count() << endl; // 59652323
+// bucket_size(n) 第n个桶中有多少个元素
+for (size_t i = 0; i < m_map.bucket_count(); i++)
+{
+    cout << m_map.bucket_size(i) << " "; // 0 2 1
+}
+cout << endl;
+```
+
+### 桶迭代
+
+```cpp
+//example17.cpp
+unordered_map<string, int> m_map = {{"aaa", 111}, {"bbb", 222}, {"ccc", 333}};
+cout << m_map.bucket_size(1) << endl; // 2
+unordered_map<string, int>::local_iterator iter = m_map.begin(1);
+while (iter != m_map.cend(1))
+{
+    // bbb 222 aaa 111
+    cout << iter->first << " " << iter->second << endl;
+    // begin返回的为local_iterator即可以利用迭代器修改pair的value
+    iter++;
+}
+// cbegin返回的为const_local_iterator不可以利用迭代器修改pair的value
+```
+
+### 哈希策略
+
+```cpp
+//example18.cpp
+unordered_map<string, int> m_map = {{"aaa", 111}, {"bbb", 222}, {"ccc", 333}};
+
+// load_factor 每个桶的平均元素数量
+cout << m_map.load_factor() << endl;                        // 1
+cout << (float)m_map.size() / m_map.bucket_count() << endl; // 3
+
+// max_load_factor 即 load_factor的阈值,load_factor<=max_load_factor总成立
+cout << m_map.max_load_factor() << endl; // 1
+
+// rehash(n) 重组存储 使得bucket_count>=n 且 bucket_count>size/max_load_factor
+m_map.rehash(4);
+cout << m_map.bucket_count() << endl; // 5
+
+// reserve(n) 重组元素，使得容器可保存n个元素，且不rehash也就是不改变hash函数
+m_map.reserve(100);
+cout << m_map.bucket_count() << endl; // 103
+```
+
+### 自定义hash函数与相等比较函数
+
+当关键字类型为自定义符合类型时，需要定义相关的hash函数与等于判断函数
+
+```cpp
+//example19.cpp
+class Person
+{
+public:
+    int age;
+    bool operator==(const Person &b) const
+    {
+        if (this->age == b.age)
+        {
+            return true;
+        }
+        return false;
+    }
+};
+
+// hash函数
+size_t hasher(const Person &person)
+{
+    return hash<int>()(person.age);
+}
+
+//==比较函数
+bool equalPerson(const Person &a, const Person &b)
+{
+    return a.age == b.age;
+}
+
+int main(int argc, char **argv)
+{
+    using namespace std;
+    using Person_map = unordered_map<Person, string, decltype(hasher) *, decltype(equalPerson) *>;
+    //使用Person_multimap 42:桶大小 hasher：哈希函数 equalPerson: 相等性判断函数
+    Person_map persons(42, hasher, equalPerson);
+    Person person;
+    person.age = 19;
+    persons.insert({person, "gaowanlu"});
+    cout << persons[person] << endl; // gaowanlu
+
+    //如果类内定义了==运算符，则可以只重载哈希函数
+    // unordered_map<Person, string, decltype(hasher) *>;
+    unordered_map<Person, string, decltype(hasher) *> persons_overide(42, hasher);
+    persons_overide.insert(make_pair(person, "gaowanlu"));
+    cout << persons[person] << endl;
+    return 0;
+}
+```
