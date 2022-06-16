@@ -164,3 +164,185 @@ int main(int argc, char **argv)
     return 0;
 }
 ```
+
+### 直接管理内存
+
+学过C语言的话可以知道在stdlib头文件中，有malloc函数与realloc函数
+
+```cpp
+//example6.cpp
+int *int_arr = (int *)malloc(sizeof(int) * 10);
+for (int i = 0; i < 10; i++)
+{
+    int_arr[i] = i;
+}
+int_arr = (int *)realloc(int_arr, sizeof(int) * 20);
+for (int i = 10; i < 20; i++)
+{
+    int_arr[i] = i;
+}
+for (int i = 0; i < 20; i++)
+{
+    cout << int_arr[i] << " ";
+}
+// 0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19
+cout << endl;
+```
+
+在C++中定义了两个运算符来显式地配分和释放内存，运算符new用于分配内存，delete释放new分配的内存
+
+### 使用new动态分配和初始化对象
+
+`Type* ptr=new Type(args)` 动态分配内存
+
+1、new基本类型与自定义数据类型，总之使用构造函数
+
+```cpp
+//example7.cpp
+int *p1 = new int; //未初始化的int
+*p1 = 999;
+cout << *p1 << endl;       // 999
+int *p2 = new int(1);      //初始化为1
+cout << *p2 << endl;       // 1
+string *p3 = new string;   //初始化为空的string
+string *p4 = new string(); //初始化为空的string
+string *p5 = new string("hello");
+string *p6 = new string(10, 'p'); //初始化为10个p的字符串
+```
+
+2、new顺序容器
+
+```cpp
+//不仅仅可以new基本数据类型
+vector<int> *p7 = new vector<int>{1, 2, 3, 4, 5};
+for (auto &item : *p7)
+{
+    cout << item << " "; // 1 2 3 4 5
+}
+cout << endl;
+```
+
+3、auto接收指针
+
+```cpp
+//使用auto
+auto p8 = new string("3232"); // p8的类型是通过"3232"类型推断出来的
+auto p9 = new vector<int>{1, 2, 3, 4, 5};
+```
+
+4、auto推断要new的数据类型
+
+```cpp
+//更厉害的auto用法,尽量不要用，C++可是非弱类型语言
+auto p10 = new auto(1); //根据1的类型自动推断
+// auto p11 = new auto{1, 2, 3, 4};//括号只能有单个初始化器
+auto p12 = new auto{string("1")}; //括号单个初始化 std::initializer_list<string>
+auto str = (*p12).begin();
+cout << *str << endl; // 1
+delete p1, p2, p3, p4, p5, p6, p7, p8, p9, p10, p12;
+```
+
+### 动态分配的const对象
+
+使用new分配const对象是被允许的
+
+```cpp
+//example8.cpp
+const int *int_ptr = new const int(666); //必须被初始化
+//*int_ptr = 999;// error: assignment of read-only location '* int_ptr'
+cout << *int_ptr << endl; // 666
+const string *str_ptr = new const string(10, 'p');
+cout << *str_ptr << endl; // pppppppppp
+```
+
+### 内存耗尽
+
+我们知道计算机的内存是有限的，操作系统对某个进程可能也存在内存的大小限制，在显式动态分配内存时，可能会分配失败，当分配失败，有两种选择
+
+1、`new Type(args)`抛出std::bad\_alloc异常\
+2、在使用new时`new (nothrow) Type(args)`形式进行，则分配失败时返回空指针
+
+bad\_alloc和nothrow都定义在头文件new中
+
+```cpp
+//example9.cpp
+int *p1 = new (nothrow) int; //分配失败异常 返回空指针
+if (p1 == nullptr)
+{
+    assert("内存分配失败");
+}
+else
+{
+    cout << "内存分配成功" << endl; //内存分配成功
+    delete p1;
+    p1 = nullptr;
+}
+try
+{
+    p1 = new int; //分配失败时则抛出异常
+}
+catch (std::bad_alloc e)
+{
+    cout << e.what() << endl;
+}
+if (p1)
+{
+    delete p1;
+    p1 = nullptr;
+}
+```
+
+### 释放动态内存
+
+delete表达式用来将动态内存归还给系统 `delete ptr;` ptr必须指向一个动态分配的对象或一个空指针
+
+delete执行两个动作，如果对象有析构函数则会执行析构函数销毁对象，然后释放对应的内存
+
+### 指针值和delete
+
+重要的是，delete释放的内存必须是我们申请的动态内存，栈内存可不能手动释放
+
+```cpp
+//example10.cpp
+int *num = new int(99);
+cout << *num << endl; // 99
+delete num;
+delete num;           //未定义 因为num指向的内存已经被释放
+cout << *num << endl; // 17211320
+int *ptr = nullptr;
+delete ptr; //释放一个空指针没有错误
+int stack_num = 100;
+delete &stack_num;         //未定义 因为&statck_num为栈内存
+cout << stack_num << endl; // 100
+
+const int *const_ptr = new const int(99);
+delete const_ptr;
+```
+
+### 动态对象的生存周期
+
+什么是内存泄露，简单地说就是我们申请了内存，我们都是动过其内存地址进行访问的，但如果内存没有释放，但是我们无法获取其地址了，那么内存就会白白被占着，知道程序停止运行
+
+容易出现的错误
+
+```cpp
+//example11.cpp
+int *p = new int;
+p = nullptr; //内存泄露 再也找不回那块内存的地址
+
+//被释放后又使用
+p = new int;
+int *p1 = p;
+delete p1;
+*p = 999;
+//卡住因为二者指向同一块内存但是已经被释放过了
+//不能在被使用
+```
+
+所以尽量在delete之后，将指针指向nullptr即空指针
+
+```cpp
+int *p=new int;
+delete p;
+p=nullptr;
+```
