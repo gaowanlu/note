@@ -346,3 +346,106 @@ int *p=new int;
 delete p;
 p=nullptr;
 ```
+
+### shared\_ptr和new结合使用
+
+如果不初始化一个shared\_ptr则将会是一个空指针，除了make\_shared还以使用以下其他方法定义和改变shared\_ptr
+
+![定义和改变shared\_ptr的其他方法](<../../../.gitbook/assets/屏幕截图 2022-06-17 090038.jpg>)
+
+```cpp
+//example12.cpp
+//返回返回
+shared_ptr<int> func()
+{
+    // return new int(1);//错误：因为shared_ptr的构造函数是explicit的
+    return shared_ptr<int>(new int(1)); //正确
+}
+
+int main(int argc, char **argv)
+{
+    int *p = new int(999);
+    shared_ptr<int> ptr1(p); //接管p所指向的对象
+    shared_ptr<int> ptr2(new int(1));
+    shared_ptr<int> ptr3 = func();
+    cout << *ptr3 << endl; // 1
+    return 0;
+}
+```
+
+### 不要混合使用普通指针和智能指针
+
+由shared\_ptr接管的new出来的内存，如果share\_ptr自动释放了它，但我们又使用普通指针使用它，则会出现错误
+
+```cpp
+//example13.cpp
+void func(shared_ptr<int> ptr)
+{
+    // use ptr
+}
+
+int main(int argc, char **argv)
+{
+    shared_ptr<int> ptr1 = make_shared<int>(999);
+    func(ptr1);            //地址进行值传递
+    cout << *ptr1 << endl; // 999
+    int *ptr2(new int(666));
+    func(shared_ptr<int>(ptr2));
+    cout << *ptr2 << endl; // 17080272 换码 可见new出来的对象被释放掉了
+    //ptr2变成为悬空指针
+    return 0;
+}
+```
+
+为什么会这样呢，因为shared\_ptr是按照值传递的，在`func(shared_ptr<int>)(ptr2)`时引用数为1，当赋值给func的形参后引用数为2，然后传参临时变量销毁引用数变为1，随着func运行结束形参ptr被销毁，引用数变为0，内存也会被释放
+
+### 不要使用get初始化另一个智能指针或智能指针赋值
+
+确定shared\_ptr.get()出来的指针不会被delete再使用get，永远不要用get初始化另一个智能指针或另一个智能指针赋值
+
+```cpp
+//example14.cpp
+int main(int argc, char **argv)
+{
+    shared_ptr<int> ptr1 = make_shared<int>(999);
+    int *ptr2 = ptr1.get(); //获取对象内存的普通地址
+    {
+        shared_ptr<int>(ptr2);
+        //因为在构造函数中 ptr2只是被认为是new出来的普通的内存地址
+        //不知道是已经被shared_ptr接管的
+    } //随着作用域消失ptr3被销毁 内存也会被释放
+    *ptr2 = 888;
+    cout << *ptr2 << endl;
+    cout << *ptr1 << endl;
+    //但有些编译器这些操作是没错误的
+    return 0;
+}
+```
+
+### 其他shared\_ptr操作
+
+常用的有reset、unique方法，shared\_ptr的reset方法用于shared\_ptr去掉对其指向对象的引用，如果reset后对象内存引用数为0则对象内存会被释放，unique方法用于检测shared\_ptr指向的对象的内存引用数是否为1，为1则返回true否则反之。
+
+```cpp
+//example15.cpp
+int main(int argc, char **argv)
+{
+    shared_ptr<int> ptr1 = make_shared<int>(888);
+    shared_ptr<int> ptr2 = ptr1;
+    //指向对象内存引用数是否为1
+    cout << ptr1.unique() << endl; // 0
+    ptr1.reset();
+    cout << *ptr2 << endl;
+    *ptr2 = 999;
+    cout << *ptr2 << endl; // 999
+    //可见reset就是将shared_ptr对指向对象内存引用数减1
+    //同时如果引用数变为0也会被释放
+    cout << ptr2.unique() << endl; // 1
+
+    shared_ptr<int> ptr3(new int(999));
+    int *ptr4 = ptr3.get();
+    ptr3.reset();
+    cout << *ptr4 << endl; //指针悬空
+    return 0;
+}
+```
