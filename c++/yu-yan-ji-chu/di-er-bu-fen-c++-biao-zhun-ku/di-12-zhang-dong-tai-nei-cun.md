@@ -449,3 +449,144 @@ int main(int argc, char **argv)
     return 0;
 }
 ```
+
+### 智能指针和异常
+
+最常见的情况
+
+```cpp
+//example16.cpp
+void func()
+{
+    int *p = new int(111);
+    throw std::logic_error("logic_error"); //抛出异常 导致delete无法被执行
+    //进而造成内存泄露
+    delete p;
+}
+
+int main(int argc, char **argv)
+{
+    try
+    {
+        func();
+    }
+    catch (std::logic_error e)
+    {
+        cout << e.what() << endl; // logic_error
+    }
+    cout << "over" << endl; // over
+    return 0;
+}
+```
+
+当自定义类没有析构函数时，但是在其内部存储了new的内存的地址的指针，但是在析构函数时并没有对其进行释放操作，在使用shared\_ptr管理时，当对象内存释放，内部指针指向的内存无法被释放
+
+```cpp
+//example17.cpp
+class Person
+{
+public:
+    string *ptr;
+    explicit Person()
+    {
+        ptr = new string("");
+    }
+    ~Person()
+    {
+        cout << "release" << endl;
+        // delete ptr;
+    }
+};
+
+void func()
+{
+    shared_ptr<Person> ptr = make_shared<Person>();
+} //内存泄露 new的string没有被释放
+
+int main(int argc, char **argv)
+{
+    func();
+    return 0;
+}
+```
+
+### 自定义删除器
+
+通过example7.cpp我们可以出有时会C++也会使用C的一些库，在C语言中是没有析构函数，有时候将需要对对象内部释放的操作，写为一个函数，在delete时进行使用
+
+* `shared_ptr<T>p(q,d)` q为T\*,d为自定义删除器
+* `shared_ptr<T>p(q,d)` q为shared\_ptr\<T>类型，d为自定义删除器
+* `p.reset(q,d)` q为T\*，d为自定义删除器
+
+在C语言中常见的操作
+
+```cpp
+//example18.cpp
+struct Person
+{
+    int *ptr;
+};
+
+Person *createPerson()
+{
+    Person *p = (Person *)malloc(sizeof(Person));
+    p->ptr = (int *)malloc(sizeof(int));
+    return p;
+}
+
+void deletePerson(Person **ptr)
+{
+    Person *p = *ptr;
+    free(p);
+    *ptr = nullptr;
+}
+
+int main(int argc, char **argv)
+{
+    Person *p = createPerson();
+    deletePerson(&p); //传递二维指针以至于deletePerson可以修改p
+    return 0;
+}
+```
+
+shared\_ptr的设计者替我们想到会面临这样的问题，程序员可以在定义shared\_ptr时传递删除器(deleter),也就是自定义函数代替delete
+
+```cpp
+//example19.cpp
+struct Person
+{
+    int *ptr;
+    Person()
+    {
+        ptr = new int(888);
+    }
+};
+
+void deletePerson(Person *ptr)
+{
+    if (ptr->ptr)
+    {
+        delete ptr->ptr;
+        ptr->ptr = nullptr;
+        cout << "delete ptr->ptr;" << endl;
+    }
+    delete ptr;
+}
+
+void func()
+{
+    shared_ptr<Person> ptr(new Person(), deletePerson); //释放时使用deletePerson
+    cout << ptr.unique() << endl;                       // 1
+    Person *p = new Person;
+    // delete ptr->ptr;
+    ptr.reset(p, deletePerson); // 释放p时使用deletePerson
+    // delete ptr->ptr;
+}
+
+int main(int argc, char **argv)
+{
+    func();                 // delete ptr->ptr
+    cout << "over" << endl; // over
+    return 0;
+}
+```
