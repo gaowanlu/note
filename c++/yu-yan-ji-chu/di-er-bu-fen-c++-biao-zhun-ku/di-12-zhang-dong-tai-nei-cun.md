@@ -590,3 +590,112 @@ int main(int argc, char **argv)
     return 0;
 }
 ```
+
+### unique\_ptr
+
+从名字上面就能知道unique\_ptr与shared\_ptr的区别，unique\_ptr指向的对象只能有一个unique\_ptr指向一个给定对象，当unique\_ptr销毁时其所指向的对象也会被释放
+
+![unique\_ptr操作](<../../../.gitbook/assets/屏幕截图 2022-06-19 080936.jpg>)
+
+与shared\_ptr最大区别就是其有release方法，其定义时必须被初始化，不能进行拷贝或者赋值，没有make\_shared类似的函数使用只能配和new和指针使用
+
+```cpp
+//example20.cpp
+struct Person
+{
+    int *ptr;
+    Person()
+    {
+        ptr = new int(888);
+    }
+};
+
+void deletePerson(Person *ptr)
+{
+    if (ptr->ptr)
+    {
+        delete ptr->ptr;
+        ptr->ptr = nullptr;
+        cout << "delete ptr->ptr;" << endl;
+    }
+    delete ptr;
+}
+
+void func1(unique_ptr<Person, decltype(deletePerson) *> u2)
+{
+}
+
+void func()
+{
+    unique_ptr<int> u(new int(999));
+    // unique_ptr<Person, decltype(deletePerson) *> u1;//错误 unique_ptr必须被初始化
+    unique_ptr<Person, decltype(deletePerson) *> u2(new Person(), deletePerson);
+    // unique_ptr<Person, decltype(deletePerson) *> u3 = u2; //错误 不允许赋值
+    // func1(u2); 错误 //不允许拷贝
+    u2 = nullptr;             // u2指向对象内存被释放
+    cout << "point1" << endl; // delete ptr->ptr; point1
+    u2.reset(new Person());
+    Person *person = u2.release();                                         //让u2放弃管理权 但不释放内存 返回作为返回值返回
+    unique_ptr<Person, decltype(deletePerson) *> u3(person, deletePerson); //新的unique_ptr接管
+    // reset
+    cout << *(u3->ptr) << endl; // 888
+    u3.reset(nullptr);          //释放并赋为nullptr
+    cout << "point2" << endl;   // delete ptr->ptr; point2
+    person = new Person();
+    u3.reset(person); // reset释放原内存指向新内存 当u3被销毁时输出 delete ptr->ptr;
+}
+
+int main(int argc, char **argv)
+{
+    func();
+    return 0;
+}
+```
+
+### unique\_ptr作为函数返回类型
+
+有种情况是被允许进行拷贝的，就是函数的返回值类型是unique\_ptr类型
+
+编译器知道要返回的对象将要被销毁，在此情况下，编译器执行一种特殊的“拷贝”
+
+```cpp
+//example21.cpp
+unique_ptr<string> func()
+{
+    unique_ptr<string> p(new string("hello"));
+    return p;
+}
+
+int main(int argc, char **argv)
+{
+    unique_ptr<string> p = func();
+    cout << *p << endl; // hello
+    return 0;
+}
+```
+
+### weak\_ptr
+
+有时对于shared\_ptr我们可能只是想让另一个指针指向其内存，但不进行内存管理，还是由原来的指向内存的shared\_ptr进行协调管理\
+将一个weak\_ptr绑定到一个shared\_ptr不会改变shared\_ptr的引用计数
+
+![weak\_ptr](<../../../.gitbook/assets/屏幕截图 2022-06-19 084419.jpg>)
+
+```cpp
+//example22.cpp
+int main(int argc, char **argv)
+{
+    shared_ptr<int> ptr(new int(888));
+    weak_ptr<int> weak(ptr);   //构造weak_ptr
+    weak_ptr<int> weak1 = ptr; //赋值构造
+    // shared_ptr引用数
+    cout << weak.use_count() << " " << weak1.use_count() << endl; // 1 1
+    //指空
+    weak1.reset();
+    cout << weak.expired() << endl; // false usecount不为0
+    // expired为true则返回一个shared_ptr
+    cout << *weak.lock() << endl; // 888
+    //但是在shared_ptr自动释放后再次使用weak_ptr则expired返回true use_count为0
+    return 0;
+}
+```
