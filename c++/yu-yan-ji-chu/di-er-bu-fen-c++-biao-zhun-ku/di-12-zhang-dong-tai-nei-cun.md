@@ -699,3 +699,211 @@ int main(int argc, char **argv)
     return 0;
 }
 ```
+
+### new和数组
+
+动态内存数组不能不是一个数组类型，不能使用begin与end获取迭代器，进而也不能使用范围for循环
+
+```cpp
+//example23.cpp
+int main(int argc, char **argv)
+{
+    int *ptr = new (nothrow) int[10];
+    delete ptr;
+    //使用tyedef
+    typedef int arrT[100];
+    ptr = new arrT;
+    delete ptr;
+    return 0;
+}
+```
+
+### 初始化动态数组
+
+可以不显式调用构造函数会默认调用，可以使用列表进行初始化
+
+```cpp
+//example24.cpp
+int main(int argc, char **argv)
+{
+    int *p1 = new int[10];         // 10个未初始化的int
+    int *p2 = new int[10]();       // 10个初始化为0的int
+    string *p3 = new string[10];   // 10个空string
+    string *p4 = new string[10](); // 10个空string
+    int *p5 = new int[10]{1, 2, 3, 4, 5, 6, 7, 8, 9, 10};
+    //初始化前三个元素
+    string *p6 = new string[10]{"aaa", "bbb", string(3, 'c')};
+    int *p7 = nullptr;
+    try
+    {
+        int *p7 = new int[3000]{1, 2, 3};
+    }
+    catch (std::bad_array_new_length e) //分配内存失败将会抛出异常
+    {
+        cout << e.what() << endl;
+    }
+    delete[] p1, p2, p3, p4, p5, p6, p7;
+    return 0;
+}
+```
+
+### 动态分配空数组
+
+没什么用知道有这种就行
+
+```cpp
+//example25.cpp
+int main(int argc, char **argv)
+{
+    char arr[0];
+    char *ptr = new char[0];
+    //二者都不能解引用
+    cout << to_string((size_t)ptr) << endl;
+    delete[] ptr;
+    return 0;
+}
+```
+
+### 智能指针和动态数组
+
+* 动态数组可以使用unique\_ptr进行内存管理
+
+![zhixiang1](<../../../.gitbook/assets/屏幕截图 2022-06-20 093304.jpg>)
+
+```cpp
+//example26.cpp
+int main(int argc, char **argv)
+{
+    unique_ptr<int[]> ptr(new int[10]);
+    ptr[0] = 1;
+    cout << ptr[0] << endl;
+    //可以手动释放
+    ptr.reset();
+    return 0;
+}
+```
+
+* shared\_ptr不能直接管理动态数组，如果需要则需要自定义删除器
+
+```cpp
+//example27.cpp
+int main(int argc, char **argv)
+{
+    shared_ptr<int> ptr(new int[10], [](int *p)
+                        { delete[] p; });
+    // shared_ptr未定义下标运算符 可以使用get获取真实的首地址
+    ptr.get()[9] = 666;
+    cout << ptr.get()[9] << endl; // 666
+    return 0;
+}
+```
+
+合理使用unique\_ptr与shared\_ptr管理动态数组，可以大大降低写代码的忧虑
+
+### allocator类
+
+使用动态内存数组容易出现什么问题呢，就是例如可能需要接近50个左右int的空间，我们可能会申请60个，但是有些内存空间我们始终没有再进行使用，造成资源浪费，new与对象的构造联系在一起，delete\[]与对象的析构函数联系在一起，allocator就是解决类似的问题而生的
+
+![](<../../../.gitbook/assets/屏幕截图 2022-06-20 094756.jpg>)
+
+简单上手
+
+```cpp
+//example28.cpp
+int main(int argc, char **argv)
+{
+    allocator<int> a;
+    int const *p = a.allocate(10); //分配10个int空间
+    for (int i = 0; i < 10; i++)
+    {
+        a.destroy(p + i); //销毁每个对象执行析构函数
+    }
+    a.deallocate((int *)p, 10);
+    return 0;
+}
+```
+
+### allocator分配未构造的内存
+
+allocator就作用就是将内存申请与对象的构造分开，delete与析构函数的调用也分开，有利于更好的利用内存空间
+
+```cpp
+//example29.cpp 
+// allocate.construct(ptr,args...)
+int main(int argc, char **argv)
+{
+    allocator<int> allocate;
+    int *ptr = allocate.allocate(10);
+    allocate.construct(ptr, 888); //利用申请的第一个内存构造
+    allocate.construct(ptr, 999); //再次构造
+    cout << *ptr << endl;         // 999
+    //调用对象的析构函数
+    allocate.destroy(ptr); //调用第一个内存存放的对象的析构
+    //将10个内存进行释放
+    allocate.deallocate(ptr, 10); //释放申请的10个内存
+    return 0;
+}
+```
+
+### 拷贝和填充未初始化内存
+
+![](<../../../.gitbook/assets/屏幕截图 2022-06-20 103037.jpg>)
+
+```cpp
+//example30.cpp
+void print(int arr[], int n);
+
+int main(int argc, char **argv)
+{
+    allocator<int> allocate;
+    constexpr int n = 10;
+    int *p1 = allocate.allocate(n);
+    int *p2 = allocate.allocate(n);
+    for (int i = 0; i < 10; i++)
+    {
+        p1[i] = i;
+    }
+
+    //此拷贝是内存级的拷贝
+    uninitialized_copy(p1, p1 + n, p2); //拷贝到p2
+    print(p2, 10);                      // 0 1 2 3 4 5 6 7 8 9
+    uninitialized_copy_n(p1, 10, p2);   //从p1拷贝10个内存单位到p2
+
+    // fill填充
+    uninitialized_fill(p1, p1 + 10, 666);
+    print(p1, 10); // 666 666 666 666 666 666 666 666 666 666
+    uninitialized_fill_n(p2, 5, 666);
+    print(p2, 10); // 666 666 666 666 666 5 6 7 8 9
+
+    //对象析构
+    for (int i = 0; i < 10; i++)
+    {
+        allocate.destroy(p1 + i);
+        allocate.destroy(p2 + i);
+    }
+
+    //内存释放
+    allocate.deallocate(p1, n);
+    allocate.deallocate(p2, n);
+    cout << "end" << endl; // end
+
+    // copy函数的返回值 返回最后一个构造的对象的后一个位置的地址
+    p1 = allocate.allocate(10);
+    p2 = allocate.allocate(10);
+    p1[0] = 0, p1[1] = 2, p1[2] = 3, p1[3] = 4;
+    int *temp = uninitialized_copy_n(p1, 3, p2);
+    *temp = 999;
+    cout << p2[3] << endl; // 999 可见是拷贝过去的后面一个位置地址
+
+    return 0;
+}
+
+void print(int arr[], int n)
+{
+    for (int i = 0; i < n; i++)
+    {
+        cout << arr[i] << " ";
+    }
+    cout << endl;
+}
+```
