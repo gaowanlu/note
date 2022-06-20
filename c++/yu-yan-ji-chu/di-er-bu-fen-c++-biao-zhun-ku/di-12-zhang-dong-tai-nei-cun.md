@@ -768,7 +768,7 @@ int main(int argc, char **argv)
 
 * 动态数组可以使用unique\_ptr进行内存管理
 
-![zhixiang1](<../../../.gitbook/assets/屏幕截图 2022-06-20 093304.jpg>)
+![指向数组的unique\_ptr](<../../../.gitbook/assets/屏幕截图 2022-06-20 093304.jpg>)
 
 ```cpp
 //example26.cpp
@@ -804,7 +804,7 @@ int main(int argc, char **argv)
 
 使用动态内存数组容易出现什么问题呢，就是例如可能需要接近50个左右int的空间，我们可能会申请60个，但是有些内存空间我们始终没有再进行使用，造成资源浪费，new与对象的构造联系在一起，delete\[]与对象的析构函数联系在一起，allocator就是解决类似的问题而生的
 
-![](<../../../.gitbook/assets/屏幕截图 2022-06-20 094756.jpg>)
+![标准库allocator类及其算法](<../../../.gitbook/assets/屏幕截图 2022-06-20 094756.jpg>)
 
 简单上手
 
@@ -847,7 +847,7 @@ int main(int argc, char **argv)
 
 ### 拷贝和填充未初始化内存
 
-![](<../../../.gitbook/assets/屏幕截图 2022-06-20 103037.jpg>)
+![allocator算法](<../../../.gitbook/assets/屏幕截图 2022-06-20 103037.jpg>)
 
 ```cpp
 //example30.cpp
