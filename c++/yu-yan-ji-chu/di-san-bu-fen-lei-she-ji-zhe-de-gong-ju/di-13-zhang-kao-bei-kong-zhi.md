@@ -1,3 +1,9 @@
+---
+cover: >-
+  https://images.unsplash.com/photo-1623864804069-438e36809fc2?crop=entropy&cs=tinysrgb&fm=jpg&ixid=MnwxOTcwMjR8MHwxfHNlYXJjaHwxMHx8Y29weXxlbnwwfHx8fDE2NTU3ODk2NTg&ixlib=rb-1.2.1&q=80
+coverY: 0
+---
+
 # 🍍 第13章 拷贝控制
 
 ## 第13章 拷贝控制
