@@ -426,3 +426,161 @@ int main(int argc, char **argv)
 ```
 
 总之优先使用=delete这种新的规范，delete是从编译阶段直接解决问题
+
+### 行为像值的类
+
+有些类拷贝是值操作，是一份相同得副本
+
+```cpp
+//example14.cpp
+class Person
+{
+public:
+    int *age;
+    string *name;
+    Person(const int &age, const string &name) : age(new int(age)), name(new string(name)) {}
+    Person() : age(new int(0)), name(new string("")) {}
+    Person &operator=(const Person &person);
+    ~Person()
+    {
+        delete age, delete name;
+    }
+};
+
+Person &Person::operator=(const Person &person)
+{
+    *age = *person.age;
+    *name = *person.name;
+    return *this;
+}
+
+int main(int argc, char **argv)
+{
+    Person person1(19, "me");
+    Person person2(20, "she");
+    person1 = person2;
+    cout << *person1.age << " " << *person1.name << endl; // 20 she
+    cout << *person2.age << " " << *person2.name << endl; // 20 she
+    *person1.name = "gaowanlu";
+    cout << *person1.age << " " << *person1.name << endl; // 20 gaowanlu
+    cout << *person2.age << " " << *person2.name << endl; // 20 she
+    //可见之间此类对象像一种值类型
+    return 0;
+}
+```
+
+### 行为像指针的类
+
+有些类拷贝是指针指向的操作，也就是不同的类的成员会使用相同的内存
+
+先来看一种简单使用的情况
+
+```cpp
+//example15.cpp
+class Person
+{
+public:
+    int *age;
+    string *name;
+    Person() : age(new int(0)), name(new string) {}
+    Person(const int &age, const string &name) : age(new int(age)), name(new string(name)) {}
+    Person &operator=(const Person &person);
+};
+
+Person &Person::operator=(const Person &person)
+{
+    if (age)
+        delete age;
+    if (name)
+        delete name;
+    age = person.age;
+    name = person.name;
+    return *this;
+}
+
+int main(int argc, char **argv)
+{
+    Person person1(19, "me");
+    Person person2 = person1;
+    // person1 person2的内容的内存是相同的
+    *person2.age = 20;
+    *person2.name = "gaowanlu";
+    cout << *person1.age << " " << *person1.name << endl; // 20 gaowanlu
+    cout << *person2.age << " " << *person2.name << endl; // 20 gaowanlu
+    return 0;
+}
+```
+
+### 实现引用计数
+
+有意思的例子是我们也可以设计引用计数的机制，通过下面这个例子可以学到很多的编程思想
+
+```cpp
+//example16.cpp
+class Person
+{
+public:
+    string *name;
+    int *age;
+    Person(const int &age = int(0), const string &name = string("")) : use(new size_t(1)), age(new int(age)), name(new string(name)) {}
+    //拷贝构造时
+    Person(const Person &person)
+    {
+        name = person.name;
+        age = person.age;
+        use = person.use;
+        ++*use; //引用数加一 不能写 *use++哦 因为那是*(use++)
+    }
+    //赋值拷贝时
+    Person &operator=(const Person &person);
+    //析构时
+    ~Person();
+    size_t *use; //引用计数器
+};
+
+//拷贝赋值
+Person &Person::operator=(const Person &person)
+{
+    //递增右边对象的引用系数
+    ++*person.use;
+    //递减本对象引用计数
+    --*use;
+    if (*use == 0)
+    {
+        delete age, delete name, delete use;
+    }
+    age = person.age;
+    name = person.name;
+    use = person.use;
+    return *this;
+}
+
+//析构
+Person::~Person()
+{
+    //将引用数减1
+    --*use;
+    //判断引用数是否为0
+    if (*use == 0)
+    {
+        delete age, delete name, delete use;
+    }
+}
+
+int main(int argc, char **argv)
+{
+    Person person1(19, "me");
+    cout << *person1.use << endl; // 1
+    {
+        Person person2(person1);
+        cout << *person1.use << endl; // 2
+        Person *ptr = new Person(person2);
+        cout << *ptr->use << endl; // 3
+        delete ptr;
+        cout << *person1.use << endl; // 2
+    }
+    cout << *person1.use << endl; // 1
+    //最后当person1销毁时 析构函数内引用计数变为0 随之将内存释放 达到内存管理的效果
+    return 0;
+}
+```
