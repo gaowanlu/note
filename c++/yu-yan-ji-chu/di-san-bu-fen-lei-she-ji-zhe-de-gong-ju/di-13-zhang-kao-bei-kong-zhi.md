@@ -584,3 +584,164 @@ int main(int argc, char **argv)
     return 0;
 }
 ```
+
+### 编写swap函数
+
+可以在类上定义一个自己的swap函数重载swap默认行为
+
+```cpp
+//example17.cpp
+class Person
+{
+    //声明为友元函数可访问类私有成员
+    friend void swap(Person &a, Person &b);
+
+public:
+    int age;
+    string name;
+    Person(const int &age, const string &name) : age(age), name(name) {}
+};
+
+//定义函数 void swap(Person &a, Person &b);
+inline void swap(Person &a, Person &b)
+{
+    std::swap(a.age, b.age);
+    std::swap(a.name, b.name);
+}
+
+int main(int argc, char **argv)
+{
+    Person person1(19, "me");
+    Person person2(19, "she");
+    swap(person1, person2);
+    cout << person1.age << " " << person1.name << endl; // 19 she
+    cout << person2.age << " " << person2.name << endl; // 19 me
+    return 0;
+}
+```
+
+### 拷贝赋值运算中使用swap
+
+类的swap通常用来定义它们的赋值运算符，是一种拷贝并交换的技术
+
+```cpp
+//example18.cpp
+class Person
+{
+    friend void swap(Person &a, Person &b);
+
+public:
+    int age;
+    string name;
+    Person &operator=(Person person);
+    Person(const int &age, const string &name) : age(age), name(name) {}
+};
+
+// person为使用合成拷贝构造函数值复制
+Person &Person::operator=(Person person)
+{
+    swap(*this, person); //二者内容交换
+    return *this;
+}
+
+// Person的swap行为
+inline void swap(Person &a, Person &b)
+{
+    a.age = b.age;
+    a.name = b.name;
+}
+
+int main(int argc, char **argv)
+{
+    Person person1(19, "me");
+    Person person2 = person1;
+    cout << person2.age << " " << person2.name << endl; // 19 me
+    return 0;
+}
+```
+
+### 对象移动
+
+什么是对象移动，也就是将对象移动到某处，即复制，但复制后就将原来的进行对象销毁了
+
+标准库函数 `std::move`，标准库容器、string、shared\_ptr类即支持移动也支持拷贝，IO类和unique\_ptr类可以移动但不能拷贝
+
+```cpp
+//example19.cpp
+#include <iostream>
+#include <utility>
+#include <string>
+int main(int argc, char **argv)
+{
+    using namespace std;
+    string a1 = "hello";
+    string a2 = std::move(a1);
+    cout << a1 << endl; // nothing
+    cout << a2 << endl; // hello
+
+    int b1 = 999;
+    int b2 = std::move(b1); // int不是对象是基本数据类型不适用
+    cout << b1 << endl;     // 999
+    cout << b2 << endl;     // 999
+    return 0;
+}
+```
+
+### 右值引用
+
+什么是右值引用，右值引用为支持移动操作而生，右值引用就是必须绑定到右值的引用，使用&&而不是&来获得右值引用
+
+左值与右值的声明周期，左值有持久的状态直到变量声明到上下文切换内存释放，右值要么是字面量或者求值过程中的临时对象\
+右值引用特性：
+
+* 所引用的对象将要被销毁
+* 该对象没有其他用户
+* 无法将右值引用绑定到右值引用
+
+```cpp
+//example20.cpp
+int main(int argc, char **argv)
+{
+    int num = 666;
+    int &ref = num; //引用
+    // int &&refref = num; //错误：不能将右值引用绑定到左值上
+    // int &ref1 = num * 42; //错误：i*42为右值
+    const int &ref2 = num * 42; // const引用可绑定到右值上
+    int &&refref1 = num * 10;   // 右值引用可以绑定在右值上
+    cout << refref1 << endl;    // 6660
+    refref1 = 999;
+    cout << refref1 << endl; // 999 而且与使用普通变量没什么区别
+
+    // int &&refref2 = refref1; //错误：无法将右值引用绑定到左值
+    return 0;
+}
+```
+
+### move与右值引用
+
+虽然不能将右值引用绑定在左值上，但可以通过std::move来实现
+
+```cpp
+//example21.cpp
+int main(int argc, char **argv)
+{
+    int num = 999;
+    // int &&rr1 = num; //错误 无法将右值引用绑定到左值
+    string stra = "hello";
+    string &&straRef = std::move(stra);
+    cout << stra << endl;    // hello
+    cout << straRef << endl; // hello
+
+    stra = "world";
+    cout << straRef << endl; // world
+    //可见straRef绑定定在了stra上
+
+    string a = "world";
+    string b = std::move(a); 
+    // move函数的表现根据等号左侧的类型的不同随之行为也不同
+    cout << a << endl;       // nothing
+    cout << b << endl;       // world
+
+    return 0;
+}
+```
