@@ -745,3 +745,184 @@ int main(int argc, char **argv)
     return 0;
 }
 ```
+
+### 右值引用做参数
+
+右值引用的最大贡献就是将临时变量的声明周期延长，减少临时变量的频繁销毁，内存的利用效率也会变高，当右值表达式被处理后结果存放在会块临时内存空间，右值引用指向它，则可以利用，直到指向它的右值引用全部被销毁，内存才会被释放
+
+```cpp
+//example22.cpp
+class Person
+{
+public:
+    string name;
+    Person(const string &name) : name(name)
+    {
+        cout << "string &name" << endl;
+    }
+    Person(string &&name) : name(name)
+    {
+        cout << "string &&name" << endl;
+    }
+};
+// const引用与右值引用重载时 传递右值时 右值引用的优先级高
+
+int main(int argc, char **argv)
+{
+    //创建临时变量"hello"
+    Person person1("hello"); // string&&name
+    
+    string s = "world";
+    Person person2(s); // string &name
+    return 0;
+}
+```
+
+### 右值和左值引用成员函数
+
+在旧标准中，右值可以调用相关成员函数与被赋值
+
+```cpp
+//example23.cpp
+int main(int argc, char **argv)
+{
+    string hello = "hello";
+    string world = "world";
+    cout << (hello + world = "nice") << endl; // nice 右值被赋值
+    return 0;
+}
+```
+
+### &左值限定符
+
+怎样限定赋值时右边只能是可修改的左值赋值，引入了引用限定符(reference qualifier)，使得方法只有对象为左值时才能被使用
+
+```cpp
+//example24.cpp
+#define USE_LIMIT
+
+class Person
+{
+public:
+    string name;
+#ifdef USE_LIMIT
+    Person &operator=(const string &) &; //引用限定符 等号左侧必须为可修改的左值
+#else
+    Person &operator=(const string &);
+#endif
+    Person(string &&name) : name(name)
+    {
+    }
+    inline void print()
+    {
+        cout << this->name << endl;
+    }
+};
+
+#ifdef USE_LIMIT
+Person &Person::operator=(const string &name) & //引用限定
+#else
+Person &Person::operator=(const string &name)
+#endif
+{
+    this->name = name;
+    return *this;
+}
+
+Person func()
+{
+    return Person("me");
+}
+
+int main(int argc, char **argv)
+{
+    func() = "hello"; // func()返回右值
+    //当define USE_LIMIT时发生错误
+    //没有define USE_LIMIT时不会发生错误
+    return 0;
+}
+```
+
+### const与&左值限定符
+
+一个方法可以同时用const和引用限定，引用限定必须在const之后
+
+```cpp
+//example25.cpp
+class Person
+{
+public:
+    int age;
+    string name;
+    Person(const int &age = 19, const string &name = "me") : age(age), name(name)
+    {
+    }
+    void print() const &
+    {
+        cout << age << " " << name << endl;
+    }
+};
+
+//func返回右值
+Person func()
+{
+    return Person(19, "she");
+}
+
+int main(int argc, char **argv)
+{
+    func().print();
+    //当print不是const&时报错,例如只有引用限定符&，只有const不报错
+    //很鸡肋没什么卵用
+    //当有const时 &限定作用消失了
+    return 0;
+}
+```
+
+### &&右值引用限定符
+
+可以使用`&&`进行方法重载，使其为可改变的右值服务\
+当一个方法名字相同 函数参数列表相同时 有一个有引用限定，全部都应该有引用限定或者全部都没有
+
+```cpp
+//example26.cpp
+class Foo
+{
+public:
+    Foo sort() &&;
+    Foo sort() const &;
+    //当一个方法名字相同 函数参数列表相同时 有一个有引用限定
+    //全部都应该有引用限定或者全部都没有
+};
+
+Foo Foo::sort() &&
+{
+    cout << "&&" << endl;
+    return *this;
+}
+
+Foo Foo::sort() const &
+{
+    cout << "const &" << endl;
+    return *this;
+}
+
+// func返回右值
+Foo func()
+{
+    return Foo();
+}
+
+int main(int argc, char **argv)
+{
+    Foo foo1;
+    foo1.sort();   // const &
+    func().sort(); //&&
+    //如果没有定义Foo Foo::sort() && 二者都会调用 Foo Foo::sort() const &
+    return 0;
+}
+```
+
+### 移动构造函数和移动赋值运算符
+
+todo
