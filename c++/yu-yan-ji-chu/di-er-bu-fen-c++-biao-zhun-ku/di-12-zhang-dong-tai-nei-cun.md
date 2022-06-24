@@ -187,6 +187,7 @@ for (int i = 0; i < 20; i++)
 }
 // 0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19
 cout << endl;
+free(int_arr);
 ```
 
 在C++中定义了两个运算符来显式地配分和释放内存，运算符new用于分配内存，delete释放new分配的内存
@@ -239,7 +240,8 @@ auto p10 = new auto(1); //根据1的类型自动推断
 auto p12 = new auto{string("1")}; //括号单个初始化 std::initializer_list<string>
 auto str = (*p12).begin();
 cout << *str << endl; // 1
-delete p1, p2, p3, p4, p5, p6, p7, p8, p9, p10, p12;
+// delete p1, p2, p3, p4, p5, p6, p7, p8, p9, p10, p12;//错误 写法 delete优先级比，高
+delete p1, delete p2, delete p3, delete p4, delete p5, delete p6, delete p7, delete p8, delete p9, delete p10, delete p12;
 ```
 
 ### 动态分配的const对象
@@ -253,6 +255,7 @@ const int *int_ptr = new const int(666); //必须被初始化
 cout << *int_ptr << endl; // 666
 const string *str_ptr = new const string(10, 'p');
 cout << *str_ptr << endl; // pppppppppp
+delete int_ptr, delete str_ptr;
 ```
 
 ### 内存耗尽
@@ -713,7 +716,7 @@ int main(int argc, char **argv)
     //使用tyedef
     typedef int arrT[100];
     ptr = new arrT;
-    delete ptr;
+    delete[] ptr;
     return 0;
 }
 ```
@@ -742,7 +745,7 @@ int main(int argc, char **argv)
     {
         cout << e.what() << endl;
     }
-    delete[] p1, p2, p3, p4, p5, p6, p7;
+    delete[] p1, delete[] p2, delete[]  p3, delete[]  p4, delete[]  p5, delete[]  p6, delete[]  p7;
     return 0;
 }
 ```
