@@ -925,4 +925,325 @@ int main(int argc, char **argv)
 
 ### 移动构造函数和移动赋值运算符
 
-todo
+资源移动实例，嫖窃其他对象的内存资源,与拷贝构造函数类似，移动构造函数第一个参数也是引用类型，但只不过是右值引用，任何额外参数必须有默认实参
+
+```cpp
+//example27.cpp
+class Person
+{
+public:
+    int *age;
+    string *name;
+    Person(const int &age, const string &name) : age(new int(age)), name(new string(name))
+    {
+    }
+    //移动操作不应抛出任何异常
+    Person(Person &&person) noexcept //”盗窃“资源 这是个移动构造函数不是 拷贝构造函数
+    {
+        delete age, delete name;
+        age = person.age;
+        name = person.name;
+        person.age = nullptr;
+        person.name = nullptr;
+    }
+    void print();
+};
+
+void Person::print()
+{
+    if (age && name)
+    {
+        cout << *age << " " << *name;
+    }
+    cout << endl;
+}
+
+int main(int argc, char **argv)
+{
+    Person person1(19, "me");
+    Person person2 = std::move(person1);
+    person1.print(); // nothing
+    person2.print(); // 19 me
+    return 0;
+}
+```
+
+### 移动赋值运算符
+
+与拷贝类似，可以也可以重载赋值运算符来实现对象的移动功能
+
+```cpp
+//example28.cpp
+class Person
+{
+public:
+    int *age;
+    string *name;
+    Person(const int &age, const string &name) : age(new int(age)), name(new string(name))
+    {
+        cout << "Person(const int &age, const string &name)" << endl;
+    }
+    Person &operator=(Person &&person) noexcept;//移动赋值运算符
+    Person(const Person &person) : age(person.age), name(person.name)
+    {
+        cout << "Person(const Person &person)" << endl;
+    }
+    void print();
+};
+
+Person &Person::operator=(Person &&person) noexcept
+{
+    cout << "Person &Person::operator=(Person &&person)" << endl;
+    if (&person != this)
+    {
+        delete age, delete name;
+        age = person.age;
+        name = person.name;
+        person.age = nullptr;
+        person.name = nullptr;
+    }
+    return *this;
+}
+
+void Person::print()
+{
+    if (age && name)
+    {
+        cout << *age << " " << *name;
+    }
+    cout << endl;
+}
+
+//返回右值
+Person func()
+{
+    return Person(19, "she"); // Person(const int &age, const string &name) 2
+}
+
+int main(int argc, char **argv)
+{
+    Person person2(18, "oop"); // Person(const int &age, const string &name) 1
+    person2 = func();          // Person &Person::operator=(Person &&person)
+    person2.print();           // 19 she
+    
+    Person person1 = std::move(person2);//person2移动到person1
+    cout << *person1.age << " " << *person2.name << endl; // 19 she
+    return 0;
+}
+```
+
+### 合成的移动操作
+
+只有当一个类没有定义任何自己版本的拷贝控制成员时，且所有数据成员都能进行移动构造或移动赋值时，编译器才会合成移动构造函数或移动赋值运算符\
+当一定义了拷贝控制成员，如自定义了拷贝构造拷贝拷贝赋值时，将不会提供合成的移动操作
+
+```cpp
+//example29.cpp
+class X
+{
+public:
+    int i;    //内置类型可以移动
+    string s; // string定义了自己的移动操作
+};
+
+class HasX
+{
+public:
+    X member; // X有合成的移动操作
+};
+
+int main(int argc, char **argv)
+{
+    X x1;
+    x1.i = 100;
+    x1.s = "me";
+    cout << x1.i << " " << x1.s << endl; // 100 me
+    // X移动
+    X x2 = std::move(x1);
+    cout << x2.i << " " << x2.s << endl; // 100me
+    cout << x1.i << " " << x1.s << endl; // 100 nothing
+    // HasX移动
+    HasX hasx;
+    hasx.member.i = 99;
+    hasx.member.s = "me";
+    HasX hasx1 = std::move(hasx);
+    cout << hasx1.member.i << " " << hasx1.member.s << endl; // 99 me
+    return 0;
+}
+```
+
+本质上move的使用就是调用了拷贝构造函数，但拷贝构造是值拷贝还是指针拷贝有我们自己定义
+
+```cpp
+//example30.cpp
+class Y
+{
+public:
+    int age;
+    Y() = default;
+    Y(const Y &y) //拷贝构造 则 Y没有合成的移动操作
+    {
+        this->age = age;
+    };
+    // Y(Y &&y)
+    // {
+    //     age = y.age;
+    //     y.age = 0;
+    // }
+};
+
+class HasY
+{
+public:
+    HasY() = default;
+    Y member;
+};
+
+int main(int argc, char **argv)
+{
+    HasY hasy;
+    hasy.member.age = 999;
+    HasY hasy1 = std::move(hasy);     //因为Y没有移动操作
+    cout << hasy1.member.age << endl; //乱码 hasy为一个新对象,为Y添加自定义移动构造函数则输出999
+    cout << "end" << endl;            // end
+    return 0;
+}
+```
+
+### 拷贝构造与移动构造的匹配
+
+当一个类既有移动构造函数，也有拷贝构造函数，当我们使用哪一个，会根据函数匹配规则来确定
+
+```cpp
+//example31.cpp
+class Person
+{
+public:
+    Person() = default;
+    Person(const Person &person)
+    {
+        cout << "Person(const Person &person)" << endl;
+    }
+    Person(Person &&person)
+    {
+        cout << "Person(Person &&person)" << endl;
+    }
+};
+
+int main(int argc, char **argv)
+{
+    Person person1;
+    Person person2(person1); // Person(const Person &person)
+
+    const Person person3;
+    Person person4(person3); // Person(const Person &person)
+
+    //而移动构造只接受右值
+    Person person5 = std::move(person4); // Person(Person &&person)
+    
+    return 0;
+}
+```
+
+要注意的是，当有拷贝构造函数没有移动构造函数时，右值也将被拷贝
+
+```cpp
+//example32.cpp
+class Person
+{
+public:
+    int age;
+    string name;
+    Person() = default;
+    Person(const Person &person) : age(person.age), name(person.name)
+    {
+        cout << " Person(const Person &person)" << endl;
+    }
+};
+
+int main(int argc, char **argv)
+{
+    Person person1;
+    // std::move的作用就是将person1作为右值传递
+    Person person2(std::move(person1)); // Person(const Person &person)
+    //当存在移动构造时则会优先使用移动构造
+    return 0;
+}
+```
+
+### 拷贝并交换赋值运算符和移动操作
+
+当定义了移动构造函数，且定义了赋值运算符，但无定义移动赋值方法，则将一个右值赋给左值时，将会先使用移动构造函数构造新对象，然后将新对象赋值给原左值，类似地隐含了移动赋值
+
+```cpp
+//example33.cpp
+class Person
+{
+public:
+    int age;
+    string name;
+    Person() = default;
+    Person(const int &age, const string &name) : age(age), name(name){};
+    //移动构造函数
+    Person(Person &&p) noexcept : age(p.age), name(p.name)
+    {
+        cout << "Person(Person &&p)" << endl;
+        p.age = 0;
+        p.name = "";
+    }
+    //拷贝构造
+    Person(const Person &p) : age(p.age), name(p.name)
+    {
+        cout << "Person(const Person &p)" << endl;
+    }
+    //赋值运算符 也是 移动赋值运算符 也是拷贝赋值运算符
+    Person &operator=(Person p)
+    {
+        cout << "Person &operator=(Person p)" << endl;
+        age = p.age;
+        name = p.name;
+        return *this;
+    }
+};
+
+int main(int argc, char **argv)
+{
+    Person person1(19, "me"); //构造函数
+    //显式调用移动构造函数
+    Person person2(std::move(person1));                 // Person(Person &&p)
+    cout << person1.age << " " << person1.name << endl; // 0 nothing
+
+    Person person3(19, "me");     //构造函数
+    Person person4;               //默认构造函数
+    person4 = std::move(person3); //先使用移动构造函数生成新对象 将新对象赋值给person4
+    // Person(Person &&p) Person &operator=(Person p)
+    cout << person4.age << " " << person4.name << endl; // 19 me
+    return 0;
+}
+```
+
+### 移动迭代器
+
+移动迭代器解引用返回一个指向元素的右值引用
+
+通过标准库`make_move_iterator`函数可以将一个普通迭代器转换为移动迭代器返回
+
+```cpp
+//example34.cpp
+int main(int argc, char **argv)
+{
+    vector<string> vec = {"aaa", "bbb"};
+    auto iter = make_move_iterator(vec.begin());
+    // auto std::move_iterator<std::vector<std::string>::iterator>
+    allocator<string> allocat;
+    string *ptr = allocat.allocate(10);
+    uninitialized_copy(make_move_iterator(vec.begin()), make_move_iterator(vec.end()), ptr);
+    cout << vec[0] << " " << vec[1] << endl; //空字符串
+    cout << ptr[0] << " " << ptr[1] << endl; // aaa bbb
+    //可见使用移动迭代器进行了移动操作
+    return 0;
+}
+```
+
+本质上是标准库算法在背后使用了移动迭代器解引用，进而相当于 string_a=std::move(stringb),将stringb移动到了stringa_\
+只有当数据类型支持移动赋值时移动迭代器才显得有意义
