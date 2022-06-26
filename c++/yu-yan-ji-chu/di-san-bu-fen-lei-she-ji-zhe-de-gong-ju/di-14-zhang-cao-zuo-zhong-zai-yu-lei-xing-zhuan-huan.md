@@ -1,3 +1,9 @@
+---
+cover: >-
+  https://images.unsplash.com/photo-1612735369300-f2d96e6eaeb4?crop=entropy&cs=tinysrgb&fm=jpg&ixid=MnwxOTcwMjR8MHwxfHNlYXJjaHwxfHx0ZXN8ZW58MHx8fHwxNjU2MjE0ODc4&ixlib=rb-1.2.1&q=80
+coverY: 0
+---
+
 # 📺 第14章 操作重载与类型转换
 
 ## 第14章 操作重载与类型转换
