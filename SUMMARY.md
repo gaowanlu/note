@@ -22,6 +22,7 @@
     * [😆 第12章 动态内存](c++/yu-yan-ji-chu/di-er-bu-fen-c++-biao-zhun-ku/di-12-zhang-dong-tai-nei-cun.md)
   * [😍 第三部分 类设计者的工具](c++/yu-yan-ji-chu/di-san-bu-fen-lei-she-ji-zhe-de-gong-ju/README.md)
     * [🍍 第13章 拷贝控制](c++/yu-yan-ji-chu/di-san-bu-fen-lei-she-ji-zhe-de-gong-ju/di-13-zhang-kao-bei-kong-zhi.md)
+    * [📺 第14章 操作重载与类型转换](c++/yu-yan-ji-chu/di-san-bu-fen-lei-she-ji-zhe-de-gong-ju/di-14-zhang-cao-zuo-zhong-zai-yu-lei-xing-zhuan-huan.md)
 * [并发编程](c++/bing-fa-bian-cheng/README.md)
   * [第1章 你好并发世界](c++/bing-fa-bian-cheng/di-1-zhang-ni-hao-bing-fa-shi-jie.md)
   * [第2章 线程管理](c++/bing-fa-bian-cheng/di-2-zhang-xian-cheng-guan-li.md)
