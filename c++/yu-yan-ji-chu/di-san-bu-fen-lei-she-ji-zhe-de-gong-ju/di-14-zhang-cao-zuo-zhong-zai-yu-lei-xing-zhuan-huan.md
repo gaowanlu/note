@@ -151,3 +151,78 @@ int main(int argc, char **argv)
     return 0;
 }
 ```
+
+### 重载输出运算符<<
+
+也就是向某些IO类使用<<时右边对象的类型是我们自定义的类型\
+第一个形参通常为IO对象的引用，第二个形参const对象的引用,可见输入输出运算符必须是非成员函数，如果是成员函数则因该是ostream与istream的方法，而不是我我们自定义类本身里的重载
+
+```cpp
+//example4.cpp
+class Person
+{
+public:
+    int age;
+    string name;
+    Person(const int &age, const string &name) : age(age), name(name), num(rand() % 10) {}
+    friend ostream &operator<<(ostream &os, const Person &person); //声明为Person的友元函数
+
+private:
+    int num;
+};
+
+ostream &operator<<(ostream &os, const Person &person)
+{
+    os << person.age << " " << person.name << " " << person.num;
+    return os;
+}
+
+int main(int argc, char **argv)
+{
+    srand(time(NULL));
+    Person person(19, "me");
+    cout << person << endl; // 19 me 7
+    return 0;
+}
+```
+
+### 重载输入运算符>>
+
+方法与<<运算符类似
+
+```cpp
+//example5.cpp
+class Person
+{
+public:
+    int age;
+    string name;
+    Person(const int &age, const string &name) : age(age), name(name) {}
+};
+
+istream &operator>>(istream &is, Person &person)
+{
+    is >> person.age >> person.name;
+    if (is.fail())
+    {
+        person = Person(19, "me");
+        throw runtime_error("error:input format of person error");
+    }
+    return is;
+};
+
+int main(int argc, char **argv)
+{
+    Person person1(19, "me");
+    try
+    {
+        cin >> person1; // 20 she
+    }
+    catch (runtime_error e)
+    {
+        cout << e.what() << endl;
+    }
+    cout << person1.age << " " << person1.name << endl; // 20 she
+    return 0;
+}
+```
