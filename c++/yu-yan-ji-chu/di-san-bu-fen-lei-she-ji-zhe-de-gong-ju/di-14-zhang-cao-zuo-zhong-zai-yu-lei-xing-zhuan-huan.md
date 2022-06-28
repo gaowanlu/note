@@ -226,3 +226,207 @@ int main(int argc, char **argv)
     return 0;
 }
 ```
+
+### 算术运算符
+
+形参通常为常量的引用，返回一个新的结果对象\
+其他算数运算定义方法都是类似的
+
+```cpp
+//example6.cpp
+class Person
+{
+public:
+    int age;
+    string name;
+    Person(const int &age, const string &name) : age(age), name(name) {}
+    Person operator*(const int &mul)
+    {
+        return Person(age * mul, name);
+    }
+    //复合赋值运算符
+    Person &operator*=(const int &mul)
+    {
+        age *= mul;
+        return *this;
+    }
+};
+
+Person operator*(const Person &a, const Person &b)
+{
+    return Person(a.age * b.age, a.name);
+}
+
+int main(int argc, char **argv)
+{
+    Person a(19, "me");
+    Person b(20, "as");
+    cout << (a * b).age << endl;  // 380
+    cout << (a * 10).age << endl; // 190
+    a *= 11;
+    cout << a.age << endl; // 209
+    return 0;
+}
+```
+
+### 相等运算符
+
+参数为常量引用，返回值类型为布尔型
+
+```cpp
+//example7.cpp
+class Person
+{
+public:
+    int age;
+    string name;
+    Person(const int &age, const string &name) : age(age), name(name)
+    {
+    }
+    bool operator==(const Person &b)
+    {
+        return this == &b || (age == b.age && name == b.name);
+    }
+    bool operator!=(const Person &b)
+    {
+        return age != b.age || name != b.name;
+    }
+};
+
+int main(int argc, char **argv)
+{
+    Person a(19, "me");
+    Person b(19, "me");
+    cout << (a != b) << endl; // 0
+    cout << (a == b) << endl; // 1
+    return 0;
+}
+```
+
+如果某个类在逻辑上有相等性的含义，则改类应该定义operator==,这样做可以使得用户更容易使用标准库算法来处理这个类
+
+### 关系运算符
+
+特别是，关联容器和一些算法要用到小于运算符等，我们通常约定规范，当<或>成立时，==不成立、!=成立，同理==成立时<=与>=成立
+
+```cpp
+//example8.cpp
+class Person
+{
+public:
+    int age;
+    string name;
+    Person(const int &age, const string &name) : age(age), name(name)
+    {
+    }
+    bool operator<(const Person &b)
+    {
+        return age < b.age;
+    }
+};
+
+int main(int argc, char **argv)
+{
+    Person a(19, "a");
+    Person b(20, "b");
+    cout << (a < b) << endl; // 1
+    cout << (b < a) << endl; // 0
+    return 0;
+}
+```
+
+### 赋值运算符
+
+函数参数为等号右侧对象，返回值通常为对象本身的引用\
+复合赋值运算在example6.cpp已经涉及，再次不再描述
+
+```cpp
+//example9.cpp
+class Person
+{
+public:
+    vector<int> list;
+    Person &operator=(initializer_list<int> init_list)
+    {
+        list.clear();
+        list = init_list;
+        return *this;
+    }
+    Person &operator=(const Person &b)
+    {
+        list = b.list;
+        return *this;
+    }
+    friend ostream &operator<<(ostream &o, const Person &p);
+};
+
+ostream &operator<<(ostream &o, const Person &p)
+{
+    for (auto item : p.list)
+    {
+        o << item << " ";
+    }
+    return o;
+}
+
+int main(int argc, char **argv)
+{
+    Person person;
+    person = {1, 2, 3, 4, 5};
+    cout << person << endl; // 1 2 3 4 5
+    initializer_list<int> list = {1, 2, 3, 4, 5};
+    // Person b = list; //错误：赋值运算不是赋值构造哦
+    //当Person有以list类型做参数的构造函数时可以调用，即类型转换构造函数
+
+    Person b = person; //赋值拷贝构造只是特殊的情况
+    cout << b << endl; // 1 2 3 4 5
+    return 0;
+}
+```
+
+### 下标运算符
+
+下标运算符必须是成员函数,通常返回对象内部数的引用，参数为size\_t类型表示下标
+
+```cpp
+//example10.cpp
+class Person
+{
+public:
+    int *arr;
+    Person(size_t n) : arr(new int[n])
+    {
+        for (size_t i = 0; i < n; i++)
+        {
+            arr[i] = i;
+        }
+    }
+    //当对象不是const时
+    int &operator[](const size_t &n)
+    {
+        return arr[n];
+    }
+    //当对象是const时
+    const int &operator[](const size_t &n) const
+    {
+        return arr[n];
+    }
+    ~Person()
+    {
+        delete[] arr;
+    }
+};
+
+int main(int argc, char **argv)
+{
+    Person person(10);
+    person[0] = 100;
+    cout << person[0] << endl; // 100
+    const Person b(10);
+    // b[0] = 99;
+    // error: assignment of read-only location 'b.Person::operator[](0)'
+    // cout << b[0] << endl;
+    cout << b[0] << endl; // 0
+    return 0;
+}
+```
