@@ -593,3 +593,126 @@ int main(int argc, char **argv)
     return 0;
 }
 ```
+
+### 函数调用运算符
+
+在C++总类可以重载函数调用运算符operator()
+
+```cpp
+//example15.cpp
+class Person
+{
+public:
+    int age;
+    string name;
+    Person(const int &age, const string &name) : age(age), name(name) {}
+    int operator()(const char *templa) const
+    {
+        printf(templa, age);
+        return age;
+    }
+};
+
+int main(int argc, char **argv)
+{
+    Person person(19, "me");
+    // age is 19
+    cout << person("age is %d \n") << endl;
+    // 19
+    return 0;
+}
+```
+
+这样的调用更像使用一种有状态的函数，我们把这类的对象称作为函数对象
+
+### lambda是函数对象
+
+当我们写了一个lambda表达式时，编译器将表达式翻译成一个未命名类的未命名对象
+
+* 使用lambda表达式
+
+```cpp
+//example16.cpp
+int main(int argc, char **argv)
+{
+    vector<int> vec = {3, 7, 5, 4, 2, 4, 4};
+    stable_sort(vec.begin(), vec.end(), [](const int &a, const int &b)
+                { return a < b; });
+    printVec(vec); // 2 3 4 4 4 5 7
+    return 0;
+}
+```
+
+* 使用函数对象
+
+```cpp
+//example17.cpp
+class IntSortFunc
+{
+public:
+    bool operator()(const int &a, const int &b)
+    {
+        return a < b;
+    }
+};
+
+int main(int argc, char **argv)
+{
+    IntSortFunc intSortFunc;
+    vector<int> vec = {3, 7, 5, 4, 2, 4, 4};
+    stable_sort(vec.begin(), vec.end(), intSortFunc);
+    printVec(vec); // 2 3 4 4 4 5 7
+    return 0;
+}
+```
+
+二者实际上是等价的，通常我们要合理考虑要使用哪一种方式，定义函数对象可以进行复用但需要维护成本，而lambda随用随定义更加灵活便捷
+
+* lambda及相应捕获行为的类
+
+经过lambda的学习，知道lambda想要操控函数外部的数据需要进行lambda捕获操作,而在函数对象中则是利用对象的属性来进行类似的操作
+
+```cpp
+//example18.cpp
+//lambda捕获
+int main(int argc, char **argv)
+{
+    vector<int> vec = {7, 4, 5, 2, 31};
+    size_t i = 0;
+    stable_sort(vec.begin(), vec.end(), [&](const int &a, const int &b) -> bool
+                { 
+                i++;
+                return a < b; });
+    cout << i << endl; // 10
+    return 0;
+}
+```
+
+同样可以使用函数对象实现类似捕获的功能
+
+```cpp
+//example19.cpp
+class IntSortFunc
+{
+public:
+    size_t *i;
+    IntSortFunc(size_t *i) : i(i) {}
+    bool operator()(const int &a, const int &b)
+    {
+        ++*i;
+        return a < b;
+    }
+};
+
+int main(int argc, char **argv)
+{
+    vector<int> vec = {7, 4, 5, 2, 31};
+    size_t i = 0;
+    IntSortFunc intSortFunc(&i);
+    stable_sort(vec.begin(), vec.end(), intSortFunc);
+    cout << i << endl; // 10
+    return 0;
+}
+```
+
+至此我们又多了一种在函数之间传递函数的方法，以前我们使用函数指针、lambda表达式现在又可以使用函数对象进行类函数的传递
