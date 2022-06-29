@@ -528,3 +528,68 @@ int main(int argc, char **argv)
     return 0;
 }
 ```
+
+### 成员访问运算符
+
+迭代器以及智能指针和普通指针等常常用到解引用\*与箭头运算符->
+
+```cpp
+//example13.cpp
+class Person
+{
+public:
+    int age;
+    string name;
+    Person(const int &age, const string &name) : age(age), name(name) {}
+    string *operator->()
+    {
+        return &this->operator*();
+    }
+    string &operator*()
+    {
+        return name;
+    }
+};
+
+int main(int argc, char **argv)
+{
+    Person person(19, "me");
+    cout << person->c_str() << endl; // me
+    (*person).assign("she");
+    cout << person.name << endl; // she
+    return 0;
+}
+```
+
+### 箭头运算符返回值的限定
+
+operator\*与operator->有区别，operator\*可以完成任何像完成的事情，其返回值不受限制，而operator->的目的是访问某些成员，其返回值类型有限定，箭头函数获取成员这个事实规则永远不变
+
+```cpp
+//example14.cpp
+class Person
+{
+public:
+    int age;
+    string name;
+    Person(const int &age, const string &name) : age(age), name(name) {}
+    string *operator->()
+    {
+        return &this->operator*();
+    }
+    string &operator*()
+    {
+        return name;
+    }
+};
+
+int main(int argc, char **argv)
+{
+    Person person(19, "me");
+    cout << (*person).c_str() << endl; // me
+    //下面两个操作是等价的
+    cout << person.operator->()->c_str() << endl; // me
+    cout << person->c_str() << endl;              // me
+    return 0;
+}
+```
