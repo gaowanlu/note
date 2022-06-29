@@ -430,3 +430,101 @@ int main(int argc, char **argv)
     return 0;
 }
 ```
+
+### 递增和递减运算符
+
+分为前置版本与后置版本，在C++中并不要求递增和递减运算符必须为类的成员
+
+* 前置版本
+
+```cpp
+//example11.cpp
+class Person
+{
+public:
+    int age;
+    Person(const int &age) : age(age)
+    {
+    }
+    Person &operator++(); //前置版本
+    Person &operator--();
+};
+
+Person &Person::operator++()
+{
+    ++age;
+    return *this;
+}
+
+Person &Person::operator--()
+{
+    --age;
+    return *this;
+}
+
+int main(int argc, char **argv)
+{
+    Person person(19);
+    --person; // 18
+    cout << person.age << endl;
+    ++person;
+    cout << person.age << endl; // 19
+    
+    cout << person.operator++().age << endl; // 20 显式调用
+    return 0;
+}
+```
+
+* 后置版本
+
+重点在于如何区分前置版本与后置版本\
+为了解决这个问题，后置版本接受一个额外的（不被使用）int类型形参，当使用后置运算符时编译器自动传递实参0
+
+```cpp
+//example12.cpp
+class Person
+{
+public:
+    int age;
+    Person(const int &age) : age(age)
+    {
+    }
+    Person operator++(int); //后置版本
+    Person operator--(int);
+    friend ostream &operator<<(ostream &os, const Person &person);
+};
+
+Person Person::operator++(int)
+{
+    //拷贝一份
+    Person person = *this;
+    ++age;
+    return person; //返回原值
+}
+
+Person Person::operator--(int)
+{
+    Person person = *this;
+    --age;
+    return person;
+}
+
+ostream &operator<<(ostream &os, const Person &person)
+{
+    os << person.age;
+    return os;
+}
+
+int main(int argc, char **argv)
+{
+    Person person(19);
+    cout << person-- << endl; // 19
+    cout << person << endl;   // 18
+    cout << person++ << endl; // 18
+    cout << person << endl;   // 19
+    
+    cout << person.operator++(0) << endl; // 19 显式调用
+    cout << person << endl;               // 20
+    return 0;
+}
+```
