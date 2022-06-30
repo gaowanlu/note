@@ -716,3 +716,179 @@ int main(int argc, char **argv)
 ```
 
 至此我们又多了一种在函数之间传递函数的方法，以前我们使用函数指针、lambda表达式现在又可以使用函数对象进行类函数的传递
+
+### 标准定义的函数对象
+
+在C++标准库中定义了一些运算函数对象，其定义在头文件functional中
+
+![标准库函数对象](<../../../.gitbook/assets/屏幕截图 2022-06-30 104551.jpg>)
+
+```cpp
+//example20.cpp
+#include <iostream>
+#include <functional>
+#include <vector>
+#include <algorithm>
+#include "print.h"
+using namespace std;
+
+int main(int argc, char **argv)
+{
+    plus<int> p;
+    cout << p(1, 2) << endl; // 3
+    vector<int> vec = {6, 7, 3, 4, 5, 2, 3, 0};
+    sort(vec.begin(), vec.end(), greater<int>());
+    printVec(vec); // 7 6 5 4 3 3 2 0
+    sort(vec.begin(), vec.end(), less<int>());
+    printVec(vec); // 0 2 3 3 4 5 6 7
+    return 0;
+}
+```
+
+### 可调用对象与function
+
+C++中可调用的对象种类有：函数、函数指针、lambda表达、bind创建的对象，重载了函数调用运算符的类
+
+### 不同类型可能具有相同的调用形式
+
+虽然可能具有相同的调用方式，但类型是不同的
+
+```cpp
+//example21.cpp
+int add(int i, int j)
+{
+    return i + j;
+}
+
+//当lamba显式声明返回值类型为int时 与add同类型
+//如果是自动推算不写->int则与add不是同类型
+auto mod = [](int i, int j) -> int
+{
+    return i % j;
+};
+
+class divide
+{
+public:
+    int operator()(int i, int j)
+    {
+        return i / j;
+    }
+};
+
+int main(int argc, char **argv)
+{
+    //三者调用形式为int(int,int)但三者不是一个类型
+    divide divideInstance;
+    cout << add(1, 2) << " " << mod(5, 2) << " " << divideInstance(9, 3) << endl;
+    // 3 1 3
+    map<string, int (*)(int, int)> m_map;
+    m_map.insert({"+", add});
+    m_map.insert({"%", mod}); // mod显式声明了返回值类型
+    // m_map.insert({"/", divideInstance});//错误：value类型不匹配
+    auto fun = m_map.find("%")->second;
+    cout << fun(5, 2) << endl; // 1
+    return 0;
+}
+```
+
+### 标准库function类型
+
+其定义在functional头文件中
+
+![function的操作](<../../../.gitbook/assets/屏幕截图 2022-06-30 111004.jpg>)
+
+其本质为了解决统一调用方式相同的可调用对象
+
+```cpp
+//example22.cpp
+int add(int i, int j)
+{
+    return i + j;
+}
+
+//当lamba显式声明返回值类型为int时 与add同类型
+//如果是自动推算不写->int则与add不是同类型
+auto mod = [](int i, int j) -> int
+{
+    return i % j;
+};
+
+class divide
+{
+public:
+    int operator()(int i, int j)
+    {
+        return i / j;
+    }
+};
+
+int main(int argc, char **argv)
+{
+    function<int(int, int)> f = add;
+    cout << add(1, 2) << endl; // 3
+    f = mod;
+    cout << f(3, 2) << endl; // 1
+    f = divide();
+    cout << f(4, 2) << endl; // 2
+    map<string, function<int(int, int)>> m_map;
+    m_map.insert({"+", add});
+    m_map.insert({"%", mod});
+    m_map.insert({"/", divide()});
+    cout << m_map["/"](10, 5) << endl; // 2
+    return 0;
+}
+```
+
+目前我们已经有了一种更好地在函数之间传递可调用对象地办法
+
+```cpp
+//example23.cpp
+int func(function<int(int, int)> f)
+{
+    return f(100, 3);
+}
+
+int main(int argc, char **argv)
+{
+    int result = func([](int a, int b) -> int
+                      { return a + b; });
+    cout << result << endl; // 103
+    //简直优雅极了是吧
+    return 0;
+}
+```
+
+### 函数的重载与function
+
+在将函数赋给function时，如果函数有多种重载形式，编译器并不能自动推算出要使用哪一种，所以存在二义性，通常会使用下列方法进行解决
+
+```cpp
+//example24.cpp
+int add(int a, int b)
+{
+    return a + b;
+}
+
+double add(double a, double b)
+{
+    return a + b;
+}
+
+int main(int argc, char **argv)
+{
+    function<int(int, int)> f = nullptr;
+    // f = add; //错误：有重载 不知道使用那一个
+    int (*fp)(int, int) = add; //先用函数指针存储指定的函数地址
+    f = fp;                    //将函数地址赋给function
+    cout << f(9, 5) << endl;   // 14
+    
+    // function向成员类型
+    function<int(int, int)>::result_type a = 12;           // int a
+    function<int(int, int)>::first_argument_type b = 100;  // int b
+    function<int(int, int)>::second_argument_type c = 200; // int c
+    function<int(int)>::argument_type d = 99;              // int d
+    cout << a << " " << b << " " << c << " " << d << endl; // 12 100 200 99
+    return 0;
+}
+```
