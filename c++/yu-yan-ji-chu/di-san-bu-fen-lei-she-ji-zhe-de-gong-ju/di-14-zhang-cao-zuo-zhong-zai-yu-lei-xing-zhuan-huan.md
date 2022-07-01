@@ -892,3 +892,298 @@ int main(int argc, char **argv)
     return 0;
 }
 ```
+
+### 类型转换运算符
+
+形式为`operator type() const`,type是任意的，只要可以作为函数的返回值，因此不允许转换成数组或者函数类型
+
+```cpp
+//example25.cpp
+class Person
+{
+public:
+    int age;
+    string name;
+    Person(int age, string name) : age(age), name(name) {}
+    operator int() const
+    {
+        return age;
+    }
+    operator string() const
+    {
+        return name;
+    }
+};
+
+int main(int argc, char **argv)
+{
+    Person person(19, "me");
+    int age = person;
+    string name = person;
+    cout << age << " " << name << endl; // 19 me
+
+    double temp_double = person; //隐式自动转换
+    cout << temp_double << endl;
+    cout << person + 9.99 << endl; // 28.99
+    //强制转换
+    cout << (string)person << endl; // me
+    return 0;
+}
+```
+
+### 显式的类型转换运算符
+
+在C++11中引入了显式的类型转换运算符，即定义的类型转换运算符方法只有在进行显式转换时才被调用
+
+```cpp
+//example26.cpp
+class Person
+{
+public:
+    int age;
+    string name;
+    Person(int age, string name) : age(age), name(name) {}
+    operator int() const
+    {
+        return age;
+    }
+    explicit operator string() const
+    {
+        return name;
+    }
+};
+
+int main(int argc, char **argv)
+{
+    Person person(19, "me");
+    //隐式转换被禁止
+    string name = person + "sx";
+    cout << name << endl; // nothing
+    //只能进行显式调用
+    name = (string)person + "sx";
+    cout << name << endl; // mesx
+    return 0;
+}
+```
+
+### IO类型有bool转换规则
+
+IO类型对象的状态为good则会返回真，否则函数返回假
+
+```cpp
+//example27.cpp
+int main(int argc, char **argv)
+{
+    ifstream i("./example27.iofile", fstream::app | fstream::in);
+    cout << (bool)i << endl; // 1
+    i.setstate(std::ios_base::badbit);
+    if (i)
+    {
+        cout << "true" << endl;
+    }
+    else
+    {
+        cout << "false" << endl; // false
+    }
+    return 0;
+}
+```
+
+### 避免有二义性的类型转换
+
+* 转换构造函数与类型转换运算
+
+最明显的情况就是在`A=B`时，A定义了B的转换构造函数，B定义了A的类型转换运算，则编译器应该用哪一个呢？\
+编译器的不同，可能处理方法是不同的，但是在必要时可以使用显式调用
+
+```cpp
+//example28.cpp
+class B;
+
+class A
+{
+public:
+    A(const B &b)
+    {
+        cout << "A(const B &b)" << endl;
+    }
+    A() = default;
+};
+
+class B
+{
+public:
+    operator A()
+    {
+        cout << "operator A()" << endl;
+        A a;
+        return a;
+    }
+};
+int main(int argc, char **argv)
+{
+    B b;
+    A a = b;            // operator A()
+    a = b;              // operator A()
+                        //显式调用
+    a = b.operator A(); // operator A()
+    A a1(b);            // A(const B &b)
+    return 0;
+}
+```
+
+* 算术运算中的二义性
+
+还有一种常见的二义性，如果两个类型转换都转成不同类型的数字，那么在算数运算时应该采用哪一种呢？\
+最简单的方法就是使用显式转换调用
+
+```cpp
+//example29.cpp
+class Person
+{
+public:
+    int age;
+    string name;
+    Person(int age, string name) : age(age), name(name) {}
+    operator double() const
+    {
+        return age;
+    }
+    operator long() const
+    {
+        return age;
+    }
+};
+
+int main(int argc, char **argv)
+{
+    Person person(19, "me");
+    long a = person;
+    cout << a << endl; // 19
+    double b = person;
+    cout << b << endl; // 19
+    // cout << person + 34.3 << endl;//错误：具有二义性 long or double ,ambiguous overloads
+    return 0;
+}
+```
+
+* 函数重载与转换构造函数二义性
+
+下面的例子当传递int给func则会触发转换构造函数，有多个构造函数的参数都是int，所以会产生二义性，不知道何去何从
+
+```cpp
+//example30.cpp
+class A
+{
+public:
+    A(int n) {}
+};
+
+class B
+{
+public:
+    B(int n) {}
+};
+
+void func(const A &a)
+{
+    cout << "void func(const A &a)" << endl;
+}
+void func(const B &b)
+{
+    cout << "void func(const B &b)" << endl;
+}
+
+int main(int argc, char **argv)
+{
+    // func(10); // call of overloaded 'func(int)' is ambiguous
+    func(A(10)); // void func(const A &a)
+    func(B(10)); // void func(const B &b)
+    return 0;
+}
+```
+
+还有一种变形情况，并不是只有当A B的构造函数接收相同的类型时才会冲突，当A与B构造函数的参数类型可以进行转换时就会引起二义性
+
+```cpp
+//example31.cpp
+class A
+{
+public:
+    A(int n) {}
+};
+
+class B
+{
+public:
+    B(double n) {}
+};
+
+void func(const A &a)
+{
+    cout << "void func(const A &a)" << endl;
+}
+void func(const B &b)
+{
+    cout << "void func(const B &b)" << endl;
+}
+
+int main(int argc, char **argv)
+{
+    // func(10);    // call of overloaded 'func(int)' is ambiguous
+    func(A(10)); // void func(const A &a)
+    func(B(10)); // void func(const B &b)
+    return 0;
+}
+```
+
+### 函数匹配与重载运算符
+
+定义运算符方法有两种形式，一种为类方法，一种为直接重载相关操作方法\
+运算`a sym b`可能由`a.operatorsym(b)`或者`operatorsym(a,b)`处理，如果两个同时被定义，编译器也不知道要调用那一个
+
+```cpp
+//example32.cpp
+class Person
+{
+public:
+    int age;
+    string name;
+    Person(int age, string name) : age(age), name(name) {}
+    Person(int age = 0) : age(age), name("") {}
+    operator long() const
+    {
+        return age;
+    }
+    Person operator+(const Person &person)
+    {
+        cout << "Person operator+(const Person &person)" << endl;
+        Person p(age + person.age, name);
+        return p;
+    }
+};
+
+Person operator+(const Person &a, const Person &b)
+{
+    cout << "Person operator+(const Person &a, const Person &b)" << endl;
+    Person p(a.age + b.age, a.name);
+    return p;
+}
+
+int main(int argc, char **argv)
+{
+    Person person1(19, "me");
+    Person person2(19, "me");
+    person1 + person2; // Person operator+(const Person &person)
+    // 二义性
+    // 78 + person1; // ambiguous overload for 'operator+' (operand types are 'int' and 'Person')
+    //编译器不知道将78使用转换构造函数变为Person还是将person1转换为long类型
+    //最简单的解决办法就是显式调用
+    78 + person1.operator long(); // int + long
+    // Person + Person
+    Person(78) + person1; // Person operator+(const Person &person)
+    return 0;
+}
+```
+
+这一节的内容比较多，学习了如何定义运算符规则，有进一步深入了解lambda与函数对象、以及标准库的function对象、讨论了类型转换运算符以及经常出现的二义性问题
