@@ -1,3 +1,9 @@
+---
+cover: >-
+  https://images.unsplash.com/photo-1470470558828-e00ad9dbbc13?crop=entropy&cs=tinysrgb&fm=jpg&ixid=MnwxOTcwMjR8MHwxfHNlYXJjaHwyfHxUb3VyJTIwZGUlMjBGcmFuY2V8ZW58MHx8fHwxNjU2NzQ0MzE5&ixlib=rb-1.2.1&q=80
+coverY: 0
+---
+
 # 🌽 第15章 面向对象程序设计
 
 ## 第15章 面向对象程序设计
