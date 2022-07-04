@@ -541,3 +541,340 @@ int main(int argc, char **argv)
     return 0;
 }
 ```
+
+### 虚函数
+
+前面看见某些方法使用了virtual关键词修饰，当使用基类调用一个虚成员函数时会执行动态绑定，每一个虚函数都应提供定义，不管是否被用到，直到运行时才知道到底调用了那个版本的虚函数
+
+当一个类中有virtual成员方法时，但是其没有定义那么这个类是不能用来创建对象的，只有其内virtual全部都有一定是才可以
+
+```cpp
+//example12.cpp
+class Person
+{
+public:
+    string name;
+    int age;
+    Person(const int &age, const string &name) : age(age), name(name) {}
+    virtual void print();//错误 virtual成员没有被定义
+};
+
+int main(int argc, char **argv)
+{
+    Person person(19, "me");
+    return 0;
+}
+```
+
+当使用指针或者引用调用虚函数时，将会发生动态绑定
+
+```cpp
+//example12.cpp
+class Person
+{
+public:
+    string name;
+    int age;
+    Person(const int &age, const string &name) : age(age), name(name) {}
+    virtual void print() const
+    {
+        cout << "Person " << age << " " << name << endl;
+    }; //错误 virtual成员没有被定义
+};
+
+class Mom : public Person
+{
+public:
+    Mom() : Person(19, "mom") {}
+    void print() const override
+    {
+        cout << "Mom " << age << " " << name << endl;
+    }
+};
+
+class Son : public Person
+{
+public:
+    Son() : Person(19, "son") {}
+    void print() const override
+    {
+        cout << "Son " << age << " " << name << endl;
+    }
+};
+
+void func(Person &person)
+{
+    person.print(); //发生动态绑定
+    //调用哪一个print完全取决于person绑定的实际对象
+}
+
+void execute(Person person)
+{
+    person.print(); // Person 19 son
+    //不会发生动态绑定
+    //因为person不是指针类型或者引用类型
+    //他仅仅是一个person对象
+}
+
+int main(int argc, char **argv)
+{
+    Mom mom;
+    Son son;
+    Person person(19, "me");
+    func(mom);    // Mom 19 mom
+    func(son);    // Son 19 son
+    func(person); // Person 19 me
+    execute(son);
+    return 0;
+}
+```
+
+### 派生类中的虚函数
+
+当派生类override了某个虚函数，可以再次使用virtual关键字指出函数性质，但是可以省略，因为一旦某个类方法被声明为虚函数，则在所有派生类中它都是虚函数
+
+```cpp
+//example14.cpp
+class Person
+{
+public:
+    string name;
+    int age;
+    Person(const int &age, const string &name) : age(age), name(name) {}
+    virtual void print() const
+    {
+        cout << "Person " << age << " " << name << endl;
+    }; //错误 virtual成员没有被定义
+    virtual Person *self()
+    {
+        return this;
+    }
+};
+
+class Mom : public Person
+{
+public:
+    Mom() : Person(19, "mom") {}
+    //即使不显式指定virtual其也是virtual的
+    virtual void print() const override
+    {
+        cout << "Mom " << age << " " << name << endl;
+    }
+    // 特殊的情况
+    // override本应返回类型 函数名 参数列表都应相同
+    // 但是仅当但会自己的指针或者引用时特殊,因为会可以发生动态绑定
+    Mom *self() override
+    {
+        return this;
+    }
+};
+
+int main(int argc, char **argv)
+{
+    Mom mom;
+    mom.self()->print(); // Mom 19 mom
+    return 0;
+}
+```
+
+### final和override说明符
+
+当派生类中定义一个名称与基类相同但是参数列表不同的方法，这是完全合法的，但是写代码就会出现些问题，目的就是覆盖掉基类的方法，但是不知道覆盖是否正确，这也正是override的作用
+
+```cpp
+//example15.cpp
+class Person
+{
+public:
+    string name;
+    int age;
+    Person(const int &age, const string &name) : age(age), name(name) {}
+    virtual void f1(){};
+    virtual void f2() const {};
+};
+
+class Mom : public Person
+{
+public:
+    //当Person内的virtual全部有定义是才能使用Person构造函数
+    Mom() : Person(19, "mom") {}
+    /*
+    void f1(int age) override //错误 override失败编译不通过
+    {
+        cout << "Mom f1" << endl;
+    }*/
+    void f1() override {}    // override正确
+    void f2() const override // override正确
+    {
+    }
+    void f2(string message) //方法重载但与override无关
+    {
+        cout << message << endl;
+    }
+};
+
+int main(int argc, char **argv)
+{
+    Mom mom;
+    mom.f1();
+    mom.f2();
+    mom.f2("hello world"); // hello world
+    return 0;
+}
+```
+
+final关键词作用域类则是禁止一个类作为基类，作用于类方法则是禁止派生类对其进行重写,重要的是final只能作用于virtual成员函数
+
+```cpp
+//example16.cpp
+class Person
+{
+public:
+    string name;
+    int age;
+    Person(const int &age, const string &name) : age(age), name(name) {}
+    // final只能作用于virtual成员
+    virtual void f1() final
+    {
+        cout << "f1" << endl;
+    }
+    void f2()
+    {
+        cout << "Person f2" << endl;
+    }
+};
+
+class Mom : public Person
+{
+public:
+    Mom() : Person(19, "mom") {}
+    // void f1(){}//错误 void f1()禁止被重写
+    void f2()
+    {
+        cout << "Mom f2" << endl;
+    }
+};
+
+int main(int argc, char **argv)
+{
+    Mom mom;
+    mom.f1(); // f1
+    mom.f2(); // Mom f2
+    return 0;
+}
+```
+
+### 虚函数默认参数
+
+虚函数直接的重写关系，只关注函数的返回类型与函数参数类型与个数以及顺序，而不关注有无参数默认值
+
+重点：如果某次函数调用使用了默认参数，则该实参值由本次调用的静态类型决定，简单点说就是，如果是通过基类的引用或者指针调用函数，则使用基类中定义的默认实参，然后执行基类指针或者引用指向的实际对象中的此方法的函数体代码
+
+最佳实践：虚函数使用默认实参，则基类和派生类中定义的默认参数最好一致
+
+```cpp
+//example17.cpp
+class Person
+{
+public:
+    string name;
+    int age;
+    Person(const int &age, const string &name) : age(age), name(name) {}
+    virtual void f1(int n = 1)
+    {
+        cout << "f1 " << n << endl;
+    }
+};
+
+class Mom : public Person
+{
+public:
+    Mom() : Person(19, "mom") {}
+    void f1(int n = 3) override
+    {
+        cout << "Mom f1 " << n << endl;
+    }
+};
+
+class Son : public Person
+{
+public:
+    Son() : Person(19, "son") {}
+    void f1(int n) override
+    {
+        cout << "Son f1 " << n << endl;
+    }
+};
+
+void func(Person &person)
+{
+    person.f1();
+}
+
+int main(int argc, char **argv)
+{
+    Mom mom;
+    mom.f1(); // Mom f1 3
+    Person person(19, "me");
+    person.f1(); // f1 1
+
+    Son son;
+    son.f1(5); // Son f1 5 必须提供实参
+
+    //神奇的一幕 func中没有提供f1实参 没有报错
+    //而是匹配到了基类的f1有默认值
+    //进而使用了基类f1的默认值 然后执行了派生类的f1
+    func(son); // Son f1 1
+    return 0;
+}
+```
+
+### 回避虚函数机制
+
+例如在链式继承中，一个底部的派生类赋给了基类的引用或者指针，有时想要明确指定调用谁的虚函数，而不是默认的动态绑定，则可以使用作用域运算符实现\
+格式为 `object.BaseClassName::Method()`或者`objectPtr->BaseClassName::Method()`\
+在C++继承中，继承链上的每个类的内容都是真实存在的，因为创建一个派生类，默认会调用继承链上基类的构造函数
+
+```cpp
+//example18.cpp
+class Person
+{
+public:
+    const int code = 1;
+    virtual void printCode()
+    {
+        cout << "Person code " << code << endl;
+    }
+};
+
+class Woman : public Person
+{
+public:
+    const int code = 2;
+    void printCode() //重写
+    {
+        cout << "Woman code " << code << endl;
+    }
+};
+
+class Mom : public Woman
+{
+public:
+    const int code = 3;
+    void printCode() //重写
+    {
+        cout << "Mom code " << code << endl;
+    }
+};
+
+int main(int argc, char **argv)
+{
+    Mom mom;
+    mom.printCode();         // Mom code 3
+    mom.Person::printCode(); // Person code 1
+    mom.Woman::printCode();  // Woman code 2
+    Mom *const ptr = &mom;
+    ptr->Person::printCode(); // Person code 1
+    return 0;
+}
+```
