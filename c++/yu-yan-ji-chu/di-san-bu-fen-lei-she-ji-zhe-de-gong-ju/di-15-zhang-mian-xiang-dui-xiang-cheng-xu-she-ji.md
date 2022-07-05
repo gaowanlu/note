@@ -425,7 +425,8 @@ int main(int argc, char **argv)
 
 ### 链式继承
 
-一个派生类本身也可以作为基类，则继承则是从最顶层的基类、一层一层向下继承
+一个派生类本身也可以作为基类，则继承则是从最顶层的基类、一层一层向下继承\
+对与派生类调用基类构造函数对基类部分初始化，重点是`派生类构造函数只初始化它的直接基类`，直接基类又是其他类的派生类，向上套娃下去
 
 ```cpp
 //example9.cpp
@@ -875,6 +876,372 @@ int main(int argc, char **argv)
     mom.Woman::printCode();  // Woman code 2
     Mom *const ptr = &mom;
     ptr->Person::printCode(); // Person code 1
+    return 0;
+}
+```
+
+### 抽象类与纯虚函数
+
+有些类只是用来在中间做基类，其中有一些方法，但是只创建一个此对象是没有意义的，很类似java里面的抽象类，抽象类不能被创建对象实例，其实际的意义就是给别人做基类\
+纯虚函数在类内声明时后面添加`=0`,纯虚函数也可以被定义，但是其定义只能在类外定义，只能在类内声明
+
+含有（或者未经覆盖直接继承）纯虚函数的类是抽象基类，抽象基类负责定义接口，而后续的其他类可以覆盖该接口。\
+不能直接创建一个抽象基类的对象，派生类必须给出纯虚函数覆盖定义，否则它仍是抽象基类
+
+```cpp
+//example19.cpp
+class Person
+{
+public:
+    const int code = 1;
+    virtual void printCode()
+    {
+        cout << "Person code " << code << endl;
+    }
+};
+
+// Woman含有纯虚函数 为抽象类
+class Woman : public Person
+{
+public:
+    const int code = 2;
+    void printCode() = 0; //纯虚函数 Woman对象不能被创建
+};
+
+//纯虚函数也可以被定义
+void Woman::printCode()
+{
+    cout << this->Person::code << endl;
+}
+
+class Mom : public Woman
+{
+public:
+    void printCode() override
+    {
+        cout << this->code << endl; // 2
+        this->Woman::printCode();   // 1
+    }
+};
+
+int main(int argc, char **argv)
+{
+    Mom mom;
+    mom.printCode(); // 2 1
+    // Woman woman;     //错误 不允许使用抽象类类型 "Woman" 的对象:
+    return 0;
+}
+```
+
+### 访问控制
+
+每个类分别控制自己的成员初始化过程，每个类分别控制着其成员对于派生类来说是否可访问
+
+`受保护的成员 protected`
+
+1、和private类似，protected成员对于类的用户来说不可访问\
+2、和public成员类似，protected成员对于派生类的成员和友元来说可以访问\
+3、派生类的成员或友元只能通过派生类对象访问基类的protected成员，派生类对基类对象中的protected对象无访问权
+
+```cpp
+//example20.cpp
+class Person
+{
+public:
+    const int code = 1;
+    virtual void printCode() = 0;
+
+protected:
+    string message = "protected message";
+};
+
+class Woman : public Person
+{
+public:
+    const int code = 2;
+    void printCode()
+    {
+        cout << this->message << endl;
+    }
+    friend void func(Woman &woman);
+    friend void funcp(Person &person);
+};
+
+void func(Woman &woman)
+{
+    cout << woman.message << endl;
+    //友元函数说着成员函数可以访问protected成员
+}
+
+void funcp(Person &person)
+{
+    // cout << person.message << endl; //错误 只能通过派生类对象访问
+    //或者在Person内添加friend void funcp(Person &person);
+}
+
+int main(int argc, char **argv)
+{
+    Woman woman;
+    woman.printCode(); // protected message
+    // woman.message;//错误message是protected成员
+    func(woman); // protected message
+    funcp(woman);
+    return 0;
+}
+```
+
+### 重新控制继承内容
+
+上面已经学习过，派生类从基类继承的public、protected成员\
+但是可以在以前的继承代码中，在派生类后面的继承列表中，基类名称前还加了控制访问限定符
+
+形如 `class Woman:public Person`，其作用是控制从Person继承而来的内容对于Woman外部是怎样的，也就是Woman派生类可以重新修饰从Person继承而来的属性与方法\
+`public`表示对继承内容public的仍为public,protected变为public,private依旧不能访问\
+`private`表示对继承内容，全部修改为private,进而其派生类将无法直接访问些内容\
+`protected`表示将继承的内容,public的改为protected,protected保持protected,private保持不可直接访问
+
+```cpp
+//example21.cpp
+class Person
+{
+public:
+    int age;
+    string name;
+    Person(const int &age, const string &name) : age(age), name(name) {}
+
+protected:
+    void func()
+    {
+        cout << age << " " << name << endl;
+    }
+};
+
+//从Person继承的内容修饰为protected的
+class Woman : private Person
+{
+public:
+    Woman() : Person(19, "me")
+    {
+        func(); // func在Woman内是private的
+    };
+};
+
+class Mom : public Woman
+{
+public:
+    void run()
+    {
+        // func(); //错误 func为基类的私有成员
+    }
+};
+
+int main(int argc, char **argv)
+{
+    Woman woman; // 19 me
+    // woman.func();
+    //  错误 func为woman中的private成员 return 0;
+}
+```
+
+### 派生类向基类转换的可访问性
+
+* 对于用户代码 用户代码只有在public继承时才能将派生类转换到基类指针或引用
+* 对于派生类成员以及其友元 无论是private public protected继承，成员友元都可使用转换
+
+```cpp
+//example22.cpp
+class Person
+{
+public:
+    int age;
+    string name;
+    Person(const int &age, const string &name) : age(age), name(name) {}
+
+protected:
+    void func()
+    {
+        cout << age << " " << name << endl;
+    }
+};
+
+class Woman : private Person
+// class Woman : public Person
+{
+public:
+    Woman() : Person(19, "me")
+    {
+        func(); // func在Woman内是private的
+    };
+    void hello()
+    {
+        Person *ptr = this;
+    }
+    friend void func();
+};
+
+void func()
+{
+    Woman woman;
+    Person *ptr = &woman;
+}
+
+int main(int argc, char **argv)
+{
+    /***对于用户代码****/
+    Woman woman;
+    // Person &ref = woman;
+    // 错误 不允许对不可访问的基类 "Person" 进行转换,Woman:private Person
+
+    /***对于派生类成员或友元****/
+    func();
+    woman.hello();
+    //无论是private public protected继承，成员友元都可使用转换
+    //用户代码只有在public继承时才能转换
+
+    return 0;
+}
+```
+
+### 友元与继承
+
+总之记住一句话：友元关系不能被继承
+
+```cpp
+//example23.cpp
+class Person
+{
+public:
+    int age;
+};
+
+class Woman : public Person
+{
+public:
+    friend void func(const Woman &woman);
+
+private:
+    string bra = "d";
+};
+
+class Mom : public Woman
+{
+public:
+    string message = "mom";
+    friend class Son;
+
+private:
+    int height = 176;
+};
+
+class Son : public Person
+{
+public:
+    string message = "son";
+    void lookMom(const Mom &mom)
+    {
+        cout << mom.height << endl;
+    }
+};
+
+// Q没有对Mom的友元能力 友元关系不能继承
+class Q : public Son
+{
+public:
+    void lookMom(const Mom &mom)
+    {
+        // cout << mom.height << endl;//错误 Q不是Mom的友元
+    }
+};
+
+// func是Woman的友元 不是 Mom的友元
+void func(const Woman &woman)
+{
+    cout << woman.bra << endl;
+    Mom mom;
+    cout << mom.bra << endl; // bra是由Woman继承而来可以访问
+}
+
+int main(int argc, char **argv)
+{
+    Mom mom;
+    func(mom); // d d
+    return 0;
+}
+```
+
+### 重新控制部分继承内容
+
+现在已经直到有三种继承方式，private、public、protected ，但是有时并不需要使得继承的全部内容统一的用同一个方式继承，所以有了改变个别成员的可访问性
+
+```cpp
+//example24.cpp
+class Person
+{
+public:
+    int age = 19;
+    void cage() const
+    {
+        cout << age << endl;
+    }
+
+protected:
+    size_t n = 999;
+};
+
+class Mom : private Person
+{
+public:
+    using Person::n; //以public方式继承n
+protected:
+    using Person::cage; //以protected方式继承cage
+};                      //其余的成员则以声明的private的方式继承
+
+int main(int argc, char **argv)
+{
+    Mom mom;
+    // cout << mom.age << endl;//错误Mom以private继承age
+    // mom.cage();//错误 Mom以protected方式继承cage
+    cout << mom.n << endl; // Mom以public继承n
+    return 0;
+}
+```
+
+### 默认继承方式
+
+经过前面学习，可以直到struct成员默认为public的，class的成员默认为private。在继承中仍然可以选择struct或者class，但是二则默认继承方式不同，class以private方式继承，struct以public方式继承
+
+```cpp
+//example25.cpp
+class A
+{
+public:
+    int n = 999;
+};
+
+class B : A
+{
+public:
+    void f()
+    {
+        cout << n << endl;
+    }
+};
+
+struct C : A
+{
+public:
+    void f()
+    {
+        cout << n << endl;
+    }
+};
+
+int main(int argc, char **argv)
+{
+    B b;
+    C c;
+    // cout << b.n << endl;//class以private方式继承n
+    cout << c.n << endl; // 999 struct以public方式继承n
     return 0;
 }
 ```
