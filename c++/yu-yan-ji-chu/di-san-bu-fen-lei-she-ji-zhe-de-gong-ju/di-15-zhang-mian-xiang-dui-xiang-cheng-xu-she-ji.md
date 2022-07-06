@@ -1245,3 +1245,366 @@ int main(int argc, char **argv)
     return 0;
 }
 ```
+
+### 继承中的类作用域
+
+在前面的链式继承已知，每个类都有自己的作用域，当存在继承关系时，派生类的作用域嵌套在基类的作用域之内，当一个名字在派生类的作用域内无法正确解析，则编译器将继续在外层的基类作用域中寻找该名字的定义
+
+C中找不到age,去B中找，没找到再向A中找，在A中找到age
+
+```cpp
+//example26.cpp
+class A
+{
+protected:
+    int age = 19;
+};
+
+class B : A
+{
+protected:
+    using A::age;
+};
+
+class C : public B
+{
+public:
+    using B::age;
+};
+
+int main(int argc, char **argv)
+{
+    C c;
+    cout << c.age << endl; // 19
+    return 0;
+}
+```
+
+### 在编译时进行名字查找
+
+一个对象、引用或者指针的静态类型决定了该对象的哪些成员是可见的，例如B继承了A，A指针指向B对象，利用此指针的使用对于A对象能使用的，简单点看个例子吧
+
+```cpp
+//example27.cpp
+class A
+{
+public:
+    int age = 19;
+};
+
+class B : public A
+{
+public:
+    int height = 180;
+};
+
+class C : public B
+{
+};
+
+int main(int argc, char **argv)
+{
+    C c;
+    cout << c.age << " " << c.height << endl; // 19 180
+    A *ptr = &c;
+    cout << ptr->age << endl;
+    // cout << ptr->height << endl;
+    // 错误 用ptr只能访问从A向上继承链中的内容，向下访问不到
+    return 0;
+}
+```
+
+### 名字冲突与继承
+
+派生类中可以定义基类中已经有的成员名称，会覆盖派生类中的\
+可以通过作用域运算符来使用隐藏的成员，也即是显式指定要访问基类的成员
+
+```cpp
+//example28.cpp
+class A
+{
+public:
+    int age = 999;
+};
+
+class B : public A
+{
+public:
+    int age = 888;
+    int base_age()
+    {
+        return A::age;
+    }
+};
+
+int main(int argc, char **argv)
+{
+    B b;
+    cout << b.age << endl;        // 888
+    cout << b.A::age << endl;     // 999 显式访问基类中的age
+    cout << b.base_age() << endl; // 999
+
+    A *ptr = &b;
+    cout << ptr->age << endl; // 999
+    // ptr的类型决定从继承关系的那一层向上查找
+    return 0;
+}
+```
+
+### 虚函数的精髓
+
+前面对虚函数的学习还没有学习到它的本质，已经知道含有虚函数但是未定义类的对象不能创建。\
+还有一个重要的特性，当一个派生类对象赋给基类引用，调用虚函数时会调用对象实例的虚函数实现，而不像普通方法会从基类向上查找
+
+```cpp
+//example29.cpp
+class A
+{
+public:
+    int age = 999;
+    virtual void print()
+    {
+        cout << "A " << age << endl;
+    }
+    int get_age()
+    {
+        cout << "A get_age" << endl;
+        return age;
+    }
+};
+
+class B : public A
+{
+public:
+    int age = 888;
+    void print() override
+    {
+        cout << "B " << age << endl;
+    }
+};
+
+int main(int argc, char **argv)
+{
+    B b;
+    A &a = b;
+    a.print(); //"B 888" 调用了对象实例的print()而非基类中的
+
+    cout << a.get_age() << endl; // A get_age 999
+    cout << b.get_age() << endl; // A get_age 999
+
+    return 0;
+}
+```
+
+### 继承的方法不会重载
+
+当继承的内容中已经有了某个名称的方法，但派生类对这个方法不能进行重载，只能覆盖\
+为什么呢，什么原理？\
+背后的本质其实也很简单，当编译器编译时，会从派生类开始沿着继承链向上查找，知道查到有这个名字方法的类为止，并不关心方法的参数\
+所以下面这个例子中，b.print() 编译器从B开始找，在B有名字为print的方法，所以停止再向上，看B中print的重载有没有参数列表匹配的
+
+```cpp
+//example30.cpp
+struct A
+{
+    void print()
+    {
+        cout << "A 19" << endl;
+    }
+};
+
+struct B : A
+{
+    void print(int age)
+    {
+        cout << "B " << age << endl;
+    }
+};
+
+int main(int argc, char **argv)
+{
+    B b;
+    b.print(10); // B 10
+    // b.print();   //错误 没有在B总发现相关重载
+    //但可以进行显式调用
+    b.A::print(); // A 19
+    A *ptr = &b;
+    ptr->print(); // A 19
+    return 0;
+}
+```
+
+### 虚函数与作用域
+
+前面提到，基类与派生类中的虚函数必须有相同形参列表，为什么呢？\
+因为只有这样才能实现调用对象本身的方法实现
+
+```cpp
+A *aptr = &c;
+cout << aptr->func() << endl; // 222
+```
+
+```cpp
+//example31.cpp
+class A
+{
+public:
+    virtual int func();
+};
+
+class B : public A
+{
+public:
+    int func(int n) //并没有实现继承的虚函数 func()仍作为一个虚函数存在
+    {
+        return 111;
+    }
+    virtual void f2()
+    {
+        cout << "B f2\n";
+    }
+};
+
+class C : public B
+{
+public:
+    int func(int n) //覆盖基类B的func
+    {
+        return n;
+    }
+    int func() //实现了继承的虚函数
+    {
+        return 222;
+    }
+    void f2() //实现虚函数的定义
+    {
+        cout << "C f2" << endl;
+    }
+};
+
+int main(int argc, char **argv)
+{
+    C c;
+    c.f2();                      // C f2
+    cout << c.func() << endl;    // 222
+    cout << c.func(555) << endl; // 555
+
+    B *bptr = &c;
+    bptr->f2(); // C f2 因为f2为虚函数 虚函数将调用对象本身的f2
+
+    A *aptr = &c;                 // A中的func()为虚函数，则会调用对象本身的func()
+    cout << aptr->func() << endl; // 222
+    return 0;
+}
+```
+
+### 通过基类调用隐藏的虚函数
+
+有些东西很难解释清楚，看代码吧，思考一下就懂了
+
+```cpp
+//example32.cpp
+class A
+{
+public:
+    virtual int func()
+    {
+        return 0;
+    };
+};
+
+class B : public A
+{
+public:
+    int func(int n) //并没有实现继承的虚函数 func()仍作为一个虚函数存在
+    {
+        return 111;
+    }
+    virtual void f2()
+    {
+        cout << "B f2\n";
+    }
+};
+
+class C : public B
+{
+public:
+    int func(int n) //覆盖基类B的func
+    {
+        return n;
+    }
+    int func() //实现了继承的虚函数
+    {
+        return 222;
+    }
+    void f2() //实现虚函数的定义
+    {
+        cout << "C f2" << endl;
+    }
+};
+
+int main(int argc, char **argv)
+{
+    A a;
+    B b;
+    C c;
+    A *pa = &a, *pb = &b, *pc = &c;
+    cout << pa->func() << endl; // 0 虚调用pb->A::func()
+    //实例b类B并没有实现虚函数func()
+    //直接调用了A的func的实现 即pb->A::func()
+    cout << pb->func() << endl; // 0 虚调用pb->A::func()
+    cout << pc->func() << endl; // 222
+    
+    B *bptr = &c;
+    // bptr->func(); //函数调用中的参数太少
+    return 0;
+}
+```
+
+### 覆盖重载的函数
+
+和其他函数一样，成员函数无论是否为虚函数都唔那个被重载，派生类可以覆盖重载函数的0个或多个实例，如果派生类希望所有的重载版本对于它是可见的，那么它需覆盖所有版本，或一个也不覆盖，或者使用using声明进行部分重载
+
+```cpp
+//example33.cpp
+class A
+{
+public:
+    void func1()
+    {
+        cout << "A" << endl;
+    }
+    void func1(int n)
+    {
+        cout << "A" << endl;
+    }
+    void func1(string m)
+    {
+        cout << "A" << endl;
+    }
+};
+
+class B : public A
+{
+public:
+    void func1(string m)
+    {
+        cout << "B" << endl;
+    }
+    // using A::func1;
+    //使用using将可以保留A中的func1不会被覆盖，只有func1(string m)重载被覆盖
+};
+
+int main(int argc, char **argv)
+{
+    B b;
+    b.func1("[]"); // B
+    // b.func1(1);    //错误 发生重载覆盖
+    //  b.func1();     //错误 发生重载覆盖
+    //当删掉B中的func1或者在B中覆盖所有A中的func1才可以是实现上面两行代码
+
+    A *ptr = &b;
+    ptr->func1(""); // A
+    return 0;
+}
+```
