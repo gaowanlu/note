@@ -1608,3 +1608,373 @@ int main(int argc, char **argv)
     return 0;
 }
 ```
+
+### 基类虚析构函数
+
+在派生类对象赋给基类指针，使用delete时会根据实际的绑定的对象调用相应的虚析构函数实现
+
+额外知识：如果一类定义了虚析构函数，编译器不会为其合成移动操作（移动操作符方法）
+
+```cpp
+//example34.cpp
+class A
+{
+public:
+    virtual ~A() = default;
+};
+
+class B : public A
+{
+public:
+    ~B() override
+    {
+        cout << "~B" << endl;
+    }
+};
+
+class C : public A
+{
+public:
+    ~C() override
+    {
+        cout << "~C" << endl;
+    }
+};
+
+int main(int argc, char **argv)
+{
+    A *p1 = new B;
+    A *p2 = new C;
+    A *p3 = new A;
+    delete p1; //~B
+    delete p2; //~C
+    delete p3; //
+    return 0;
+}
+```
+
+### 基类删除控制拷贝
+
+当基类删除合成拷贝构造函数时，会对派生类产生影响\
+在合成构造函数中，构造派生类调用的是什么形式的合成构造函数，在其执行时也会执行基类的相应格式的合成构造函数，如果派生类没有相应格式，则编译不通过
+
+```cpp
+//example35.cpp
+class A
+{
+public:
+    A() = default;
+    A(const A &) = delete; //删除默认拷贝构造函数
+};
+
+class B : public A
+{
+};
+
+int main(int argc, char **argv)
+{
+    B b1;                //正确 在构造b1时调用了A()
+    B b2(b1);            //错误 A的合成拷贝函数被删除了
+    B b3(std::move(b1)); //错误 隐式使用B的被删除的拷贝构造函数
+    return 0;
+}
+```
+
+### 基类移动操作与继承
+
+一般情况都会将基类的析构函数定义为虚函数，再此默认情况下编译器不会为其合成移动操作，而且在它的派生类中也没有合成的移动操作，如果需要则需要手动定义
+
+注意:要否需要显式定义，或者在拥有虚析构函数时是否会阻止生成合成移动拷贝操作，要根据编译器的不同而注意，有些编译器是不会阻止的
+
+```cpp
+//example36.cpp
+class A
+{
+public:
+    A() = default;
+    A(const A &) = default;
+    A(A &&) = default;
+    A &operator=(const A &) = default;
+    A &operator=(A &&) = default;
+    char type = 'A';
+    virtual ~A() = default;
+};
+
+class B : public A
+{
+};
+
+int main(int argc, char **argv)
+{
+    A a;
+    A b = a;
+    cout << b.type << endl;
+    B b1;
+    B b2 = b1;
+    b2.type = 'G';
+    cout << b1.type << " " << b2.type << endl; // A G
+    return 0;
+}
+```
+
+### 派生类的拷贝与移动构造函数
+
+在为派生类定义拷贝或移动构造函数时，我们通常使用初始化列表调用基类构造函数对对象的基类部分进行初始化
+
+```cpp
+//example37.cpp
+class A
+{
+public:
+    A(const int &num = 999) : num(num) {}
+    int num;
+    virtual ~A() = default;
+};
+
+class B : public A
+{
+public:
+    B() = default; //调用A()
+    //默认情况使用默认构造函数
+    B(const B &b) : A(b) //使用基类的合成拷贝构造
+    {
+    }
+    B(B &&b) : A(std::move(b)) //使用基类的合成移动构造
+    {
+    }
+};
+
+int main(int argc, char **argv)
+{
+    B b1;
+    cout << b1.num << endl; // 999
+    b1.num = 888;
+    B b2(std::move(b1));
+    cout << b2.num << endl; // 888
+
+    B b3(b1);               //拷贝构造
+    cout << b3.num << endl; // 888
+    return 0;
+}
+```
+
+容易出错的地方，定义了错误的拷贝,当派生类拷贝构造没有调用基类相应构造函数时，则会调用基类的默认构造函数，造成假的拷贝
+
+```cpp
+//example38.cpp
+class A
+{
+public:
+    A(const int &num = 999) : num(num) {}
+    int num;
+    virtual ~A() = default;
+};
+
+class B : public A
+{
+public:
+    B() = default; //调用A()
+    //默认情况使用默认构造函数
+    B(const B &b) //没有调用基类的拷贝构造
+    {
+    }
+};
+
+int main(int argc, char **argv)
+{
+    B b1;
+    b1.num = 888;
+    cout << b1.num << endl; // 888
+    B b3(b1);               //拷贝构造 假拷贝
+    cout << b3.num << endl; // 999
+    return 0;
+}
+```
+
+### 派生类赋值运算符
+
+与拷贝和构造函数一样，派生类的赋值运算符也需显式地为其基类部分赋值
+
+```cpp
+//example39.cpp
+class A
+{
+public:
+    A()
+    {
+        cout << "A()" << endl;
+    };
+    A(const A &) = default;
+    virtual ~A() = default;
+};
+
+class B : public A
+{
+public:
+    B &operator=(const B &b)
+    {
+        A::operator=(b); //为基类部分赋值
+        return *this;
+    }
+    B(const B &b) : A(b)
+    {
+        cout << "B(const B &b) : A(b)" << endl;
+    }
+    B() = default;
+};
+
+int main(int argc, char **argv)
+{
+    B b1;      // A()
+    B b2;      // A()
+    b2 = b1;   // 调用B &operator=(const B &b)
+    B b3 = b2; // 调用B(const B &b) : A(b)
+    return 0;
+}
+```
+
+### 派生类析构函数
+
+析构函数体执行完成后，对象的成员将会被隐式销毁，基类同理\
+析构函数的调用构成从派生类开始向上一次执行基类的析构，每个基类负责销毁自己的那部分
+
+```cpp
+//example40.cpp
+class A
+{
+public:
+    A() = default;
+    virtual ~A()
+    {
+        cout << "~A" << endl;
+    }
+};
+
+class B : public A
+{
+public:
+    B() = default;
+    ~B() override
+    {
+        cout << "~B()" << endl;
+    }
+};
+
+int main(int argc, char **argv)
+{
+    B *b = new B();
+    A *a = b;
+    delete a; //~B() ~A()
+    return 0;
+}
+```
+
+### 构造函数内调用虚函数
+
+当构造函数调用虚函数时其派生的部分已经被销毁，所以在析构函数内只能调用此基类能够使用的，如果定义了虚函数则会调用自己的，但绝不是其派生类的实现，因为执行基类的系构造函数时，派生类的析构函数已经执行过了
+
+```cpp
+//example41.cpp
+class A // A为抽象类
+{
+public:
+    A() = default;
+    virtual void print() = 0; //纯虚函数
+    virtual ~A()
+    {
+        cout << "~A" << endl;
+        // print(); //错误 析构时print已经无定义
+    }
+};
+
+class B : public A
+{
+public:
+    B() = default;
+    ~B() override
+    {
+        cout << "~B()" << endl;
+    }
+    void print() override
+    {
+        cout << "print()" << endl;
+    }
+};
+
+int main(int argc, char **argv)
+{
+    B *b = new B();
+    A *a = b;
+    delete a; //~B() ~A()
+    return 0;
+}
+```
+
+### 继承构造函数
+
+有时可能会用到默认使用派生类的合成默认构造函数但暴露基类的构造函数的调用
+
+```cpp
+//example42.cpp
+class A
+{
+public:
+    int age;
+    A(int age) : age(age) {}
+    // A() = default;
+};
+
+class B : public A
+{
+public:
+    int n;
+    using A::A; //继承A的构造函数
+    //等价于
+    // B(int age):A(age){
+    // }
+};
+
+int main(int argc, char **argv)
+{
+    B b(13);
+    cout << b.age << endl; // 13
+    B b1;                  //错误 A没有默认构造函数
+    return 0;
+}
+```
+
+特点：
+
+1、继承构造函数的特点，一个using声明语句不能指定explicit或constexpr,如果需要指定则因该在基类中指定，派生类自然就会继承
+
+2、派生类不会继承基类构造函数的默认实参、而是对有默认实参的构造函数参数进行省略，这种要根据编译器确定
+
+```cpp
+//example43.cpp
+class A
+{
+public:
+    int age;
+    string name;
+    A(int age, string name = "me") : age(age), name(name) {}
+};
+
+class B : public A
+{
+public:
+    using A::A; //继承构造函数
+};
+
+int main(int argc, char **argv)
+{
+    B b(10, "oo");
+    cout << b.age << " " << b.name << endl; // 10 oo
+    B b1(11);
+    cout << b1.age << " " << b1.name << endl; // 11 me
+    return 0;
+}
+```
+
+3、派生类如果定义了自己的构造函数且函数的参数与继承的构造函数冲突时，则会采用自定义的而非继承的构造函数
+
+4、默认、拷贝、移动构造函数、操作符函数等不会被继承
