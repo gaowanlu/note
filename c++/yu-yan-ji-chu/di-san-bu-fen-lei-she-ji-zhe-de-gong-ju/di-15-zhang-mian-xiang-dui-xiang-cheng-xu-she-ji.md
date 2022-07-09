@@ -1978,3 +1978,202 @@ int main(int argc, char **argv)
 3、派生类如果定义了自己的构造函数且函数的参数与继承的构造函数冲突时，则会采用自定义的而非继承的构造函数
 
 4、默认、拷贝、移动构造函数、操作符函数等不会被继承
+
+### 容器与继承
+
+在C++中的标准容器中，虽然派生类可以向基类进行动态绑定，但是一个容器中是不能有两种数据类型的，不能同时存放基类和派生类对象，必须进行间接存放
+
+```cpp
+//example44.cpp
+class A
+{
+public:
+    int age;
+    A(int age) : age(age) {}
+};
+
+class B : public A
+{
+public:
+    string name;
+    B(string name, int age) : A(age), name(name) {}
+};
+
+int main(int argc, char **argv)
+{
+    vector<A> vec;
+    vec.push_back(B("me", 19));
+    //虽然可以把B放入但只是存储了基类部分，派生类部分将被忽略
+    vec.push_back(A(19));
+    cout << vec.size() << endl;  // 2
+    cout << vec[0].age << endl;  // 19
+    cout << vec[0].name << endl; // no member named 'name'
+    return 0;
+}
+```
+
+解决方法有很多、例如在容器内存储基类指针或者使用自定义类内定义基类指针做二次封装
+
+```cpp
+//example45.cpp
+class A
+{
+public:
+    int age;
+    A(int age) : age(age) {}
+    virtual void print()
+    {
+        cout << "A " << age << endl;
+    }
+};
+
+class B : public A
+{
+public:
+    string name;
+    B(string name, int age) : A(age), name(name) {}
+    void print() override
+    {
+        cout << "B " << name << endl;
+    }
+};
+
+int main(int argc, char **argv)
+{
+    vector<shared_ptr<A>> vec;
+    vec.push_back(make_shared<A>(19));
+    vec.push_back(make_shared<B>("me", 19));
+    cout << vec[0]->age << endl; // 19
+    cout << vec[1]->age << endl; // 19
+    A *a = vec[1].get();
+    B *b = (B *)a;
+    cout << b->name << endl; // me
+    //虚函数执行 多态
+    vec[0]->print(); // A 19
+    vec[1]->print(); // B me
+    return 0;
+}
+```
+
+可以进行二次封装
+
+```cpp
+//example46.cpp
+class C
+{
+public:
+    shared_ptr<A> ptr;
+    C(shared_ptr<A> ptr) : ptr(ptr)
+    {
+    }
+};
+
+int main(int argc, char **argv)
+{
+    vector<C> vec;
+    vec.push_back(C(make_shared<A>(19)));
+    vec.push_back(C(make_shared<B>("me", 19)));
+    vec[0].ptr->print(); // A 19
+    vec[1].ptr->print(); // B me
+    return 0;
+}
+```
+
+### 辨别基类对象与派生类对象
+
+当基类指针有可能指向派生类对象或者基类对象时，我们往往需要进行判别，有许多方法可以实现
+
+1、利用虚函数的特性
+
+```cpp
+//example47.cpp
+class A
+{
+public:
+    int age;
+    A(int age) : age(age) {}
+    virtual string type()
+    {
+        return "A";
+    }
+};
+
+class B : public A
+{
+public:
+    string name;
+    B(string name, int age) : A(age), name(name) {}
+    string type() override
+    {
+        return "B";
+    }
+};
+
+int main(int argc, char **argv)
+{
+    shared_ptr<A> ptr1 = make_shared<A>(19);
+    shared_ptr<A> ptr2 = make_shared<B>("me", 19);
+    cout << ptr1->type() << endl; // A
+    cout << ptr2->type() << endl; // B
+    if (ptr2->type() == "B")
+    {
+        B *b = (B *)ptr2.get();
+        cout << b->name << endl; // me
+    }
+    return 0;
+}
+```
+
+2、typeid C++11 查询类型的信息。用于必须知晓多态对象的动态类型的场合以及静态类型鉴别
+
+当基类与派生类存在多态时，typeid可以辨别二者的类型
+
+```cpp
+//example48.cpp
+class A
+{
+public:
+    int age;
+    A(int age) : age(age) {}
+    virtual void type(void) //建立多态性
+    {
+    }
+};
+
+class B : public A
+{
+public:
+    string name;
+    B(string name, int age) : A(age), name(name) {}
+};
+
+int main(int argc, char **argv)
+{
+    A *p1 = new A(19);
+    A *p2 = new B("me", 19);
+    // 因为type_info没有拷贝构造函数
+    const type_info &inf1 = typeid(*p1);
+    const type_info *inf2 = &typeid(*p2);
+    cout << inf1.name() << endl;  // 1A
+    cout << inf2->name() << endl; // 1B
+    // A B之间存在多态性 才可以辨别
+    //否则都是如果A中无virtual void type则二者的name都为1A
+    delete p1, delete p2;
+
+    cout << typeid(12).name() << endl;                           // i
+    cout << typeid(17.0f).name() << endl;                        // f
+    cout << typeid("hello").name() << endl;                      // A6_c
+    cout << (typeid(12.0f) == typeid(float)) << endl;            // 1
+    cout << (typeid(string("hello")) == typeid(string)) << endl; // 1
+    return 0;
+}
+```
+
+3、dynamic\_cast C++11 类型转换运算符，沿继承层级向上、向下及侧向，安全地转换到其他类的指针和引用
+
+关于dynamic\_cast将会在第19章 特殊工具与技术中进行学习，在此现进不进行学习
+
+### 结束语
+
+到此第15章 面向对象程序设计的语法知识学习就先告一段落了，但是对于OOP的学习是无穷无尽的我们仍需反复阅读大量相关书籍，提升自我认知\
+年轻人不要心高气傲，好好沉淀自己，才能让自己走得更远，总之在这一生我们要找到自己真正热爱的东西，可能是一项体育运动、可能是遇见一位知己、可能是在软件行业做出自己的事业、也许是家庭的和睦沟通与陪伴，总之在这个浮躁的大环境中让自己快乐起来，加油吧！
