@@ -795,3 +795,150 @@ int main(int argc, char **argv)
     return 0;
 }
 ```
+
+### 成员模板
+
+一个类（无论是普通类还是类模板），本身可以含有模板的成员函数，这总成员称为成员模板(member template),成员模板不能是虚函数
+
+### 普通类的成员模板
+
+将成员函数直接定义为函数模板
+
+```cpp
+//example19.cpp
+class A
+{
+public:
+    template <typename T>
+    void func(const T &t) const
+    {
+        cout << t << endl;
+    }
+    template <typename T>
+    void operator()(T *p) const
+    {
+        delete p;
+    }
+};
+
+int main(int argc, char **argv)
+{
+    A a;
+    a.func(12);    // 12
+    a.func("oop"); // oop
+    //类A本身拥有了 func(const int&t)与func(const string&)的两个重载
+    unique_ptr<int, A> num1(new int(19), a);
+    unique_ptr<float, A> num2(new float(19.0), a);
+    return 0;
+}
+```
+
+### 类模板的成员模板
+
+类模板与成员模板二者拥有自己的模板参数，当存在typename的名字相同时会产生冲突编译不通过，因为在一个范围内相同名字typename只能用一次
+
+如下样例中，函数成员在类作用域下，类的模板参数名不能与内部的冲突，但是hello与hi是两个独立的作用域，二者之间不会影响
+
+```cpp
+//example20.cpp
+template <typename T>
+class A
+{
+public:
+    static void func(const T &t)
+    {
+        cout << t << endl;
+    }
+
+    template <typename F>
+    void hello(const F &f)
+    {
+        cout << f << endl;
+    }
+
+    template <typename F>
+    void hi(const F &f)
+    {
+        cout << f << endl;
+    }
+};
+
+int main(int argc, char **argv)
+{
+    A<int> a;
+    a.func(19); // 19
+    // a.func("oop");//错误
+
+    a.hello("sds"); // sds
+    a.hello(19);    // 19
+
+    a.hi(19);    // 19
+    a.hi("oop"); // oop
+    return 0;
+}
+```
+
+### 实例化与成员模板
+
+成员模板的具体应用，最熟悉的就是容器的列表初始化操作中，有时不能提前知道初始化列表中存储的那种类型的数据，或者根据迭代器范围进行初始化时，只要它们内置的元素可以向目标容器的数据类型转换就可以实现这种操作，在容器的初始化中有学习到
+
+```cpp
+//example21.cpp
+int main(int argc, char **argv)
+{
+    initializer_list<int> list = {1, 2, 3, 4, 5};
+    int arr[] = {1, 1};
+    //为什么不能用{1.0,1.0}因为float到int需要进行强制转换，不能自动转换
+    cout << arr[0] << " " << arr[1] << endl; // 1 1
+    vector<float> vec = {1, 2, 3, 4};
+    //背后的构造原理就是使用了initializer_list<T> 在未知具体类型下定义模板成员
+    //由编译器自动生成
+    for (const auto &item : vec) // 1 2 3 4
+    {
+        cout << item << endl;
+    }
+
+    vector<int> vec1{1, 2, 3};
+    vector<float> vec2(vec1.begin(), vec1.end());
+    //这种背后也是模板成员的应用 接收vector迭代器 但用模板参数解决vector中的数据类型
+    for (const auto &item : vec2) // 1 2 3
+    {
+        cout << item << endl;
+    }
+    return 0;
+}
+```
+
+背后是怎样的呢，大致原理是什么？
+
+```cpp
+//example22.cpp
+class A
+{
+public:
+    vector<float> vec;
+    template <typename T>
+    A(const initializer_list<T> &t)
+    {
+        vec.assign(t.begin(), t.end());
+    }
+    void print()
+    {
+        for (const auto &item : vec)
+        {
+            cout << item << " ";
+        }
+        cout << endl;
+    }
+};
+
+int main(int argc, char **argv)
+{
+    initializer_list<int> m_list = {1, 2, 3, 4};
+    A a(m_list);
+    A b({1.0, 2.0, 3.0, 4.0}); // A b(initializer_list<float>)
+    a.print();                 // 1 2 3 4
+    b.print();                 // 1 2 3 4
+    return 0;
+}
+```
