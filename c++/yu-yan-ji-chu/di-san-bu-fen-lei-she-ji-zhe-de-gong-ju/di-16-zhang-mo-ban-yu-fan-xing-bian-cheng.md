@@ -628,3 +628,170 @@ int main(int argc, char **argv)
     return 0;
 }
 ```
+
+### 模板参数
+
+一个模板参数的名字没有什么内在含义，我们通常在一个模板参数的情况下，将参数命名为T
+
+```cpp
+template<typename T> void func(const T&t){
+
+}
+```
+
+### 模板参数与作用域
+
+模板参数的作用域在其声明之后，至模板声明或定义结束之前\
+模板参数名不能重用，一个模板参数名在特定模板参数列表中只能出现一次
+
+```cpp
+//example14.cpp
+double T;
+
+template <typename T, typename F>
+void func(const T &t, const F &f) // typename T覆盖double T
+{
+    cout << t << " " << f << endl;
+    T t1;
+}
+```
+
+### 模板声明
+
+模板内容的声明必须包括模板参数\
+一个给定模板的每个声明和定义必须拥有相同的数量和种类的参数
+
+```cpp
+//example15.cpp
+//声明函数模板
+template <typename T>
+void func(const T &t);
+
+//声明类模板
+template <typename T>
+class A;
+
+//模板定义
+template <typename F>
+void func(const F &f)
+{
+    cout << f << endl;
+}
+
+//类模板定义
+template <typename T>
+class A
+{
+public:
+    void func(const T &t);
+};
+
+template <typename T>
+void A<T>::func(const T &t)
+{
+    cout << t << endl;
+}
+
+int main(int argc, char **argv)
+{
+    func(19);            // 19
+    func("hello world"); // hello world
+    A<int> a;
+    a.func(19); // 19
+    return 0;
+}
+```
+
+### 使用类的类型成员
+
+再掉用类静态成员时，因为类的类型为一个模板类型参数时\
+编译器不知道是调用函数名为`T::mem`的函数还是`T`类的静态成员`mem`,如果需要使用模板参数类型的静态成员，需要进行显式的声明，使用关键字typename
+
+```cpp
+T::mem();//错误
+typename T::mem();//正确
+```
+
+```cpp
+//example16.cpp
+template <typename T>
+class A
+{
+public:
+    typename T::size_type func(const T &t)
+    {
+        typename T::size_type size; //正确
+        // T::size_type size;//错误
+        size = t.size();
+
+        return size;
+    }
+    static void hi()
+    {
+        cout << "hi" << endl;
+    }
+};
+
+int main(int argc, char **argv)
+{
+    vector<int> vec{1, 2, 3, 4};
+    A<vector<int>> a;
+    cout << a.func(vec) << endl; // 4
+
+    A<std::vector<int>>::hi(); // hi
+    return 0;
+}
+```
+
+### 默认模板实参
+
+如同函数参数一样，也可以像模板参数提供默认实参，但实参不知值而是类型\
+如下面代码样例，首先在compare被调用时，编译器通过实参类型与模板函数形参类型匹配，将能够推算出的模板参数推算出来，然后将模板参数列表内的全部typename进行初始化，然后确定了所有模板参数类型，然后进行实参的初始化，要知道这些操作都是在编译阶段完成的
+
+```cpp
+//example17.cpp
+template <typename T, typename F = less<T>>
+int compare(const T &t1, const T &t2, F f = F())
+{
+    if (f(t1, t2)) // v1<v2
+        return -1;
+    if (f(t2, t1)) // v2<v1
+        return 1;
+    return 0;
+}
+
+int main(int argc, char **argv)
+{
+    cout << compare(1, 3) << endl; //-1
+    cout << compare(3, 1) << endl; // 1
+    cout << compare(1, 1) << endl; // 0
+    return 0;
+}
+```
+
+### 模板默认实参与类模板
+
+与函数模板默认参数同理，在参数列表内进行类型赋值
+
+```cpp
+//example18.cpp
+template <typename T = int>
+class A
+{
+public:
+    void func(const T &t) const
+    {
+        cout << t << endl;
+    }
+};
+
+int main(int argc, char **argv)
+{
+    A<> a;
+    a.func(19); // 19
+    // a.func("dcs"); //错误
+    A<string> a_s;
+    a_s.func("hello world"); // hello world
+    return 0;
+}
+```
