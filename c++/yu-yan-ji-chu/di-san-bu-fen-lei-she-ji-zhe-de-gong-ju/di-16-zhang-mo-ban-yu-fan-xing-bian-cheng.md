@@ -942,3 +942,163 @@ int main(int argc, char **argv)
     return 0;
 }
 ```
+
+### 控制实例化
+
+当模板被使用时才会被进行实例化，则相同的实例可能出现在多个对象文件中，两多个独立编译的源文件中使用了相同的模板，并提供相同的模板参数时，每个文件中都会有该模板的一个实例，这样的开销可能非常严重，在C++11中可以通过显式实例化(explicit instantiation)来避免这种开销
+
+```cpp
+extern template declaration;//实例化声明
+template declaration;       //实例化定义
+```
+
+```cpp
+//example23/main.cpp
+#include <iostream>
+#include <string>
+#include "main.h"
+using namespace std;
+
+template class A<string>;         //定义模板实例
+template void func(const int &t); //定义模板实例
+
+extern void m_func();
+
+int main(int argc, char **argv)
+{
+    m_func();
+    return 0;
+}
+// g++ -c main2.cpp
+// g++ -c main.cpp
+// g++ main.o main2.o -o main.exe
+// ./main.exe
+```
+
+编译器遇见定义模板实例时会生成代码，所以A的func实例在main.o内
+
+```cpp
+//example23/main.h
+#ifndef main_h
+#define main_h
+#include <iostream>
+void m_func();
+//定义类模板
+template <typename T>
+class A
+{
+public:
+    void func(const T &t)
+    {
+        using namespace std;
+        cout << t << endl;
+    }
+};
+
+//定义函数模板
+template <typename T>
+void func(const T &t)
+{
+    using namespace std;
+    cout << t << endl;
+}
+#endif
+```
+
+extern表示其定义在其他源文件定义，想要程序完整必须进行链接
+
+```cpp
+//example23/main2.cpp
+#include "main.h"
+#include <string>
+#include <iostream>
+using namespace std;
+extern template class A<string>;
+extern template void func(const int &t);
+
+void m_func()
+{
+    A<string> a;
+    a.func("hello world"); // hello world
+    func(12);              // 12
+}
+```
+
+> 重点概念：与普通的模板实例化不同，实例化定义会实例化所有成员，普通的使用实例化仅仅实例化我们有使用到的成员，而在显式实例化中，编译器不知道我们需要使用哪些成员，所以它直接会将所有成员进行实例化，包括内联的成员 。 进而在一个类模板的显式实例化定义中，提供的模板类型参数必须能用于模板的所有成员函数
+
+### shared\_ptr与unique\_ptr中的模板知识
+
+已经学习过shared\_ptr与unique\_ptr,它们提供了自定义删除器的方法
+
+1、shared\_ptr可以在定义是提供删除器，例如下面格式
+
+```cpp
+//example19.cpp
+struct Person
+{
+    int *ptr;
+    Person()
+    {
+        ptr = new int(888);
+    }
+};
+
+void deletePerson(Person *ptr)
+{
+    if (ptr->ptr)
+    {
+        delete ptr->ptr;
+        ptr->ptr = nullptr;
+        cout << "delete ptr->ptr;" << endl;
+    }
+    delete ptr;
+}
+
+void func()
+{
+    shared_ptr<Person> ptr(new Person(), deletePerson); //释放时使用deletePerson
+    cout << ptr.unique() << endl;                       // 1
+    Person *p = new Person;
+    // delete ptr->ptr;
+    ptr.reset(p, deletePerson); // 释放p时使用deletePerson
+    // delete ptr->ptr;
+}
+```
+
+shared\_ptr也可以在reset时提供删除器，可见shared\_ptr是在运行时绑定删除器的
+
+```cpp
+del?del(p):delete p;
+```
+
+2、unique\_ptr只能在定义时在见括号内提供自定义删除器
+
+```cpp
+//example20.cpp
+struct Person
+{
+    int *ptr;
+    Person()
+    {
+        ptr = new int(888);
+    }
+};
+
+void deletePerson(Person *ptr)
+{
+    if (ptr->ptr)
+    {
+        delete ptr->ptr;
+        ptr->ptr = nullptr;
+        cout << "delete ptr->ptr;" << endl;
+    }
+    delete ptr;
+}
+
+void func()
+{
+    unique_ptr<Person, decltype(deletePerson) *> u2(new Person(), deletePerson);
+}
+```
+
+shared\_ptr是将删除器的指针或引用等存储到了对象内部，当删除是需判断，而unique则是使用了类模板参数，并且为删除器提供了默认参数为delete，可见二者删除器的绑定原理是不一样的，前者是运行时绑定，后者是使用模板编译器在编译阶段进行了代码级别的绑定
