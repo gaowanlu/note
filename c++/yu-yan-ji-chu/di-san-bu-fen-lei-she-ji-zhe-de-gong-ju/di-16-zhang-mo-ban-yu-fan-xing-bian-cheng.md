@@ -1216,3 +1216,76 @@ int main(int argc, char **argv)
 ```
 
 可见func函数模板的形参中 float num 与 ostream\&os 都可以进行正常的类型转换，追溯原理还要从模板编译说起，在编译器检测到模板被调用时，先检测实参列表是否匹配，对于非模板参数类型还要进行是否可以进行类型转换，而不是简单的类型匹配
+
+### 函数模板显式实参
+
+有没有想过当函数模板参数类型中，有些没有被使用到函数形参内，编译器就不能自动推断出类型，这样的情况应该怎样处理，所以允许用户进行使用函数模板显式实参
+
+```cpp
+//example27.cpp
+template <typename T1, typename T2, typename T3>
+T1 sum(T2 t1, T3 t2)
+{
+    return t1 + t2;
+}
+
+int main(int argc, char **argv)
+{
+    // sum(12, 32);// couldn't deduce template parameter 'T1'
+    long long res = sum<long long>(12332, 23);
+    cout << res << endl; // 12355
+    return 0;
+}
+```
+
+那么尖括号中提供的显式实参与模板参数类型的匹配机制是怎样的呢？
+
+显式模板实参按左至右顺序与对应模板参数匹配，第一个显式实参与第一个参数匹配、第二个与第二个，以此类推，只有最右的显式模板实参才能忽略
+
+```cpp
+//example28.cpp
+//糟糕的用法
+template <typename T1, typename T2, typename T3>
+T3 func(T2 t2, T1 t1)
+{
+    return t1 * t2;
+}
+//需要用户显式为T3提供实参
+//因为想要为T3提供实参就必须为其前面的模板参数提供实参
+
+int main(int argc, char **argv)
+{
+    auto res = func<int, int, int>(12, 21);
+    cout << res << endl; // 252
+    // func<int>(21, 32);//couldn't deduce template parameter 'T3'
+    return 0;
+}
+```
+
+最佳实践就是，将模板参数列表中需要显式提供实参的参数放到列表前面去
+
+### 类型转换应用于显式指定的实参
+
+与非模板参数类型一样，提供显式类型实参的参数也支持正常的类型转换
+
+```cpp
+//example29.cpp
+template <typename T1>
+T1 mul(T1 t1, T1 t2)
+{
+    return t2 * t1;
+}
+
+int main(int argc, char **argv)
+{
+    // mul(long(122), 12);
+    // error:deduced conflicting types for parameter 'T1' ('long int' and 'int')
+
+    auto res = mul<int>(long(122), 12);
+    cout << res << endl; // 1464
+
+    auto res1 = mul<double>(23, 32);
+    cout << res1 << endl; // 736
+    return 0;
+}
+```
