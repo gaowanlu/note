@@ -1102,3 +1102,117 @@ void func()
 ```
 
 shared\_ptr是将删除器的指针或引用等存储到了对象内部，当删除是需判断，而unique则是使用了类模板参数，并且为删除器提供了默认参数为delete，可见二者删除器的绑定原理是不一样的，前者是运行时绑定，后者是使用模板编译器在编译阶段进行了代码级别的绑定
+
+### 模板实参推断
+
+在函数模板中，编译器利用调用中地函数地实参类型来确定模板参数，这一过程称为`模板实参推断`。在类模板中是通过尖括号进行初始化模板参数列表
+
+### 类型转换与模板类型参数
+
+当使用模板时提供地模板实参之间可以进行类型转换时，只有有限地几种类型会自动地应用于这些实参，编译器通常不是对实参进行类型转换、而是生成一个新的模板实例
+
+可以进行类型转换的情况有两种\
+1、const转换：非const对象的引用或指针，传递给一个const的引用或指针形参\
+2、数组或函数指针转换：如果函数形参不是引用类型、则可以对数组或函数类型的实参应用正常的指针转换，一个数组实参可以转换为一个指向其首元素的指针、一个函数实参可以转换为一个该函数类型的指针、而不是不同长度的数组或者不同函数传递时都会产生新的模板实例
+
+```cpp
+//example24.cpp
+//拷贝
+template <typename T>
+T f1(T t1, T t2)
+{
+    return t1;
+}
+//引用
+template <typename T>
+const T &f2(const T &t1, const T &t2)
+{
+    return t1;
+}
+//接收可调用对象
+template <typename T>
+void f3(const T &f)
+{
+    f();
+}
+
+void func()
+{
+    cout << "hello world" << endl;
+}
+
+int main(int argc, char **argv)
+{
+    string s1("oop");
+    const string &s2 = f2(s1, s1);
+    cout << s2 << endl; // oop
+    s1 = "hello world";
+    cout << s2 << endl; // hello world
+
+    int a[10], b[20];
+    int *arr_a = f1(a, b); //按照首地址指针处理
+    arr_a[0] = 999;
+    cout << a[0] << endl; // 999
+
+    //错误 按照数组的引用处理错误 const T &t1, const T &t2
+    //实参 t1 t2类型不同 因为a与b的大小不同
+    // const int *arr_a_ptr = f2(a, b);
+    // cout << arr_a_ptr[0] << endl; // 999
+
+    //函数到函数指针的转换
+    f3(func); // hello world
+    return 0;
+}
+```
+
+> 重点:将实参传递给带模板类型的函数形参时，能够自动进行类型转换只有const转换与(数组或函数)到指针的转换
+
+### 使用相同的模板参数类型
+
+当形参列表中多次使用了模板参数类型时，在传递实参时这些位置的实参的类型在不进行类型转换的情况下，应该相同
+
+```cpp
+//example25.cpp
+template <typename T>
+void func(T t1, T t2)
+{
+    cout << t1 * t2 << endl;
+}
+
+int main(int argc, char **argv)
+{
+    // func(long(12), int(12));
+    // no matching function for call to 'func(long int, int)'
+
+    float num = 99.0;
+    // func(num, 12);
+    // no matching function for call to 'func(float&, int)'
+
+    func(long(19), long(32)); // 608
+    return 0;
+}
+```
+
+### 非模板类型参数可正常类型转换
+
+在函数模板形参中，如果有非模板参数类型的形参，则其正常类型转换不会受到影响
+
+```cpp
+//example26.cpp
+template <typename T>
+void func(float num, ostream &os, const T &t)
+{
+    os << num << " " << t << endl;
+}
+
+int main(int argc, char **argv)
+{
+    func(int(19), cout, 12); // 19 12
+    ofstream f("output.iofile");
+    func(unsigned(12), f, 12); //在文件output.iofile内 12 12
+    f.close();
+    return 0;
+}
+```
+
+可见func函数模板的形参中 float num 与 ostream\&os 都可以进行正常的类型转换，追溯原理还要从模板编译说起，在编译器检测到模板被调用时，先检测实参列表是否匹配，对于非模板参数类型还要进行是否可以进行类型转换，而不是简单的类型匹配
