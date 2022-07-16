@@ -1289,3 +1289,171 @@ int main(int argc, char **argv)
     return 0;
 }
 ```
+
+### 尾置返回类型与类型转换
+
+有时需要返回未知的数据类型，但是使用参数类型推断并不能很好解决问题，使用显式模板实参又显得负担很重，那么尾置返回类型就要显现出其作用了
+
+```cpp
+//example30.cpp
+template <typename Res, typename T>
+Res &func(T beg, T end)
+{
+    return *beg;
+}
+
+int main(int argc, char **argv)
+{
+    vector<int> vec = {1, 2, 3};
+    auto res = func<int>(vec.begin(), vec.end());
+    cout << res << endl; // 1
+    return 0;
+}
+```
+
+有没有更好的办法解决问题呢，yes！使用尾置返回(在第6章 函数时就有接触到)
+
+```cpp
+//example31.cpp
+template <typename T>
+auto func(T beg, T end) -> decltype(*beg)
+{
+    return *beg;
+}
+
+int main(int argc, char **argv)
+{
+    vector<int> vec = {1, 2, 3};
+    auto res = func(vec.begin(), vec.end());
+    // auto func<std::vector<int>::iterator>(std::vector<int>::iterator beg, std::vector<int>::iterator end)->int &
+    cout << res << flush; // 1
+
+    decltype(vec) r;              // std::vector<int> vec
+    decltype(vec.begin()) t;      // std::vector<int>::iterator t
+    decltype(0 + 1) y;            // int y
+    decltype(*vec.begin() + 1) u; // int u
+
+    return 0;
+}
+```
+
+### 类型转换模板
+
+在上面我们发现了，还是我有解决问题，只能获得再怎么操作都也只能使用引用类型，怎样获得元素类型呢，这就要使用标准库的`类型转换模板`
+
+```cpp
+//example32.cpp
+template <typename T>
+auto func(T beg, T end) -> typename remove_reference<decltype(*beg)>::type
+{
+    return *beg;
+}
+
+int main(int argc, char **argv)
+{
+    vector<int> vec = {1, 2, 3};
+    vector<int>::value_type res = func(vec.begin(), vec.end());
+    cout << res << endl; // 1
+
+    int num = 999;
+    int &num_ref = num;
+    //脱去引用
+    remove_reference<decltype(num_ref)>::type num_copy = num_ref;
+    // int num_copy=num_ref;
+    return 0;
+}
+```
+
+类似的模板类有很多，其都在头文件`type_traits`内
+
+![标准类型转换模板](<../../../.gitbook/assets/屏幕截图 2022-07-16 212018.jpg>)
+
+```cpp
+//example33.cpp
+int main(int argc, char **argv)
+{
+    //脱引用
+    remove_reference<int &>::type t1;  // int t1
+    remove_reference<int &&>::type t2; // int t2
+    remove_reference<int>::type t3;    // int t3
+
+    //加const
+    int num = 1;
+    add_const<int &>::type t4 = num;     // int &t4
+    add_const<const int>::type t5 = num; // const int t5
+    add_const<int>::type t6 = num;       // const int t5
+
+    //加左值引用
+    add_lvalue_reference<int &>::type t7 = num;  // int &t7
+    add_lvalue_reference<int &&>::type t8 = num; // int &t8
+    add_lvalue_reference<int>::type t9 = num;    // int &t8
+
+    //还有如
+    // add_rvalue_reference加右值引用
+    // remove_pointer 移除指针（从指针类型退出值类型）
+    // make_signed 去unsigned
+    // make_unsigned 从带符号类型退出相应的unsgined
+    // remove_extent 根据数组类型得到元素类型
+    // remove_all_extents 根据多维数组推断
+
+    remove_extent<int[10]>::type item1;          // int item1
+    remove_all_extents<int[10][10]>::type item2; // int item2
+    return 0;
+}
+```
+
+先知道有这么个东西吧，其实很少用到的，除非想要开发一个高复用的库可能会用到
+
+### 函数模板与函数指针
+
+函数模板可以与函数指针进行操作时，也会涉及模板参数类型的推断问题
+
+```cpp
+//example34.cpp
+template <class T>
+T big(const T &t1, const T &t2)
+{
+    return t1 > t2 ? t1 : t2;
+}
+
+int main(int argc, char **argv)
+{
+    int (*pf1)(const int &t1, const int &t2) = big;
+    auto res = (*pf1)(12, 32);
+    cout << res << endl; // 32
+    return 0;
+}
+```
+
+函数模板在赋给函数指针时，相关的模板参数推断是根据左边的函数指针类型进行推断的
+
+当作为函数模板作为函数参数传递时可能会遇见的问题
+
+```cpp
+//example35.cpp
+template <typename T>
+T big(const T &t1, const T &t2)
+{
+    return t1 > t2 ? t1 : t2;
+}
+
+void func(int (*p)(const int &t1, const int &t2))
+{
+    cout << (*p)(12, 32) << endl;
+}
+
+void func(string (*p)(const string &s1, const string &s2))
+{
+    cout << (*p)("23", "dsc") << endl;
+}
+
+int main(int argc, char **argv)
+{
+    // func(big); // error: call of overloaded 'func(<unresolved overloaded function type>)' is ambiguous
+    //可见func传递big在确定重载时是模棱两可的
+
+    //如何解决，使用显式模板参数
+    func(big<int>);    // 32
+    func(big<string>); // dsc
+    return 0;
+```
