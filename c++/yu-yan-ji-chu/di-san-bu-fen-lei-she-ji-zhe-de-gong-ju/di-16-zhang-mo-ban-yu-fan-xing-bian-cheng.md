@@ -1456,4 +1456,369 @@ int main(int argc, char **argv)
     func(big<int>);    // 32
     func(big<string>); // dsc
     return 0;
+}
 ```
+
+### 从左值引用函数参数推断类型
+
+主要讨论的就是，T&与const T&在使用中的类型推断
+
+```cpp
+//example36.cpp
+// T&
+template <typename T>
+void func1(T &t)
+{
+    cout << t << endl;
+}
+
+// const T&
+template <typename T>
+void func2(const T &t) // t具有底层const
+{
+    cout << t << endl;
+}
+
+int main(int argc, char **argv)
+{
+    // func1(12);//错误12不是左值引用
+    int num = 19;
+    func1(num); // 19
+    const int num1 = 999;
+    // T 按const int处理
+    func1(num1); // void func1<const int>(const int &t)
+
+    func2(18);   // 18
+    func2(num);  // void func2<int>(const int &t)
+    func2(num1); // 999
+
+    return 0;
+}
+```
+
+### 从右值引用函数参数推断类型
+
+讨论T&&用作右值引用时的情况
+
+```cpp
+//example37.cpp
+template <typename T>
+void func(T &&t)
+{
+    t = 999;
+    cout << t << endl;
+}
+
+int main(int argc, char **argv)
+{
+    // void func<int>(int &&t)
+    func(11); // 999
+
+    int num = 888;
+    func(num); // 999
+    // void func<int &>(int &t)
+    cout << num << endl;  // 999
+    func(std::move(num)); // void func<int>(int &&t)
+
+    func(12.0f); // void func<float>(float &&t)
+    func(23.32); // void func<double>(double &&t)
+
+    return 0;
+}
+```
+
+### 右值引用折叠与模板参数
+
+在上面代码example37.cpp中可以发现，为什么普通的int num可以传递给func，而且推断出的T&&实际为int&,这是怎么回事呢？
+
+1、将一个左值传递给函数的右值引用参数，且右值引用指向模板类型参数时，编译器推断类型参数实参为左值引用类型，如传递int类型的num,则T为int&\
+2、不能直接定义引用的引用，但是如果间接创建了引用的引用，则会折叠，如int& &&则实际为int&,int&& &,int& &都会折叠为int &, 类型int&& &&折叠为int &&
+
+```cpp
+//example38.cpp
+template <typename T>
+void func(T &&t)
+{
+    cout << t << endl;
+}
+
+/*void f(int &&&num){}不允许直接使用引用的引用*/
+
+int main(int argc, char **argv)
+{
+    int num = 999;
+    func(num); // T被推断为int& ,int& &&折叠为int&
+    const int n1 = 888;
+    func(n1); // T被推断为 const int& ,const int& &&折叠为 cosnt int&
+    func(88); //正常右值引用 int&&
+
+    func<int>(12);    // void func<int>(int &&t) T推断为int
+    func<int &>(num); // void func<int &>(int &t) 折叠 int& &&
+    func<int &&>(12); // void func<int &&>(int &&t) 折叠 int&& &&
+    return 0;
+}
+```
+
+因为有这个特性，当我们在func中使用T关键词时，它又会代表着怎样的特性呢？
+
+```cpp
+//example39.cpp
+template <typename T>
+void func(T &&t)
+{
+    T t1 = t;
+    t1 = 888;
+    cout << (t1 == t ? "true" : "false") << endl;
+}
+
+void f(const int &t)
+{
+    cout << "const int & " << t << endl;
+}
+
+void f(int &&t)
+{
+    cout << "&& " << t << endl;
+}
+
+int main(int argc, char **argv)
+{
+    int num = 999;
+    func<int>(12);    // false T被推断为 int
+    func<int &>(num); // true T被推断为int& ，t实际类型为int&
+    // func<int &&>(12); //错误 T被推断为 int&& 不能将左值t赋给int&&t1
+
+    const int i = 888;
+    // func(i);//错误 T被推断为 const int，t1=888发生错误
+
+    int &&j = 999;
+    f(j); // const int& 999
+    j = 888;
+    f(j); // const int& 888
+
+    f(99); //&& 99
+    return 0;
+}
+```
+
+### 理解std::move
+
+回顾一下std::move
+
+```cpp
+//example40.cpp
+int main(int argc, char **argv)
+{
+    int &&i = 999;
+    int num = 999;
+    // int &&j = num;//错误 不能将左值绑到右值引用上
+
+    int &&j = std::move(num); //使用move
+    cout << j << endl;        // 999
+    num = 888;
+    cout << j << endl; // 888
+
+    return 0;
+}
+```
+
+std::move可以使得传入的实参作为右值，绑定到右值引用，背后的原理是怎样的呢？下面将进行学习相关知识
+
+### std::move是如何定义的
+
+```cpp
+//example41.cpp
+template <typename T>
+typename remove_reference<T>::type &&func(T &&t)
+{
+    return static_cast<typename remove_reference<T>::type &&>(t);
+}
+
+int main(int argc, char **argv)
+{
+    int num = 999;
+    int &&i = func(num);
+    num = 888;
+    cout << i << endl; // 888
+    return 0;
+}
+```
+
+其中使用了remove\_reference移除引用获取数据类型，返回其相应数据类型的右值引用，返回值使用static\_cast进行强制转换得到
+
+### std::move是如何工作的
+
+总之就是背后remove\_reference与static\_cast的功劳
+
+```cpp
+//example42.cpp
+int main(int argc, char **argv)
+{
+    int num = 999;
+    int &&i = move(num);
+    // T推断为int&
+    // remove_reference返回int 确定函数返回类型为 int&&
+
+    int &&j = move(88);
+    // T推断为int
+    // remove_reference返回int 确定函数返回类型为 int&&
+    j = 666.;
+    cout << j << endl; // 666
+    return 0;
+}
+```
+
+### static\_cast左值转右值引用
+
+通常static\_cast只能用在如float->int等其他合法的类型转换，但是有一个特殊的规则\
+static\_cast可以将一个左值转换为一个右值引用
+
+```cpp
+//example43.cpp
+int main(int argc, char **argv)
+{
+    int num = 999;
+    // int &&i = num; // error
+    int &&i = static_cast<int &&>(num);
+    i = 888;
+    cout << num << endl; // 888
+    return 0;
+}
+```
+
+***
+
+以上的内容确实是相当无趣的，可能过几天就会忘记，在开发中也会用得很少，但是别忘记有这样得操作，时不时得回来看一看
+
+### 转发
+
+首先我们先了解一下在此得“转发”是什么意思呢？\
+当在函数模板内使用形参作为调用函数时的实参，即需要将其中一个或多个实参连同类型不变地转发给其他函数
+
+```cpp
+//example44.cpp
+void fi(int v1, int &v2)
+{
+    cout << v1 << " " << ++v2 << endl;
+}
+
+//接收可调用对象f和其他两个参数
+//翻转参数调用给定的调用对象
+template <typename F, typename T, typename N>
+void func(F f, T t, N n)
+{
+    f(n, t);
+}
+
+int main(int argc, char **argv)
+{
+    func(fi, 12, 21); // 21 13
+    int num1 = 99, num2 = 88;
+    func(fi, num1, num2);                // 88 100
+    cout << num1 << " " << num2 << endl; // 99 88
+
+    const int n1 = 999;
+    func(fi, n1, n1); // 999 1000
+    // void func<void (*)(int v1, int &v2), int, int>(void (*f)(int v1, int &v2), int t, int n)
+    // 在此出现了顶层const被忽略的情况
+
+    return 0;
+}
+```
+
+如何尽可能保持参数的类型呢
+
+### 保持类型信息的函数参数
+
+使用右值引用做参数即可实现
+
+```cpp
+//example45.cpp
+void fi(int v1, int &v2)
+{
+    cout << v1 << " " << ++v2 << endl;
+}
+
+void fir(int v1, const int &v2)
+{
+    cout << v1 << " " << v2 << endl;
+}
+
+//接收可调用对象f和其他两个参数
+//翻转参数调用给定的调用对象
+template <typename F, typename T, typename N>
+void func(F f, T &&t, N &&n)
+{
+    f(n, t);
+}
+
+int main(int argc, char **argv)
+{
+    const int num1 = 1, num2 = 2;
+
+    // func(fi, num1, num2);//错误 fi(int v1,int&v2); 不能用num1对v2初始化
+    //  void func<void (*)(int v1, int &v2), const int &, const int &>
+    //         (void (*f)(int v1, int &v2), const int &t, const int &n)
+    // T与N被推断为 const int&类型 然后进行了引用折叠 为 const int&
+    // const int&不能初始化int&
+
+    func(fir, num1, num2); // 2 1
+    //使用右值引用可以保证const得以保留
+    //在传递 常量表达式如123 时为 int&&
+    // const int时 为 const int&
+    // int 时 为 int&
+    // int& 时折叠为 int&
+    // const int& 时折叠为const int&
+
+    return 0;
+}
+```
+
+### 在调用中使用std::forward保持类型信息
+
+至此还是没有解决问题，在传递右值时会出错,为了解决问题，在func中传递参数时使用forard或者move获得临时右值对目标函数形参初始化
+
+```cpp
+//example46.cpp
+template <typename T, typename F>
+void fi(T &&v1, F &&v2)
+{
+    cout << v1 << " " << v2 << endl;
+}
+
+template <typename F, typename T, typename N>
+void func(F f, T &&t, N &&n)
+{
+    f(std::forward<N>(n), std::forward<T>(t));
+    // f(t, n);
+    // 当 t n为右值引用时 fi的形参也被推断为右值引用类型
+    // 可见右值引用是不能初始化右值引用的
+}
+
+int main(int argc, char **argv)
+{
+    func(fi<int &&, int &&>, 12, 32); // 32 12
+    //  func=>(void (*f)(int &&, int &&), int &&t, int &&n)
+    //  void fi<int &&, int &&>(int &&v1, int &&v2)
+    //  func使用forward得以转发右值引用
+
+    const int &&num1 = 888;
+    const int &&num2 = 999;
+    func(fi<const int, const int>, std::forward<const int>(num1), std::forward<const int>(num2)); // 999 888
+    // void fi<const int, const int>(const int &&v1, const int &&v2)
+    // func=>(void (*f)(const int &&, const int &&), const int &&t, const int &&n)
+
+    // std::move与std::forward最主要的区别 forward为显式指定类型
+    std::move(12);
+    int &&i = std::forward<int>(12);
+    const int &&j = std::forward<const int &&>(12);
+    cout << j << endl; // 12
+    // j = 888;//错误
+    i = 888;
+    cout << i << endl; // 888
+
+    return 0;
+}
+```
+
+到此，可能脑袋要爆了！不知道你怎么样，反正我快崩溃了，在中文翻译版的书籍，我认为描述的是非常模糊的。甚至我认为翻译得不流畅，没有生动得描述出知识。是在太难了，先坚持吧！后面再进行回顾与复习，与阅读其他书籍或资料进行深入学习
