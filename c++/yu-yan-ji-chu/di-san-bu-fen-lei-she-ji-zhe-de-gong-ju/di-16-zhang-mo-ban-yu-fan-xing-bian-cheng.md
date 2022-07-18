@@ -1822,3 +1822,207 @@ int main(int argc, char **argv)
 ```
 
 到此，可能脑袋要爆了！不知道你怎么样，反正我快崩溃了，在中文翻译版的书籍，我认为描述的是非常模糊的。甚至我认为翻译得不流畅，没有生动得描述出知识。是在太难了，先坚持吧！后面再进行回顾与复习，与阅读其他书籍或资料进行深入学习
+
+### 重载与模板
+
+函数模板可以被另一个普通模板或普通函数重载，名字相同的函数必须具有不同数量或类型的参数
+
+```cpp
+//example47.cpp
+template <typename T>
+string debug_rep(const T &t)
+{
+    ostringstream ret;
+    ret << t;
+    return ret.str();
+}
+
+template <typename T>
+string debug_rep(T *p)
+{
+    ostringstream ret;
+    if (p)
+    {
+        ret << debug_rep(*p); //调用string debug_rep(const T &t)
+    }
+    else
+    {
+        ret << " null pointer";
+    }
+    return ret.str();
+}
+
+int main(int argc, char **argv)
+{
+    cout << debug_rep("hello world") << endl;         // h std::string debug_rep<const char>(const char *p)
+    cout << debug_rep(string("hello world")) << endl; // hello world std::string debug_rep<std::string>(const std::string &t)
+    cout << debug_rep(1) << endl;                     // 1 std::string debug_rep<int>(const int &t)
+    int num = 999;
+    cout << debug_rep(num) << endl;  // 999 std::string debug_rep<int>(const int &t)
+    cout << debug_rep(&num) << endl; // 999 std::string debug_rep<int>(int *p)
+    return 0;
+}
+```
+
+### 多个可行模板
+
+再对模板重载匹配时可能存在多个匹配都是符合要求的
+
+```cpp
+const int *ptr = &num;
+debug_rep(ptr);       // std::string debug_rep<const int>(const int *p)
+```
+
+理论上可以匹配为debug\_rep(const string\*&)或debug\_rep(const string\*),但根据重载函数模板的特殊规则，此调用被解析为后者，因为后者更特例化
+
+```cpp
+//example48.cpp
+template <typename T>
+string debug_rep(const T &t)
+{
+    ostringstream ret;
+    ret << t;
+    return ret.str();
+}
+
+template <typename T>
+string debug_rep(T *p)
+{
+    ostringstream ret;
+    if (p)
+    {
+        ret << debug_rep(*p); //调用string debug_rep(const T &t)
+    }
+    else
+    {
+        ret << " null pointer";
+    }
+    return ret.str();
+}
+
+int main(int argc, char **argv)
+{
+    int num = 999;
+    const int *ptr = &num;
+    int *const ptr1 = &num;
+    *ptr1 = 888;
+    cout << *ptr << endl; // 888
+    debug_rep(ptr);       // std::string debug_rep<const int>(const int *p)
+    return 0;
+}
+```
+
+> Note: 当有多个重载模板对一个调用提供同样好的匹配时，应选择最特例化的版本
+
+### 模板与非模板重载
+
+完全可以存在与函数模板相同名称的普通函数
+
+```cpp
+//example49.cpp
+template <typename T>
+string debug_rep(const T &t)
+{
+    ostringstream ret;
+    ret << t;
+    return ret.str();
+}
+
+string debug_rep(const string &t)
+{
+    cout << "debug_rep(const string &t)\n";
+    return t;
+}
+
+int main(int argc, char **argv)
+{
+    cout << debug_rep(string("cd")) << endl; // debug_rep(const string &t) cd
+    cout << debug_rep("ds") << endl;         // ds
+    //能够匹配到普通函数就不会使用模板
+    return 0;
+}
+```
+
+> Note: 对于一个调用，如果一个非函数模板与一个函数模板提供同样好的匹配，则选择非模板版本
+
+### 重载模板和类型转换
+
+对于debug\_rep("hello world"),存在多个匹配都是可行的
+
+```cpp
+debug_rep(const T&);
+debug_rep(T*);
+debug_rep(const string&);
+```
+
+```cpp
+//example50.cpp
+// 1
+template <typename T>
+void debug_rep(const T &t)
+{
+    cout << t << endl;
+}
+
+// 2
+template <typename T>
+void debug_rep(T *t)
+{
+    cout << t << endl;
+}
+
+// 3
+void debug_rep(const string &t)
+{
+    cout << t << endl;
+}
+
+int main(int argc, char **argv)
+{
+    // 1 2 3 存在
+    debug_rep("oop"); // oop void debug_rep<const char>(const char *t)
+    // 1 3存在
+    debug_rep("oop"); // oop void debug_rep<char [4]>(const char (&t)[4])
+    // 3存在
+    debug_rep("oop"); // oop void debug_rep(const std::string &t)
+    //发生 const char* 到 const char&的转换
+
+    return 0;
+}
+```
+
+### 缺少声明可能导致程序行为异常
+
+现在已经学习，再对重载进行匹配时，如果非模板匹配成功则会调用非模板，但是，如果调用函数前并没有非模板的声明，则会使用模板进行生成实例,有时可能会出现预料之外的结果
+
+```cpp
+//example51.cpp
+template <typename T>
+void func(const T &t)
+{
+    cout << "1 " << t << endl;
+}
+
+// TAG::声明
+//  void func(const string &t);
+
+int main(int argc, char **argv)
+{
+    func("hello world");
+    // 1 hello world
+    // void func<char[12]>(const char(&t)[12])
+
+    func(string("hello world")); // 2 hello world
+    //如果 TAG::声明被注释掉将会输出1 hello world
+    //采用模板实例而不是非模板
+
+    return 0;
+}
+
+void func(const string &t)
+{
+    cout << "2 " << t << endl;
+}
+```
+
+> Note: 在定义任何函数前，记得声明所有重载的函数版本，这样就不用担心编译器由于未遇到你希望调用的函数而用模板实例化一个并非你所需的版本。
