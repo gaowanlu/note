@@ -2026,3 +2026,241 @@ void func(const string &t)
 ```
 
 > Note: 在定义任何函数前，记得声明所有重载的函数版本，这样就不用担心编译器由于未遇到你希望调用的函数而用模板实例化一个并非你所需的版本。
+
+### 可变参数模板
+
+可变参数模板为解决接收未知的参数类型未知的参数数量问题而生，进一步可以提高程序的复用性\
+`可变参数模板(variadic template)`就是一个接收可变数目参数的模板函数或模板类。\
+可变数目的参数被称为`参数包(parameter packet)`,`模板参数包(template parameter packet)`表示零个或多个模板参数。`函数参数包(function parameter packet)`,表示零个或多个函数参数
+
+```cpp
+//example52.cpp
+//  foo为可变参数模板
+//  Args为模板参数包
+//  rest为函数参数包
+template <typename T, typename... Args>
+void foo(const T &t, const Args &...rest)
+{
+}
+
+int main(int argc, char **argv)
+{
+    // void foo<int, double, std::string>
+    foo(int(12), double(23), string("wew")); //模板参数包中有两个参数 double string
+
+    // void foo<double, int>
+    foo(double(23), int(3232)); //模板参数包中有一个参数int
+
+    // void foo<double, int, int, int>
+    foo(double(232), int(323), int(343), int(4334)); //模板参数包中有三个参数int
+
+    // void foo<std::string>
+    foo(string("dscs")); //模板参数包为空
+
+    // void foo<char [4]>
+    foo("oop"); //模板参数包为空
+
+    return 0;
+}
+```
+
+拥有这样的特性，存在着巨大的潜在能力
+
+### sizeof...运算符
+
+使用sizeof...运算符可以知道参数包内有多少个参数
+
+```cpp
+//example53.cpp
+template <typename T, typename... Args>
+void func(const T &t, Args... args)
+{
+    cout << sizeof...(Args) << " " << sizeof...(args) << endl;
+}
+
+int main(int argc, char **argv)
+{
+    func(12, 32, 43);         // 2 2
+    func(12);                 // 0 0
+    func(23, 43, 43.f, 78.f); // 3 3
+    return 0;
+}
+```
+
+### 包扩展
+
+之前有接触过initializer\_list用于接收未知数量但类型相同的参数
+
+```cpp
+//example54.cpp
+void func(initializer_list<int> m_list)
+{
+    for (auto &item : m_list)
+    {
+        cout << item << " ";
+    }
+    cout << endl;
+}
+
+int main(int argc, char **argv)
+{
+    func({12, 32, 43}); // 12 32 43
+    return 0;
+}
+```
+
+已经学习了怎么接收参数包，但是怎样利用参数包内的内容呢\
+扩展一个包就是将其分解为构成的元素，对每个元素应用模式，获得扩展后的列表
+
+```cpp
+//example55.cpp
+// 1
+template <typename T>
+void print(const T &t)
+{
+    cout << t << " ";
+}
+
+// 2
+template <typename T, typename... Args>
+void print(const T &t, const Args&... args)
+{
+    cout << t << " ";
+    print(args...); //解构参数包
+}
+
+int main(int argc, char **argv)
+{
+    print(12, 32, 43, 23.f, 43); // 12 32 43 23 43
+    //调用过程
+    /*
+    print(12,32,43,23.f,43) 使用2
+    print(32,43,23.f,43) 使用2
+    print(43,23.f,43) 使用2
+    print(23.f,43) 使用2
+    print(43) 使用1
+    */
+    //如果没有定义1会怎样呢
+    /*
+    在print(43)时只能调用2，此时Args与args为空包，然后函数内部再次调用了print(args...)
+    造成错误 print() 即没有相匹配的函数
+    */
+    return 0;
+}
+```
+
+再来看个简单的例子吧
+
+```cpp
+//example56.cpp
+void print(int n, int i, float j, double k)
+{
+    cout << n << " " << i << " " << j << " " << k << endl;
+}
+
+template <typename T, typename... Args>
+void func(const T &t, const Args &...args)
+{
+    print(t, args...);
+}
+
+int main(int argc, char **argv)
+{
+    func(12, 23, 23.f, 23.43); // 12 23 23 23.43
+    return 0;
+}
+```
+
+### 高级包扩展
+
+认识`func(args...)`与`func(args)...`的区别
+
+```cpp
+//example57.cpp
+template <typename T>
+T addOne(const T &t)
+{
+    return t + 1;
+}
+
+template <typename T, typename Y, typename U, typename I>
+void print(const T &t, const Y &y, const U &u, const I &i)
+{
+    cout << t << " " << y << " " << u << " " << i << endl;
+}
+
+template <typename... Args>
+void func(const Args &...args)
+{
+    print(addOne(args)...);
+    //等价于 print(addOne(arg1),addOne(arg2),addOne(arg3),addOne(arg4))
+}
+
+int main(int argc, char **argv)
+{
+    func(1, 2, 3, 4); // 2 3 4 5
+    return 0;
+}
+```
+
+### 转发参数包
+
+转发参数包就是将接收到的参数包，调用另一个函数时将包传递出去\
+在标准容器中emplace\_back方法就利用了转发参数包的特性
+
+```cpp
+//example58.cpp
+class A
+{
+public:
+    int a;
+    string b;
+    A(int a, string b) : a(a), b(b)
+    {
+    }
+};
+
+int main(int argc, char **argv)
+{
+    list<A> m_list;
+    m_list.emplace_back(19, "hi");
+    cout << m_list.size() << endl; // 1
+    return 0;
+}
+```
+
+可见emplace\_back接收参数包，然后将内容转发到了调用A的构造函数\
+转发就要保证实参中的类型信息，所以其模板类型参数应该为右值引用\
+而且使用std::forward对内容进行转发
+
+```cpp
+//example59.cpp
+void func(int i, int j, float k)
+{
+    cout << i << " " << j << " " << k << endl;
+}
+
+void func(int &i, int j)
+{
+    cout << i << " " << j << " " << endl;
+    i++;
+}
+
+template <typename... Args>
+void emplace_back(Args &&...args) //相当于 T1&&arg1,T2&&arg2...
+{
+    func(std::forward<Args>(args)...);
+    //相当于std::forward<T1>(arg1),std::forward<T2>(arg2)...
+}
+
+int main(int argc, char **argv)
+{
+    emplace_back(12, 32, 34.f); // 12 32 34
+    int n = 999;
+    emplace_back(n, 12);
+    cout << n << endl; // 1000
+    return 0;
+}
+```
+
+到此是不是更懵逼了，不要慌慢慢学，在实际项目中尝试使用就好了，要记得多回来翻一翻，多复习。
