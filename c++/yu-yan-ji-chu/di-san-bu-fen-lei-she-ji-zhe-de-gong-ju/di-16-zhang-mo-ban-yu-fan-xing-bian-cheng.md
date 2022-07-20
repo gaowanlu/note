@@ -2264,3 +2264,404 @@ int main(int argc, char **argv)
 ```
 
 到此是不是更懵逼了，不要慌慢慢学，在实际项目中尝试使用就好了，要记得多回来翻一翻，多复习。
+
+### 模板特例化
+
+一个模板使其对所有模板实参都最合适，这部总是能办到，当不是（不希望）使用模板时，可以定义类或函数模板地一个特例化版本
+
+```cpp
+//example60.cpp
+template <typename T>
+int m_compare(const T &t1, const T &t2)
+{
+    if (t1 < t2)
+    {
+        return -1;
+    }
+    else if (t1 > t2)
+    {
+        return 1;
+    }
+    return 0;
+}
+
+int main(int argc, char **argv)
+{
+    cout << m_compare(1, 2) << endl;                         //-1
+    cout << m_compare(string("abc"), string("abc")) << endl; // 0
+    cout << m_compare("oop", "fop") << endl;                 //错误 字符数组不能用< > ==直接比较
+    // int m_compare<char [4]>(const char (&t1)[4], const char (&t2)[4])
+    return 0;
+}
+```
+
+怎样可以解决这样地问题呢，有多种办法可以解决
+
+```cpp
+//example61.cpp
+
+template <size_t N, size_t M>
+int m_compare(const char (&arr1)[N], const char (&arr2)[M])
+{
+    return strcmp(arr1, arr2);
+}
+
+int main(int argc, char **argv)
+{
+    cout << m_compare("oop", "fop") << endl; // 1
+    return 0;
+}
+```
+
+还可以进行定义函数模板特例化，如下
+
+### 定义函数模板特例化
+
+`template<>`为原模板的所有模板参数提供实参，进行定义函数模板特例化
+
+```cpp
+//example62.cpp
+template <typename T>
+int m_compare(const T &t1, const T &t2)
+{
+    if (t1 < t2)
+    {
+        return -1;
+    }
+    else if (t1 > t2)
+    {
+        return 1;
+    }
+    return 0;
+}
+
+template <> //<>表示我们将为原模板的所有模板参数提供实参
+int m_compare(const char *const &p1, const char *const &p2)
+{
+    return strcmp(p1, p2);
+}
+
+int main(int argc, char **argv)
+{
+    cout << m_compare(1, 2) << endl;                         //-1
+    cout << m_compare(string("abc"), string("abc")) << endl; // 0
+
+    //  cout << m_compare("oop", "fop") << endl;//当没有特例化模板时使用模板实例化
+    //  int m_compare<char [4]>(const char (&t1)[4], const char (&t2)[4])
+
+    const char *str1 = "oop", *str2 = "oop";
+    cout << m_compare(str1, str2) << endl; // 0 使用模板特例化
+    // template<> int m_compare<const char *>(const char *const &p1, const char *const &p2)
+    return 0;
+}
+```
+
+### 函数重载与模板特例化
+
+本质：特例化的本质是实例化一个模板，而非重载它。因此，特例化不影响函数匹配
+
+```cpp
+//example63.cpp
+template <typename T>
+int m_compare(const T &t1, const T &t2)
+{
+    if (t1 < t2)
+    {
+        return -1;
+    }
+    else if (t1 > t2)
+    {
+        return 1;
+    }
+    return 0;
+}
+
+template <> //<>表示我们将为原模板的所有模板参数提供实参
+int m_compare(const char *const &p1, const char *const &p2)
+{
+    return strcmp(p1, p2);
+}
+
+int main(int argc, char **argv)
+{
+    m_compare("wdw", "cds");
+    // 此时模板与其特例化二者都是可行的，提供同样好的匹配
+    // 但接收数组参数的版本更特例化，编译器会选择
+    // int m_compare<char [4]>(const char (&t1)[4], const char (&t2)[4])
+    return 0;
+}
+```
+
+如果还存在非模板函数，调用情况又会不同
+
+```cpp
+//example64.cpp
+template <typename T>
+int m_compare(const T &t1, const T &t2)
+{
+    if (t1 < t2)
+    {
+        return -1;
+    }
+    else if (t1 > t2)
+    {
+        return 1;
+    }
+    return 0;
+}
+
+template <> //<>表示我们将为原模板的所有模板参数提供实参
+int m_compare(const char *const &p1, const char *const &p2)
+{
+    return strcmp(p1, p2);
+}
+
+int m_compare(const char *const &p1, const char *const &p2)
+{
+    cout << "it's not template" << endl;
+    return strcmp(p1, p2);
+}
+
+int main(int argc, char **argv)
+{
+    m_compare("wdw", "cds"); // it's not template
+    return 0;
+}
+```
+
+当模板、模板特例化、非模板交杂在一起程序变得复杂起来，可阅读性也会大大下降\
+还有关于模板特例的作用域问题，想要使用模板特例就要在调用模板函数前，存在模板特例的声明，否则编译器会使用模板进行实例的生成\
+最佳实践：模板及其特例化版本应该声明在同一个头文件中，所有同名模板的声明应该放在前面，然后是模板的特例化版本。
+
+### 类模板特例化
+
+类模板特例化与函数模板特例化类似
+
+```cpp
+//example65.cpp
+//声明
+template <typename T>
+class A;
+template <>
+class A<int>;
+
+template <typename T>
+class A
+{
+public:
+    T t;
+    A(const T &t) : t(t)
+    {
+        cout << "template<typename T>" << endl;
+    }
+};
+
+//类模板特例化定义
+template <>
+class A<int>
+{
+public:
+    int t;
+    A(const int &t) : t(t)
+    {
+        cout << "template <>" << endl;
+    }
+};
+
+int main(int argc, char **argv)
+{
+    A<int> a(12); // template <>
+    return 0;
+}
+```
+
+### 实战类模板特例化
+
+下面来做些有趣的事情，我们对标准库内的模板进行特例化
+
+```cpp
+//example66.cpp
+class A
+{
+public:
+    int a;
+    float b;
+    unsigned int c;
+    A(int a, float b, unsigned int c, int d) : a(a), b(b), c(c), d(d)
+    {
+    }
+    friend class std::hash<A>;
+
+private:
+    int d;
+};
+
+//打开std命名空间 以便特例化std::hash
+namespace std
+{
+    template <>
+    class hash<A>
+    {
+    public:
+        typedef size_t result_type;
+        typedef A argument_type;
+        size_t operator()(const A &a) const;
+    };
+    size_t hash<A>::operator()(const A &a) const
+    {
+        return hash<int>()(a.a) ^ hash<float>()(a.b) ^ hash<double>()(a.c) ^ hash<int>()(a.d);
+    }
+}
+
+int main(int argc, char **argv)
+{
+    A a(1, 2.f, 4, 6);
+    std::hash<A>::result_type res = std::hash<A>()(a);
+    cout << res << endl; // 1000015520
+    A b(2, 4.f, 5, 7);
+    cout << std::hash<A>()(b) << endl; // 672367880
+    return 0;
+}
+```
+
+定义hash有什么用呢，当使用A作为容器的关键字类型时，编译器就会自动使用此特例化版本，而不是编译器自动生成的
+
+```cpp
+//example67.cpp
+class A
+{
+public:
+    int a;
+    float b;
+    unsigned int c;
+    A(int a, float b, unsigned int c, int d) : a(a), b(b), c(c), d(d)
+    {
+    }
+    friend class std::hash<A>;
+    bool operator==(const A &other) const
+    {
+        return other.a == a && other.b == b && other.c == c && other.d == d;
+    }
+
+private:
+    int d;
+};
+
+//打开std命名空间 以便特例化std::hash
+namespace std
+{
+    template <>
+    class hash<A>
+    {
+    public:
+        typedef size_t result_type;
+        typedef A argument_type;
+        size_t operator()(const A &a) const;
+    };
+    size_t hash<A>::operator()(const A &a) const
+    {
+        cout << "m_hash" << endl;
+        return std::hash<int>()(a.a) ^ std::hash<float>()(a.b) ^ std::hash<double>()(a.c) ^ std::hash<int>()(a.d);
+    }
+}
+
+int main(int argc, char **argv)
+{
+    A a(1, 2.f, 4, 6);
+    unordered_multiset<A> m_set; // m_hash 可见使用了特例化的std::hash
+    m_set.insert(a);
+    return 0;
+}
+```
+
+### 类模板部分特例化
+
+与函数模板不同的是，类模板的特例化不必为所有模板参数提供实参，可以只提供一部分而非所有模板参数，被称为部分特例化
+
+```cpp
+//example68.cpp
+template <typename T>
+struct A
+{
+    A(T t)
+    {
+        cout << "T" << endl;
+    }
+};
+
+template <typename T>
+struct A<T &>
+{
+    A(T &t)
+    {
+        cout << "T&" << endl;
+    }
+};
+
+template <typename T>
+struct A<T &&>
+{
+    A(T &&t)
+    {
+        cout << "T&&" << endl;
+    }
+};
+
+int main(int argc, char **argv)
+{
+    A<decltype(42)> a1(12); // T
+    int i = 999;
+    int &n = i;
+    A<decltype(n)> a2(n);                       // T&
+    A<decltype(std::move(i))> a3(std::move(i)); // T&&
+    return 0;
+}
+```
+
+### 特例化类成员
+
+在参数列表实参符合一定条件下，可以对这个条件下的类的部分成员进行特例化，而不是整合类
+
+```cpp
+//example69.cpp
+template <typename T>
+struct A
+{
+    A(const T &t = T()) : mem(t)
+    {
+    }
+    T mem;
+    void func();
+};
+
+//通用型定义
+template <typename T>
+void A<T>::func()
+{
+    cout << "A<T>" << endl;
+}
+
+//成员特例化
+template <>
+void A<int>::func()
+{
+    cout << "A<int>" << endl;
+}
+
+int main(int argc, char **argv)
+{
+    A<float> a1(float(234));
+    a1.func(); // A<T>
+
+    A<int> a2(23);
+    a2.func(); // A<int>
+
+    A<string> a3(string("scsd"));
+    a3.func(); // A<T>
+    return 0;
+}
+```
+
+### 小结
+
+到此模板编程的基础知识会先告一段落了，与此同时第三部分 类设计者的工具也将结束。我想经过控制拷贝、操作重载与类型转换、面向对象程序设计、模板与泛型编程几个章节，我们已经对面向对象有了更进一部的认识，总之学习要坚持，而不是一腔热血转眼就放弃了。
