@@ -568,7 +568,7 @@ m_list.erase(m_list.begin(), m_list.end());
 
 forward\_list就是我们在数据结构中所学习的单向链表，因此就有了对于forward\_list中插入或者元素删除的特殊操作
 
-![在forward\_list中插入或删除元素的操作](<../../../.gitbook/assets/屏幕截图 2022-05-29 142535 (1).jpg>)
+![在forward\_list中插入或删除元素的操作](<../../../.gitbook/assets/屏幕截图 2022-05-29 142535.jpg>)
 
 ### before\_begin与cbefore\_begin
 
