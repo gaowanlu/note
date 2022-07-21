@@ -1,3 +1,9 @@
+---
+cover: >-
+  https://images.unsplash.com/photo-1584114161426-b5f10850272a?crop=entropy&cs=tinysrgb&fm=jpg&ixid=MnwxOTcwMjR8MHwxfHNlYXJjaHw1fHxtZXJpZGF8ZW58MHx8fHwxNjU4Mzg5Nzc3&ixlib=rb-1.2.1&q=80
+coverY: 0
+---
+
 # 🏍 第17章 标准库特殊设施
 
 ## 第17章 标准库特殊设施
