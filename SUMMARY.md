@@ -25,6 +25,7 @@
     * [📺 第14章 操作重载与类型转换](c++/yu-yan-ji-chu/di-san-bu-fen-lei-she-ji-zhe-de-gong-ju/di-14-zhang-cao-zuo-zhong-zai-yu-lei-xing-zhuan-huan.md)
     * [🌽 第15章 面向对象程序设计](c++/yu-yan-ji-chu/di-san-bu-fen-lei-she-ji-zhe-de-gong-ju/di-15-zhang-mian-xiang-dui-xiang-cheng-xu-she-ji.md)
     * [🧸 第16章 模板与泛型编程](c++/yu-yan-ji-chu/di-san-bu-fen-lei-she-ji-zhe-de-gong-ju/di-16-zhang-mo-ban-yu-fan-xing-bian-cheng.md)
+    * [🏍 第17章 标准库特殊设施](c++/yu-yan-ji-chu/di-san-bu-fen-lei-she-ji-zhe-de-gong-ju/di-17-zhang-biao-zhun-ku-te-shu-she-shi.md)
 * [并发编程](c++/bing-fa-bian-cheng/README.md)
   * [第1章 你好并发世界](c++/bing-fa-bian-cheng/di-1-zhang-ni-hao-bing-fa-shi-jie.md)
   * [第2章 线程管理](c++/bing-fa-bian-cheng/di-2-zhang-xian-cheng-guan-li.md)
