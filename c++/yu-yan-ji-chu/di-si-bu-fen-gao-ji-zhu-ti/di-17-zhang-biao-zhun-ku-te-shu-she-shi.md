@@ -166,3 +166,243 @@ int main(int argc, char **argv)
     return 0;
 }
 ```
+
+### bitset类型
+
+已经学习过位运算的相关知识，标准库还定义了bitset类，使得位运算使用起来更为容易，能够处理超过最长整形类型大小的位集合
+
+```cpp
+#include<bitset>
+```
+
+### 定义和初始化bitset
+
+bitset是一个模板，与array类类似，有固定大小
+
+编号从0开始的二进制位被称为低位、编号到n-1结束的二进制被称为高位
+
+```cpp
+//example6.cpp
+int main(int argc, char **argv)
+{
+    bitset<10> b1;       // n位全为0
+    bitset<64> b2(1ull); //使用unsigned long long初始化
+    bitset<128> b22(0xbeef);
+    bitset<128> b23(~0ull); // 64个1
+
+    //使用字符串初始化
+    string str = "010101010101";
+    bitset<32> b31(str);
+    cout << b31 << endl; // 00000000000000000000010101010101
+
+    bitset<32> b32(str, 0, str.size(), '0', '1'); //'0'为0 '1'为1
+    cout << b32 << endl;                          // 00000000000000000000010101010101
+
+    bitset<32> b33(str, 0, 3); //[ 0, 2 ]
+    cout << b33 << endl;       // 00000000000000000000000000000010
+
+    bitset<32> b34(str, str.size() - 4); //末尾4位
+    cout << b34 << endl;                 // 00000000000000000000000000000101
+
+    try
+    {
+        bitset<32> b4(str, 0, str.size(), '0', 'g'); //有非g的字符
+    }
+    catch (invalid_argument e)
+    {
+        cout << e.what() << endl; // bitset::_M_copy_from_ptr
+    }
+
+    // C字符串初始化
+    const char *str1 = "010101000111";
+    bitset<32> b5(str1); //默认为[0,strlen(str1)-1]
+    cout << b5 << endl;  // 00000000000000000000010101000111
+
+    bitset<32> b6(string(str1), 0, 1, '0', '1');
+    cout << b6 << endl; // 00000000000000000000000000000000
+    return 0;
+}
+```
+
+### bitset操作
+
+bitset类模板支持功能丰富的二进制相关操作
+
+![bitset操作](<../../../.gitbook/assets/屏幕截图 2022-07-22 114326.jpg>)
+
+### bitset统计操作
+
+bitset支持统计其中的零一比特位，操作有bitset.any()、bitset.all()、bitset.count()、bitset.size()、bitset.none()
+
+```cpp
+//example7.cpp
+int main(int argc, char **argv)
+{
+    bitset<64> b(888ULL);
+    cout << b << endl;
+    // 0000000000000000000000000000000000000000000000000000001101111000
+    cout << b.any() << endl;   // 1 是否存在1
+    cout << b.all() << endl;   // 0 是否全为1
+    cout << b.count() << endl; // 6 有几个1
+    cout << b.size() << endl;  // 64 bitset大小
+    cout << b.none() << endl;  // 0 是否全为0
+
+    bitset<32> b1;
+    cout << b1 << endl;
+    // 00000000000000000000000000000000
+    cout << b1.any() << endl;   // 0 是否存在1
+    cout << b1.all() << endl;   // 0 是否全为1
+    cout << b1.count() << endl; // 0 有几个1
+    cout << b1.size() << endl;  // 32 bitset大小
+    cout << b1.none() << endl;  // 1 是否全为0
+    return 0;
+}
+```
+
+### bitset修改操作
+
+bitset支持改变bitset内的内容,bitset.flip()、bitset.reset()、bitset.set()、bitset.test(),bitset\[pos]
+
+```cpp
+//example8.cpp
+int main(int argc, char **argv)
+{
+    bitset<10> b;
+    cout << b << endl; // 0000000000
+
+    //默认
+    b.flip();          //反转所有位
+    cout << b << endl; // 1111111111
+    b.reset();         //全置为0
+    cout << b << endl; // 0000000000
+    b.set();           //全置为1
+    cout << b << endl; // 1111111111
+
+    //指定下标
+    b.flip(0);
+    cout << b << endl; // 1111111110
+    b.set(0);
+    cout << b << endl; // 1111111111
+    b.set(1, 0);       // index 1 value 0
+    cout << b << endl; // 1111111101
+    b.reset(0);
+    cout << b << endl; // 1111111100
+    //判断是bit 1
+    cout << b.test(0) << " " << b.test(2) << endl; // 0 1
+
+    //下标操作
+    cout << b << endl; // 1111111100
+    b[0] = 1;
+    cout << b << endl; // 1111111101
+    b[1] = b[0];
+    cout << b << endl; // 1111111111
+    b[0].flip();
+    cout << b << endl; // 1111111110
+    bool res = ~b[0];
+    cout << res << endl; // 1
+    return 0;
+}
+```
+
+### bitset提取值
+
+bitset.to\_ulong()与bitset.to\_ullong操作，只有bitset的大小与unsigned long 与 unsigned long long 内存大小相等时，才能调用这两个方法
+
+```cpp
+//example9.cpp
+int main(int argc, char **argv)
+{
+    cout << sizeof(unsigned long) * 8 << endl;      // 32bit
+    cout << sizeof(unsigned long long) * 8 << endl; // 64bit
+
+    bitset<32> b1;
+    unsigned long res1 = b1.to_ulong();
+
+    bitset<64> b2;
+    unsigned long long res2 = b2.to_ullong();
+    cout << b2.to_string() << endl;
+    // 0000000000000000000000000000000000000000000000000000000000000000
+
+    try
+    {
+        bitset<128> b3;
+        b3.set();
+        int res = b3.to_ulong(); // b3装不到ulong里
+    }
+    catch (overflow_error e)
+    {
+        cout << e.what() << endl; //_Base_bitset::_M_do_to_ulong
+    }
+    return 0;
+}
+```
+
+### bitset的IO运算
+
+bitset作为作为输入流时，其原理为先用临时的字符串流存储，然后用字符串对bitset进行了改变，在读取字符串时，遇到输入流结尾或者不是'0'或'1'时结束\
+bitset作为输出流时也是将内容以字符串形式输出
+
+```cpp
+//example10.cpp
+int main(int argc, char **argv)
+{
+    bitset<10> b1;
+    string s1 = "0101010011";
+    stringstream s;
+    s << s1;
+    s >> b1;
+    cout << b1 << endl; // 0101010011
+    return 0;
+}
+```
+
+### bitset实战
+
+请你用尽可能内存少数据存储64个同学的成绩是否通过的数据结构
+
+```cpp
+//example11.cpp
+class Data
+{
+private:
+    bitset<64> base;
+    function<bool(int)> check;
+
+public:
+    Data(const function<bool(int)> &check) : check(check)
+    {
+    }
+    void set(int index, int score)
+    {
+        if (check(score))
+        {
+            base.set(index);
+        }
+    }
+    string to_string()
+    {
+        return base.to_string();
+    }
+    bool operator[](const int &index)
+    {
+        return base[index];
+    }
+};
+
+int main(int argc, char **argv)
+{
+    Data data([](int score) -> bool
+              { return score >= 60; });
+    cout << data.to_string() << endl;
+    // 0000000000000000000000000000000000000000000000000000000000000000
+    data.set(0, 45);
+    data.set(1, 78);
+    cout << data.to_string() << endl;
+    // 0000000000000000000000000000000000000000000000000000000000000010
+    cout << data[0] << " " << data[1] << endl;
+    // 0 1
+    return 0;
+}
+```
+
+可以发现第17章是很有趣的一章，因为在前面的章节内我们已经学习了关于C++的大多数功能特性，再此应用起来也能够明白其内的原理
