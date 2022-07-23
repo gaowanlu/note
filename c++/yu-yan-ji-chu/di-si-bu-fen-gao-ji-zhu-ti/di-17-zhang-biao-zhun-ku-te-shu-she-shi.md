@@ -406,3 +406,130 @@ int main(int argc, char **argv)
 ```
 
 可以发现第17章是很有趣的一章，因为在前面的章节内我们已经学习了关于C++的大多数功能特性，再此应用起来也能够明白其内的原理
+
+### 正则表达式
+
+C++是支持正则表达式的，如果你还不知道正则表达式请查阅相关博客或者教学视频进行了解其理论基础与实际用法
+
+```cpp
+#include<regex>
+```
+
+正则表达式库组件
+
+![正则表达式库组件](<../../../.gitbook/assets/屏幕截图 2022-07-23 223413.jpg>)
+
+regex\_match用于匹配整个输入序列与表达式匹配，则返回true\
+regex\_search用于如果输入序列中一个子串与表达式匹配，则返回true
+
+![regexsearch和regex\_match的参数](<../../../.gitbook/assets/屏幕截图 2022-07-23 223816.jpg>)
+
+表达式基础
+
+![正则表达式语法规则](<../../../.gitbook/assets/屏幕截图 2022-07-23 224319.jpg>)
+
+### 使用正则表达式
+
+下面以`[abc]wan`表达式为模板，其表达式的含义为以abc中任意一个字符开头，且后面紧跟的序列为wan
+
+```cpp
+//example12.cpp
+int main(int argc, char **argv)
+{
+    string pattern("[abc]wan");
+    regex r(pattern);
+    smatch results;
+    string test = "cwanawanbwanwan";
+    regex_search(test, results, r);
+    cout << results.str() << endl; // cwan
+
+    const sregex_iterator end;
+    sregex_iterator iter(test.begin(), test.end(), r);
+    while (iter != end)
+    {
+        cout << iter->str() << endl; // cwan awan bwan
+        iter++;
+    }
+
+    return 0;
+}
+```
+
+### 深入regex对象
+
+正则表达式是一种语言，但是其有多种版本，这些都是历史遗留问题，C++允许在创建regex与wregex时指定正则表达式语法版本
+
+![regex和wregex的选项](<../../../.gitbook/assets/屏幕截图 2022-07-23 225629.jpg>)
+
+```cpp
+//example13.cpp
+int main(int argc, char **argv)
+{
+    string s1 = "[acv]pp";
+    const char *s2 = "[acv]pp";
+    regex p1(s1, regex::icase);
+    p1 = s2;
+    regex p2 = p1;
+    p2.assign(s1, regex::optimize);
+    return 0;
+}
+```
+
+### regex相关异常
+
+正则表达式本身可以视为一种简单程序设计语言，这种语言的解析不是C++编译器解决的，所以有异常时，也是运行时异常而非编译错误
+
+![正则表达式错误类型](<../../../.gitbook/assets/屏幕截图 2022-07-23 230446.jpg>)
+
+```cpp
+//example14.cpp
+int main(int argc, char **argv)
+{
+    try
+    {
+        regex r("[acv", regex::icase);
+    }
+    catch (regex_error e)
+    {
+        // Unexpected character in bracket expression.
+        cout << e.what() << endl;
+    }
+    cout << "hi" << endl; // hi
+    return 0;
+}
+```
+
+### 输入序列类型
+
+输入序列类型可以为，char数据和wchar\_t数据，字符可以保存在string或char数组中、宽字符版本，w\_string或wchar\_t数组中
+
+regex默认为匹配char字符，如果操作宽字符要使用wregex
+
+![正则表达式库类](<../../../.gitbook/assets/屏幕截图 2022-07-23 231220.jpg>)
+
+```cpp
+//example15.cpp
+int main(int argc, char **argv)
+{
+    regex r1("[abc]ui");
+    smatch res1;
+    // regex_search("cui", res1, r1);
+    //错误 不应用smatch接收char序列的结果
+    string test = string("cui");
+    regex_search(test, res1, r1); //正确
+    cmatch res2;
+    regex_search("cui", res2, r1); //正确
+
+    wstring test2 = L"b你好";
+    wsmatch res3;
+    wregex r2(L"[abc]你好");
+    regex_search(test2, res3, r2);
+    // wcout.imbue(std::locale(""));
+    wcout << res3.str() << endl;
+
+    wchar_t ch = L'你';
+    cout << ch << endl;
+
+    return 0;
+}
+```
