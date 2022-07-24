@@ -533,3 +533,197 @@ int main(int argc, char **argv)
     return 0;
 }
 ```
+
+### 匹配和Regex迭代器类型
+
+有时需要找出一个序列中所有符号要求的子序列，这就需要使用sregex\_iterator、cregex\_iterator、wsregex\_iterator和wcregx\_iterator
+
+![sregex\_iterator操作](<../../../.gitbook/assets/屏幕截图 2022-07-24 160628.jpg>)
+
+```cpp
+//example16.cpp
+int main(int argc, char **argv)
+{
+    string pattern("[^bc]ui");
+    string test = "buicuiruiuitui";
+    regex r(pattern, regex::icase);
+    for (sregex_iterator iter(test.begin(), test.end(), r), end_iter; iter != end_iter; ++iter)
+    {
+        cout << iter->str() << endl; // rui tui
+    }
+    return 0;
+}
+```
+
+我们会发现上面的匹配结果中并没有`iui`,为什么呢？因为在扫描test时有一个迭代器，每次从那个迭代器使用regex\_search然后从开头进行匹配，匹配成功则将迭代器移动到符合要求的子串的后面，所以在`buicuiruiuitui`迭代器到`uitui`时匹配成功的子序列就是`tui`
+
+### smatch操作
+
+本质上每个sregex\_iterator指向一个smatch,smatch本身可以提供很多额外的信息
+
+![smatch操作](<../../../.gitbook/assets/屏幕截图 2022-07-24 162117.jpg>)
+
+```cpp
+//example17.cpp
+int main(int argc, char **argv)
+{
+    string pattern("[^bc]ui");
+    string test = "buicuiruiuitui";
+    regex r(pattern, regex::icase);
+    for (sregex_iterator iter(test.begin(), test.end(), r), end_iter; iter != end_iter; ++iter)
+    {
+        if (iter->ready())
+        {
+            cout << iter->str() << " "
+                 << iter->prefix().str() << " "
+                 << iter->suffix().str() << endl;
+            // rui buicui uitui 此次的subffix会成为下次search的序列
+            // tui ui 当subffix为空串时结束
+            cout << iter->size() << endl;     // 1 1
+            cout << iter->empty() << endl;    // 0 0
+            cout << iter->length() << endl;   // 3 3
+            cout << iter->position() << endl; // 6 11 匹配成功的子序列首字母下标
+            cout << iter->format("$0=>") << endl; // tui=>
+        }
+    }
+    return 0;
+}
+```
+
+### 使用子表达式
+
+一个正则表达式从语法上由多个子表达式共同组成
+
+```cpp
+//example18.cpp
+int main(int argc, char **argv)
+{
+    regex r("([[:alnum:]]+)\\.(cpp|cxx|cc)$", regex::icase);
+    //[[:alnum:]]+ [a-z]+
+    //\\. .
+    //(cpp|cxx|cc)
+    //$
+    string test("dcsc.cpp dsc.cpp vfd.cxx fgbf.cc sdfc.cc");
+    smatch res;
+    regex_search(test, res, r);
+    //子表达式匹配结果
+    for (size_t i = 0; i < res.size(); i++)
+    {
+        cout << res.str(i) << endl;
+        // sdfc.cc
+        // sdfc
+        // cc
+    }
+    for (sregex_iterator iter(test.begin(), test.end(), r), end_iter; iter != end_iter; ++iter)
+    {
+        cout << iter->str() << endl; // sdfc.cc
+    }
+    return 0;
+}
+```
+
+### 使用子匹配操作
+
+根据ECMAScript标准，正则表达式`(\\()?(\\d{3})(\\))?([-. ])?(\\d{3})([-. ]?)(\\d{4})`
+
+1、`(\\()?`表示可选的左括号\
+2、`(\\d{3})`表示三位数字\
+3、`(\\))?`表示可选的右括号\
+4、`([-. ])?`表示可选的- . 空格\
+5、`(\\d{3})`表示三位数字\
+6、`([-. ]?)`表示可选的- . 空格\
+7、`(\\d{4})`表示4位数字
+
+仅仅拥有整个正则表达式是否匹配成功的信息是不足够的，smatch内有ssub\_match的信息，\[0]表示整个匹配，\[1]表示第一个子表达式匹配，以此类推
+
+![子匹配操作](<../../../.gitbook/assets/屏幕截图 2022-07-24 172624.jpg>)
+
+```cpp
+//example19.cpp
+//因为phonePattern由8个子表达式组成，所以m有8个ssub_match元素
+bool valid(const smatch &m)
+{
+    if (m[1].matched)
+    { //有左括号
+        return m[3].matched && (m[4].matched && m[4].str() == "-");
+    }
+    else
+    {
+        return !m[3].matched && m[4].str() == m[6].str();
+    }
+}
+
+int main(int argc, char **argv)
+{
+    string phonePattern = "(\\()?(\\d{3})(\\))?([-. ])?(\\d{3})([-. ])?(\\d{4})";
+    regex r(phonePattern);
+    smatch m;
+    string s = "434-434-5423"; // valid: 434-434-5423
+    for (sregex_iterator iter(s.begin(), s.end(), r), end_iter; iter != end_iter; ++iter)
+    {
+        if (valid(*iter))
+        {
+            cout << "valid: " << iter->str() << endl;
+        }
+        else
+        {
+            cout << "not valid: " << iter->str() << endl;
+        }
+    }
+    return 0;
+}
+```
+
+### regex\_replace
+
+regex\_replace用于在匹配时，将符合要求的子序列替换成其他指定的内容
+
+![正则表达式替换操作](<../../../.gitbook/assets/屏幕截图 2022-07-24 173017.jpg>)
+
+```cpp
+//example20.cpp
+int main(int argc, char **argv)
+{
+    string phonePattern = "(\\()?(\\d{3})(\\))?([-. ])?(\\d{3})([-. ])?(\\d{4})";
+    regex r(phonePattern);
+    string s = "434-434-5423 434-434-5423";
+    string fmt = "$2.$5.$7"; //第2个表达式.第5个表达式.第7个表达式
+    string fmted = regex_replace(s, r, fmt);
+    cout << fmted << endl; // 434.434.5423 434.434.5423
+    return 0;
+}
+```
+
+### 匹配和格式标志
+
+这些标志可以传递给函数regex\_search、regex\_match、smatch的format成员
+
+![匹配标志](<../../../.gitbook/assets/屏幕截图 2022-07-24 181330.jpg>)
+
+```cpp
+//example21.cpp
+int main(int argc, char **argv)
+{
+    string phonePattern = "(\\()?(\\d{3})(\\))?([-. ])?(\\d{3})([-. ])?(\\d{4})";
+    regex r(phonePattern, regex::icase);
+    string s = "434-434-5423 434-434-5523nvfdkjnvdk";
+    string fmt = "$2.$5.$7"; //第2个表达式.第5个表达式.第7个表达式
+    string fmted = regex_replace(s, r, fmt, std::regex_constants::format_no_copy);
+    cout << fmted << endl; // 434.434.5423434.434.5523
+
+    fmted = regex_replace(s, r, fmt);
+    cout << fmted << endl; // 434.434.5423 434.434.5523nvfdkjnvdk
+
+    sregex_iterator end_iter;
+    for (sregex_iterator iter(s.begin(), s.end(), r); iter != end_iter; ++iter)
+    {
+        cout << iter->str() << endl; // 434-434-5423 434-434-5523
+    }
+    for (sregex_iterator iter(s.begin(), s.end(), r, std::regex_constants::match_continuous); iter != end_iter; ++iter)
+    {
+        cout << iter->str() << endl; // 434-434-5423
+    }
+
+    return 0;
+}
+```
