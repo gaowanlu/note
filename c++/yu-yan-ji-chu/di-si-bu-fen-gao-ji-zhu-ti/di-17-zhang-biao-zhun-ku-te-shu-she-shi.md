@@ -727,3 +727,317 @@ int main(int argc, char **argv)
     return 0;
 }
 ```
+
+### 随机数
+
+在C语言中可以使用rand函数来生成伪随机数，但其并没有提供相关的封装与丰富的功能，在C++中标准库对随机数引擎进行了封装
+
+C中的方法
+
+```cpp
+//example22.cpp
+#include <iostream>
+#include <cstdlib>
+#include <cstdio>
+#include <ctime>
+using namespace std;
+int main(int argc, char **argv)
+{
+    int n1 = rand();
+    cout << n1 << endl; // 41
+    //想要生成伪随机数要用srand
+    srand((unsigned)time(NULL));
+    cout << rand() << endl;
+    //产生随机数范围[m,n]
+    // int a=m+rand()%(n-m+1);
+    cout << 44 + rand() % (66 - 44 + 1) << endl; //[44,66]
+    return 0;
+}
+```
+
+C++中
+
+```cpp
+#include<random>
+```
+
+功能有随机数引擎(random-number engines)、随机数分布类(random-number distribution)
+
+![随机数库的组成](<../../../.gitbook/assets/屏幕截图 2022-07-25 124653.jpg>)
+
+### 随机数引擎
+
+随机数引擎`default_random_engine`是函数对象类，定义了一个调用运算符，不接受参数然后返回一个随机unsigned整数
+
+![随机数引擎操作](<../../../.gitbook/assets/屏幕截图 2022-07-25 125327.jpg>)
+
+```cpp
+//example23.cpp
+int main(int argc, char **argv)
+{
+    default_random_engine e;
+    for (size_t i = 0; i < 10; ++i)
+    {
+        cout << e() << endl;
+    }
+    //     16807
+    // 282475249
+    // 1622650073
+    // 984943658
+    // 1144108930
+    // 470211272
+    // 101027544
+    // 1457850878
+    // 1458777923
+    // 2007237709
+    return 0;
+}
+```
+
+### 使用分布类型
+
+为了得到一个指定范围内的数，可以使用分布类型对象，uniform\_int\_distribution\<T>(min,max)为均匀分布
+
+```cpp
+//example24.cpp
+#include <iostream>
+#include <random>
+using namespace std;
+
+int main(int argc, char **argv)
+{
+    uniform_int_distribution<unsigned> u(0, 9);
+    default_random_engine e;
+    for (size_t i = 0; i < 10; ++i)
+    {
+        cout << u(e) << endl;
+    }
+    // 0 1 7 4 5 2 0 6 6 9
+    return 0;
+}
+```
+
+分布对象和引擎对象的组合称为随机数发生器
+
+### 获取生成范围
+
+在C中，rand生成的数的范围在0至RAND\_MAX之间，C++中随机数引擎使用min与max方法获得范围
+
+```cpp
+//example25.cpp
+int main(int argc, char **argv)
+{
+    cout << 0 << " " << RAND_MAX << endl; // 0 32767
+    default_random_engine e;
+    cout << e.min() << " " << e.max() << endl; // 1 2147483646
+    return 0;
+}
+```
+
+### 生成数值序列
+
+下面有种令人迷惑的问题、default\_random\_engine每次生成的数值序列都是相同的，犹如default\_random\_engine存储了一个数值序列一样，每生成一个，下一次就会返回后面的一个
+
+```cpp
+//example26.cpp
+vector<unsigned> get()
+{
+    default_random_engine e;
+    vector<unsigned> vec;
+    uniform_int_distribution<unsigned> u(0, 9);
+    for (int i = 0; i < 10; i++)
+    {
+        vec.push_back(u(e));
+    }
+    return vec;
+}
+
+template <typename T>
+void print(const vector<T> &vec)
+{
+    for (auto item : vec)
+    {
+        cout << item << " ";
+    }
+    cout << endl;
+}
+
+int main(int argc, char **argv)
+{
+    vector<unsigned> vec1 = get();
+    vector<unsigned> vec2 = get();
+    print(vec1); // 0 1 7 4 5 2 0 6 6 9
+    print(vec2); // 0 1 7 4 5 2 0 6 6 9
+    return 0;
+}
+```
+
+怎么解决这种问题呢，可以将模板引擎定义为static的，这样就会取同一个引擎中不同的序列了
+
+```cpp
+//example27.cpp
+vector<unsigned> get()
+{
+    static default_random_engine e;
+    vector<unsigned> vec;
+    static uniform_int_distribution<unsigned> u(0, 9);
+    for (int i = 0; i < 10; i++)
+    {
+        vec.push_back(u(e));
+    }
+    return vec;
+}
+
+int main(int argc, char **argv)
+{
+    vector<unsigned> vec1 = get();
+    vector<unsigned> vec2 = get();
+    print(vec1); // 0 1 7 4 5 2 0 6 6 9
+    print(vec2); // 3 5 8 0 0 5 6 0 3 0
+    //每次get都是不同的序列
+    return 0;
+}
+```
+
+### 随机数发生器种子
+
+种子就是一个数值，引擎可以利用它从序列中一个新位置重新开始生成随机数，为两种设置种子的方式，在创建引擎时提供种子，调用引擎的seed成员
+
+```cpp
+//example28.cpp
+int main(int argc, char **argv)
+{
+    default_random_engine e1;       //默认种子
+    default_random_engin e2(23434); //使用给定的种子值
+    default_random_engine e3;
+    // e1 e3将会生成相同的数值序列 因为其种子值相同
+
+    //使用seed重新设置新的种子值
+    e3.seed(434);
+    return 0;
+}
+```
+
+那么如何使得运行时设置的种子是不确定的呢？最好的办法是使用`ctime`内的time函数，返回从一个特定时刻到当前经过了多少秒，其接受单个指针参数，它指向用于写入时间的数据结构，如果指针为空，则简单地返回时间
+
+```cpp
+//example29.cpp
+int main(int argc, char **argv)
+{
+    unsigned i = time(nullptr);
+    for (int i = 0; i < 10000; i++)
+    {
+        for (int i = 0; i < 100; i++)
+        {
+            if (i == 99)
+            {
+                cout << i << endl;
+            }
+        }
+    }
+    unsigned j = time(nullptr);
+    cout << i << " " << j << endl; // 1658727833 1658727836
+    // time返回以秒计的时间
+    default_random_engine e(time(nullptr));
+    return 0;
+}
+```
+
+要注意的时，在很短的间隔内如果多次调用time其可能返回的数值是相同的，所以要小心，以防多次设置了相同的种子造成，意想不到的结果
+
+### 随机数分布
+
+![分布类型的操作](<../../../.gitbook/assets/屏幕截图 2022-07-25 134928.jpg>)
+
+新标准库定义了20种分布类型，详情请见术语表章节的随机数部分
+
+1、生成随机实数
+
+uniform\_int\_distribution\<double> u(min,max)
+
+```cpp
+//example30.cpp
+#include <iostream>
+#include <random>
+using namespace std;
+
+int main(int argc, char **argv)
+{
+    default_random_engine e;
+    uniform_real_distribution<double> u(0, 1);
+    //使用默认模板实参
+    uniform_real_distribution<> u1(0, 1); //默认生成double
+    for (size_t i = 0; i < 10; ++i)
+    {
+        cout << u1(e) << endl;
+    }
+    // 0.131538 0.45865 0.218959 0.678865 0.934693 0.519416 0.0345721 0.5297 0.00769819 0.0668422
+
+    return 0;
+}
+```
+
+2、非均匀分布
+
+```cpp
+//example31.cpp
+int main(int argc, char **argv)
+{
+    default_random_engine e;         //生成随机整数
+    normal_distribution<> n(4, 1.5); //均值为4 标准差为1.5
+    vector<unsigned> vec(9);         // 9个0
+    for (size_t i = 0; i != 200; ++i)
+    {
+        unsigned v = lround(n(e)); //舍入到最近的整数
+        if (v < vec.size())        //在范围内
+        {
+            ++vec[v];
+        }
+    }
+    for (size_t j = 0; j != vec.size(); ++j)
+    {
+        cout << j << ": " << string(vec[j], '*') << endl;
+    }
+    // 0: ***
+    // 1: ********
+    // 2: ********************
+    // 3: **************************************
+    // 4: **********************************************************
+    // 5: ******************************************
+    // 6: ***********************
+    // 7: *******
+    // 8: *
+    return 0;
+}
+```
+
+可见打印结果不是完美对称的，不符合均匀分布
+
+3、伯努利分布
+
+bernoulli\_distribution是一个普通类不是模板，其返回一个bool值，它返回true的概率为0,.5
+
+```cpp
+//example32.cpp
+int main(int argc, char **argv)
+{
+    default_random_engine e;
+    bernoulli_distribution b;
+    size_t count_true = 0, count_false = 0;
+    for (size_t i = 0; i < 10000; i++)
+    {
+        bool res = b(e);
+        if (res)
+            ++count_true;
+        else
+            ++count_false;
+    }
+    cout << count_true << " " << count_false << endl; // 4994 5006接近1:1
+
+    //还可以调整返回true的概率
+    bernoulli_distribution b1(0.55); //返回true/false 55/45
+    return 0;
+}
+```
+
+关于随机分布还有很多，可以查阅术语表章节或者查看其他资料进行学习
