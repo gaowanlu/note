@@ -321,6 +321,23 @@ int main(int argc,char**argv){
 }
 ```
 
+### mode的组合使用
+
+* ofstream流 以ios::app打开（或者“ios::app|ios::out”）,如果没有文件，那么生成空文件；如果有文件，那么在文件尾追加。\
+  以ios::app|ios::in打开，不管有没有文件，都是失败。\
+  以ios::ate打开（或者”ios::ate|ios::out”），如果没有文件，那么生成空文件；如果有文件，那么清空该文件\
+  以ios::ate|ios::in打开，如果没有文件，那么打开失败；如果有文件，那么定位到文件尾，并可以写文件，但是不能读文件
+* ifstream流 以ios::app打开（“ios::app|ios::out”）,不管有没有文件，打开都是失败。\
+  以ios::ate打开（“ios::ate|ios::out”）,如果没有文件，打开失败\
+  如果有文件，打开成功，并定位到文件尾，但是不能写文件
+* fstream流 默认是ios::in，所以如果没有文件，ios::app和ios::ate都是失败，\
+  以ios::app|ios::out,如果没有文件则创建文件，如果有文件，则在文件尾追加\
+  以ios::ate|ios::out打开，如果没有文件则创建文件，如果有，则清空文件。\
+  以ios::ate|ios::out|ios::in打开，如果没有文件，则打开失败，有文件则定位到文件尾\
+  可见：ios::app不能用来打开输入流，即不能和ios::in相配合\
+  而ios::ate可以和ios::in配合，此时定位到文件尾；如果没有ios::in相配合而只是同ios::out配合，那么将清空原文件\
+  (ios::ate|ios::in–>在原文件尾追加内容；ios::ate—>清空原文件，ios::out是默认必带的，可加上也可不加，对程序无影响)
+
 ### string流
 
 sstream头文件定义了三个支持内存IO，可以向string写入数据，从string读取数据，就像string是一个IO流一样

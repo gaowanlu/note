@@ -10,6 +10,8 @@ coverY: 0
 
 如果你已经从第一章按部就班的学到了第17章，我相信你所认识的C++知识已经超过了很多人，因为有学习的同学并没有耐心慢慢全面地学完C++11的全部知识，从17章 标准库特殊设施以及第18章 用于大型程序的工具、第19章 特殊工具与技术这三个单元被统称为高级主题，这些内容往往在大型工程中意义重大
 
+首先介绍本章整体内容，tuple类型、bitset类型、正则表达式、随机数、进一步深入IO操作
+
 ### tuple类型
 
 ```cpp
@@ -1041,3 +1043,449 @@ int main(int argc, char **argv)
 ```
 
 关于随机分布还有很多，可以查阅术语表章节或者查看其他资料进行学习
+
+### 进一步学习IO库
+
+在前面的章节中已经学习到关于IO的一些操作，例如标准输入输出流、文件输入输出流、以及字符串流等相关操作，在此将会学习三个关于IO库的特性：格式控制、未格式化IO、随机访问
+
+### 格式化输入和输出
+
+如果有学习过C语言的话，我们知道printf、sprintf、scanf这些函数是支持进行内容格式化的，下面是一个简单的例子
+
+```cpp
+//example33.cpp
+#include <iostream>
+#include <cstdio>
+using namespace std;
+
+int main(int argc, char **argv)
+{
+    int a;
+    double b;
+    scanf("%d %lf", &a, &b);
+    getchar(); //获取回车
+    printf("%d,%lf\n", a, b);
+    char ch;
+    ch = getchar();
+    return 0;
+}
+```
+
+在C++是否支持类似的内容呢？这就需要进行学习探索了
+
+### IO操纵符
+
+每个iostream对象维护了一个格式状态控制IO如何格式化细节，例如整形值是几进制、浮点值的精度、一个输出元素的宽度等
+
+`操纵符(manipulator)`来修改流的格式状态，如endl就是一个操纵符，不仅仅是个普通的值，它输出一个换行符并刷新缓冲区
+
+iostream中的操纵符
+
+![定义在iostream中的操纵符](<../../../.gitbook/assets/屏幕截图 2022-07-26 202743.jpg>)
+
+iomanip中的操纵符
+
+![定义在iomanip中的操纵符](<../../../.gitbook/assets/屏幕截图 2022-07-26 204758.jpg>)
+
+### 控制布尔值的格式
+
+boolalpha与noboolalpha
+
+```cpp
+//example34.cpp
+
+int main(int argc, char **argv)
+{
+    cout << true << " " << false << endl; // 1 0
+    cout << boolalpha;
+    cout << true << " " << false << endl; // true false
+    cout << noboolalpha;
+    cout << true << " " << false << endl; // 1 0
+
+    cout << boolalpha << true << noboolalpha << endl; // true
+    return 0;
+}
+```
+
+### 控制整型值的进制
+
+整形数值默认输出十进制格式，可以使用hex、oct、dec将其改为十六进制、八进制、十进制\
+hex、oct、dec只影响整型，对浮点值无影响
+
+```cpp
+//example35.cpp
+int main(int argc, char **argv)
+{
+    cout << 12 << endl;        // 12
+    cout << oct << 12 << endl; // 14
+    cout << hex << 12 << endl; // c
+    cout << dec;               //改回十进制
+    cout << 12 << endl;        // 12
+    return 0;
+}
+```
+
+### showbase操纵符
+
+用于显示进制的前导部分\
+1、前导0x为十六进制\
+2、前导0为八进制\
+3、无前导字符串表示十进制
+
+关于十六进制的0x与0X可以使用uppercase与nouppercase控制
+
+```cpp
+//example36.cpp
+int main(int argc, char **argv)
+{
+    cout << showbase;
+    cout << oct << 12 << endl;                                    // 014
+    cout << hex << 12 << endl;                                    // 0xc
+    cout << dec << 12 << endl;                                    // 12
+    cout << uppercase << hex << 12 << dec << nouppercase << endl; // 0XC
+    cout << noshowbase;
+    return 0;
+}
+```
+
+### 控制浮点数格式
+
+浮点数输出有三种格式\
+1、以多高精度（多少个数字）打印浮点数\
+2、数值是打印为十六进制、定点十进制、科学计数法\
+3、当小数部分没有浮点值是否打印小数点
+
+### 指定打印精度
+
+可以调用IO对象的precision成员或者使用setprecision操纵符
+
+操纵符setprecision和其他接收参数的操纵符都定义在头文件iomanip中
+
+```cpp
+//example37.cpp
+#include <iostream>
+#include <iomanip>
+using namespace std;
+
+int main(int argc, char **argv)
+{
+    cout << cout.precision() << endl; // 6
+    cout << 23.3242345 << endl;       // 23.3242
+
+    //设置精度
+    cout.precision(12);
+    cout << 1.123456789012 << endl; // 1.12345678901
+
+    // setprecision操纵符
+    cout << setprecision(6);
+    cout << cout.precision() << endl; // 6
+    return 0;
+}
+```
+
+### 指定浮点数记数法
+
+scientific科学计数法、fixed定点十进制、hexfloat浮点数十六进制、defaultfloat恢复默认状态
+
+```cpp
+//example38.cpp
+int main(int argc, char **argv)
+{
+    cout << 142.421 << endl;               // 142.421
+    cout << scientific << 142.421 << endl; // 1.424210e+002
+    cout << fixed << 142.421 << endl;      // 142.421000
+    cout << hexfloat << 124.421 << endl;   // 8.00532e-307
+    cout << defaultfloat;
+    cout << 142.421 << endl; // 142.421
+    return 0;
+}
+```
+
+### 打印小数点
+
+showpoint与noshowpoint操纵当小数部分全为0时是否还输出小数部分
+
+```cpp
+//example39.cpp
+int main(int argc, char **argv)
+{
+    cout << 10.0 << endl;              // 10
+    cout << showpoint << 10.0 << endl; // 10.0000
+    cout << noshowpoint;               //恢复
+    return 0;
+}
+```
+
+### 输出补白
+
+1、setw指定下一个数字或字符串值得最小空间\
+2、left表示左端对齐输出\
+3、right表示右对齐输出、右对齐是默认格式\
+4、internal控制负数得符号位置，左对齐符号、右对齐值，用空格填满所有中间空间\
+5、setfill指定一个字符代替默认的空格来补白输出
+
+```cpp
+//example40.cpp
+int main(int argc, char **argv)
+{
+    //至少12个空
+    cout << setw(12) << 23 << endl; //"          23"
+    //左对齐
+    cout << setw(12) << left << 23
+         << setw(12) << 34 << endl;               //"23          34          "
+    cout << right;                                //恢复默认右对齐
+    cout << internal << setw(12) << -234 << endl; //"-        234"
+
+    //自定义填充
+    cout << setfill('#') << setw(12) << right << 23 << endl; //"##########23"
+    cout << setfill(' ');                                    //恢复默认填充
+    return 0;
+}
+```
+
+### 控制输入格式
+
+默认情况下，输入运算符会忽略空白符(空格符、制表符、换行符、换纸符、回车符)
+
+一下程序，输入`a b c cc\nfd`会输出`abcccfd`
+
+```cpp
+//example41.cpp
+int main(int argc, char **argv)
+{
+    char ch;
+    while (cin >> ch)
+    {
+        cout << ch;
+    }
+    return 0;
+}
+```
+
+skipws与noskipws可以控制是否跳过空白符,使用noskipws后输入什么内容就会输出什么内容
+
+```cpp
+//example42.cpp
+int main(int argc, char **argv)
+{
+    cin >> noskipws;
+    char ch;
+    while (cin >> ch)
+    {
+        cout << ch;
+    }
+    return 0;
+}
+```
+
+### 未格式化的输入与输出操作
+
+什么是格式化与未格式化，在之前使用`<<`或`>>`都是根据读取或写入的数据类型来进行格式化的，未格式化IO(unformatted IO)将流当坐字节序列处理
+
+### 单字节操作
+
+单字节低层IO操作
+
+![单字节低层IO操作](<../../../.gitbook/assets/屏幕截图 2022-07-26 205919.jpg>)
+
+```cpp
+//example43.cpp
+int main(int argc, char **argv)
+{
+    char ch;
+    cin.get(ch);
+    // cout << ch << endl;
+    cout.put(ch);
+    cin.get();                  //读取\n
+    int ascii_code = cin.get(); // c
+    cout << ascii_code << endl; // 9
+    cin.putback(ascii_code);    //检查流第一个字节与ascii_code是否相同，相同则跳过
+    ch = cin.peek();            //字节流第一个字节
+    cout << ch << endl;         // c
+    cin.unget();                //向后移动一个字节即跳过一个字节
+    return 0;
+}
+```
+
+### EOF
+
+在头文件cstdio中定义了名为EOF的const，可以检测从get返回的值是否为文件尾
+
+```cpp
+//example44.cpp
+int main(int argc, char **argv)
+{
+    stringstream io;
+    io << "c++";
+    char ch;
+    while ((ch = io.get()) != EOF)
+    {
+        cout.put(ch); // c++
+    }
+    return 0;
+}
+```
+
+### 多字节操作
+
+多字节低层IO操作
+
+![多字节低层IO操作](<../../../.gitbook/assets/屏幕截图 2022-07-26 211446.jpg>)
+
+get与getline有区别，两个函数一直读取数据，直至 已读取了size-1个字符、遇到了文件尾、遇到了分隔符，差别在于getline会丢弃分隔符
+
+```cpp
+//example45.cpp
+int main(int argc, char **argv)
+{
+    stringstream io;
+    io << "helloworld";
+    // is.get(sink,size,delim)
+    char str[20];
+    io.get(str, 5, 'e');
+    cout << str << endl; // h
+    // getline(sink,size,delim)
+    io.getline(str, 5, 'w');
+    cout << str << endl; // ello io内的w被丢弃
+    // read(sink,size)
+    io.read(str, 4);
+    cout << str << endl; // orld
+    // is.gcount()
+    cout << io.gcount() << endl; // 4 上次未格式化读取的字节数
+    // os.write(source,size)
+    io.write(string("c++").c_str(), 3);
+    io.getline(str, 4);
+    cout << str << endl; // c++
+
+    // is.ignore(size,delim)
+    stringstream sio("hello");
+    sio.ignore(4, 'l');
+    char temp[10];
+    sio.read(temp, 2);
+    temp[2] = '\0';
+    cout << temp << endl; // lo
+
+    return 0;
+}
+```
+
+### 确定读取了多少个字符
+
+使用gcount来确定最后一个未格式化输入操作读取了多少个字符 ，如果调用gcount前使用了peek、unget或putback，则gcount返回0
+
+```cpp
+//example46.cpp
+int main(int argc, char **argv)
+{
+    stringstream io;
+    io << "123456789";
+    char str[10];
+    io.getline(str, 100);
+    cout << str << endl;         // 123456789
+    cout << io.gcount() << endl; // 9
+    return 0;
+}
+```
+
+### 流随机访问
+
+在之前几个例子中我们都在使用stringstream但是当从中read内容，其中的内容并不会在流中消失，就是内部有个定位指针，其默认只会向后移动，没读取一个字节就像后移动一个位置，但是例如访问文件时，往往需要进行随机访问，标准库提供了定位(seek)到流中给定位置以及告诉(tell)我们当前的位置
+
+要注意的是，istream和ostream类型通常并不支持随机访问，大多数情况下用于fstream和sstream类型
+
+### seek和tell函数
+
+seek和tell函数
+
+![seek和tell函数](<../../../.gitbook/assets/屏幕截图 2022-07-26 214428.jpg>)
+
+```cpp
+//example47.cpp
+int main(int argc, char **argv)
+{
+    stringstream io;
+    io << "helloworld";
+    // g版本用于输入流 p版本用于输出流
+
+    // tellg tellp
+    size_t pos = io.tellg();
+    cout << pos << endl; // 0
+    pos = io.tellp();
+    cout << pos << endl; // 10
+
+    // seekg seekp
+    io.seekg(0);
+    io.seekp(10);
+
+    io.seekg(1, io.beg);
+    cout << io.tellg() << endl; // 1
+    io.seekg(-1, io.cur);
+    cout << io.tellg() << endl; // 0
+    io.seekp(-1, io.cur);
+    cout << io.tellp() << endl; // 9
+    io.seekp(1, io.cur);
+    cout << io.tellp() << endl; // 10
+    return 0;
+}
+```
+
+### 只有一个标记
+
+总之g就是输入流的标记，p就是输出流的标记，seek与tell是在调整标记的位置与告诉标记的所在位置，在每个流中只维护单一的标记，如果一个流关联了输出流也关联了输入流则有g标记也有p标记
+
+### 标记的数据类型
+
+标记的类型为`stream::pos_type`,可以使用相应流数据类型的标记类型对标记进行临时存储等操作
+
+```cpp
+//example49.cpp
+int main(int argc, char **argv)
+{
+    stringstream io;
+    io << "helloworld";
+    stringstream::pos_type mark = io.tellp();
+    cout << mark << endl; // 10
+    return 0;
+}
+```
+
+### 文件实战
+
+创建一个文件，写入内容，再将文件内的内容拷贝到另一个文件中
+
+```cpp
+//example50.cpp
+int main(int argc, char **argv)
+{
+    fstream file1("1.iofile");
+    fstream file2("2.iofile");
+    if (file1.fail() || file2.fail()) //检查文件是否存在
+    {
+        cout << "create new file" << endl;
+        file1.open("1.iofile", fstream::ate | fstream::out);
+        file2.open("2.iofile", fstream::ate | fstream::out);
+        file1.close(), file2.close();
+        file1.open("1.iofile");
+        file2.open("2.iofile");
+    }
+    file1 << "helloworld" << flush;
+    //将file1内容拷贝的file2
+    file1.seekg(0, file1.beg);
+    cout << file1.tellg() << endl; // 0
+    cout << file2.tellp() << endl; // 0
+    char buffer[128];
+    while (file1.good() && !file1.eof())
+    {
+        file1.get(buffer, 128);
+        static size_t size;
+        size = file1.gcount();
+        cout << size << endl; // 10
+        file2.write(buffer, size);
+    }
+    return 0;
+}
+```
+
+### 小结
+
+到此我们对C++的特殊功能有了更近一步的了解，这些功能都是在特定的场景下才能展现作用，使得开发效率更高，关于IO的内容到此也学习完毕了，后面的章节不再会介绍IO相关的内容了
