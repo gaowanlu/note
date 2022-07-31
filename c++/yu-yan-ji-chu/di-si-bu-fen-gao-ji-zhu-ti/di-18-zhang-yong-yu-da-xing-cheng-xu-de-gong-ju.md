@@ -625,3 +625,823 @@ int main(int argc, char **argv)
     return 0;
 }
 ```
+
+### 命名空间
+
+当多个不同的库在一起使用时，及那个名字放置在全局命名空间中将引起命名空间污染，还有可能造成重复定义等。在C中往往使用命名加前缀从定义的名称上来解决，C++中引入了命名空间的概念\
+可以使得一个库中的内容更加封闭，不会与其他的内容出现名字冲突
+
+### 命名空间定义
+
+关键词`namespace`，随后为命名空间的名称，然后为花括号。花括号内主要包括，类、变量(及其初始化操作)、函数(及定义)、模板、其他命名空间
+
+```cpp
+//example17.cpp
+namespace me
+{
+    class Person
+    {
+    public:
+        int age;
+        Person(int age) : age(age) {}
+    };
+    int num = 999;
+    void func()
+    {
+        cout << num << endl;
+    }
+}
+
+int main(int argc, char **argv)
+{
+    me::func();              // 999
+    cout << me::num << endl; // 999
+    me::Person person(me::num);
+    cout << person.age << endl; // 999
+    return 0;
+}
+```
+
+要注意的是，命名空间作用域后面无须分号
+
+### 命名空间一个作用域
+
+每个命名空间是一个独立的作用域，作用域与作用域之间不会产生命名冲突
+
+```cpp
+//example18.cpp
+namespace A
+{
+    int num = 999;
+}
+
+namespace B
+{
+    int num = 888;
+}
+
+int main(int argc, char **argv)
+{
+    cout << A::num << " " << B::num << endl; // 999 888
+    return 0;
+}
+```
+
+### 命名空间可以是不连续的
+
+namespace是可以进行重新打开的，并不需要在一个花括号内定义或声明namespace的全部内容
+
+```cpp
+//example19.cpp
+namespace A
+{
+    int n1 = 999;
+}
+
+namespace A
+{
+    int n2 = 888;
+}
+
+int main(int argc, char **argv)
+{
+    cout << A::n1 << " " << A::n2 << endl; // 999 888
+    return 0;
+}
+```
+
+通常头文件中命名空间中定义类以及声明作为类接口的函数及对象，命名空间成员的定义置于源文件中
+
+### 正确的定义命名空间
+
+与类的声明定义规范非常相似
+
+```cpp
+//example20/main.hpp
+#pragma once
+namespace A
+{
+    class Data
+    {
+    public:
+        int num;
+        Data(const int &num) : num(num)
+        {
+        }
+        void print();
+    };
+}
+```
+
+```cpp
+//example20/main.cpp
+#include <iostream>
+#include "main.hpp"
+using namespace std;
+
+namespace A
+{
+    void Data::print()
+    {
+        cout << num << endl;
+    }
+}
+
+int main(int argc, char **argv)
+{
+    A::Data data(21);
+    data.print(); // 21
+    return 0;
+}
+```
+
+### 定义命名空间成员
+
+完全允许在namespace作用域外定义命名空间成员，但是要显式指出命名空间
+
+```cpp
+//example21.cpp
+namespace A
+{
+    void print();
+}
+
+void A::print()
+{
+    cout << "hello world" << endl;
+}
+
+int main(int argc, char **argv)
+{
+    A::print(); // hello world
+    return 0;
+}
+```
+
+或者重新打开命名空间等
+
+```cpp
+//example22.cpp
+namespace A
+{
+    void print();
+}
+
+namespace A
+{
+    void print()
+    {
+        cout << "hello world" << endl;
+    }
+}
+
+int main(int argc, char **argv)
+{
+    A::print(); // hello world
+    return 0;
+}
+```
+
+### 模板特例化
+
+在模板章节中，已经有使用过定义模板特例化，模板特例化必须定义在原始模板所属的命名空间中
+
+```cpp
+//example23.cpp
+class Person
+{
+public:
+    int num;
+};
+
+//打开命名空间std
+namespace std
+{
+    template <>
+    struct hash<Person>;
+}
+
+//定义
+template <>
+struct std::hash<Person>
+{
+    size_t operator()(const Person &p) const
+    {
+        return std::hash<int>()(p.num);
+    }
+};
+
+int main(int argc, char **argv)
+{
+    Person p;
+    p.num = 888;
+    cout << std::hash<Person>()(p) << endl; // 888
+    return 0;
+}
+```
+
+### 全局命名空间
+
+全局命名空间也就是整个全局作用域，全局作用域是隐式的，所以它没有自己的名字
+
+```cpp
+//example24.cpp
+int num = 999;
+
+void func()
+{
+    cout << num << endl;
+}
+
+int main(int argc, char **argv)
+{
+    ::num = 888;
+    ::func(); // 888
+    return 0;
+}
+```
+
+### 嵌套命名空间
+
+命名空间里面可以有命名空间，也就形成了命名空间的嵌套
+
+```cpp
+//example25.cpp
+namespace A
+{
+    namespace B
+    {
+        int num = 888;
+    }
+    namespace C
+    {
+        void print();
+    }
+}
+
+void A::C::print()
+{
+    cout << B::num << endl;
+}
+
+int main(int argc, char **argv)
+{
+    A::B::num = 666;
+    A::C::print(); // 666
+    return 0;
+}
+```
+
+### 内联命名空间
+
+内联命名空间(inline namespace)是C++11引入的一种新的嵌套命名空间
+
+```cpp
+//example26.cpp
+inline namespace A
+{
+    int num = 999;
+}
+
+namespace A
+{
+    void print()
+    {
+        cout << num << endl;
+    }
+}
+
+int main(int argc, char **argv)
+{
+    //通过namespaceA的外层空间的名字即可访问A的num
+    cout << ::num << endl; // 999
+    A::print();
+    //但仍可以指定A::
+    cout << A::num << endl; // 999
+    ::print();              // 999
+    return 0;
+}
+```
+
+重点：关键字inline必须出现在命名空间第一次定义的地方，后续再次打开可以些inline也可以不写
+
+一种骚操作的写法
+
+```cpp
+//example27/A.hpp
+#pragma once
+
+inline namespace A
+{
+    int num = 999;
+    string name = "gaowanlu";
+}
+```
+
+```cpp
+//example27/B.hpp
+#pragma once
+inline namespace B
+{
+    int num = 888;
+}
+```
+
+```cpp
+//example27/main.cpp
+#include <iostream>
+using namespace std;
+
+namespace C
+{
+#include "A.hpp"
+#include "B.hpp"
+}
+
+int main(int argc, char **argv)
+{
+    cout << C::A::num << endl; // 999
+    cout << C::B::num << endl; // 888
+    // cout << C::num << endl;//错误
+    cout << C::name << endl; // gaowanlu
+    return 0;
+}
+```
+
+### 未命名的命名空间
+
+未命名的命名空间(unnamed namespace)定义的变量拥有静态生命周期，在第一次使用前创建，并且 直到程序结束才销毁
+
+重点：未命名的命名空间仅在特定的文件内部有效，其作用范围不会横跨多个不同的文件
+
+```cpp
+//example28.cpp
+#include <iostream>
+using namespace std;
+
+int i = 999; //此i是跨文件作用域的
+
+namespace
+{
+    int i = 888; //此i只在此cpp中有效
+}
+
+//在C中往往使用static达到此目的,但C++标准中已经取消了，推荐使用未命名的命名空间
+static int num = 666; // num仅在此文件有效
+
+namespace A
+{
+    namespace
+    {
+        int i; //在命名空间A中
+    }
+}
+
+int main(int argc, char **argv)
+{
+    // cout << i << endl;//错误 出现二义性 编译器不知道是哪一个i
+    cout << num << endl; // 666
+    A::i = 888;
+    cout << A::i << endl; // 888
+    return 0;
+}
+```
+
+### 使用命名空间成员
+
+使用命名空间的成员就要显式在前面指出命名空间，这样的操作往往会显得繁琐，例如使用标准库中的string每次都要在前面指定std::,这样将会过于麻烦，我们已经知道有using这样的操作，下面将会深入学习using
+
+### 命名空间的别名
+
+可以将namespace当做数据类型来为namespace定义新的名字
+
+```cpp
+//example29.cpp
+namespace AAAAA
+{
+    int num = 666;
+    namespace B
+    {
+        int num = 999;
+    }
+}
+
+namespace
+{
+    namespace A = AAAAA;
+    namespace AB = AAAAA::B;
+}
+
+int main(int argc, char **argv)
+{
+    A::num = 888;
+    cout << A::num << endl;  // 888
+    cout << AB::num << endl; // 999
+    return 0;
+}
+```
+
+### using声明：扼要概述
+
+using声明语句可以出现在全局作用域、局部作用域、命名空间作用域以及类的作用域中\
+一条using声明语句一次只能引入命名空间的一个成员
+
+```cpp
+//example30.cpp
+namespace A
+{
+    using std::string;
+    string name;
+}
+
+int main(int argc, char **argv)
+{
+    A::name = "gaowanlu";
+    std::cout << A::name << std::endl; // gaowanlu
+    {
+        using std::cout;
+        using std::endl;
+        cout << A::name << endl; // gaowanlu
+    }
+    return 0;
+}
+```
+
+### using指示
+
+using namespace xx,using指示一次引入命名空间全部成员\
+using指示可以出现在全局作用域、局部作用域、命名空间作用域中，不能出现在类的作用域中
+
+```cpp
+//example31.cpp
+#include <iostream>
+using namespace std;
+
+int i = 999;
+
+namespace A
+{
+    using namespace std;
+    int i = 888;
+    string name;
+    void print()
+    {
+        cout << name << endl;
+    }
+}
+
+int main(int argc, char **argv)
+{
+    A::name = "gaowanlu";
+    A::print(); // gaowanlu
+
+    using namespace A;
+    // cout << i << endl;//二义性
+    cout << A::i << endl; // 888
+    cout << ::i << endl;  // 999
+    return 0;
+}
+```
+
+### 头文件与using声明或指示
+
+在前面的章节我们也有提到，不应该再头文件中的全局作用域部分使用using，因为头文件会被引入到源文件中，造成源文件不知不觉的使用了using\
+所以头文件最多只能在它的函数或命名空间内使用using指示或using声明
+
+### 类、命名空间与作用域
+
+在namespace嵌套的情况下，往往容易混淆对作用域的理解
+
+```cpp
+//example32.cpp
+namespace A
+{
+    int i = 666;
+    namespace B
+    {
+        int i = 777;
+        void print1()
+        {
+            cout << i << endl;
+        }
+        void print2()
+        {
+            int i = 999;
+            cout << i << endl;
+        }
+    }
+    void print1()
+    {
+        // cout << h << endl;//// error: 'h' was not declared in this scope
+    }
+    void print2();
+    int h = 999;
+}
+
+void A::print2()
+{
+    cout << h << endl;
+}
+
+int main(int argc, char **argv)
+{
+    A::B::print1(); // 777
+    A::B::print2(); // 999
+    A::print2();    // 999
+    return 0;
+}
+```
+
+当namespace中定义类时
+
+```cpp
+//example33.cpp
+namespace A
+{
+    int i = 888;
+    class B
+    {
+    public:
+        int i = 999;
+        void print()
+        {
+            cout << i << endl;
+            // cout << h << endl;// error: 'h' was not declared in this scope
+        }
+    };
+    void print1()
+    {
+        // cout << h << endl;// error: 'h' was not declared in this scope
+    }
+    int h = 555;
+    void print2()
+    {
+        cout << h << endl;
+    }
+}
+
+int main(int argc, char **argv)
+{
+    A::B b;
+    b.print();   // 999
+    A::print2(); // 555
+    return 0;
+}
+```
+
+可见namespace中的定义的现后顺序会影响其使用，在使用前必须要已经定义过了
+
+### 实参相关的查找与类累心形参
+
+```cpp
+//example34.cpp
+#include <iostream>
+
+int main(int argc, char **argv)
+{
+    {
+        std::string s;
+        std::cin >> s; //等价于
+        std::cout << s << std::endl;
+        operator>>(std::cin, s);
+        std::cout << s << std::endl;
+    }
+    return 0;
+}
+```
+
+这里面有什么关于using的知识呢?operator>>在std命名空间内，为什么没有显式指出std就可以调用了呢，因此除了普通的命名空间作用域查找，还会查找其实参所在的命名空间，所以实参cin在std内，所以会在std中查找时找到，所以调用了std::operator>>
+
+当然可以依旧显式的指出
+
+```cpp
+//example35.cpp
+#include <iostream>
+int main(int argc, char **argv)
+{
+    {
+        using std::operator>>;
+        std::string s;
+        operator>>(std::cin, s);
+    }
+    {
+        std::string s;
+        std::operator>>(std::cin, s);
+    }
+    return 0;
+}
+```
+
+### 查找std::move和std::forward
+
+在千前面有提到，使用move与forward时要使用std::move与std::forward，而不省略std。这是因为涉及到实参命名空间推断的问题，如果实参的命名空间中有move或者forward可能会造成意想不到的结果\
+约定，总是用std::move与std::forard就好了
+
+### 友元声明与实参相关的查找
+
+一个另外的未声明的类或函数如果第一次出现在友元声明中，则认为它是最近的外层命名空间的成员
+
+```cpp
+//example37.cpp
+#include <iostream>
+using namespace std;
+
+void f2();
+
+namespace A
+{
+    class C
+    {
+    private:
+        int age = 999;
+
+    public:
+        //下面的友元隐式成为A的成员,编译器认为f f2定义在命名空间A中
+        friend void f2();
+        friend void f(const C &);
+    };
+    void f(const C &c)
+    {
+        cout << "f " << c.age << endl;
+    }
+    // void f2(){
+    //     cout << "f2" << endl;
+    // }
+}
+
+void f2()
+{
+    A::C c;
+    // cout << "f2 " << c.age << endl;
+    // error: 'int A::C::age' is private within this context
+}
+
+int main(int argc, char **argv)
+{
+    A::C c;
+    A::f(c); // f 999
+    // A::f2();//error: 'f2' is not a member of 'A'
+    f2();
+    return 0;
+}
+```
+
+### 与实参相关的查找与重载
+
+不仅会向实参的命名空间查找，还会向实参基类所在的命名空间查找
+
+```cpp
+//example38.cpp
+namespace A
+{
+    class B
+    {
+    };
+    void print(const B &b)
+    {
+        cout << "print" << endl;
+    }
+}
+
+class C : public A::B
+{
+};
+
+int main(int argc, char **argv)
+{
+    C c;
+    print(c); // print
+    return 0;
+}
+```
+
+### 重载与using声明
+
+using声明关注的是名字，而不关注参数列表
+
+```cpp
+//example39.cpp
+namespace A
+{
+    void print()
+    {
+        cout << "print()" << endl;
+    }
+    void print(int n)
+    {
+        cout << "print(n)" << endl;
+    }
+}
+
+int main(int argc, char **argv)
+{
+    // using A::print(int);//错误
+    using A::print; //正确
+    A::print();     // print()
+    A::print(12);   // print(n)
+    return 0;
+}
+```
+
+### 重载与using指示
+
+using namespace使得相应命名空间内的成员加入到候选集中
+
+```cpp
+//example40/main.cpp
+#include <iostream>
+using namespace std;
+
+namespace A
+{
+    extern void print(int);
+    extern void print(double);
+}
+
+void print(string s)
+{
+    cout << s << endl;
+}
+
+int main(int argc, char **argv)
+{
+    A::print(10);    // 10
+    A::print(23.32); // 23.32
+    using namespace A;
+    print(10);    // 10
+    print(23.32); // 23.32
+    print("sds"); // sds
+    return 0;
+}
+// g++ main.cpp other.cpp -o example40.exe
+```
+
+当main使用using namespace A;后在main中print有了三个候选项
+
+```cpp
+//example40/other.cpp
+#include <iostream>
+namespace A
+{
+    void print(int n)
+    {
+        std::cout << n << std::endl;
+    }
+    void print(double n);
+}
+
+void A::print(double n)
+{
+    std::cout << n << std::endl;
+}
+```
+
+### 跨越多个using指示的重载
+
+在一个作用域下，using指示多个命名空间
+
+```cpp
+//example41.cpp
+#include <iostream>
+using namespace std;
+
+void print()
+{
+}
+void print(int n)
+{
+    cout << "global" << endl;
+}
+
+namespace A
+{
+    int print(int n)
+    {
+        cout << n << endl;
+        return n;
+    }
+}
+
+namespace B
+{
+    double print(double d)
+    {
+        cout << d << endl;
+        return d;
+    }
+}
+
+int main(int argc, char **argv)
+{
+    {
+        using namespace A;
+        using namespace B;
+        print(); //
+        // print(12);   // 二义性
+        ::print(12);  // global
+        A::print(12); // 12
+        print(34.2);  // 34.2
+    }
+    return 0;
+}
+```
