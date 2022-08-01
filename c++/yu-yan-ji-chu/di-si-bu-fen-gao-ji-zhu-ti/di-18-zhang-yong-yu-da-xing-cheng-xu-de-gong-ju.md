@@ -1445,3 +1445,686 @@ int main(int argc, char **argv)
     return 0;
 }
 ```
+
+### 多重继承
+
+多重继承是指从多个直接基类中产生派生类的能力。
+
+```cpp
+//example42.cpp
+class A
+{
+public:
+    int a;
+};
+
+class B
+{
+public:
+    int b;
+};
+
+class C : public A, public B
+{
+public:
+    int c;
+};
+
+int main(int argc, char **argv)
+{
+    C c;
+    c.a = c.b = c.c = 999;
+    cout << c.a << " " << c.b << " " << c.c << endl; // 999 999 999
+    return 0;
+}
+```
+
+实际工程运用中并没有像这样简单
+
+### 使用基类构造函数
+
+与单继承相同，在派生类构造函数初始化列表中可以使用基类的构造函数对相应基类进行初始化
+
+```cpp
+//example43.cpp
+class A
+{
+public:
+    int age;
+    string name;
+    A(const int &age, const string &name) : age(age), name(name) {}
+};
+
+class B
+{
+public:
+    B(const int &b) : b(b) {}
+    int b;
+};
+
+class C : public A, public B
+{
+public:
+    C(const int &age, const string &name, const int &b) : A(age, name), B(b)
+    {
+        //先初始化第一个直接基类A 然后初始化第二个直接基类B
+    }
+    void print();
+};
+
+void C::print()
+{
+    cout << age << " " << name << " " << b << endl;
+}
+
+int main(int argc, char **argv)
+{
+    C c(20, "gaowanlu", 1);
+    c.print(); // 20 gaowanlu 1
+    return 0;
+}
+```
+
+### 继承构造函数
+
+在OOP章节学习过单继承的继承构造函数，在C++11中，允许从多个直接基类继承构造函数
+
+```cpp
+//example44.cpp
+#include <iostream>
+using namespace std;
+
+class A
+{
+public:
+    string s;
+    double n;
+    A() = default;
+    A(const string &s) : s(s)
+    {
+    }
+    A(double n) : n(n) {}
+};
+
+class B
+{
+public:
+    B() = default;
+    B(const string &s)
+    {
+    }
+    B(int n) {}
+};
+
+class C : public A, public B
+{
+public:
+    using A::A;
+    using B::B;
+};
+
+int main(int argc, char **argv)
+{
+    C c;
+    // C c("s");//错误不知道使用继承的哪一个构造函数A与B都是const string&
+    return 0;
+}
+```
+
+怎样解决这样的构造函数继承冲突，当自身定义了此形式的构造函数时，这个形式的构造函数就不会被继承
+
+```cpp
+//example45.cpp
+#include <iostream>
+using namespace std;
+
+class A
+{
+public:
+    string s;
+    double n;
+    A() = default;
+    A(const string &s) : s(s)
+    {
+    }
+    A(double n) : n(n) {}
+};
+
+class B
+{
+public:
+    B() = default;
+    B(const string &s)
+    {
+    }
+    B(int n) {}
+};
+
+class C : public A, public B
+{
+public:
+    using A::A;
+    using B::B;
+    C(const string &s) : B(s), A(s) {}
+    C() = default;
+};
+
+int main(int argc, char **argv)
+{
+    C c("s");
+    cout << c.A::s << endl; // s
+    return 0;
+}
+```
+
+### 构造函数与析构函数执行顺序
+
+当多继承时构造函数的执行顺序与析构函数执行顺序相反
+
+```cpp
+//example46.cpp
+#include <iostream>
+using namespace std;
+
+class A
+{
+public:
+    A()
+    {
+        cout << "A" << endl;
+    }
+    ~A()
+    {
+        cout << "~A" << endl;
+    }
+};
+
+class B
+{
+public:
+    B()
+    {
+        cout << "B" << endl;
+    }
+    ~B()
+    {
+        cout << "~B" << endl;
+    }
+};
+
+class C : public A, public B
+{
+public:
+    C()
+    {
+        cout << "C" << endl;
+    }
+    ~C()
+    {
+        cout << "~C" << endl;
+    }
+};
+
+class D : public B, public A
+{
+public:
+    D()
+    {
+        cout << "D" << endl;
+    }
+    ~D()
+    {
+        cout << "~D" << endl;
+    }
+};
+
+int main(int argc, char **argv)
+{
+    {
+        C c; // A B C
+        D d; // B A D
+    }
+    //从栈顶依次释放
+    //~D ~A ~B
+    //~C ~B ~A
+    return 0;
+}
+```
+
+### 多重继承派生类的拷贝与移动
+
+如果派生类没有自定义拷贝与移动操作，编译器将会进行自动合成。并且其基类部分在拷贝或移动时会被基类部分使用基类的相关拷贝与移动操作。\
+同理如果自定义了相关操作，编译器则不再为其自动合成
+
+```cpp
+//example47.cpp
+#include <iostream>
+using namespace std;
+
+class A
+{
+public:
+    int a;
+    A(const int &a) : a(a)
+    {
+    }
+};
+
+class B
+{
+public:
+    int b;
+    B(const int &b) : b(b) {}
+};
+
+class C : public A, public B
+{
+public:
+    int c;
+    C(int a, int b, int c) : A(a), B(b), c(c)
+    {
+    }
+    void print()
+    {
+        cout << a << " " << b << " " << c << endl;
+    }
+};
+
+int main(int argc, char **argv)
+{
+    C c(1, 2, 3);
+    C c1 = c;
+    c.print(); // 1 2 3
+    return 0;
+}
+```
+
+### 类型转换与多个基类
+
+基类的指针或引用可以直接指向一个派生类对象
+
+```cpp
+//example48.cpp
+int main(int argc, char **argv)
+{
+    // class C : public A, public B
+    C c(1, 2, 3);
+    //引用
+    C &cref = c;
+    B &bref = c;
+    A &aref = c;
+    cout << bref.b << " " << aref.a << endl; // 2 1
+    //指针
+    B *bptr = &c;
+    A *aptr = &c;
+    cout << bptr->b << " " << aptr->a << endl; // 2 1
+    //值
+    B b = c; //只保留基类部分进行拷贝
+    A a = c;
+    cout << b.b << " " << a.a << endl; // 2 1
+    return 0;
+}
+```
+
+当函数重载遇见多继承可能出现的问题
+
+```cpp
+//example49.cpp
+void print(A &a)
+{
+}
+
+void print(B &b)
+{
+}
+
+int main(int argc, char **argv)
+{
+    // class C : public A, public B
+    C c(1, 2, 3);
+    // print(c);//二义性
+    B &b = c;
+    print(b);
+    A &a = c;
+    print(a);
+    return 0;
+}
+```
+
+### 多重继承下的类作用域
+
+在单继承中，派生类部分找不到将会去往基类寻找按照继承链向上上找。在多重继承中派生类部分找不到，将会在其直接基类中同时查找，如果找到多个则出现二义性
+
+```cpp
+//example50.cpp
+class A
+{
+public:
+    int num;
+    A(const int &num) : num(num)
+    {
+    }
+};
+
+class B
+{
+public:
+    int num;
+    B(const int &num) : num(num) {}
+};
+
+class C : public A, public B
+{
+public:
+    C(int num) : A(num), B(num)
+    {
+    }
+    void print()
+    {
+        cout << A::num << " " << B::num << endl;
+    }
+};
+
+int main(int argc, char **argv)
+{
+    C c(12);
+    // cout << c.num << endl;//二义性
+    //解决方案
+    cout << c.A::num << endl; // 12 显式指定
+    cout << c.B::num << endl; // 12
+    c.print();                // 12 12
+    return 0;
+}
+```
+
+### 虚继承
+
+什么是虚继承？以上的这种多重继承方式，会出现一种问题，对然在直接基类中一个类只能出现依次，但是在整个继承链中，一个类可能会出现多次
+
+```cpp
+//example51.cpp
+class Person
+{
+public:
+    int age;
+};
+class Student : public Person
+{
+};
+class Girl : public Person
+{
+};
+class GirlFriend : public Girl, public Student
+{
+};
+
+int main(int argc, char **argv)
+{
+    GirlFriend she;
+    // she.age;//二义性
+    she.Girl::age = 23;
+    she.Student::age = 43;
+    cout << she.Girl::age << endl;//23
+    cout << she.Student::age << endl;//43
+    return 0;
+}
+```
+
+虚继承就是为了解决这种问题的
+
+### 使用虚基类
+
+虚继承的目的就是当出现example51.cpp中的问题时，怎样将在继承链中怎样将Person何为一个实例，而不是Girl部分与Student部分分别继承两个不同的Person实例
+
+虚继承的使用方式就是在派生列表中添加virtual关键字
+
+```cpp
+class A:public virtual B;
+class A:virtual public B;
+```
+
+解决example51.cpp中的问题
+
+```cpp
+//example52.cpp
+class Person
+{
+public:
+    int age;
+};
+class Student : public virtual Person
+{
+};
+class Girl : public virtual Person
+{
+};
+class GirlFriend : public Girl, public Student
+{
+};
+
+int main(int argc, char **argv)
+{
+    GirlFriend she;
+    she.age = 23;
+    cout << she.age << endl;
+    //只有一个Person实例
+    she.Girl::Person::age = 43;
+    cout << she.Student::Person::age << endl; // 43
+    return 0;
+}
+```
+
+### 虚继承向基类的常规类型转换
+
+虚继承中派生类向基类的类型转换并不会受到影响
+
+```cpp
+//example53.cpp
+class Person
+{
+public:
+    int age;
+};
+class Student : public virtual Person
+{
+};
+class Girl : public virtual Person
+{
+};
+class GirlFriend : public Girl, public Student
+{
+};
+
+int main(int argc, char **argv)
+{
+    Student student;
+    Person &p1 = student;
+    p1.age = 12;
+    cout << p1.age << endl; // 12
+    GirlFriend she;
+    Person *ptr = &she;
+    ptr->age = 20;
+    cout << ptr->age << endl; // 20
+    return 0;
+}
+```
+
+### 虚基类成员的可见性
+
+在单继承中，查找只当成员时，会从派生类本身部分查找，查找不到就沿着继承链向上查找。但使用了虚继承后，查找到同一个成员的路径不可不止一条，如在example52.cpp中，GirlFriend部分找不到age,向上查找有Student部分、Girl部分，二者都又继承同一个Person实例，总之无论从哪一个查找age最终都是统一个实例
+
+### 构造函数与虚继承
+
+虚继承，虚基类只有一个实例，但是在其派生类的构造函数构造时调用了其构造函数，如果派生类使用构造函数不是相同的时候会怎样呢
+
+```cpp
+//example54.cpp
+class Person
+{
+public:
+    int age;
+    string name;
+    Person() = default;
+    Person(int age) : age(age) {}
+    Person(string name) : name(name) {}
+};
+class Student : public virtual Person
+{
+public:
+    Student() : Person(12) {}
+};
+class Girl : public virtual Person
+{
+public:
+    Girl() : Person("sdc") {}
+};
+class GirlFriend : public Girl, public Student
+{
+};
+
+int main(int argc, char **argv)
+{
+    GirlFriend she;
+    cout << she.age << endl;  //乱码
+    cout << she.name << endl; //""
+    //为什么两个构造都没有被成功执行
+    return 0;
+}
+```
+
+因为这样，不仅仅编译器蒙圈了，恐怕我们自己都有点蒙圈。以边让使用Person(12)构造Person实例，一边让用Person("sdc")构造Person实例，那么有没有解决办法呢？
+
+```cpp
+//example55.cpp
+class Person
+{
+public:
+    int age;
+    string name;
+    Person() = default;
+    Person(int age) : age(age)
+    {
+        cout << "Person" << endl;
+    }
+    Person(string name) : name(name)
+    {
+        cout << "Person" << endl;
+    }
+};
+class Student : public virtual Person
+{
+public:
+    Student() : Person(12)
+    {
+        cout << "Student" << endl;
+    }
+};
+class Girl : public virtual Person
+{
+public:
+    Girl() : Person("sdc")
+    {
+        cout << "Gril" << endl;
+    }
+};
+class GirlFriend : public Girl, public Student
+{
+public:
+    GirlFriend() : Student(), Girl(), Person(12)
+    {
+        cout << "GrilFriend" << endl;
+    }
+};
+
+int main(int argc, char **argv)
+{
+    GirlFriend she;
+    cout << she.age << endl;  // 12
+    cout << she.name << endl; //""
+    /*
+    Person
+    Gril
+    Student
+    GrilFriend
+    */
+    //派生类显式调用虚基类的构造函数后就创建了Person实例，在创建Stduent与Gril时不再构造Person
+    //直接将继承已经创建的Person实例
+    return 0;
+}
+```
+
+> Note: 虚基类总是先于非虚基类构造，与它们在继承体系中的次序和位置无关
+
+### 构造函数与析构函数的次序
+
+一个类可以继承多个虚基类,它们的构造顺序按照直接基类的声明顺序对其依次检查，确定其中是否含有虚基类，如有则先构造虚基类，然后按照声明顺序依次构造非虚基类
+
+```cpp
+//example56.cpp
+class A
+{
+public:
+    int a;
+    A(const int &a) : a(a)
+    {
+        cout << "A" << endl;
+    }
+    ~A()
+    {
+        cout << "~A" << endl;
+    }
+};
+
+class B : public virtual A
+{
+public:
+    B() : A(12)
+    {
+        cout << "B" << endl;
+    }
+    ~B()
+    {
+        cout << "~B" << endl;
+    }
+};
+
+class C
+{
+public:
+    C()
+    {
+        cout << "C" << endl;
+    }
+    ~C()
+    {
+        cout << "~C" << endl;
+    }
+};
+
+class D : public B, public virtual C
+{
+public:
+    D() : A(13)
+    {
+        cout << "D" << endl;
+    }
+    ~D()
+    {
+        cout << "~D" << endl;
+    }
+};
+
+int main(int argc, char **argv)
+{
+    {
+        D d; // A C B D
+    }        //~D ~B ~C ~A
+    return 0;
+}
+```
+
+总之就是先构造虚基类，虚基类的构造顺序与在继承列表的顺序有关
+
+### 小结
+
+至此我们学习完了第18章 用于大型程序的工具，主要为异常、命名空间、多重继承、虚继承。从第1章到第18章经历了千辛万苦，非常不容易。C++基础，基本剩余第19章 特殊工具与技术了，还有相关泛型算法的查阅表等附录内容。要坚持哦！
