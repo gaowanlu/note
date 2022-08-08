@@ -159,6 +159,11 @@ int main(int argc, char **argv)
 
 ```cpp
 //example4.cpp
+#include <iostream>
+#include <cstdlib>
+#include <ctime>
+using namespace std;
+
 class Person
 {
 public:
@@ -177,11 +182,26 @@ ostream &operator<<(ostream &os, const Person &person)
     return os;
 }
 
+//想要些类内定义怎么办
+class A
+{
+public:
+    int n;
+    A(int n) : n(n) {}
+    ostream &operator<<(ostream &os) const
+    {
+        os << n << endl;
+        return os;
+    }
+};
+
 int main(int argc, char **argv)
 {
     srand(time(NULL));
     Person person(19, "me");
     cout << person << endl; // 19 me 7
+    A a(999);
+    a << cout; // 999
     return 0;
 }
 ```
