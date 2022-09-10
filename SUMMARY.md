@@ -90,6 +90,7 @@
   * [第8章 排序](shu-ju-jie-gou-yu-suan-fa/shu-ju-jie-gou/di-8-zhang-pai-xu/README.md)
     * [😅 插入排序](shu-ju-jie-gou-yu-suan-fa/shu-ju-jie-gou/di-8-zhang-pai-xu/cha-ru-pai-xu.md)
     * [😃 交换排序](shu-ju-jie-gou-yu-suan-fa/shu-ju-jie-gou/di-8-zhang-pai-xu/jiao-huan-pai-xu.md)
+    * [☺ 选择排序](shu-ju-jie-gou-yu-suan-fa/shu-ju-jie-gou/di-8-zhang-pai-xu/xuan-ze-pai-xu.md)
   * [第9章 高级数据结构](shu-ju-jie-gou-yu-suan-fa/shu-ju-jie-gou/di-9-zhang-gao-ji-shu-ju-jie-gou.md)
 
 ## 🎆 计算机网络
