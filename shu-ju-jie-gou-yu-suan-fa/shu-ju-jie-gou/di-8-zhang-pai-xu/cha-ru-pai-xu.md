@@ -206,11 +206,7 @@ int main(int argc, char **argv)
 2、代码实现
 
 ```cpp
-#include <iostream>
-#include <vector>
-using namespace std;
-
-// main4.cpp
+//main4.cpp
 /**
  * @brief 写入增量直接插入排序
  *
@@ -252,26 +248,16 @@ void shellSort(vector<int> &vec, vector<int> &d)
     }
 }
 
-template <typename T>
-void printVec(const T &t)
-{
-    for (size_t i = 0; i < t.size(); i++)
-    {
-        cout << t[i] << " ";
-    }
-    cout << endl;
-}
-
 int main(int argc, char **argv)
 {
     vector<int> vec = {6, 5, 4, 3, 2, 5, 6, 2, 5};
     vector<int> d = {5, 4, 3, 2, 1}; //增量
-    printVec<vector<int>>(vec);
-    // 6 5 4 3 2 5 6 2 5
+    printVec(vec);
+    //[0]:6 [1]:5 [2]:4 [3]:3 [4]:2 [5]:5 [6]:6 [7]:2 [8]:5
     shellSort(vec, d);
     // sort(vec.begin(), vec.end());
-    printVec<vector<int>>(vec);
-    // 2 2 3 4 5 5 5 6 6
+    printVec(vec);
+    //[0]:2 [1]:2 [2]:3 [3]:4 [4]:5 [5]:5 [6]:5 [7]:6 [8]:6
     return 0;
 }
 ```
