@@ -92,6 +92,12 @@
     * [😃 交换排序](shu-ju-jie-gou-yu-suan-fa/shu-ju-jie-gou/di-8-zhang-pai-xu/jiao-huan-pai-xu.md)
     * [☺ 选择排序](shu-ju-jie-gou-yu-suan-fa/shu-ju-jie-gou/di-8-zhang-pai-xu/xuan-ze-pai-xu.md)
     * [😍 归并排序](shu-ju-jie-gou-yu-suan-fa/shu-ju-jie-gou/di-8-zhang-pai-xu/gui-bing-pai-xu.md)
+    * [🤩 桶排序](shu-ju-jie-gou-yu-suan-fa/shu-ju-jie-gou/di-8-zhang-pai-xu/tong-pai-xu.md)
+    * [🤪 基数排序](shu-ju-jie-gou-yu-suan-fa/shu-ju-jie-gou/di-8-zhang-pai-xu/ji-shu-pai-xu.md)
+    * [😜 外部排序简介](shu-ju-jie-gou-yu-suan-fa/shu-ju-jie-gou/di-8-zhang-pai-xu/wai-bu-pai-xu-jian-jie.md)
+    * [😝 多路平衡归并与败者树](shu-ju-jie-gou-yu-suan-fa/shu-ju-jie-gou/di-8-zhang-pai-xu/duo-lu-ping-heng-gui-bing-yu-bai-zhe-shu.md)
+    * [🥳 置换-选择排序](shu-ju-jie-gou-yu-suan-fa/shu-ju-jie-gou/di-8-zhang-pai-xu/zhi-huan-xuan-ze-pai-xu.md)
+    * [😎 最佳归并树](shu-ju-jie-gou-yu-suan-fa/shu-ju-jie-gou/di-8-zhang-pai-xu/zui-jia-gui-bing-shu.md)
   * [第9章 高级数据结构](shu-ju-jie-gou-yu-suan-fa/shu-ju-jie-gou/di-9-zhang-gao-ji-shu-ju-jie-gou.md)
 
 ## 🎆 计算机网络
