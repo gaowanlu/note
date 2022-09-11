@@ -79,7 +79,7 @@ int main(int argc, char **argv)
 
 堆是一个完全二叉树，且如果每个节点的值都大于等于左右孩子的值，称为最大堆。如果每个节点的值都小于等于左右孩子的值，称为最小堆。
 
-<figure><img src="../../../.gitbook/assets/image.png" alt=""><figcaption><p>大根堆</p></figcaption></figure>
+<figure><img src="../../../.gitbook/assets/image (3).png" alt=""><figcaption><p>大根堆</p></figcaption></figure>
 
 1、算法步骤
 
