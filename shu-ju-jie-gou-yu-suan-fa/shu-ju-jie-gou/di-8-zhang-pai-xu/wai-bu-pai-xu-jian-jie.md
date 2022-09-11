@@ -10,7 +10,7 @@ coverY: 0
 
 <figure><img src="../../../.gitbook/assets/屏幕截图 2022-09-11 233452.jpg" alt=""><figcaption></figcaption></figure>
 
-<figure><img src="../../../.gitbook/assets/image.png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../../.gitbook/assets/image (3).png" alt=""><figcaption></figcaption></figure>
 
 <figure><img src="../../../.gitbook/assets/屏幕截图 2022-06-07 213406.jpg" alt=""><figcaption></figcaption></figure>
 
