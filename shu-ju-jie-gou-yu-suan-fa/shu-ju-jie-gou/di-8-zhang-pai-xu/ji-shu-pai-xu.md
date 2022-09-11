@@ -18,7 +18,7 @@ coverY: 0
 
 最大值为92，共两位数字
 
-<figure><img src="../../../.gitbook/assets/image (1).png" alt=""><figcaption><p>分配</p></figcaption></figure>
+<figure><img src="../../../.gitbook/assets/image (1) (1).png" alt=""><figcaption><p>分配</p></figcaption></figure>
 
 收集 70、80、12、92、83、54、75、75、68、48
 
