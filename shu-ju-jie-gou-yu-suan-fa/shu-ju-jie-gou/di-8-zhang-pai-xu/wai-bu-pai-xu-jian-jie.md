@@ -21,3 +21,5 @@ coverY: 0
 还有其他优化方式，减少初始归并段数量
 
 例如有四个缓冲区，一下子读入四个将其内部排序，然后将四个快写回磁盘，省去了之前的步骤
+
+<figure><img src="../../../.gitbook/assets/屏幕截图 2022-09-11 235410.jpg" alt=""><figcaption></figcaption></figure>
