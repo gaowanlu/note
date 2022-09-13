@@ -80,7 +80,7 @@
     * [🍓 图的基本术语](shu-ju-jie-gou-yu-suan-fa/shu-ju-jie-gou/di-6-zhang-tu/tu-de-ji-ben-shu-yu.md)
     * [🚲 图的存储与基本操作](shu-ju-jie-gou-yu-suan-fa/shu-ju-jie-gou/di-6-zhang-tu/tu-de-cun-chu-yu-ji-ben-cao-zuo.md)
     * [🚎 图的遍历](shu-ju-jie-gou-yu-suan-fa/shu-ju-jie-gou/di-6-zhang-tu/tu-de-bian-li.md)
-    * [🚁 图的应用](shu-ju-jie-gou-yu-suan-fa/shu-ju-jie-gou/di-6-zhang-tu/tu-de-ying-yong.md)
+    * [🚁 最短路径](shu-ju-jie-gou-yu-suan-fa/shu-ju-jie-gou/di-6-zhang-tu/zui-duan-lu-jing.md)
   * [第7章 查找](shu-ju-jie-gou-yu-suan-fa/shu-ju-jie-gou/di-7-zhang-cha-zhao/README.md)
     * [🥲 顺序查找](shu-ju-jie-gou-yu-suan-fa/shu-ju-jie-gou/di-7-zhang-cha-zhao/shun-xu-cha-zhao.md)
     * [😍 折半查找](shu-ju-jie-gou-yu-suan-fa/shu-ju-jie-gou/di-7-zhang-cha-zhao/zhe-ban-cha-zhao.md)
