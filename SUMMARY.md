@@ -81,6 +81,7 @@
     * [🚲 图的存储与基本操作](shu-ju-jie-gou-yu-suan-fa/shu-ju-jie-gou/di-6-zhang-tu/tu-de-cun-chu-yu-ji-ben-cao-zuo.md)
     * [🚎 图的遍历](shu-ju-jie-gou-yu-suan-fa/shu-ju-jie-gou/di-6-zhang-tu/tu-de-bian-li.md)
     * [🚁 最短路径](shu-ju-jie-gou-yu-suan-fa/shu-ju-jie-gou/di-6-zhang-tu/zui-duan-lu-jing.md)
+    * [☺ 最小生成树](shu-ju-jie-gou-yu-suan-fa/shu-ju-jie-gou/di-6-zhang-tu/zui-xiao-sheng-cheng-shu.md)
   * [第7章 查找](shu-ju-jie-gou-yu-suan-fa/shu-ju-jie-gou/di-7-zhang-cha-zhao/README.md)
     * [🥲 顺序查找](shu-ju-jie-gou-yu-suan-fa/shu-ju-jie-gou/di-7-zhang-cha-zhao/shun-xu-cha-zhao.md)
     * [😍 折半查找](shu-ju-jie-gou-yu-suan-fa/shu-ju-jie-gou/di-7-zhang-cha-zhao/zhe-ban-cha-zhao.md)
