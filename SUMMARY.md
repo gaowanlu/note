@@ -83,6 +83,7 @@
     * [🚁 最短路径](shu-ju-jie-gou-yu-suan-fa/shu-ju-jie-gou/di-6-zhang-tu/zui-duan-lu-jing.md)
     * [☺ 最小生成树](shu-ju-jie-gou-yu-suan-fa/shu-ju-jie-gou/di-6-zhang-tu/zui-xiao-sheng-cheng-shu.md)
     * [😃 有向无环图描述表达式](shu-ju-jie-gou-yu-suan-fa/shu-ju-jie-gou/di-6-zhang-tu/you-xiang-wu-huan-tu-miao-shu-biao-da-shi.md)
+    * [😜 拓扑排序](shu-ju-jie-gou-yu-suan-fa/shu-ju-jie-gou/di-6-zhang-tu/tuo-pu-pai-xu.md)
   * [第7章 查找](shu-ju-jie-gou-yu-suan-fa/shu-ju-jie-gou/di-7-zhang-cha-zhao/README.md)
     * [🥲 顺序查找](shu-ju-jie-gou-yu-suan-fa/shu-ju-jie-gou/di-7-zhang-cha-zhao/shun-xu-cha-zhao.md)
     * [😍 折半查找](shu-ju-jie-gou-yu-suan-fa/shu-ju-jie-gou/di-7-zhang-cha-zhao/zhe-ban-cha-zhao.md)
