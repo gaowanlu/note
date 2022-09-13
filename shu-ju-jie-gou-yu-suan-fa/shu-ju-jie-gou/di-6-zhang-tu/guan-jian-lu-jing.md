@@ -42,3 +42,5 @@ e=ve\[i] ;  l=vl\[j]-weight ;
 
 3、计算l(i)-e(i)
 
+<figure><img src="../../../.gitbook/assets/屏幕截图 2022-09-13 185044.jpg" alt=""><figcaption></figcaption></figure>
+
