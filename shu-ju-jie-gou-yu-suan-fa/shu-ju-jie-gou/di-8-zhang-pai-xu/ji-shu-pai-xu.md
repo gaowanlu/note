@@ -22,7 +22,7 @@ coverY: 0
 
 收集 70、80、12、92、83、54、75、75、68、48
 
-<figure><img src="../../../.gitbook/assets/image (2).png" alt=""><figcaption><p>分配</p></figcaption></figure>
+<figure><img src="../../../.gitbook/assets/image (2) (1).png" alt=""><figcaption><p>分配</p></figcaption></figure>
 
 收集12、48、54、68、70、75、75、80、83、92
 
