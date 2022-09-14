@@ -275,3 +275,61 @@ int main(int argc, char **argv)
 2、父线程不是主线程，则父线程退出后， 子线程不受影响，继续运行。
 
 总之进程的mian线程会随着主进程结束而结束，主进程结束程序的所有进程都会被干掉,但是子线程开的子线程就不同
+
+### 参数传递
+
+函数指针形式构造线程传参
+
+```cpp
+#include<iostream>
+#include<thread>
+#include<string>
+
+using namespace std;
+
+void f(int t,const string&s) {
+	cout << t << " " << s << endl;
+}
+
+int main() {
+	thread t1(::f,1,"hello");
+	t1.join();//1 hello
+
+	char buffer[1024];
+	int i=999;
+	sprintf_s(buffer, "%i",i);
+	thread t2(f,1,buffer);//参数自动转换
+	t2.join();//1 999
+	return 0;
+}
+```
+
+使用线程分离可能出现悬空指针的现象
+
+```cpp
+#include<iostream>
+#include<thread>
+#include<string>
+
+using namespace std;
+
+void f(int t,const string&s) {
+	cout << t << " " << s << endl;
+}
+
+int main() {
+	char buffer[1024];
+	int i=999;
+	sprintf_s(buffer, "%i",i);
+	thread t2(f,1,buffer);//参数自动转换
+	t2.detach();
+	//在main结束时可能t2还没有利用buffer指针构造string
+	//可能会造成悬空指针的问题
+
+	//应该使用
+	//std::thread t2(f,1,std::string(buffer));
+	//在传递到构造函数之前，将字面值转化为string
+
+	return 0;
+}
+```
