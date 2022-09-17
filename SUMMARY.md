@@ -37,6 +37,8 @@
   * [第2章 线程管理](c++/bing-fa-bian-cheng/di-2-zhang-xian-cheng-guan-li.md)
 * [3D游戏编程](c++/3d-you-xi-bian-cheng.md)
 * [网络编程](c++/wang-luo-bian-cheng.md)
+* [设计模式](c++/she-ji-mo-shi/README.md)
+  * [🥲 创建型模式](c++/she-ji-mo-shi/chuang-jian-xing-mo-shi.md)
 
 ## 🍏 数据结构与算法
 
