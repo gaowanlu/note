@@ -278,7 +278,7 @@ int main(int argc, char **argv)
 
 ### 参数传递
 
-函数指针形式构造线程传参
+### 函数指针形式构造线程传参
 
 ```cpp
 #include<iostream>
@@ -304,7 +304,7 @@ int main() {
 }
 ```
 
-使用线程分离可能出现悬空指针的现象
+### 使用线程分离可能出现悬空指针的现象
 
 ```cpp
 #include<iostream>
@@ -334,7 +334,9 @@ int main() {
 }
 ```
 
-使用函数指针形式传递线程函数，怎样传递引用类型参数,因为thread的构造函数机制与std::bind类似，所以其绑定的参数是拷贝而不是引用，在语言基础泛型算法的bind引用参数部分学习过，以及std::ref的使用
+### 使用函数指针形式传递线程函数
+
+怎样传递引用类型参数,因为thread的构造函数机制与std::bind类似，所以其绑定的参数是拷贝而不是引用，在语言基础泛型算法的bind引用参数部分学习过，以及std::ref的使用
 
 ```cpp
 #include<iostream>
@@ -362,7 +364,9 @@ int main() {
 }
 ```
 
-thread构造函数与std::bind机制类似,可以提供一个成员函数指针，并提供一个其类型对象的地址
+### thread构造函数与std::bind机制类似
+
+可以提供一个成员函数指针，并提供一个其类型对象的地址
 
 ```cpp
 #include<iostream>
@@ -390,6 +394,427 @@ int main() {
 	function<void(int)> m_f = std::bind(&X::exe, &m_x, num);
 	m_f(num);//100
 
+	return 0;
+}
+```
+
+### thread绑定参数时std::move的使用
+
+```cpp
+#include<iostream>
+#include<thread>
+#include<functional>
+#include<memory>
+
+using namespace std;
+
+void func(unique_ptr<int>ptr) {
+	cout << *ptr << endl;
+}
+
+void funcb(shared_ptr<int>ptr) {
+	cout<<*ptr<<endl;
+}
+
+int main() {
+	unique_ptr<int>ptr(new int(1));
+	thread t(::func,std::move(ptr));
+	t.join();
+	//cout << *ptr << endl; ptr已经不再指向申请的内存，因为已经移交给了形参
+	if (nullptr==ptr) {
+		cout << "is nullptr" << endl;
+	}
+	//1
+	//is nullptr
+
+	shared_ptr<int>ptrb(new int(100));
+	thread t1(::funcb,std::move(ptrb));
+	t1.join();//100 
+	cout <<boolalpha<< (ptrb == nullptr) << endl;//true
+
+	//其过程是将ptrb所指的int对象，通过
+	//将ptrb所指对象作为右值传递给int的移动构造器函数或移动赋值运算符
+	//然后进行了内容拷贝
+
+	return 0;
+}
+```
+
+### 转移所有权
+
+std::thread是不能进行赋值的，但是可以在std::thread没有绑定任务或者已经结束是使用std::move令其关联新的线程任务
+
+```cpp
+#include<iostream>
+#include<thread>
+#include<functional>
+#include<memory>
+
+using namespace std;
+
+void funca() {
+	for(int i=0;i<10;i++)
+		cout << i << endl;
+}
+
+void funcb() {
+
+}
+
+int main() {
+	thread t1(::funca);
+	//std::move返回一个右值引用常量表达式
+	thread t2 = std::move(t1);//t1背后的任务将由t2管理
+	cout <<boolalpha<< t1.joinable()<<noboolalpha<< endl;//false
+	cout << boolalpha << t2.joinable() << noboolalpha << endl;//true
+	t2.join();
+	cout << "executed funca" << endl;
+
+	//如果thread左值已经关联一个线程，则不能修改其关联
+	thread t3(::funca);
+	//t3.join();//等待t3关联线程结束后，可以让其关联新的其他线程任务
+	t3 = std::move(t2);//t3没结束前赋值会发生错误
+	return 0;
+}
+```
+
+### 在函数间传递std::thread作为参数以及函数的返回值
+
+```cpp
+#include<iostream>
+#include<thread>
+#include<functional>
+#include<memory>
+
+using namespace std;
+
+void funcb() {
+	cout << "funcb" << endl;
+}
+
+//thread作为函数参数
+void func(thread t) {
+	t.join();
+}
+
+//函数返回thread对象
+thread back() {
+	return thread(funcb);//允许
+}
+
+//函数返回thread对象
+thread backb() {
+	thread t(funcb);
+	bool res=t.joinable();
+	return t;
+}
+
+int main() {
+	func(thread(funcb));//funcb
+	thread t(funcb);
+	//func(t);//不允许 禁止thread拷贝
+	//使用std::move可以解决
+	func(std::move(t));//funcb
+	
+	thread t1=back();
+	t1.join();//funcb
+
+	thread t2=backb();
+	t2.join();//funcb
+	return 0;
+}
+```
+
+### thread引用类型作为函数参数
+
+```cpp
+#include<iostream>
+#include<thread>
+#include<functional>
+#include<memory>
+
+using namespace std;
+
+void funcb() {
+	cout << "funcb" << endl;
+}
+
+void func(thread &t) {
+	cout << boolalpha << t.joinable() << noboolalpha << endl;//true
+	t.join();
+}
+
+
+int main() {
+	thread t(funcb);
+	func(t);
+	return 0;
+}
+```
+
+### 基于转移所有权的作用域自动join,scoped\_thread
+
+```cpp
+#include<iostream>
+#include<thread>
+#include<functional>
+#include<memory>
+
+using namespace std;
+
+//基于转移所有权的作用域自动join
+class scoped_thread {
+private:
+	std::thread t;
+public:
+	explicit scoped_thread(std::thread t_) :t(std::move(t_)) {
+		if (!t.joinable()) {
+			throw std::logic_error("no thread");
+		}
+	}
+	~scoped_thread() {
+		t.join();
+	}
+	scoped_thread(const scoped_thread&) = delete;//禁止拷贝
+	scoped_thread& operator=(const scoped_thread&) = delete;//禁止拷贝
+};
+
+
+int main() {
+	{
+		auto func = []()->void {
+			cout << "hello world" << endl;
+		};
+		thread t(func);
+		scoped_thread scoped(std::move(t));
+	}
+	cout << "end" << endl;
+	return 0;
+}
+
+/*
+hello world
+end
+*/
+```
+
+### joining\_thread自定义线程类
+
+```cpp
+#include<iostream>
+#include<thread>
+#include<functional>
+#include<memory>
+#include<string>
+
+using namespace std;
+
+//joining_thread
+class joining_thread {
+private:
+	std::thread t;
+public:
+	joining_thread()noexcept = default;
+	template<typename Callable,typename ...Args>
+	explicit joining_thread(Callable&& func, Args&&...args):t(func,std::forward<Args>(args)...) {
+
+	}
+	explicit joining_thread(std::thread t_)noexcept :t(std::move(t_)) {
+
+	}
+	joining_thread(joining_thread&& other)noexcept:t(std::move(other.t)) {
+		
+	}
+	joining_thread& operator=(joining_thread&& other)noexcept {
+		if (joinable()) {
+			join();
+		}
+		t = std::move(other.t);
+		return*this;
+	}
+	bool joinable()const noexcept {
+		return t.joinable();
+	}
+	void join() {
+		if(joinable())
+			t.join();
+	}
+	~joining_thread()noexcept {
+		if (joinable())
+			join();
+	}
+	void swap(joining_thread&other)noexcept {
+		t.swap(other.t);
+	}
+	std::thread::id get_id()const noexcept {
+		return t.get_id();
+	}
+	void detach() {
+		t.detach();
+	}
+	std::thread& as_thread()noexcept {
+		return t;
+	}
+	const std::thread& as_thread()const noexcept {
+		return t;
+	}
+};
+
+int main() {
+	joining_thread t([]()->void {
+		cout << "hello world" << endl;
+	});//hello world
+	return 0;
+}
+```
+
+### 量产线程使用容器存储thread对象
+
+```cpp
+#include<iostream>
+#include<thread>
+#include<vector>
+#include<functional>
+
+using namespace std;
+
+int main() {
+	function<void(int)> func = [](int n)->void {
+		cout << n << endl;
+	};
+	vector<thread>vec;
+	for (int i = 0; i < 10; i++) {
+		vec.emplace_back(func,i);
+	}
+	for (thread& t : vec) {
+		t.join();
+	}
+	return 0;
+}
+```
+
+### 确定线程数量
+
+std::thread::hardware\_concurrency()返回值可以是CPU核心数量，返回值仅仅是一个标识，无法获取时返回0
+
+```cpp
+#include<iostream>
+#include<thread>
+#include<vector>
+#include<functional>
+
+using namespace std;
+
+int main() {
+	cout << std::thread::hardware_concurrency() << endl;// It's 12 on my host
+	return 0;
+}
+```
+
+### 编写并发的std::accumulate
+
+```cpp
+/*
+并发版的std::accumulate
+*/
+#include<iostream>
+#include<thread>
+#include<vector>
+#include<functional>
+#include<numeric>
+
+using namespace std;
+
+template<typename Iterator,typename T>
+void accumulate_block(Iterator first, Iterator end, T& t) {
+	t = std::accumulate(first, end, t);
+}
+
+template<typename Iterator,typename T>
+T parallel_accumulate(Iterator first, Iterator last, T init) {
+	const unsigned long length = std::distance(first,last);//计算求和列表长度
+	if (!length) {//长度为0
+		return init;
+	}
+	//每个线程最小负责的长度
+	const unsigned long min_per_thread = 25;
+	//理应需要的线程数量 当length>=1时
+	const unsigned long max_threads = (length + min_per_thread - 1) / min_per_thread;
+	//CPU核心
+	unsigned long const hardware_threads =std::thread::hardware_concurrency();
+	//得出合理的线程数量
+	unsigned long const num_threads = std::min(hardware_threads != 0 ? hardware_threads : 2, max_threads);
+	//每个block的元素数量
+	unsigned long const block_size = length / num_threads;
+	//记录计算内容
+	std::vector<T> results(num_threads);
+	std::vector<std::thread> threads(num_threads - 1);
+	
+	Iterator block_start = first;
+	for (unsigned long i = 0; i < (num_threads - 1); ++i)
+	{
+		Iterator block_end = block_start;
+		std::advance(block_end, block_size);//移动迭代器
+		threads[i] = std::thread( 
+			accumulate_block<Iterator,T>,
+			block_start, block_end, std::ref(results[i]));
+		block_start = block_end; 
+	}
+
+	accumulate_block(block_start, last, results[num_threads - 1]);//剩余的部分
+	for (auto& entry : threads)//等待全部子任务结束
+		entry.join();
+	return std::accumulate(results.begin(), results.end(), init); 
+}
+
+
+int main() {
+	vector<int>vec;
+	for (int i = 0; i < 100; i++) {
+		vec.push_back(i);
+	}
+	long sum = 0;
+	sum=parallel_accumulate(vec.begin(),vec.end(),sum);
+	cout << sum << endl;//4950
+	return 0;
+}
+```
+
+### 线程的标识
+
+每个线程任务由自己的ID标识
+
+std::this\_thread::get_id()以及thread.get\__id()的使用
+
+```cpp
+#include<iostream>
+#include<thread>
+#include<vector>
+#include<functional>
+#include<numeric>
+#include<Windows.h>
+
+using namespace std;
+
+int main() {
+	thread t1([]()->void {
+		cout << std::this_thread::get_id() << endl;//a
+	});
+	cout << t1.get_id() << endl;//a
+	t1.join();
+	thread t2([]()->void {
+		cout << std::this_thread::get_id() << endl;//b
+	});
+	cout << t2.get_id() << endl;//b
+	t2.join();
+	cout << std::this_thread::get_id() << endl;//c
+
+	//std::hash<std::thread::id> 容器， std::thread::id 也可以作为无序容器的键值。
+	std::hash<std::thread::id> t;
+	cout << t(this_thread::get_id()) << endl;
+
+	//std::thread::id 允许赋值 比较对比等操作
+	//当thread出于未关联 以及detached状态时 get_id返回值为0
 	return 0;
 }
 ```
