@@ -333,3 +333,63 @@ int main() {
 	return 0;
 }
 ```
+
+使用函数指针形式传递线程函数，怎样传递引用类型参数,因为thread的构造函数机制与std::bind类似，所以其绑定的参数是拷贝而不是引用，在语言基础泛型算法的bind引用参数部分学习过，以及std::ref的使用
+
+```cpp
+#include<iostream>
+#include<thread>
+#include<string>
+
+using namespace std;
+
+void func(int&i) {
+	++i;
+}
+
+int main() {
+	int i = 99;
+	/*thread t(::func,i);
+	t.join();
+	cout << i << endl;*/
+	//报错，thread的构造函数并不知道函数的参数类型
+	//只是盲目的拷贝提供的变量
+	//想要解决此问题就要使用ref
+	thread t(::func,std::ref(i));
+	t.join();
+	cout << i << endl;//100
+	return 0;
+}
+```
+
+thread构造函数与std::bind机制类似,可以提供一个成员函数指针，并提供一个其类型对象的地址
+
+```cpp
+#include<iostream>
+#include<thread>
+#include<string>
+#include<functional>
+
+using namespace std;
+
+class X {
+public:
+	void exe(int num);
+};
+
+void X::exe(int num) {
+	cout << num << endl;
+}
+
+int main() {
+	X m_x;
+	int num = 100;
+	std::thread t(&X::exe, &m_x,num);
+	t.join();//100
+
+	function<void(int)> m_f = std::bind(&X::exe, &m_x, num);
+	m_f(num);//100
+
+	return 0;
+}
+```
