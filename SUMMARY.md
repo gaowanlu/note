@@ -35,6 +35,7 @@
 * [并发编程](c++/bing-fa-bian-cheng/README.md)
   * [第1章 你好并发世界](c++/bing-fa-bian-cheng/di-1-zhang-ni-hao-bing-fa-shi-jie.md)
   * [第2章 线程管理](c++/bing-fa-bian-cheng/di-2-zhang-xian-cheng-guan-li.md)
+  * [第3章 共享数据](c++/bing-fa-bian-cheng/di-3-zhang-gong-xiang-shu-ju.md)
 * [网络编程](c++/wang-luo-bian-cheng.md)
 * [设计模式](c++/she-ji-mo-shi/README.md)
   * [🥲 创建型模式](c++/she-ji-mo-shi/chuang-jian-xing-mo-shi.md)
