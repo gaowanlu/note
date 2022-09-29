@@ -36,11 +36,13 @@
   * [第1章 你好并发世界](c++/bing-fa-bian-cheng/di-1-zhang-ni-hao-bing-fa-shi-jie.md)
   * [第2章 线程管理](c++/bing-fa-bian-cheng/di-2-zhang-xian-cheng-guan-li.md)
   * [第3章 共享数据](c++/bing-fa-bian-cheng/di-3-zhang-gong-xiang-shu-ju.md)
-* [网络编程](c++/wang-luo-bian-cheng.md)
+* [UNIX网络编程](c++/unix-wang-luo-bian-cheng.md)
+* [UNIX环境编程](c++/unix-huan-jing-bian-cheng.md)
+* [Effective C++](c++/effective-c++.md)
+* [More Effective C++](c++/more-effective-c++.md)
+* [STL源码剖析](c++/stl-yuan-ma-pou-xi.md)
 * [设计模式](c++/she-ji-mo-shi/README.md)
   * [🥲 创建型模式](c++/she-ji-mo-shi/chuang-jian-xing-mo-shi.md)
-* [UNIX系统编程](c++/unix-xi-tong-bian-cheng.md)
-* [开发工具](c++/kai-fa-gong-ju.md)
 
 ## 🍏 数据结构与算法
 
@@ -110,7 +112,7 @@
 
 ## 🎆 计算机网络
 
-* [计算机网络](ji-suan-ji-wang-luo/ji-suan-ji-wang-luo.md)
+* [TCP/IP](ji-suan-ji-wang-luo/tcp-ip.md)
 * [HTTP](ji-suan-ji-wang-luo/http.md)
 
 ## 💻 操作系统
