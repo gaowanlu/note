@@ -126,3 +126,46 @@ int main() {
 }
 
 ```
+
+### 接口间的竞争
+
+下面一个使用stack的样例
+
+```cpp
+#include<iostream>
+#include<deque>
+#include<stack>
+
+using namespace std;
+
+deque<int> m_deque;
+stack<int> m_stack(m_deque);
+
+int main() {
+	if (!m_stack.empty()) {
+		const int value = m_stack.top();
+		m_stack.pop();
+		cout << value << endl;
+	}
+	//这段代码在m_stack支持并发操作时会产生问题吗
+	//如果在判断条件!m_stack.empty()后进入if代码块后
+	//此时其他线程操作了m_stack，导致value值不再是其top元素
+	//如
+	/*
+			A				B
+		if(!s.empty)  
+						if(!s.empty)
+		value=s.top	
+						value=s.top
+		s.pop()
+						s.pop()
+	*/
+	//这将导致不是我们原来想要的计划
+	return 0;
+}
+```
+
+有没有考虑过，为什么std::stack的弹出栈顶元素，需要top()然后pop()呢，而且pop()没有返回值，为什么不直接pop()返回栈顶值且将其弹出呢？这是因为接收栈顶元素时如果进行拷贝，然是内存分配失败导致异常，并没有如期拿到栈顶元素，且栈顶元素已经被弹出，那么我们将永远失去了栈顶元素。
+
+而将其二者分开操作在一定程度上可以部分问题。
+
