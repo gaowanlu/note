@@ -169,3 +169,204 @@ int main() {
 
 而将其二者分开操作在一定程度上可以部分问题。
 
+如果将某些操作封装为方法，且每个方法不能同时被进行，那么在一定程度上可以解决问题
+
+```cpp
+#include<iostream>
+#include<deque>
+#include<stack>
+#include<vector>
+#include<exception>
+#include<memory>
+#include<thread>
+#include<mutex>
+
+using namespace std;
+
+class empty_stack : public std::exception {
+public:
+	const char* what()const;
+};
+
+const char* empty_stack::what()const{
+	return "stack is empty";
+}
+
+template<typename T>
+class threadsafe_stack {
+private:
+	stack<T>data;
+	deque<T>m_deque;
+	mutable mutex m_mutex;//mutable在任何情况下保持可变，即使在const函数内
+public:
+	threadsafe_stack();
+	threadsafe_stack(const threadsafe_stack&);
+	threadsafe_stack& operator=(const threadsafe_stack&) = delete;
+	void push(T new_value);
+	std::shared_ptr<T>pop();
+	void pop(T& value);
+	bool empty()const;
+};
+
+template<typename T>
+threadsafe_stack<T>::threadsafe_stack():data(m_deque) {
+	
+}
+
+template<typename T>
+threadsafe_stack<T>::threadsafe_stack(const threadsafe_stack& other) {
+	lock_guard<mutex>lock(other.m_mutex);
+	data = other.data;
+}
+
+template<typename T>
+void threadsafe_stack<T>::push(T new_value) {
+	lock_guard<mutex>lock(m_mutex);
+	data.push(new_value);
+}
+
+template<typename T>
+shared_ptr<T> threadsafe_stack<T>::pop() {
+	lock_guard<mutex>lock(m_mutex);
+	if (data.empty()) {
+		throw empty_stack();
+	}
+	//取出栈顶元素
+	shared_ptr<T> const res(std::make_shared<T>(data.top()));
+	data.pop();
+	return res;
+}
+
+template<typename T>
+void threadsafe_stack<T>::pop(T&value) {
+	lock_guard<mutex>lock(m_mutex);
+	if (data.empty()) {
+		throw empty_stack();
+	}
+	value = data.top();
+	data.pop();
+}
+
+template<typename T>
+bool threadsafe_stack<T>::empty()const {
+	lock_guard<mutex>lock(m_mutex);
+	return data.empty();
+}
+
+
+int main() {
+	threadsafe_stack<int> m_stack;
+	thread t1([&]()->void {
+		for (int i = 0; i < 100; i++) {
+			m_stack.push(i);
+		}
+	});
+	thread t2([&]()->void {
+		for (int i = 0; i < 100; i++) {
+			try {
+				shared_ptr<int> ptr = m_stack.pop();
+				cout << *ptr << endl;
+			}
+			catch (const empty_stack& e) {
+				cout << e.what() << endl;
+			}
+		}
+	});
+	t1.join();
+	t2.join();
+	return 0;
+}
+
+```
+
+但是这样也会引起其他问题，就是锁的粒度的粗与细
+
+锁住的代码少，这个粒度叫细，执行效率高
+
+锁住的代码多，这个粒度叫粗，执行效率低
+
+### 死锁
+
+死锁定义：一对线程需要对他们所有的互斥量做一些操作，其中每个 线程都有一个互斥量，且等待另一个解锁。因为他们都在等待对方释放互斥量，没有线程能工作。这种情况 就是死锁，它的问题就是由两个或两个以上的互斥量进行锁定。
+
+简单点说就是互相等待的问题
+
+```cpp
+#include<iostream>
+#include<exception>
+#include<thread>
+#include<mutex>
+#include<algorithm>
+
+using namespace std;
+
+mutex m1;
+mutex m2;
+int data1, data2;
+
+int main() {
+	data1 = 1, data2 = 2;
+	//std::lock 可以一次性锁住多个互斥量，并且没有死锁的风险，即要锁全部锁不然就全不锁
+	thread t1([&]()->void {
+		lock(m1,m2);
+		lock_guard<mutex>lock_a(m1,std::adopt_lock);
+		//std::adopt_lock 表示之前已经获取到了锁，lock_guard将来只需要unlock
+		lock_guard<mutex>lock_b(m2,std::adopt_lock);
+		swap(data1,data2);
+		cout << data1 << " " << data2 << endl;
+	});
+	thread t2([&]()->void {
+		lock(m1, m2);
+		lock_guard<mutex>lock_a(m1, std::adopt_lock);
+		lock_guard<mutex>lock_b(m2, std::adopt_lock);
+		swap(data1, data2);
+		cout << data1 << " " << data2 << endl;
+	});
+	t1.join();
+	t2.join();
+	return 0;
+}
+/*2 1
+  1 2*/
+
+```
+
+不同的线程t1，t2对于m1,m2如果lock如果顺序是一样的那么就不会出现死锁的情况，不然例如t1获取了m1,t2先获取m2,那么就陷入死锁，t1等待获取m2,t2等待获取m1
+
+### std::scoped\_lock<>
+
+C++17提供了std::scoped_lock<>，其是一种新的RAII模板类型,功能相当于std::lock与lock\__guard的结合
+
+```cpp
+#include<iostream>
+#include<exception>
+#include<thread>
+#include<mutex>
+#include<algorithm>
+
+using namespace std;
+
+mutex m1;
+mutex m2;
+int data1, data2;
+
+int main() {
+	data1 = 1, data2 = 2;
+	thread t1([&]()->void {
+		std::scoped_lock guard(m1, m2);
+		//在此使用了C++17的自动推导模板参数
+		std::swap(data1, data2);
+		cout << data1 << " " << data2 << endl;
+		});
+	thread t2([&]()->void {
+		std::scoped_lock<std::mutex,std::mutex> guard(m1, m2);
+		std::swap(data1, data2);
+		cout << data1 << " " << data2 << endl;
+		});
+	t1.join();
+	t2.join();
+	return 0;
+}
+/*2 1
+  1 2*/
+```
