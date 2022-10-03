@@ -886,7 +886,165 @@ int main()
 
 ```
 
+### std::call\_once与std::once\_flag
+
+一个once\_flag只能一次call_once,此操作是线程安全的,并不代表init\_resouce只能被调用一次，而是once\_flag只能被call\_once一次。_
+
+```cpp
+#include <mutex>
+#include <thread>
+#include <iostream>
+#include <memory>
+
+using namespace std;
+
+shared_ptr<int> resource_ptr;
+once_flag resource_flag;
+
+void init_resouce() {
+    resource_ptr.reset(new int(999));
+    cout << *resource_ptr << endl;
+}
+
+void func() {
+    call_once(resource_flag,init_resouce);
+    //call_once与std::bind类似
+}
+
+int main()
+{
+    thread a([]()->void {
+        func();
+    });
+    thread b([]()->void {
+        func();
+    });
+    a.join(); b.join();
+    //只会输出一次999
+    //一个once_flag只能一次call_once,此操作是线程安全的
+    return 0;
+}
+
+```
+
+```cpp
+#include <mutex>
+#include <thread>
+#include <iostream>
+#include <memory>
+
+using namespace std;
+
+class X
+{
+private:
+    int data;
+    std::once_flag data_init_flag;
+    void init_data()
+    {
+        cout << "init_data" << endl;
+        data = 999;
+    }
+public:
+    X() {}
+    void a()
+    {
+        std::call_once(data_init_flag, &X::init_data, this);
+    }
+    void b()
+    {
+        std::call_once(data_init_flag, &X::init_data, this);
+    }
+};
+
+int main()
+{
+    X x;
+    thread a([&]()->void { x.a(); });
+    thread b([&]()->void { x.b(); });
+    a.join(); b.join();
+    //init_data
+    return 0;
+}
+
+```
+
+### static的线程安全
+
+```cpp
+#include <mutex>
+#include <thread>
+#include <iostream>
+#include <memory>
+
+using namespace std;
+
+struct MyStruct
+{
+
+};
+
+//get是线程安全的
+MyStruct& get() {
+    static MyStruct instance;
+    return instance;
+}
+
+int main()
+{
+   
+    return 0;
+}
+
+```
+
 ### 保护不常更新的数据结构
+
+这里需要另一种不同的互斥量，这种互斥量常被称为“读者-作者锁” 。因为其允许两种不同的使用方式：一个“作者”线程独占访问和共享访问，让多个“读者”线程并发访问。 C++17标准库提供了两种非常好的互斥量std::shared\_mutex、std::shared\_timed\_mutex 。 C++14只提供了std::shared\_timed\_mutex&#x20;
+
+当有线程拥有共享锁时，尝试获取独占锁的线程会被阻塞，直到所有其他线程放弃锁。&#x20;
+
+当任一线程拥有一个独占锁时，其他线程就无法获得共享锁或独占锁，直到第一个线程放弃其拥有的锁。
+
+简单说shared\_locked状态还可以shared_lock，但不能独占锁，当有线程独占锁时其他线程也不能进行独占锁与shared\__lock
+
+```cpp
+#include <mutex>
+#include <thread>
+#include <iostream>
+#include <memory>
+#include <map>
+#include <shared_mutex>
+
+using namespace std;
+
+class cache
+{
+    map<string,string> entries;
+    shared_mutex entry_mutex;
+public:
+    string find_entry(string const& key)
+    {
+        shared_lock<shared_mutex> lk(entry_mutex);//使用共享状态
+        map<string, string>::const_iterator const it = entries.find(key);
+        return (it == entries.end()) ? "" : it->second;
+    }
+    void update_or_add_entry(std::string const& key,string const& value)
+    {
+        std::lock_guard<std::shared_mutex> lk(entry_mutex);//使用独占状态
+        entries[key] = value;
+    }
+};
+
+int main()
+{
+    cache c;
+    c.update_or_add_entry("aaa","12345");
+    cout << c.find_entry("aaa") << endl;//12345
+    return 0;
+}
+
+```
 
 ### 嵌套锁
 
