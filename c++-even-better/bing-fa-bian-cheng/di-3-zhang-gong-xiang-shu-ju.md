@@ -608,3 +608,45 @@ int main()
 }
 
 ```
+
+### 可移动std::unique\_lock<>
+
+mutex不可以移动也不可以赋值，std::unque_lock支持移动，即转交对mutex的管理_
+
+```cpp
+#include <iostream>
+#include <mutex>
+
+using namespace std;
+
+mutex m_mutex;
+
+
+unique_lock<mutex> get_lock() {
+    unique_lock<mutex> m_lock(m_mutex);//unique_lock构造函数
+    return m_lock;//移动构造函数 然后执行lock的析构函数
+    //不显式用std::move也会进行移动构造
+    //当源值时右值时，才会必须要显式std::move
+}
+
+
+int main()
+{
+    {
+        unique_lock<mutex> m_lock = get_lock();
+        unique_lock<mutex> m_lock_ref = std::move(m_lock);
+    }//m_lock_ref的析构函数执行时 释放m_mutex
+    
+    //当没有上面花括号时 t1无法获取到m_mutex因为m_lock析构时才会释放m_mutex
+
+    thread t1([&]()->void {
+        m_mutex.lock();
+        cout << "t1" << endl;
+        m_mutex.unlock();
+     });//t1
+    t1.join();
+
+    return 0;
+}
+
+```
