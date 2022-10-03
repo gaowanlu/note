@@ -558,3 +558,53 @@ thread thread_a([&]()mutable->void{
 
 ### std::unique\_lock<>
 
+std::unique\__lock与std::lock\_guard类似，但uniquelock支持延迟上锁，也就是先给它管理，然后我们等会再上锁，其次可以直接将unique\_lock传递给std::lock,而std::lock\_guard只支持std::adopt\_lock。_
+
+```cpp
+#include <iostream>
+#include <mutex>
+#include <algorithm>
+
+using namespace std;
+
+class some_big_object{
+};
+
+void swap(some_big_object& lhs, some_big_object& rhs){
+}
+
+class X{
+    friend void swap(X& lhs, X& rhs);
+private:
+    some_big_object some_detail;
+    mutable std::mutex m;
+public:
+    X(some_big_object const& sd) :some_detail(sd) {
+    }
+};
+
+void swap(X& lhs, X& rhs)
+{
+    if (&lhs == &rhs)
+        return;
+    //unique_lock同样支持
+    //std::adopt_lock与std::defer_lock 前者表示已经上锁了 后者表示推迟上锁
+    //而lock_guard只支持std::adopt_lock
+    std::unique_lock<std::mutex> lock_a(lhs.m, std::defer_lock);
+    std::unique_lock<std::mutex> lock_b(rhs.m, std::defer_lock);
+    //上锁
+    std::lock(lock_a, lock_b);
+    swap(lhs.some_detail, rhs.some_detail);
+    //lhs.m rhs.m的解锁在unique_lock的析构函数执行
+}
+
+int main()
+{
+    some_big_object data1, data2;
+    X x1(data1);
+    X x2(data2);
+    swap(x1, x2);
+    return 0;
+}
+
+```
