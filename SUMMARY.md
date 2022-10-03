@@ -41,6 +41,7 @@
   * [导读](c++-even-better/effective-c++/dao-du.md)
 * [More Effective C++](c++-even-better/more-effective-c++/README.md)
   * [导读](c++-even-better/more-effective-c++/dao-du.md)
+* [Effective Modern C++](c++-even-better/effective-modern-c++.md)
 * [深入理解C++对象模型](c++-even-better/shen-ru-li-jie-c++-dui-xiang-mo-xing/README.md)
   * [导读](c++-even-better/shen-ru-li-jie-c++-dui-xiang-mo-xing/dao-du.md)
 * [UNIX网络编程](c++-even-better/unix-wang-luo-bian-cheng/README.md)
@@ -51,6 +52,7 @@
 * [设计模式](c++-even-better/she-ji-mo-shi/README.md)
   * [创建型模式](c++-even-better/she-ji-mo-shi/chuang-jian-xing-mo-shi.md)
 * [STL源码剖析](c++-even-better/stl-yuan-ma-pou-xi.md)
+* [C++沉思录](c++-even-better/c++-chen-si-lu.md)
 
 ## 🍏 数据结构与算法
 
@@ -125,12 +127,16 @@
 
 ## 💻 操作系统
 
-* [操作系统](cao-zuo-xi-tong/cao-zuo-xi-tong.md)
+* [操作系统CSAPP](cao-zuo-xi-tong/cao-zuo-xi-tong-csapp.md)
 
 ## 🖨 计算机组成原理
 
 * [计算机组成原理](ji-suan-ji-zu-cheng-yuan-li/ji-suan-ji-zu-cheng-yuan-li.md)
+* [编码](ji-suan-ji-zu-cheng-yuan-li/bian-ma.md)
 
 ## 🪅 数据库
 
-* [数据库](shu-ju-ku/shu-ju-ku.md)
+* [数据库](shu-ju-ku/shu-ju-ku/README.md)
+  * [SQL](shu-ju-ku/shu-ju-ku/sql.md)
+  * [高性能MySQL](shu-ju-ku/shu-ju-ku/gao-xing-neng-mysql.md)
+  * [Redis](shu-ju-ku/shu-ju-ku/redis.md)
