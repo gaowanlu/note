@@ -1046,5 +1046,102 @@ int main()
 
 ```
 
-### 嵌套锁
+### std::recursive\_mutex
 
+std::recursive_mutex与std::mutex不同的是，std::recursive\__mutex可以进行lock多次，同理unlock也需要多次
+
+```cpp
+    mutex m;
+    m.lock();
+    m.lock();//错误 mutex不能二次上锁
+    m.unlock();
+    m.unlock();
+```
+
+```cpp
+    recursive_mutex m;
+    m.lock();
+    m.lock();//正确
+
+    m.unlock();
+    m.unlock();
+```
+
+std::lock\__guard与std::unique\__lock可以辅助这些
+
+```cpp
+#include <mutex>
+#include <thread>
+#include <iostream>
+#include <memory>
+#include <map>
+
+using namespace std;
+
+int main()
+{
+    recursive_mutex m;
+    thread a([&]()->void {
+        unique_lock<recursive_mutex> lock1(m);
+        cout << "a lock1" << endl;
+        lock_guard<recursive_mutex> lock2(m);
+        cout << "a lock2" << endl;
+    });
+    thread b([&]()->void {
+        unique_lock<recursive_mutex> lock1(m);
+        cout << "b lock1" << endl;
+        lock_guard<recursive_mutex> lock2(m);
+        cout << "b lock2" << endl;
+    });
+    a.join(); b.join();
+    //当一个线程拥有了m,则在此线程可以继续lock
+    //但其他线程如果想要lock则需要m处于unlock状态
+    return 0;
+}
+
+```
+
+有没有是实际点的例子呢
+
+```cpp
+#include <mutex>
+#include <thread>
+#include <iostream>
+#include <memory>
+#include <map>
+
+using namespace std;
+
+class A {
+private:
+    recursive_mutex m_mutex;
+public:
+    void a() {
+        lock_guard<recursive_mutex> lock(m_mutex);
+        cout << "a" << endl;
+        b();
+    }
+    void b() {
+        lock_guard<recursive_mutex> lock(m_mutex);
+        cout << "b" << endl;
+        c();
+    }
+    void c() {
+        lock_guard<recursive_mutex> lock(m_mutex);
+        cout << "c" << endl;
+    }
+};
+
+int main()
+{
+    A a;
+    thread t1([&]()->void {a.a(); });
+    thread t2([&]()->void {a.a(); });
+    t1.join(); t2.join();
+    //有什么作用呢 也就是当某个线程访问 a b c任意方法时 其他的线程都不可访问三者
+    //某个线程一旦获取到了锁 则有权利访问 三者且是任意多次访问
+    //输出结果必定为 abcabc
+    return 0;
+}
+
+```
