@@ -370,3 +370,191 @@ int main() {
 /*2 1
   1 2*/
 ```
+
+### 避免死锁指南
+
+死锁通常是使用锁方式不当造成的，多个线程相互join等待对方也会产生死锁，例如两个线程每个线程本身join等待对方完成，则二者陷入死锁状态
+
+1、避免嵌套锁
+
+当线程获取到一个锁时就不要去获取第二个，如果需要获取多个锁，使用std::lock(对取锁的操作上锁)，避免产生死锁
+
+2、避免在持有锁时调用外部代码
+
+调用外部的代码具有不确定性，可能会申请第二把锁，尽可能避免调用外部代码，仅为别的线程也可能在运行那个代码段，造成竞争状态
+
+3、使用固定顺序获取锁
+
+如果要获取两个及其以上锁，如果不能使用std::lock,则最好在每个线程上按照固定顺序获取锁
+
+4、使用层次锁结构
+
+层次锁是怎么回事呢，如果给锁规定层次等级，线程也有层次等级，线程获取锁时只能获取比自己等级低的锁，获取后将线程等级改为锁的等级，当解锁时在恢复回原来的线程层次等级
+
+这样就会发现
+
+```cpp
+     异常拒绝
+  ------------>
+1               2    这样就不会造成双方等待的情况，避免了死锁
+  <------------
+     允许获得
+```
+
+```cpp
+#include <iostream>
+#include <thread>
+#include <mutex>
+#include <stdexcept>
+#include <climits>
+
+class hierarchical_mutex
+{
+    std::mutex internal_mutex;
+    unsigned long const hierarchy_value;//现在所在层次
+    unsigned long previous_hierarchy_value;//上一次所在层次
+
+    //现在获取到此锁的线程所在的层次
+    //thread_local关键此代表在每个线程中此static都是独立存在的
+    static thread_local unsigned long this_thread_hierarchy_value;
+
+    //检查自己的线程层次是否大于此锁的层次
+    //满足大于其锁层次才能尝试获取此锁
+    void check_for_hierarchy_violation()
+    {
+        if (this_thread_hierarchy_value <= hierarchy_value)
+        {
+            throw std::logic_error("mutex hierarchy violated");
+        }
+    }
+
+    //当此锁被某线程获取时，需将此线程的层次改为此锁层次
+    void update_hierarchy_value()
+    {
+        previous_hierarchy_value = this_thread_hierarchy_value;
+        this_thread_hierarchy_value = hierarchy_value;
+    }
+
+public:
+    explicit hierarchical_mutex(unsigned long value) :
+        hierarchy_value(value),
+        previous_hierarchy_value(0)
+    {}
+
+    void lock()
+    {
+        check_for_hierarchy_violation();
+        internal_mutex.lock();
+        update_hierarchy_value();
+    }
+
+    void unlock()
+    {
+        //使得此线程的层次恢复为原来的层次
+        this_thread_hierarchy_value = previous_hierarchy_value;
+        internal_mutex.unlock();
+    }
+
+    bool try_lock()
+    {
+        check_for_hierarchy_violation();
+        if (!internal_mutex.try_lock())
+            return false;
+        update_hierarchy_value();
+        return true;
+    }
+};
+
+
+//将线程的层次设置为最高，代表有层次等级获取任何锁
+thread_local unsigned long hierarchical_mutex::this_thread_hierarchy_value(ULONG_MAX);
+
+
+hierarchical_mutex high_level_mutex(10000);
+hierarchical_mutex low_level_mutex(5000);
+
+int do_low_level_stuff()
+{
+    return 42;
+}
+
+int low_level_func()
+{
+    std::lock_guard<hierarchical_mutex> lk(low_level_mutex);
+    return do_low_level_stuff();
+}
+
+void high_level_stuff(int some_param)
+{}
+
+
+void high_level_func()
+{
+    std::lock_guard<hierarchical_mutex> lk(high_level_mutex);
+    high_level_stuff(low_level_func());
+}
+
+void thread_a()
+{
+    high_level_func();
+}
+
+hierarchical_mutex other_mutex(100);
+
+void do_other_stuff()
+{}
+
+
+void other_stuff()
+{
+    high_level_func();
+    do_other_stuff();
+}
+
+void thread_b()
+{
+    std::lock_guard<hierarchical_mutex> lk(other_mutex);
+    //threab获取到other_mutex后层次等级成了100
+    other_stuff();
+    //而other_stuff内又要获取high_level_mutex与low_level_mutex
+    //可见此时线程等级已经不满足层次锁获取条件
+}
+
+int main()
+{
+    thread a(thread_a);
+    thread b(thread_b);
+    a.join();
+    b.join();
+    //不能在执行thread_b时执行high_level_func
+    //但是可以在执行high_level_func时执行thread_b获取other_mutex
+    return 0;
+}
+
+```
+
+5、超越锁的延伸
+
+死锁不一定发生在所之间，可能还会发生在线程的同步问题中
+
+```cpp
+//嵌套锁
+mutex a,b;
+
+thread thread_b([&]()mutable->void{
+    a.lock();
+    b.lock();    
+});
+
+thread thread_a([&]()mutable->void{
+    a.lock();
+    b.lock();
+    thread_b.join();    
+});
+
+如果thread_a先启动，获得了a,b锁，然后thread_b尝试获取a则thread_b则进入等待
+然后thread_a一直在等待thread_b的结束，二者陷入死锁
+```
+
+### std::unique\_lock<>
+
