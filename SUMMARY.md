@@ -36,6 +36,7 @@
   * [第1章 你好并发世界](c++-even-better/bing-fa-bian-cheng/di-1-zhang-ni-hao-bing-fa-shi-jie.md)
   * [第2章 线程管理](c++-even-better/bing-fa-bian-cheng/di-2-zhang-xian-cheng-guan-li.md)
   * [第3章 共享数据](c++-even-better/bing-fa-bian-cheng/di-3-zhang-gong-xiang-shu-ju.md)
+  * [第4章 同步操作](c++-even-better/bing-fa-bian-cheng/di-4-zhang-tong-bu-cao-zuo.md)
 * [Effective C++](c++-even-better/effective-c++/README.md)
   * [导读](c++-even-better/effective-c++/dao-du.md)
 * [More Effective C++](c++-even-better/more-effective-c++/README.md)
