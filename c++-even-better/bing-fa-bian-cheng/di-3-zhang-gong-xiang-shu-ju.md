@@ -650,3 +650,243 @@ int main()
 }
 
 ```
+
+### 锁的粒度
+
+一个细粒度锁(a fine-grained lock)能够保护较小的数据量，一个粗粒度(a coarse-grained lock)能够保护较多的数据量
+
+有一个有趣的例子，超市有很多人正在结账，但是他忘了去一个自己想要的东西，在轮到他是就拿到了锁，但是他去那东西时没必要锁一直给他。如果一直给他，不管中间他要花费多长时间，知道他自己主动释放锁，这样就是粗粒度锁。
+
+```cpp
+//细粒度锁表现
+#include <iostream>
+#include <mutex>
+
+using namespace std;
+
+mutex m_mutex;
+int data=0;
+
+void process(int&m_data) {
+    //可能process需要很长的时间
+    m_data = 999;
+}
+
+int main()
+{
+    unique_lock<mutex> m_lock(m_mutex);
+    int now_data = ::data;
+    m_lock.unlock();
+    process(now_data);
+    m_lock.lock();
+    ::data = now_data;
+    cout << ::data << endl;//999
+    return 0;
+}
+```
+
+锁粒度太细会造成竞争
+
+```cpp
+#include <mutex>
+#include <iostream>
+
+using namespace std;
+
+class Y
+{
+private:
+    int some_detail;
+    mutable std::mutex m;
+
+    int get_detail() const
+    {
+        std::lock_guard<std::mutex> lock_a(m);
+        return some_detail;
+    }
+
+public:
+    Y(int sd) :some_detail(sd) {}
+
+    void set_detail(int detail) {
+        some_detail = detail;
+    }
+
+    friend bool operator==(Y const& lhs, Y const& rhs)
+    {
+        if (&lhs == &rhs)
+            return true;
+        int const lhs_value = lhs.get_detail();
+        //这会处于一个问题，获取lhs_value后，其他线程可能改变lhs的some_detail
+        int const rhs_value = rhs.get_detail();
+        //那么这样的比较是没有意义的
+        //可见锁的粒度太细
+        return lhs_value == rhs_value;
+    }
+};
+
+int main()
+{
+    Y y1(1);
+    Y y2(2);
+    bool res=(y1 == y2);
+    cout << res << endl;//0
+}
+
+```
+
+适当放大粒度
+
+```cpp
+#include <mutex>
+#include <thread>
+#include <iostream>
+
+using namespace std;
+
+class Y
+{
+private:
+    int some_detail;
+public:
+    mutable std::mutex m;
+
+private:
+    int get_detail() const
+    {
+        return some_detail;
+    }
+public:
+    Y(int sd) :some_detail(sd) {}
+
+    void set_detail(int detail) {
+        std::lock_guard<std::mutex> lock_a(m);
+        some_detail = detail;
+    }
+
+    friend bool operator==(Y const& lhs, Y const& rhs)
+    {
+        if (&lhs == &rhs)
+            return true;
+        std::scoped_lock<mutex, mutex> m_lock(lhs.m,rhs.m);
+        int const lhs_value = lhs.get_detail();
+        //这会处于一个问题，获取lhs_value后，其他线程可能改变lhs的some_detail
+        int const rhs_value = rhs.get_detail();
+        //那么这样的比较是没有意义的
+        //可见锁的粒度太细
+        return lhs_value == rhs_value;
+    }
+};
+
+int main()
+{
+    Y y1(12);
+    Y y2(13);
+    thread a([&]()->void {
+        for(int i=0;i<1000;i++)
+            cout <<(y1 == y2);
+    });
+    thread b([&]()->void {
+        for (int i = 1000; i >0; i--) {
+            y1.set_detail(i);
+        }
+    });
+    thread c([&]()->void {
+        for (int i = 0; i < 0; i++) {
+            y2.set_detail(i);
+        }
+    });
+    a.join(); b.join(); c.join();
+    return 0;
+}
+
+```
+
+### 保护共享数据的初始化过程
+
+```cpp
+//不考虑线程安全
+int main()
+{
+    shared_ptr<int> resource_ptr;
+    if (!resource_ptr) {
+        resource_ptr.reset(new int(10));
+    }
+    cout << *resource_ptr << endl;//10
+    return 0;
+}
+```
+
+```cpp
+//使用延迟初始化(线程安全)
+#include <mutex>
+#include <thread>
+#include <iostream>
+#include <memory>
+
+using namespace std;
+
+shared_ptr<int> resource_ptr;
+mutex resource_mutex;
+
+void fun() {
+    unique_lock<mutex> lock(resource_mutex);
+    if (!resource_ptr) {
+        resource_ptr.reset(new int(999));
+    }
+    lock.unlock();
+    cout << *resource_ptr << endl;
+}
+
+int main()
+{
+    thread a([&]()->void {
+        fun();
+    });
+    thread b([&]()->void {
+        fun();
+    });
+    a.join(); b.join();
+    return 0;
+}
+```
+
+```cpp
+//双重检查锁模式
+#include <mutex>
+#include <thread>
+#include <iostream>
+#include <memory>
+
+using namespace std;
+
+shared_ptr<int> resource_ptr;
+mutex resource_mutex;
+
+void fun() {
+    if (!resource_ptr) {
+        lock_guard<mutex> lock(resource_mutex);
+        if (!resource_ptr) {
+            resource_ptr.reset(new int(999));
+        }
+    }
+}
+
+int main()
+{
+    thread a([&]()->void {
+        fun();
+    });
+    thread b([&]()->void {
+        fun();
+    });
+    a.join(); b.join();
+    return 0;
+}
+
+```
+
+### 保护不常更新的数据结构
+
+### 嵌套锁
+
