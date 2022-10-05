@@ -723,27 +723,24 @@ int main(int argc, char **argv)
 
 ```cpp
 //example21.cpp
-int main(int argc, char** argv)
+int main(int argc, char **argv)
 {
     int num = 999;
     // int &&rr1 = num; //错误 无法将右值引用绑定到左值
     string stra = "hello";
-    string&& straRef = std::move(stra);
-    cout << "1 "<<stra << endl;    // hello
-    cout << "2 "<<straRef << endl; // hello
+    string &&straRef = std::move(stra);
+    cout << stra << endl;    // hello
+    cout << straRef << endl; // hello
 
     stra = "world";
-    cout << "3 "<<straRef << endl; // world
+    cout << straRef << endl; // world
     //可见straRef绑定定在了stra上
-    straRef = "c++";
-    cout <<"4 "<< stra << endl;//c++
-
 
     string a = "world";
-    string b = std::move(a); //move返回一个右值引用，调用string的移动构造函数构造b 
+    string b = std::move(a); 
     // move函数的表现根据等号左侧的类型的不同随之行为也不同
-    cout <<"5 "<< a << endl;       // nothing
-    cout <<"6 "<< b << endl;       // world
+    cout << a << endl;       // nothing
+    cout << b << endl;       // world
 
     return 0;
 }
