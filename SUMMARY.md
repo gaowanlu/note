@@ -50,7 +50,8 @@
 * [UNIX环境编程](c++-even-better/unix-huan-jing-bian-cheng/README.md)
   * [UNIX基础知识](c++-even-better/unix-huan-jing-bian-cheng/unix-ji-chu-zhi-shi.md)
 * [设计模式](c++-even-better/she-ji-mo-shi/README.md)
-  * [创建型模式](c++-even-better/she-ji-mo-shi/chuang-jian-xing-mo-shi.md)
+  * [创建型模式](c++-even-better/she-ji-mo-shi/chuang-jian-xing-mo-shi/README.md)
+    * [🍎 工厂模式](c++-even-better/she-ji-mo-shi/chuang-jian-xing-mo-shi/gong-chang-mo-shi.md)
 * [STL源码剖析](c++-even-better/stl-yuan-ma-pou-xi.md)
 * [C++沉思录](c++-even-better/c++-chen-si-lu.md)
 
