@@ -274,18 +274,23 @@ int main(int argc, char **argv)
 #include <iostream>
 #include <string>
 using namespace std;
-struct Person
-{
+
+struct Person {
     string name;
     int age;
     Person() = default;
-    //初始化属性列表
-    Person(string name) : name(name), age(20)
-    {
-        cout << this->name << " " << this->age << endl;
-    }
+    Person(string name);//定义处不用写初始化列表
+    //因为声明是给别人看的
 };
-int main(int argc, char **argv)
+
+//初始化列表与定义有关，而不用给别人声明
+//通常将初始化列表写在定义,写在声明处会编译出错
+Person::Person(string name) : name(name), age(20)
+{
+    cout << this->name << " " << this->age << endl;
+}
+
+int main(int argc, char** argv)
 {
     Person person("gaowanlu");  // gaowanlu 20
     cout << person.age << endl; // 20
