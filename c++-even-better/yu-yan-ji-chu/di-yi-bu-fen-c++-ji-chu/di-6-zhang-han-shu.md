@@ -1408,17 +1408,21 @@ void func(float num)
 
 只能省略函数尾部形参对应的实参，也就是说实参列表与形参列表是从左面一个一个匹配的
 
+默认实参是从调用者的角度来考虑的，如果调用者直到目标函数的声明里有默认实参，而且开发者并没有提供相应参数，则编译器将会在调用处使用默认实参来充当实际实参传递给目标函数。而不是站在目标函数本身来考虑，有没有实参传过来。
+
 ```cpp
 //example42.cpp
 #include <iostream>
 using namespace std;
+
+int func1(int a, int b = 8, int c);
 
 int func(int num = 1, int c = 3)
 {
     return num * c;
 }
 
-int func1(int a, int b = 8, int c)
+int func1(int a, int b, int c)
 {
     return a * b * c;
 }
@@ -1451,7 +1455,11 @@ int double_num()
     return num * 2;
 }
 
-string func(int a = double_num(), int b = num, char c = '*')
+//声明
+string func(int a = double_num(),int b = num,char c = '*');
+
+//定义
+string func(int a , int b , char c)
 {
     cout << a << " " << b << " " << c << endl;
     return "hi";
