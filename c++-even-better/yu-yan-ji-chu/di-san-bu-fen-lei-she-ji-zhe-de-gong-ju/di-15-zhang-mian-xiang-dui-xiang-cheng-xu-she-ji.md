@@ -977,6 +977,7 @@ void funcp(Person &person)
 {
     // cout << person.message << endl; //错误 只能通过派生类对象访问
     //或者在Person内添加friend void funcp(Person &person);
+    //虽然是动态绑定，但是实际上是站在Person的角度来看问题的
 }
 
 int main(int argc, char **argv)
@@ -998,7 +999,7 @@ int main(int argc, char **argv)
 形如 `class Woman:public Person`，其作用是控制从Person继承而来的内容对于Woman外部是怎样的，也就是Woman派生类可以重新修饰从Person继承而来的属性与方法。\
 `public: 基类中的public对于派生类仍为public，protected的仍为protected的`\
 `private: 从基类继承的public,protected部分全部称为private的`\
-`protected`表示将继承的public与protected内容全部变为protected的
+`protected:`表示将继承的public与protected内容全部变为protected的
 
 ```cpp
 //example21.cpp
