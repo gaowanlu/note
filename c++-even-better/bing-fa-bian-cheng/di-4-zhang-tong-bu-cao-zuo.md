@@ -536,3 +536,67 @@ int main() {
 	return 0;
 }
 ```
+
+### std::shared\_future多个线程的等待
+
+future只能get一次，如果多个线程需要等待同一个future呢，应该怎样做呢
+
+```cpp
+#include<thread>
+#include<future>
+#include<string>
+#include<iostream>
+
+using namespace std;
+
+string func() {
+	return "func";
+}
+
+int main() {
+	future<string> f = async(func);
+	//运行出错，存在竞争关系,f只能get一次
+	thread t1([&] {cout << f.get() << endl; });
+	thread t2([&] {cout << f.get() << endl; });
+	t1.join();
+	t2.join();
+	return 0;
+}
+```
+
+使用shared\_future。类模板`std::shared_future`提供访问异步操作结果的机制，类似于`std::future`，只是允许多个线程等待相同的共享状态。不像`std::future`，因此只有一个实例可以引用任何特定的异步结果%29，`std::shared_future`是可复制的，多个共享的未来对象可能引用相同的共享状态。如果每个线程通过自己的副本访问同一个共享状态，则从多个线程访问该状态是安全的。`shared_future`对象。
+
+```cpp
+#include<thread>
+#include<future>
+#include<string>
+#include<iostream>
+
+using namespace std;
+
+string func() {
+	return "func";
+}
+
+int main() {
+	future<string> f = async(func);
+	cout << boolalpha << f.valid() << endl;//true
+	shared_future<string> sf(move(f));
+	//shared_future<string>sf = f.share();
+	cout << boolalpha << f.valid() << endl;//false
+
+	thread t1([&] {
+		shared_future<string> local = sf;
+		local.get(); cout << "f ok" << endl; 
+	});
+	thread t2([&] {
+		shared_future<string> local = sf;
+		local.get(); cout << "f ok" << endl; 
+	});
+	t1.join();
+	t2.join();
+	//f ok
+	//f ok
+	return 0;
+}
+```
