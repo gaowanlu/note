@@ -1408,21 +1408,17 @@ void func(float num)
 
 只能省略函数尾部形参对应的实参，也就是说实参列表与形参列表是从左面一个一个匹配的
 
-默认实参是从调用者的角度来考虑的，如果调用者直到目标函数的声明里有默认实参，而且开发者并没有提供相应参数，则编译器将会在调用处使用默认实参来充当实际实参传递给目标函数。而不是站在目标函数本身来考虑，有没有实参传过来。
-
 ```cpp
 //example42.cpp
 #include <iostream>
 using namespace std;
-
-int func1(int a, int b = 8, int c);
 
 int func(int num = 1, int c = 3)
 {
     return num * c;
 }
 
-int func1(int a, int b, int c)
+int func1(int a, int b = 8, int c)
 {
     return a * b * c;
 }
@@ -1455,11 +1451,7 @@ int double_num()
     return num * 2;
 }
 
-//声明
-string func(int a = double_num(),int b = num,char c = '*');
-
-//定义
-string func(int a , int b , char c)
+string func(int a = double_num(), int b = num, char c = '*')
 {
     cout << a << " " << b << " " << c << endl;
     return "hi";
@@ -1826,36 +1818,16 @@ float func(int num, float c)
     return num * c;
 }
 
-int main(int argc, char** argv)
+int main(int argc, char **argv)
 {
     float (*ptr)(int num, float c); //要加括号 否则为ptr函数返回float* 的函数声明
     ptr = &func;
     cout << (*ptr)(1, 2.2) << endl; // 2.2
-
-    //函数指针数组
-    float(*ptr_array[3])(int num, float c);
-    //ptr_array与[]结合说明是一个数组，然后与*结合说明数组里面存放的是指针
-    ptr_array[0] = &func;
-    ptr_array[1] = &func;
-    ptr_array[2] = &func;
-    cout<<(*ptr_array[0])(1,2.2)<<endl;//2.2
-    //ptr_array与[0]结合取出第一个函数的地址，解引用得到函数本身然后()调用
-
-    //数组指针
-    float (*(* ptr_array_ptr)[3])(int num, float c)=&ptr_array;
-    //ptr_array_ptr与*结合代表ptr_array_ptr为一个指针，然后与[]结合说明指针ptr_array_ptr存储数组的地址
-    //与*结合表示数组存放的是函数指针
-    cout << (*(*ptr_array_ptr)[0])(4,1.1) << endl;//4.4
-
     return 0;
 }
 ```
 
 注：不同函数类型的指针不存在转换规则
-
-### 函数指针数组与函数指针数组指针
-
-请见example53.cpp实例，认清\*与\[]结合的规律。
 
 ### 重载函数指针
 
