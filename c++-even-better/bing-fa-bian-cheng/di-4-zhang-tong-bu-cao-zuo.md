@@ -600,3 +600,41 @@ int main() {
 	return 0;
 }
 ```
+
+### 限时等待
+
+限时有两种，一种是限制事件段另一种为限制时刻，前者通常以_for结尾，后者为_\_until作为后缀。
+
+例如std::condition\__variable的wait\_for与wait\__until
+
+```cpp
+#include<thread>
+#include<iostream>
+#include<condition_variable>
+#include<mutex>
+#include<chrono>
+
+using namespace std;
+
+mutex m_mutex;
+condition_variable condition;
+int info=0;
+
+int main() {
+	thread t1([&] {
+		unique_lock<mutex> lk(m_mutex);
+		//wait_for阻塞当前线程，直到条件变量被唤醒，或到指定时限时长后
+		//wait_unti阻塞当前线程，直到条件变量被唤醒，或直到抵达指定时间点
+		condition.wait_for(lk, chrono::duration(chrono::milliseconds(7000)), [&]()->bool {
+			return info!=0;
+		});
+		cout << "t1 wake up " << info << endl;//t1 wake up 0
+	});
+	t1.join();
+	//若超过7s时condition没有被notify，则t1尝试超时重新获取lk
+	return 0;
+}
+```
+
+### 时钟
+
