@@ -448,3 +448,91 @@ int main(int argc, char** argv)
     return 0;
 }
 ```
+
+### 将异常存与future中
+
+async
+
+```cpp
+#include<iostream>
+#include<stdexcept>
+#include<future>
+using namespace std;
+
+void func() {
+	throw std::exception("func throw exception");
+}
+
+int main() {
+	future<void>f = async(func);
+	try {
+		f.get();
+	}
+	catch (const exception&e) {
+		cout << e.what() << endl;//func throw exception
+	}
+	return 0;
+}
+```
+
+packaged\_task
+
+```cpp
+#include<iostream>
+#include<stdexcept>
+#include<future>
+using namespace std;
+
+void func() {
+	throw std::exception("func throw exception");
+}
+
+int main() {
+	packaged_task<void()> task(func);
+	future<void> f=task.get_future();
+	task();
+	try {
+		f.get();
+	}
+	catch (exception& e) {
+		cout << e.what() << endl;//func throw exception
+	}
+	return 0;
+}
+```
+
+promise
+
+```cpp
+#include<iostream>
+#include<stdexcept>
+#include<future>
+#include<exception>
+
+using namespace std;
+
+void func(promise<void>m_promise) {
+	/*try {
+		throw runtime_error("error");
+	}
+	catch (...) {
+		m_promise.set_exception(std::current_exception());
+	}*/
+	//或者使用
+	m_promise.set_exception(std::make_exception_ptr(runtime_error("error")));
+}
+
+int main() {
+	promise<void> m_promise;
+	future<void> f = m_promise.get_future();
+	thread t1([&] {func(move(m_promise)); });
+	try {
+		f.get();
+	}
+	catch (const exception& e) {
+		cout << e.what() << endl;//error
+	}
+	t1.join();
+	return 0;
+}
+```
