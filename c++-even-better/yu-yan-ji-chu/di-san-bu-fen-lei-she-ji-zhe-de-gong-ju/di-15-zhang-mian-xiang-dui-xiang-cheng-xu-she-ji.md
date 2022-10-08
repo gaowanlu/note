@@ -995,10 +995,10 @@ int main(int argc, char **argv)
 上面已经学习过，派生类从基类继承的public、protected成员\
 但是可以在以前的继承代码中，在派生类后面的继承列表中，基类名称前还加了控制访问限定符
 
-形如 `class Woman:public Person`，其作用是控制从Person继承而来的内容对于Woman外部是怎样的，也就是Woman派生类可以重新修饰从Person继承而来的属性与方法\
-`public`表示对继承内容public的仍为public,protected变为public,private依旧不能访问\
-`private`表示对继承内容，全部修改为private,进而其派生类将无法直接访问些内容\
-`protected`表示将继承的内容,public的改为protected,protected保持protected,private保持不可直接访问
+形如 `class Woman:public Person`，其作用是控制从Person继承而来的内容对于Woman外部是怎样的，也就是Woman派生类可以重新修饰从Person继承而来的属性与方法。\
+`public: 基类中的public对于派生类仍为public，protected的仍为protected的`\
+`private: 从基类继承的public,protected部分全部称为private的`\
+`protected`表示将继承的public与protected内容全部变为protected的
 
 ```cpp
 //example21.cpp

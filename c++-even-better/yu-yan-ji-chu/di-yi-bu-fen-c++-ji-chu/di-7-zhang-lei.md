@@ -111,8 +111,6 @@ this的数据类型就是,Person\*,他是一个相应类数据类型的常量指
 
 这里的const的作用是修改隐式this指针的类型，
 
-简单点说就是当对象是const的时候，只能调用对象的const成员函数，如果成员函数为const成员函数，但是在函数内修改非mutable成员，则会编译不通过
-
 ```cpp
 //example4.cpp
 #include <iostream>
