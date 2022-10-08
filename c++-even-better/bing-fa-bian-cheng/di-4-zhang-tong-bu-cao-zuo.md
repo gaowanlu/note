@@ -412,3 +412,39 @@ int main() {
 }
 
 ```
+
+### std::promise
+
+std::promise也是一种产生future的一种方式，promise与future关联，future可以进行get的标志不再是相应任务进行返回，而是promise.set\_value方法，传送future可以get的数据
+
+```cpp
+#include <iostream>
+#include <thread>
+#include <future>
+#include <chrono>
+
+using namespace std;
+
+void task(std::promise<string> m_promise) {
+    m_promise.set_value("hello promise");
+    this_thread::sleep_for(chrono::milliseconds(2000));
+    cout << "task end" << endl;
+}
+
+int main(int argc, char** argv)
+{
+    std::promise<string> m_promise;
+    std::promise<string> m_promise_other;
+    m_promise.swap(m_promise_other);//swap交换
+    future<string> m_future = m_promise.get_future();
+    thread m_thread([&] {
+        task(std::move(m_promise));//赋值拷贝与拷贝构造是被禁止的，可以使用移动构造
+    });
+    cout << m_future.get() << endl;
+    m_thread.join();
+    //hello promise
+    //task end
+    //从功能上来看promise也是中线程通信的一种方式
+    return 0;
+}
+```
