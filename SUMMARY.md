@@ -52,6 +52,7 @@
 * [设计模式](c++-even-better/she-ji-mo-shi/README.md)
   * [🍎 工厂模式](c++-even-better/she-ji-mo-shi/chuang-jian-xing-mo-shi/gong-chang-mo-shi.md)
   * [🤩 抽象工厂模式](c++-even-better/she-ji-mo-shi/chou-xiang-gong-chang-mo-shi.md)
+  * [☺ 单例模式](c++-even-better/she-ji-mo-shi/dan-li-mo-shi.md)
 * [STL源码剖析](c++-even-better/stl-yuan-ma-pou-xi.md)
 * [C++沉思录](c++-even-better/c++-chen-si-lu.md)
 
