@@ -52,7 +52,9 @@ private:
 	static singleton_hungry* ptr;
 };
 
-//在全局作用域可以使用非public构造函数
+//为什么在这里可以访问singleton_hungey的私有构造函数呢
+//因为ptr不是全局变量，而是类静态成员，它的初始化器在类内进行
+//而非全局作用域
 singleton_hungry* singleton_hungry::ptr = new singleton_hungry;
 
 
