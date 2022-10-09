@@ -233,8 +233,8 @@ int main(int argc, char **argv)
     cout << str1 << endl; // fdvdf
     str1.clear();
 
-    const char *str2 = new char[512];
-    str2 = "dsfv";
+    char *str2 = new char[512];
+    strcpy(str2,"dsfv");
     cout << str2 << endl; // dsfv
     delete str2;
     return 0;

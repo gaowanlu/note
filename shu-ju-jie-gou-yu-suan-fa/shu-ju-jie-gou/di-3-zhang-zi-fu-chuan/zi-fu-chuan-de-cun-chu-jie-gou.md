@@ -23,17 +23,17 @@ char str[512]="HELLO";//str最长可存储511个字符，因为最后还要存�
 ```cpp
 #include <iostream>
 #include <cstdlib>
-#include<cstring>
 using namespace std;
-int main(int argc, char** argv)
+int main(int argc, char **argv)
 {
-    char * const str = (char*)malloc(sizeof(char) * 512);
-    strcpy_s(str,sizeof("HELLO"), "HELLO");
+    const char *str = (char *)malloc(sizeof(char) * 512);
+    str = "HELLO";
     cout << str << endl; // HELLO
-    free(str);
+    str = "NIHAO";
+    cout << str << endl; // NIHAO
+    delete str;
     return 0;
 }
-
 ```
 
 * 块链存储表示
