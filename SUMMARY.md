@@ -54,9 +54,10 @@
 * [UNIX环境编程](c++-even-better/unix-huan-jing-bian-cheng/README.md)
   * [UNIX基础知识](c++-even-better/unix-huan-jing-bian-cheng/unix-ji-chu-zhi-shi.md)
 * [设计模式](c++-even-better/she-ji-mo-shi/README.md)
-  * [🍎 工厂模式](c++-even-better/she-ji-mo-shi/chuang-jian-xing-mo-shi/gong-chang-mo-shi.md)
-  * [🤩 抽象工厂模式](c++-even-better/she-ji-mo-shi/chou-xiang-gong-chang-mo-shi.md)
-  * [☺ 单例模式](c++-even-better/she-ji-mo-shi/dan-li-mo-shi.md)
+  * [🍎 工厂模式(Factory模式)](c++-even-better/she-ji-mo-shi/gong-chang-mo-shi-factory-mo-shi.md)
+  * [🤩 抽象工厂模式(AbstractFactory模式)](c++-even-better/she-ji-mo-shi/chou-xiang-gong-chang-mo-shi-abstractfactory-mo-shi.md)
+  * [☺ 单例模式(Singleton模式)](c++-even-better/she-ji-mo-shi/dan-li-mo-shi-singleton-mo-shi.md)
+  * [🥳 建造者模式(Builder模式)](c++-even-better/she-ji-mo-shi/jian-zao-zhe-mo-shi-builder-mo-shi.md)
 
 ## 🍏 数据结构与算法
 
