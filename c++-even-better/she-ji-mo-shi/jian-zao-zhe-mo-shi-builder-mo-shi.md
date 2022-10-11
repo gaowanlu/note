@@ -26,9 +26,9 @@ public:
 class Builder {
 public:
 	virtual ~Builder() {}
-	virtual void processA()const = 0;
-	virtual void processB()const = 0;
-	virtual void processC()const = 0;
+	virtual Builder* processA() = 0;
+	virtual Builder* processB() = 0;
+	virtual Builder* processC() = 0;
 };
 
 class MyBuilder:public Builder{
@@ -42,14 +42,17 @@ public:
 	void reset() {
 		ptr = new Product;
 	}
-	void processA()const override {
+	Builder* processA() override {
 		ptr->vec.push_back("process A");
+		return this;
 	}
-	void processB()const override {
+	Builder* processB() override {
 		ptr->vec.push_back("process B");
+		return this;
 	}
-	void processC()const override {
+	Builder* processC() override {
 		ptr->vec.push_back("process C");
+		return this;
 	}
 	Product* get() {
 		Product* ptrTemp = ptr;
@@ -71,9 +74,7 @@ public:
 		mBuilder->processA();
 	}
 	void buildFullFeatureProduct() {
-		mBuilder->processA();
-		mBuilder->processB();
-		mBuilder->processC();
+		mBuilder->processA()->processB()->processC();
 	}
 };
 
