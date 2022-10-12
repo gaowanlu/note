@@ -59,6 +59,7 @@
   * [☺ 单例模式(Singleton模式)](c++-even-better/she-ji-mo-shi/dan-li-mo-shi.md)
   * [🥳 建造者模式(Builder模式)](c++-even-better/she-ji-mo-shi/jian-zao-zhe-mo-shi-builder-mo-shi.md)
   * [👾 原型模式(Prototype模式)](c++-even-better/she-ji-mo-shi/yuan-xing-mo-shi-prototype-mo-shi.md)
+  * [🤩 桥接模式(Bridge模式)](c++-even-better/she-ji-mo-shi/qiao-jie-mo-shi-bridge-mo-shi.md)
 
 ## 🍏 数据结构与算法
 
