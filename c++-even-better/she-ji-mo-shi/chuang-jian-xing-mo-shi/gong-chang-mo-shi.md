@@ -8,6 +8,8 @@ coverY: 0
 
 特点：被实例化的子类
 
+<figure><img src="../../../.gitbook/assets/image.png" alt=""><figcaption><p>类图</p></figcaption></figure>
+
 ```cpp
 #include <iostream>
 

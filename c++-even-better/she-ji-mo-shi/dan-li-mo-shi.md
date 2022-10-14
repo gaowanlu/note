@@ -1,4 +1,5 @@
 ---
+description: 创建型模式
 coverY: 0
 ---
 
