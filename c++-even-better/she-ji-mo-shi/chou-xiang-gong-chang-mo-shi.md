@@ -9,6 +9,8 @@ coverY: 0
 
 特点：产品对象家族
 
+<figure><img src="../../.gitbook/assets/image (1).png" alt=""><figcaption></figcaption></figure>
+
 ```cpp
 #include <iostream>
 #include<string>
