@@ -27,7 +27,7 @@
     * [🧸 第16章 模板与泛型编程](c++-even-better/yu-yan-ji-chu/di-san-bu-fen-lei-she-ji-zhe-de-gong-ju/di-16-zhang-mo-ban-yu-fan-xing-bian-cheng.md)
   * [📷 第四部分 高级主题](c++-even-better/yu-yan-ji-chu/di-si-bu-fen-gao-ji-zhu-ti/README.md)
     * [🏍 第17章 标准库特殊设施](c++-even-better/yu-yan-ji-chu/di-si-bu-fen-gao-ji-zhu-ti/di-17-zhang-biao-zhun-ku-te-shu-she-shi.md)
-    * [🇨🇳 第18章 用于大型程序的工具](c++-even-better/yu-yan-ji-chu/di-si-bu-fen-gao-ji-zhu-ti/di-18-zhang-yong-yu-da-xing-cheng-xu-de-gong-ju.md)
+    * [🇨🇳 🇨🇳 第18章 用于大型程序的工具](c++-even-better/yu-yan-ji-chu/di-si-bu-fen-gao-ji-zhu-ti/di-18-zhang-yong-yu-da-xing-cheng-xu-de-gong-ju.md)
     * [🚌 第19章 特殊工具与技术](c++-even-better/yu-yan-ji-chu/di-si-bu-fen-gao-ji-zhu-ti/di-19-zhang-te-shu-gong-ju-yu-ji-shu.md)
   * [🏍 第五部分 接口手册](c++-even-better/yu-yan-ji-chu/di-wu-bu-fen-jie-kou-shou-ce/README.md)
     * [🚴 第20章 接口手册](c++-even-better/yu-yan-ji-chu/di-wu-bu-fen-jie-kou-shou-ce/di-20-zhang-jie-kou-shou-ce.md)
@@ -54,12 +54,13 @@
 * [UNIX环境编程](c++-even-better/unix-huan-jing-bian-cheng/README.md)
   * [UNIX基础知识](c++-even-better/unix-huan-jing-bian-cheng/unix-ji-chu-zhi-shi.md)
 * [设计模式](c++-even-better/she-ji-mo-shi/README.md)
-  * [🍎 工厂模式(Factory模式)](c++-even-better/she-ji-mo-shi/gong-chang-mo-shi.md)
+  * [🍎 工厂模式(Factory模式)](c++-even-better/she-ji-mo-shi/chuang-jian-xing-mo-shi/gong-chang-mo-shi.md)
   * [🤩 抽象工厂模式(AbstractFactory模式)](c++-even-better/she-ji-mo-shi/chou-xiang-gong-chang-mo-shi.md)
   * [☺ 单例模式(Singleton模式)](c++-even-better/she-ji-mo-shi/dan-li-mo-shi.md)
   * [🥳 建造者模式(Builder模式)](c++-even-better/she-ji-mo-shi/jian-zao-zhe-mo-shi-builder-mo-shi.md)
   * [👾 原型模式(Prototype模式)](c++-even-better/she-ji-mo-shi/yuan-xing-mo-shi-prototype-mo-shi.md)
   * [🤩 桥接模式(Bridge模式)](c++-even-better/she-ji-mo-shi/qiao-jie-mo-shi-bridge-mo-shi.md)
+  * [🙄 适配器模式(Adapter模式)](c++-even-better/she-ji-mo-shi/shi-pei-qi-mo-shi-adapter-mo-shi.md)
 
 ## 🍏 数据结构与算法
 

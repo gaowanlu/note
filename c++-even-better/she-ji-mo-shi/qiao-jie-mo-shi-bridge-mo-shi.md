@@ -78,7 +78,7 @@ int main() {
 	//ReinterfaceCab是叫普通出租车,在其run方法进行某些业务操作
 	//然后用callCar->call()，真正的去叫出租车
 	//ReinterfaceUber是叫Uber,在其run方法进行某些业务操作
-	//然后callCar->call(),真正的去叫出租车
+	//然后callCar->call(),真正的去叫Uber
 	//当叫不同的车有不同的业务逻辑，则在不同的Reinterface内进行就好了
 	//而不用把复杂的业务逻辑由不同的CallCar派生类实现
 	return 0;
