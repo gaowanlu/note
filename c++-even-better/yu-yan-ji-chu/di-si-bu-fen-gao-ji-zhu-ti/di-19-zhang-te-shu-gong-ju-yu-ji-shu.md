@@ -185,13 +185,19 @@ using namespace std;
 class A
 {
 public:
+    A():num(0){}
     virtual void test() = 0;
+protected:
+    int num;
 };
 
 class B : public A
 {
 public:
     void test() override {}
+    void show() {
+        cout << ++num << endl;
+    }
 };
 
 class C : public A
@@ -202,16 +208,24 @@ public:
     {
         cout << "hello world" << endl;
     }
+    void show() {
+        cout << ++num << endl;
+    }
 };
 
-int main(int argc, char **argv)
+int main(int argc, char** argv)
 {
-    B *b = new B();
-    A *a = b;
-    B *b1 = dynamic_cast<B *>(a); // A至少要有一个虚函数
+    B* b = new B();
+    A* a = b;
 
-    C *c = dynamic_cast<C *>(a); //去a的基类部分构造c
-    c->hello();
+    B* b1 = dynamic_cast<B*>(a); // A至少要有一个虚函数
+    b1->show();//1
+
+    C* c = dynamic_cast<C*>(a); //去a的基类部分构造c
+    //通过c只能访问基类的部分
+    c->hello();//hello
+    //c->show();错误
+
     delete c;
     delete b;
     return 0;
@@ -269,13 +283,49 @@ int main(int argc, char **argv)
 }
 ```
 
+### 右值引用dynamic\_cast
+
+```cpp
+//example5.cpp
+#include <iostream>
+#include <stdexcept>
+using namespace std;
+
+class A {
+public:
+    virtual ~A(){}
+    void run() {
+        cout << "hello world" << endl;
+    }
+};
+
+class B:public A {
+public:
+    B(){}
+    ~B(){}
+    void run() {
+        cout << "bbb" << endl;
+    }
+};
+
+
+int main(int argc, char** argv)
+{
+    A&& a = B();
+    a.run();//hello world
+    B&& b = dynamic_cast<B&&>(a);
+    b.run();//bbb
+    return 0;
+}
+```
+
 ### RTTI实战
 
 编写自定义类的equal方法
 
 ```cpp
 //example7.cpp
-#include <iostream>
+#include <iostreadym>
 using namespace std;
 
 class A
