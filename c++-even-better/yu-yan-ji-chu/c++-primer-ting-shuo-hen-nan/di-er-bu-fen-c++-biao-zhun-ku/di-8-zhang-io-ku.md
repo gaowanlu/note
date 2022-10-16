@@ -25,7 +25,7 @@ getline函数，从一个给定的istream读取一行数据，存入一个给定
 
 先知道下面的东西大致有什么用途即可
 
-![IO库类型和头文件](<../../../.gitbook/assets/屏幕截图 2022-05-23 123506.jpg>)
+![IO库类型和头文件](<../../../../.gitbook/assets/屏幕截图 2022-05-23 123506.jpg>)
 
 以w开头的是表示支持使用宽字符的语言，C++定义类一组来操纵wchar\_t类型的数据，宽字符版本类型和函数以w开头，如wcin,wcout,wcerr
 
@@ -55,7 +55,7 @@ int main(int argc,char**argv){
 
 流对象有自己的状态，称为操作流的条件状态
 
-![IO库条件状态](<../../../.gitbook/assets/屏幕截图 2022-05-23 125105.jpg>)
+![IO库条件状态](<../../../../.gitbook/assets/屏幕截图 2022-05-23 125105.jpg>)
 
 看不懂没关系，先知道有这么回事，会面的学习才会真的用起来
 
@@ -221,7 +221,7 @@ int main(int argc,char**argv){
 
 三种流对象支持对文件的内容操作，ifstream从一个文件读取数据，ofstream向一个给定文件写入数据，以及fstream可以读写给定文件
 
-![fstream特有的操作](<../../../.gitbook/assets/屏幕截图 2022-05-24 071451.jpg>)
+![fstream特有的操作](<../../../../.gitbook/assets/屏幕截图 2022-05-24 071451.jpg>)
 
 ### 使用文件流对象
 
@@ -275,7 +275,7 @@ int main(int argc,char**argv){
 
 ### 文件模式
 
-![文件模式](<../../../.gitbook/assets/屏幕截图 2022-05-24 074028.jpg>)
+![文件模式](<../../../../.gitbook/assets/屏幕截图 2022-05-24 074028.jpg>)
 
 只有当out被设定才能设定trunc模式\
 如果trunc没有被设定，可以设定app模式，在app模式即使没有显示指定out模式，文件总能以输出模式被打开\
@@ -344,7 +344,7 @@ sstream头文件定义了三个支持内存IO，可以向string写入数据，�
 
 `istringstream`从string读取数据，`ostringstream`向string写入数据，而头文件`stringstream`既可以从string读数据写可以写数据，同理这些类也继承iostream,可以使用iostream，istream,ostream相关的操作
 
-![stringstream特有的操作](<../../../.gitbook/assets/屏幕截图 2022-05-25 234638.jpg>)
+![stringstream特有的操作](<../../../../.gitbook/assets/屏幕截图 2022-05-25 234638.jpg>)
 
 ### 使用istringstream
 

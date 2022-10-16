@@ -333,7 +333,7 @@ cout << endl; // 2 3 4 5 6 7
 
 捕获分为值捕获与引用捕获
 
-![lambda捕获列表](<../../../.gitbook/assets/屏幕截图 2022-06-06 095133.jpg>)
+![lambda捕获列表](<../../../../.gitbook/assets/屏幕截图 2022-06-06 095133.jpg>)
 
 ```cpp
 //example16.cpp
@@ -521,7 +521,7 @@ int main(int argc, char **argv)
 
 ### 插入迭代器back\_inserter、front\_inserter、inserter
 
-![插入迭代器操作](<../../../.gitbook/assets/屏幕截图 2022-06-08 110947.jpg>)
+![插入迭代器操作](<../../../../.gitbook/assets/屏幕截图 2022-06-08 110947.jpg>)
 
 插入迭代器有三种
 
@@ -567,7 +567,7 @@ iostream虽然不是容器，但标准库定义了相关迭代器，istream\_ite
 
 ### istream\_iterator操作
 
-![istream\_iterator操作](<../../../.gitbook/assets/屏幕截图 2022-06-08 114104.jpg>)
+![istream\_iterator操作](<../../../../.gitbook/assets/屏幕截图 2022-06-08 114104.jpg>)
 
 ```cpp
 //example24.cpp
@@ -599,7 +599,7 @@ cout << sum << endl;
 
 ### ostream\_iterator操作
 
-![ostream\_iterator操作](<../../../.gitbook/assets/屏幕截图 2022-06-08 131557.jpg>)
+![ostream\_iterator操作](<../../../../.gitbook/assets/屏幕截图 2022-06-08 131557.jpg>)
 
 ```cpp
 //example27.cpp
@@ -621,7 +621,7 @@ copy(vec.begin(), vec.end(), out1); // 1\n2\n3\n4
 
 反向迭代器就是++移动到上一个元素，--移动到下一个元素，除了forward\_list之外，其他的容器都支持反向迭代器，可以通过调用rbegin、rend、crbegin、crend成员函数获得反向迭代器
 
-![比较cbegin、cend、crbegin、crend](<../../../.gitbook/assets/屏幕截图 2022-06-09 080145.jpg>)
+![比较cbegin、cend、crbegin、crend](<../../../../.gitbook/assets/屏幕截图 2022-06-09 080145.jpg>)
 
 ### rbegin、rend、cbegin、crend
 
@@ -652,7 +652,7 @@ cout << endl;
 
 ### reverse\_iterator.base获取普通迭代器
 
-![反向迭代器和普通迭代器间的关系](<../../../.gitbook/assets/屏幕截图 2022-06-09 082211.jpg>)
+![反向迭代器和普通迭代器间的关系](<../../../../.gitbook/assets/屏幕截图 2022-06-09 082211.jpg>)
 
 重点：关键点在于`[str.crbegin(),rcomma)`的范围与`[rcomma.base(),str.cend())`的范围相同，所以.base()是返回反向迭代器的下一个位置的普通迭代器
 
@@ -680,7 +680,7 @@ if (target != str.crend())
 
 ### 迭代器类别
 
-![迭代器类别](<../../../.gitbook/assets/屏幕截图 2022-06-10 095931.jpg>)
+![迭代器类别](<../../../../.gitbook/assets/屏幕截图 2022-06-10 095931.jpg>)
 
 与容器类似，一些操作所有迭代器都支持，另外一些只有特定类别的迭代器才支持，如ostream\_iterator只支持递增、解引用、赋值，vector、string、deque的迭代器另外还支持递减、关系、算数运算
 
@@ -848,7 +848,7 @@ printVec(vec_copy); // 3 4 5
 
 例
 
-![list和forward\_list成员函数版本的算法](<../../../.gitbook/assets/屏幕截图 2022-06-10 144906.jpg>)
+![list和forward\_list成员函数版本的算法](<../../../../.gitbook/assets/屏幕截图 2022-06-10 144906.jpg>)
 
 ```cpp
 //example34.cpp
@@ -869,7 +869,7 @@ printVec(m_list2); //
 
 链表类型还定义了splice算法，用于将链表的一部分移动到另一个链表上去，此算法为链表数据结构特有的，并不是完全的泛型算法
 
-![list和forward\_list的splice成员函数的参数](<../../../.gitbook/assets/屏幕截图 2022-06-10 145928.jpg>)
+![list和forward\_list的splice成员函数的参数](<../../../../.gitbook/assets/屏幕截图 2022-06-10 145928.jpg>)
 
 ```cpp
 //example35.cpp

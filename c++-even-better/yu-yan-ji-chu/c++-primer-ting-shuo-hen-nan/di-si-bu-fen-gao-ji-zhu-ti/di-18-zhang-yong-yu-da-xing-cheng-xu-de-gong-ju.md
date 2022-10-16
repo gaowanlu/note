@@ -4,7 +4,7 @@ cover: >-
 coverY: 0
 ---
 
-# 🇨🇳 第18章 用于大型程序的工具
+# 🇨🇳 🇨🇳 第18章 用于大型程序的工具
 
 ## 第18章 用于大型程序的工具
 
@@ -589,7 +589,7 @@ int main(int argc, char **argv)
 
 ### 常见异常类继承关系
 
-![标准exception类层次](<../../../.gitbook/assets/屏幕截图 2022-07-30 230439.jpg>)
+![标准exception类层次](<../../../../.gitbook/assets/屏幕截图 2022-07-30 230439.jpg>)
 
 exception只定义了拷贝构造函数、拷贝赋值运算符、虚析构函数、what的虚成员，what返回const char\* 字符数组，其为noexcept(true)的\
 exception、bad\_cast、bad\_alloc有默认构造函数、runtime\_error、logic\_error无默认构造函数，可以接收C字符数组

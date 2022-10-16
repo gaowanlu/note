@@ -12,7 +12,7 @@ coverY: 0
 
 ### 关联容器类型
 
-![关联容器类型](<../../../.gitbook/assets/屏幕截图 2022-06-11 103211.jpg>)
+![关联容器类型](<../../../../.gitbook/assets/屏幕截图 2022-06-11 103211.jpg>)
 
 ### 使用map
 
@@ -165,7 +165,7 @@ int main(int argc, char **argv)
 pair的标准库类型，定义在utility头文件中\
 一个piar保存两个数据成员，类似容器piar是一个用来生成特定类型的模板，大致可以认为是一个键值对
 
-![pair上的操作](<../../../.gitbook/assets/屏幕截图 2022-06-12 112841.jpg>)
+![pair上的操作](<../../../../.gitbook/assets/屏幕截图 2022-06-12 112841.jpg>)
 
 ```cpp
 //example6.cpp
@@ -210,7 +210,7 @@ cout << (m_pair5 != m_pair6) << endl; // 0
 
 ### key\_type、mapped\_type、value\_type操作
 
-![关联容器额外的类型别名](<../../../.gitbook/assets/屏幕截图 2022-06-13 091547.jpg>)
+![关联容器额外的类型别名](<../../../../.gitbook/assets/屏幕截图 2022-06-13 091547.jpg>)
 
 只有map类型(unordered\_map、unordered\_multimap、multimap和map)才定义了mapped\_type
 
@@ -289,7 +289,7 @@ for (auto &item : m_map_copy)
 
 ### 添加元素
 
-![关联容器insert操作](<../../../.gitbook/assets/屏幕截图 2022-06-13 095858.jpg>)
+![关联容器insert操作](<../../../../.gitbook/assets/屏幕截图 2022-06-13 095858.jpg>)
 
 ```cpp
 //example10.cpp
@@ -332,7 +332,7 @@ cout << m_set.size() << endl; // 3
 
 关联容器的erase定义了三个版本
 
-![从关联容器删除元素](<../../../.gitbook/assets/屏幕截图 2022-06-14 101514.jpg>)
+![从关联容器删除元素](<../../../../.gitbook/assets/屏幕截图 2022-06-14 101514.jpg>)
 
 ```cpp
 //example12.cpp
@@ -361,7 +361,7 @@ printSet(m_set); //
 
 map、uordered\_map有下标操作，而multimap与unordered\_multimap没有下标操作，因为一个关键词可对应多个值
 
-![map和unordered\_map的下标操作](<../../../.gitbook/assets/屏幕截图 2022-06-14 103133.jpg>)
+![map和unordered\_map的下标操作](<../../../../.gitbook/assets/屏幕截图 2022-06-14 103133.jpg>)
 
 ```cpp
 //example13.cpp
@@ -397,7 +397,7 @@ catch (std::out_of_range e)
 
 主要为根据关键字查找元素的操作，在multimap与multiset中相同关键字的元素总是相邻存放
 
-![在一个关联容器中查找元素的操作](<../../../.gitbook/assets/屏幕截图 2022-06-14 104235.jpg>)
+![在一个关联容器中查找元素的操作](<../../../../.gitbook/assets/屏幕截图 2022-06-14 104235.jpg>)
 
 ```cpp
 //example14.cpp
@@ -468,7 +468,7 @@ cout << endl;
 
 无序容器的存放原理为，无序容器有多个桶，每个桶存放0个或多个元素，先对关键字进行hash然后找到对应的桶，在桶内存放要存放的元素，在访问元素时也是同样的原理
 
-![无序容器管理操作](<../../../.gitbook/assets/屏幕截图 2022-06-14 111352.jpg>)
+![无序容器管理操作](<../../../../.gitbook/assets/屏幕截图 2022-06-14 111352.jpg>)
 
 ### 桶接口
 

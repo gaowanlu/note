@@ -20,7 +20,7 @@ C语言也有动态内存，而其也是一件非常危险地是事情，经验�
 
 ### shared\_ptr和unique\_ptr都支持的操作
 
-![shared\_ptr和unique\_ptr都支持的操作](<../../../.gitbook/assets/屏幕截图 2022-06-15 120951.jpg>)
+![shared\_ptr和unique\_ptr都支持的操作](<../../../../.gitbook/assets/屏幕截图 2022-06-15 120951.jpg>)
 
 ```cpp
 //example1.cpp
@@ -35,7 +35,7 @@ if (str_ptr != nullptr)
 
 ### shared\_ptr独有的操作
 
-![shared\_ptr独有的操作](<../../../.gitbook/assets/屏幕截图 2022-06-15 121014.jpg>)
+![shared\_ptr独有的操作](<../../../../.gitbook/assets/屏幕截图 2022-06-15 121014.jpg>)
 
 ### make\_shared函数
 
@@ -354,7 +354,7 @@ p=nullptr;
 
 如果不初始化一个shared\_ptr则将会是一个空指针，除了make\_shared还以使用以下其他方法定义和改变shared\_ptr
 
-![定义和改变shared\_ptr的其他方法](<../../../.gitbook/assets/屏幕截图 2022-06-17 090038.jpg>)
+![定义和改变shared\_ptr的其他方法](<../../../../.gitbook/assets/屏幕截图 2022-06-17 090038.jpg>)
 
 ```cpp
 //example12.cpp
@@ -598,7 +598,7 @@ int main(int argc, char **argv)
 
 从名字上面就能知道unique\_ptr与shared\_ptr的区别，unique\_ptr指向的对象只能有一个unique\_ptr指向一个给定对象，当unique\_ptr销毁时其所指向的对象也会被释放
 
-![unique\_ptr操作](<../../../.gitbook/assets/屏幕截图 2022-06-19 080936.jpg>)
+![unique\_ptr操作](<../../../../.gitbook/assets/屏幕截图 2022-06-19 080936.jpg>)
 
 与shared\_ptr最大区别就是其有release方法，其定义时必须被初始化，不能进行拷贝或者赋值，没有make\_shared类似的函数使用只能配和new和指针使用
 
@@ -682,7 +682,7 @@ int main(int argc, char **argv)
 有时对于shared\_ptr我们可能只是想让另一个指针指向其内存，但不进行内存管理，还是由原来的指向内存的shared\_ptr进行协调管理\
 将一个weak\_ptr绑定到一个shared\_ptr不会改变shared\_ptr的引用计数
 
-![weak\_ptr](<../../../.gitbook/assets/屏幕截图 2022-06-19 084419.jpg>)
+![weak\_ptr](<../../../../.gitbook/assets/屏幕截图 2022-06-19 084419.jpg>)
 
 ```cpp
 //example22.cpp
@@ -771,7 +771,7 @@ int main(int argc, char **argv)
 
 * 动态数组可以使用unique\_ptr进行内存管理
 
-![指向数组的unique\_ptr](<../../../.gitbook/assets/屏幕截图 2022-06-20 093304.jpg>)
+![指向数组的unique\_ptr](<../../../../.gitbook/assets/屏幕截图 2022-06-20 093304.jpg>)
 
 ```cpp
 //example26.cpp
@@ -807,7 +807,7 @@ int main(int argc, char **argv)
 
 使用动态内存数组容易出现什么问题呢，就是例如可能需要接近50个左右int的空间，我们可能会申请60个，但是有些内存空间我们始终没有再进行使用，造成资源浪费，new与对象的构造联系在一起，delete\[]与对象的析构函数联系在一起，allocator就是解决类似的问题而生的
 
-![标准库allocator类及其算法](<../../../.gitbook/assets/屏幕截图 2022-06-20 094756.jpg>)
+![标准库allocator类及其算法](<../../../../.gitbook/assets/屏幕截图 2022-06-20 094756.jpg>)
 
 简单上手
 
@@ -850,7 +850,7 @@ int main(int argc, char **argv)
 
 ### 拷贝和填充未初始化内存
 
-![allocator算法](<../../../.gitbook/assets/屏幕截图 2022-06-20 103037.jpg>)
+![allocator算法](<../../../../.gitbook/assets/屏幕截图 2022-06-20 103037.jpg>)
 
 ```cpp
 //example30.cpp

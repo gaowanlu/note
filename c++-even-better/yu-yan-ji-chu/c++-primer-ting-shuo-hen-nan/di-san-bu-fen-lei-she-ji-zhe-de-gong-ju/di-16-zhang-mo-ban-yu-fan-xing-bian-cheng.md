@@ -1366,7 +1366,7 @@ int main(int argc, char **argv)
 
 类似的模板类有很多，其都在头文件`type_traits`内
 
-![标准类型转换模板](<../../../.gitbook/assets/屏幕截图 2022-07-16 212018.jpg>)
+![标准类型转换模板](<../../../../.gitbook/assets/屏幕截图 2022-07-16 212018.jpg>)
 
 ```cpp
 //example33.cpp

@@ -20,7 +20,7 @@ coverY: 0
 
 tuple与pair有些类似，但是tuple支持多个元素，多种元素类型，在希望将一些数据组合成单一对象，但不想麻烦地自定义数据结构表示时很有用,tuple是一个“快速而随意”的数据结构
 
-![tuple支持的操作](<../../../.gitbook/assets/屏幕截图 2022-07-21 131108.jpg>)
+![tuple支持的操作](<../../../../.gitbook/assets/屏幕截图 2022-07-21 131108.jpg>)
 
 ### 定义和初始化tuple
 
@@ -230,7 +230,7 @@ int main(int argc, char **argv)
 
 bitset类模板支持功能丰富的二进制相关操作
 
-![bitset操作](<../../../.gitbook/assets/屏幕截图 2022-07-22 114326.jpg>)
+![bitset操作](<../../../../.gitbook/assets/屏幕截图 2022-07-22 114326.jpg>)
 
 ### bitset统计操作
 
@@ -419,16 +419,16 @@ C++是支持正则表达式的，如果你还不知道正则表达式请查阅�
 
 正则表达式库组件
 
-![正则表达式库组件](<../../../.gitbook/assets/屏幕截图 2022-07-23 223413.jpg>)
+![正则表达式库组件](<../../../../.gitbook/assets/屏幕截图 2022-07-23 223413.jpg>)
 
 regex\_match用于匹配整个输入序列与表达式匹配，则返回true\
 regex\_search用于如果输入序列中一个子串与表达式匹配，则返回true
 
-![regexsearch和regex\_match的参数](<../../../.gitbook/assets/屏幕截图 2022-07-23 223816.jpg>)
+![regexsearch和regex\_match的参数](<../../../../.gitbook/assets/屏幕截图 2022-07-23 223816.jpg>)
 
 表达式基础
 
-![正则表达式语法规则](<../../../.gitbook/assets/屏幕截图 2022-07-23 224319.jpg>)
+![正则表达式语法规则](<../../../../.gitbook/assets/屏幕截图 2022-07-23 224319.jpg>)
 
 ### 使用正则表达式
 
@@ -461,7 +461,7 @@ int main(int argc, char **argv)
 
 正则表达式是一种语言，但是其有多种版本，这些都是历史遗留问题，C++允许在创建regex与wregex时指定正则表达式语法版本
 
-![regex和wregex的选项](<../../../.gitbook/assets/屏幕截图 2022-07-23 225629.jpg>)
+![regex和wregex的选项](<../../../../.gitbook/assets/屏幕截图 2022-07-23 225629.jpg>)
 
 ```cpp
 //example13.cpp
@@ -481,7 +481,7 @@ int main(int argc, char **argv)
 
 正则表达式本身可以视为一种简单程序设计语言，这种语言的解析不是C++编译器解决的，所以有异常时，也是运行时异常而非编译错误
 
-![正则表达式错误类型](<../../../.gitbook/assets/屏幕截图 2022-07-23 230446.jpg>)
+![正则表达式错误类型](<../../../../.gitbook/assets/屏幕截图 2022-07-23 230446.jpg>)
 
 ```cpp
 //example14.cpp
@@ -507,7 +507,7 @@ int main(int argc, char **argv)
 
 regex默认为匹配char字符，如果操作宽字符要使用wregex
 
-![正则表达式库类](<../../../.gitbook/assets/屏幕截图 2022-07-23 231220.jpg>)
+![正则表达式库类](<../../../../.gitbook/assets/屏幕截图 2022-07-23 231220.jpg>)
 
 ```cpp
 //example15.cpp
@@ -540,7 +540,7 @@ int main(int argc, char **argv)
 
 有时需要找出一个序列中所有符号要求的子序列，这就需要使用sregex\_iterator、cregex\_iterator、wsregex\_iterator和wcregx\_iterator
 
-![sregex\_iterator操作](<../../../.gitbook/assets/屏幕截图 2022-07-24 160628.jpg>)
+![sregex\_iterator操作](<../../../../.gitbook/assets/屏幕截图 2022-07-24 160628.jpg>)
 
 ```cpp
 //example16.cpp
@@ -563,7 +563,7 @@ int main(int argc, char **argv)
 
 本质上每个sregex\_iterator指向一个smatch,smatch本身可以提供很多额外的信息
 
-![smatch操作](<../../../.gitbook/assets/屏幕截图 2022-07-24 162117.jpg>)
+![smatch操作](<../../../../.gitbook/assets/屏幕截图 2022-07-24 162117.jpg>)
 
 ```cpp
 //example17.cpp
@@ -638,7 +638,7 @@ int main(int argc, char **argv)
 
 仅仅拥有整个正则表达式是否匹配成功的信息是不足够的，smatch内有ssub\_match的信息，\[0]表示整个匹配，\[1]表示第一个子表达式匹配，以此类推
 
-![子匹配操作](<../../../.gitbook/assets/屏幕截图 2022-07-24 172624.jpg>)
+![子匹配操作](<../../../../.gitbook/assets/屏幕截图 2022-07-24 172624.jpg>)
 
 ```cpp
 //example19.cpp
@@ -680,7 +680,7 @@ int main(int argc, char **argv)
 
 regex\_replace用于在匹配时，将符合要求的子序列替换成其他指定的内容
 
-![正则表达式替换操作](<../../../.gitbook/assets/屏幕截图 2022-07-24 173017.jpg>)
+![正则表达式替换操作](<../../../../.gitbook/assets/屏幕截图 2022-07-24 173017.jpg>)
 
 ```cpp
 //example20.cpp
@@ -700,7 +700,7 @@ int main(int argc, char **argv)
 
 这些标志可以传递给函数regex\_search、regex\_match、smatch的format成员
 
-![匹配标志](<../../../.gitbook/assets/屏幕截图 2022-07-24 181330.jpg>)
+![匹配标志](<../../../../.gitbook/assets/屏幕截图 2022-07-24 181330.jpg>)
 
 ```cpp
 //example21.cpp
@@ -765,13 +765,13 @@ C++中
 
 功能有随机数引擎(random-number engines)、随机数分布类(random-number distribution)
 
-![随机数库的组成](<../../../.gitbook/assets/屏幕截图 2022-07-25 124653.jpg>)
+![随机数库的组成](<../../../../.gitbook/assets/屏幕截图 2022-07-25 124653.jpg>)
 
 ### 随机数引擎
 
 随机数引擎`default_random_engine`是函数对象类，定义了一个调用运算符，不接受参数然后返回一个随机unsigned整数
 
-![随机数引擎操作](<../../../.gitbook/assets/屏幕截图 2022-07-25 125327.jpg>)
+![随机数引擎操作](<../../../../.gitbook/assets/屏幕截图 2022-07-25 125327.jpg>)
 
 ```cpp
 //example23.cpp
@@ -949,7 +949,7 @@ int main(int argc, char **argv)
 
 ### 随机数分布
 
-![分布类型的操作](<../../../.gitbook/assets/屏幕截图 2022-07-25 134928.jpg>)
+![分布类型的操作](<../../../../.gitbook/assets/屏幕截图 2022-07-25 134928.jpg>)
 
 新标准库定义了20种分布类型，详情请见术语表章节的随机数部分
 
@@ -1081,11 +1081,11 @@ int main(int argc, char **argv)
 
 iostream中的操纵符
 
-![定义在iostream中的操纵符](<../../../.gitbook/assets/屏幕截图 2022-07-26 202743.jpg>)
+![定义在iostream中的操纵符](<../../../../.gitbook/assets/屏幕截图 2022-07-26 202743.jpg>)
 
 iomanip中的操纵符
 
-![定义在iomanip中的操纵符](<../../../.gitbook/assets/屏幕截图 2022-07-26 204758.jpg>)
+![定义在iomanip中的操纵符](<../../../../.gitbook/assets/屏幕截图 2022-07-26 204758.jpg>)
 
 ### 控制布尔值的格式
 
@@ -1286,7 +1286,7 @@ int main(int argc, char **argv)
 
 单字节低层IO操作
 
-![单字节低层IO操作](<../../../.gitbook/assets/屏幕截图 2022-07-26 205919.jpg>)
+![单字节低层IO操作](<../../../../.gitbook/assets/屏幕截图 2022-07-26 205919.jpg>)
 
 ```cpp
 //example43.cpp
@@ -1330,7 +1330,7 @@ int main(int argc, char **argv)
 
 多字节低层IO操作
 
-![多字节低层IO操作](<../../../.gitbook/assets/屏幕截图 2022-07-26 211446.jpg>)
+![多字节低层IO操作](<../../../../.gitbook/assets/屏幕截图 2022-07-26 211446.jpg>)
 
 get与getline有区别，两个函数一直读取数据，直至 已读取了size-1个字符、遇到了文件尾、遇到了分隔符，差别在于getline会丢弃分隔符
 
@@ -1397,7 +1397,7 @@ int main(int argc, char **argv)
 
 seek和tell函数
 
-![seek和tell函数](<../../../.gitbook/assets/屏幕截图 2022-07-26 214428.jpg>)
+![seek和tell函数](<../../../../.gitbook/assets/屏幕截图 2022-07-26 214428.jpg>)
 
 ```cpp
 //example47.cpp

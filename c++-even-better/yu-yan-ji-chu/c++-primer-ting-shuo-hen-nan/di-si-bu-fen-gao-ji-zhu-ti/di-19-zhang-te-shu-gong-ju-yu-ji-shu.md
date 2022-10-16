@@ -416,7 +416,7 @@ type\_info的定义可能根据编译器的不同而不同
 
 其没有默认构造函数，它的拷贝和移动构造函数、赋值运算符都被定义成了删除的，创建type\_info的唯一途径就是使用typeid操作
 
-![type\_info的操作](<../../../.gitbook/assets/屏幕截图 2022-08-03 171825.jpg>)
+![type\_info的操作](<../../../../.gitbook/assets/屏幕截图 2022-08-03 171825.jpg>)
 
 ```cpp
 //example9.cpp

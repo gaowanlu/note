@@ -12,7 +12,7 @@ coverY: 0
 
 ### 顺序容器概述
 
-![顺序容器类型](<../../../.gitbook/assets/屏幕截图 2022-05-26 114318.jpg>)
+![顺序容器类型](<../../../../.gitbook/assets/屏幕截图 2022-05-26 114318.jpg>)
 
 如list、forward\_list是链式存储结构，而vector、deque、array、string为顺序存储结构，在增删改等操作上它们会有不同的特性
 
@@ -206,7 +206,7 @@ while (const_reverse_iter!=vec.crend())
 
 主要要掌握容器的构造函数的相关重载，以及赋值拷贝等特性
 
-![容器定义和初始化](<../../../.gitbook/assets/屏幕截图 2022-05-27 233201.jpg>)
+![容器定义和初始化](<../../../../.gitbook/assets/屏幕截图 2022-05-27 233201.jpg>)
 
 在前面的构造函数内容中我们已经过实践，可以进行复习与在此学习
 
@@ -271,7 +271,7 @@ int main(int argc,char**argv){
 
 ### 赋值与swap
 
-![容器赋值运算](<../../../.gitbook/assets/屏幕截图 2022-05-27 235933.jpg>)
+![容器赋值运算](<../../../../.gitbook/assets/屏幕截图 2022-05-27 235933.jpg>)
 
 ```cpp
 //example7.cpp
@@ -357,7 +357,7 @@ cout << (vec1 > vec2) << endl;//0
 
 向容器内添加元素的有多种方式，不同的容器也有相应的约束以及仅有的特性
 
-![向顺序容器添加元素的操作](<../../../.gitbook/assets/屏幕截图 2022-05-28 133030.jpg>)
+![向顺序容器添加元素的操作](<../../../../.gitbook/assets/屏幕截图 2022-05-28 133030.jpg>)
 
 ### push\_back
 
@@ -468,7 +468,7 @@ m_list.emplace_back(19,"she");//传递元素构造参数
 
 ### 访问元素
 
-![在顺序容器中访问元素的操作](<../../../.gitbook/assets/屏幕截图 2022-05-29 112914 (1).jpg>)
+![在顺序容器中访问元素的操作](<../../../../.gitbook/assets/屏幕截图 2022-05-29 112914 (1).jpg>)
 
 ### at(n)
 
@@ -513,7 +513,7 @@ cout << vec1[0] << endl;//999
 
 删除元素会改变容器的大小，标准库提供的删除操作不支持array
 
-![顺序容器的删除操作](<../../../.gitbook/assets/屏幕截图 2022-05-29 114149.jpg>)
+![顺序容器的删除操作](<../../../../.gitbook/assets/屏幕截图 2022-05-29 114149.jpg>)
 
 ### pop\_front和pop\_back
 
@@ -568,7 +568,7 @@ m_list.erase(m_list.begin(), m_list.end());
 
 forward\_list就是我们在数据结构中所学习的单向链表，因此就有了对于forward\_list中插入或者元素删除的特殊操作
 
-![在forward\_list中插入或删除元素的操作](<../../../.gitbook/assets/屏幕截图 2022-05-29 142535.jpg>)
+![在forward\_list中插入或删除元素的操作](<../../../../.gitbook/assets/屏幕截图 2022-05-29 142535.jpg>)
 
 ### before\_begin与cbefore\_begin
 
@@ -624,7 +624,7 @@ cout << endl;
 如果当前实际大小大于所要求的大小，容器后部的元素会被删除\
 如果当前实际大小小于新大小，会将新元素添加到容器后部
 
-![顺序容器大小操作](<../../../.gitbook/assets/屏幕截图 2022-05-30 090211.jpg>)
+![顺序容器大小操作](<../../../../.gitbook/assets/屏幕截图 2022-05-30 090211.jpg>)
 
 ```cpp
 //example19.cpp
@@ -704,7 +704,7 @@ vector每次扩展会增添空余的新元素空间，而不是增加一个时�
 
 capacity返回不扩展内存的情况下，现在最多能容纳多少元素，reserve操作允许通知容器应该准备多少个存储元素的空间
 
-![容器大小管理操作](<../../../.gitbook/assets/屏幕截图 2022-05-30 101120.jpg>)
+![容器大小管理操作](<../../../../.gitbook/assets/屏幕截图 2022-05-30 101120.jpg>)
 
 当reserve的需求大小超过capacity时才会改变capacity，分配的大小至少与reserve的一样多甚至超过它 ，当reserve需求还没有capacity大时，增不做操作
 
@@ -734,7 +734,7 @@ cout << m_vec.capacity() << endl;//100
 
 C字符串与string之间的操作
 
-![构造string的其他方法](<../../../.gitbook/assets/屏幕截图 2022-05-31 223118.jpg>)
+![构造string的其他方法](<../../../../.gitbook/assets/屏幕截图 2022-05-31 223118.jpg>)
 
 ```cpp
 //example23.cpp
@@ -755,7 +755,7 @@ cout << str3 << endl;//hello w
 
 用于截取子串
 
-![子字符串操作](<../../../.gitbook/assets/屏幕截图 2022-05-31 223714.jpg>)
+![子字符串操作](<../../../../.gitbook/assets/屏幕截图 2022-05-31 223714.jpg>)
 
 ```cpp
 //example24.cpp
@@ -785,7 +785,7 @@ try{
 
 下面只是对于string特殊的操作，string同样有顺序容器的接口如insert的各种插入形式，需要结合前面的接口进行学习，下面有列举replace与insert的重载表格可以参考对比
 
-![修改string的操作](<../../../.gitbook/assets/屏幕截图 2022-05-31 225113 (1).jpg>)
+![修改string的操作](<../../../../.gitbook/assets/屏幕截图 2022-05-31 225113 (1).jpg>)
 
 ### string.insert(pos,args)
 
@@ -900,7 +900,7 @@ cout << str1 << endl;//oocdef
 
 string类提供了6各不同的搜索函数、每个函数都有4个重载
 
-![string搜索操作](<../../../.gitbook/assets/屏幕截图 2022-06-01 231700.jpg>)
+![string搜索操作](<../../../../.gitbook/assets/屏幕截图 2022-06-01 231700.jpg>)
 
 ### string.find
 
@@ -974,7 +974,7 @@ cout << str.find_last_not_of("gcfb") << endl;//6 h
 
 类似于C语言中的strcmp，同样等于、大于、小于情况分别返回0、整数、负数
 
-![compare的几种参数形式](<../../../.gitbook/assets/屏幕截图 2022-06-01 233504.jpg>)
+![compare的几种参数形式](<../../../../.gitbook/assets/屏幕截图 2022-06-01 233504.jpg>)
 
 ```cpp
 //example31.cpp
@@ -990,7 +990,7 @@ cout << str.compare("abcdef") << endl;//0
 
 新标准库引入了多个函数，可以实现数值数据与标准库string之间的转换
 
-![string和数值之间的转换](<../../../.gitbook/assets/屏幕截图 2022-06-02 154255.jpg>)
+![string和数值之间的转换](<../../../../.gitbook/assets/屏幕截图 2022-06-02 154255.jpg>)
 
 ### to\_string
 
@@ -1098,7 +1098,7 @@ cout << num10 << endl;//8439.54
 
 适配器是啥，学过数据结构，例如栈和队列它们都有不同的实现方式，比如顺序栈、链栈，顺序队列、链队列等等，标准库中我们们提供了stack、queue、priority\_queue适配器，这是一个通用概念
 
-![所有容器适配器都支持的操作和类型](<../../../.gitbook/assets/屏幕截图 2022-06-02 160547.jpg>)
+![所有容器适配器都支持的操作和类型](<../../../../.gitbook/assets/屏幕截图 2022-06-02 160547.jpg>)
 
 ### 定义一个适配器
 
@@ -1120,7 +1120,7 @@ stack<string, vector<string>> string_stack_base_vector;
 
 ### stack
 
-![栈的特殊操作](<../../../.gitbook/assets/屏幕截图 2022-06-02 161843.jpg>)
+![栈的特殊操作](<../../../../.gitbook/assets/屏幕截图 2022-06-02 161843.jpg>)
 
 ```cpp
 //example34.cpp
@@ -1138,7 +1138,7 @@ while(!m_stack.empty()){
 
 ### queue与priority\_queue
 
-![队列的特殊操作](<../../../.gitbook/assets/屏幕截图 2022-06-02 162001.jpg>)
+![队列的特殊操作](<../../../../.gitbook/assets/屏幕截图 2022-06-02 162001.jpg>)
 
 priority\_queue允许为队列中的元素建立优先级，新加入的元素会被安排在所有优先级比它低的已有元素之前，默认情况下，标准库在元素类型上使用`<`运算符来确定优先级 ，也就是谁越大谁优先级就越高，到后面还会详细学习，先不要慌
 
