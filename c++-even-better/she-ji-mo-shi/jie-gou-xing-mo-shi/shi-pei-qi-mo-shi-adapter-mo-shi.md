@@ -9,6 +9,8 @@ coverY: 0
 
 继承方式
 
+<figure><img src="../../../.gitbook/assets/ClassDiagram22.png" alt=""><figcaption></figcaption></figure>
+
 ```cpp
 //适配器模式 多继承方式
 #include<iostream>
@@ -78,6 +80,8 @@ int main() {
 ```
 
 组合方式
+
+<figure><img src="../../../.gitbook/assets/ClassDiagram23.png" alt=""><figcaption></figcaption></figure>
 
 ```cpp
 //适配器模式 组合方式

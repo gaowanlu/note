@@ -638,3 +638,173 @@ int main() {
 
 ### 时钟
 
+```cpp
+#include<iostream>
+#include<chrono>
+using namespace std;
+
+//时钟就是时间信息的来源 时钟是一个类
+//当前时间 时间类型 时钟节拍 稳定时钟
+
+int main() {
+	//system_clock是可调的是不稳定时钟
+	chrono::system_clock::time_point now= chrono::system_clock::now();
+	cout << now << endl;//2022-10-18 16:05:28.6659077
+	std::time_t time2 = chrono::system_clock::to_time_t(now);
+	cout << time2 << endl;//1666111276
+
+	//稳定时钟 steady_clock
+	chrono::steady_clock::time_point time1= chrono::steady_clock::now();
+	cout << time1.time_since_epoch() << endl;//55111350630200ns
+	//clock 的纪元间的时间量的 duration
+	
+	//high_resolution_clock最短滴答周期
+	chrono::high_resolution_clock::time_point time3= chrono::high_resolution_clock::now();
+	chrono::high_resolution_clock::time_point time4 = chrono::high_resolution_clock::now();
+	cout << time4 - time3 << endl;//400ns
+
+	//是否满足时钟要求C++ 20
+	bool res1=chrono::is_clock<chrono::system_clock>();
+	bool res2= chrono::is_clock<chrono::steady_clock>();
+	bool res3 = chrono::is_clock<chrono::high_resolution_clock>();
+	cout << res1 << " " << res2 << " " << res3 << endl;//1 1 1
+
+	//UTC时间 协调世界时间C++20
+	chrono::utc_clock::time_point time5= chrono::utc_clock::now();
+	chrono::system_clock::time_point time6= chrono::utc_clock::to_sys(time5);
+	//还有from_sys成员函数
+	cout << chrono::system_clock::to_time_t(time6) << endl;//1666110621
+
+	//tai_clock国际原子钟C++20
+	chrono::tai_clock::to_utc(chrono::tai_clock::now());
+	//chrono::tai_clock::from_utc(utc_time);
+
+	//gps时间时钟C++20
+	chrono::gps_clock::to_utc(chrono::gps_clock::now());
+	//chrono::gps_clock::from_utc(utc_time);
+
+	//用于文件时间的时钟C++20
+	chrono::file_clock::now();
+	//chrono::file_clock::from_utc();
+	//chrono::file_clock::to_utc();
+	
+	return 0;
+}
+```
+
+### 时间段
+
+每种时钟都有自己的duration类型
+
+```cpp
+#include<iostream>
+#include<chrono>
+using namespace std;
+
+int main() {
+	chrono::duration<short, std::ratio<60, 1>>;//分钟计 60秒1分钟
+	chrono::duration<double, std::ratio<1, 1000>>;//毫秒计 1秒1000毫秒
+
+	using namespace std::chrono_literals;//使用时间单位后缀
+	std::chrono::hours one_day = 24h;
+	std::chrono::minutes half_an_hour = 30min;
+	std::chrono::milliseconds m_time = 10ms;
+	std::chrono::nanoseconds n_time = std::chrono::nanoseconds(10);//10ns
+	cout << n_time << endl;//10ns
+
+	//转换
+	auto one_day_seconds=std::chrono::duration_cast<std::chrono::seconds>(one_day);
+	cout << one_day_seconds << endl;//86400s
+
+	//做差计算
+	auto sub=one_day - half_an_hour;
+	cout << sub << endl;//1410min
+	cout << sub.count() << endl;//1410
+
+	return 0;
+}
+```
+
+上面有用到为future的wait\_for传递时间段
+
+```cpp
+#include<iostream>
+#include<chrono>
+#include<mutex>
+#include<future>
+#include<string>
+using namespace std;
+
+string task() {
+	this_thread::sleep_for(chrono::seconds(10));
+	return "hello";
+}
+
+int main() {
+	mutex m_mutex;
+	future<string> res= async(task);
+	//std::future_status::timeout 超时返回
+	//std::future_status::ready 状态已经改变
+	//std::future_status::deferred 任务延迟了
+	if (res.wait_for(chrono::seconds(5)) == std::future_status::ready) {
+		cout << "没有超出时间" << endl;
+	}
+	else {
+		cout << "超出时间" << endl;
+	}
+	//输出超出时间 wait_for返回了 timeout
+	res.wait();
+	return 0;
+}
+```
+
+可见已经可以限制异步任务在一定时间范围内执行了，根据超时然后做出其他操作等
+
+### 时间点
+
+在上面的时钟里，可以看到有time\_point数据类型
+
+UNIX的时间戳表示1970年1月1日00:00,time\__point的time\_since\_epoch表示指定时间点至UNIX时间戳的时间间隔_
+
+```cpp
+#include<iostream>
+#include<chrono>
+using namespace std;
+
+int main() {
+	//chrono::high_resolution_clock::time_point
+	auto start = chrono::high_resolution_clock::now();
+	for(int i=0;i<10;i++){}
+	auto end = chrono::high_resolution_clock::now();
+	chrono::duration time = end - start;
+	cout << time.count() << endl;//600滴答
+	return 0;
+}
+```
+
+在条件等待中使用超时时间
+
+```cpp
+#include<iostream>
+#include<chrono>
+#include<mutex>
+#include<thread>
+using namespace std;
+
+int main() {
+	condition_variable cv;
+	mutex m_mutex;
+	bool done=false;
+	//time_point
+	auto const timeout = chrono::steady_clock::now() + chrono::milliseconds(2000);
+	unique_lock<mutex> lk(m_mutex);
+	while (!done) {
+		if (cv.wait_until(lk,timeout) == cv_status::timeout) {
+			cout << "timeout" << endl;
+			break;
+		}
+	}
+	//输出timeout
+	return 0;
+}
+```

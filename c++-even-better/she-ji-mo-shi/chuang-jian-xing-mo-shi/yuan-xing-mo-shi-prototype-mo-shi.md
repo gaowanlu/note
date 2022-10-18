@@ -7,6 +7,8 @@ coverY: 0
 
 特点：针对被实例化的类
 
+<figure><img src="../../../.gitbook/assets/ClassDiagram25.png" alt=""><figcaption></figcaption></figure>
+
 ```cpp
 #include<iostream>
 using namespace std;
