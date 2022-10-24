@@ -50,6 +50,7 @@
   * [第2章 线程管理](c++-even-better/bing-fa-bian-cheng/di-2-zhang-xian-cheng-guan-li.md)
   * [第3章 共享数据](c++-even-better/bing-fa-bian-cheng/di-3-zhang-gong-xiang-shu-ju.md)
   * [第4章 同步操作](c++-even-better/bing-fa-bian-cheng/di-4-zhang-tong-bu-cao-zuo.md)
+  * [第5章 C++内存模型和原子操作](c++-even-better/bing-fa-bian-cheng/di-5-zhang-cpp-内存模型和原子操作.md)
 * [UNIX网络编程](c++-even-better/unix-wang-luo-bian-cheng/README.md)
   * [套接字联网API](c++-even-better/unix-wang-luo-bian-cheng/tao-jie-zi-lian-wang-api.md)
   * [进程间通信](c++-even-better/unix-wang-luo-bian-cheng/jin-cheng-jian-tong-xin.md)
