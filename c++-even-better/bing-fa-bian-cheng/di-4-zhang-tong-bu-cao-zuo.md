@@ -809,4 +809,175 @@ int main() {
 }
 ```
 
-### 
+### C++标准库中接收超时时限的函数
+
+<figure><img src="../../.gitbook/assets/5A5A4B0DD74266C5F81502E0B6037F68.png" alt=""><figcaption></figcaption></figure>
+
+
+```cpp
+#include<iostream>
+#include<thread>
+#include<mutex>
+#include<future>
+
+using namespace std;
+
+int main1() {
+	//std::this_thread::sleep_for();
+	//std::this_thread::sleep_until();
+
+	//condition_variable cv;//与condition_variable_any
+	//cv.wait_until(lock,time_point);
+	//cv.wait_for(lock,duration);
+	//返回std::cv_status::time_out或std::cv_status::no_timeout
+
+	//wait_for(lock, duration,predicate)
+	//wait_until(lock, duration,predicate)
+	//bool —— 当唤醒时，返回谓词的结果 
+
+	timed_mutex tm;
+	//tm.try_lock_for(duration);
+	//tm.try_lock_until(point);//获取到锁返回true否则返回false
+
+	//unique_lock<timed_mutex> lk(tm, time);//time可为time_point或者duration
+	//lk.unlock();
+										  //lk.try_lock_for();
+	//lk.try_lock_until();
+
+	//同时对future和shared_future支持
+	//future<void> res = async([]()->void {});
+	//res.wait_for();//当等待超时，返回std::future_status::timeout
+	//res.wait_until();
+	//当期望值准备就绪时，返回std::future_status::ready
+	//当期望值持有一个为启动的延迟函数，返回std::future_status::deferred
+
+	return 0;
+}
+```
+
+### 编写并发的快速排序
+
+非并发版本  
+
+```cpp
+#include <list>
+#include <algorithm>
+#include <iostream>
+using namespace std;
+
+template<typename T>
+std::list<T> sequential_quick_sort(std::list<T> input)
+{
+    if (input.empty())
+    {
+        return input;
+    }
+    std::list<T> result;
+    result.splice(result.begin(), input, input.begin());
+    T const& pivot = *result.begin();//基准元素
+    auto divide_point = std::partition(input.begin(), input.end(),
+        [&](T const& t) {return t < pivot; });//使用划分函数
+
+    std::list<T> lower_part;
+    lower_part.splice(lower_part.end(), input, input.begin(), divide_point);//左边部分裁剪到lower_part
+
+    auto new_lower(sequential_quick_sort(std::move(lower_part)));//递归左边且拷贝
+    auto new_higher(sequential_quick_sort(std::move(input)));//递归右边且拷贝
+    result.splice(result.end(), new_higher);//右边部分加入到result
+    result.splice(result.begin(), new_lower);//左边的部分加入到前面
+    return result;//返回结果
+}
+
+int main2() {
+    list<int> m_list = { 23,43,12,4,4,6,7,34,6,75 };
+    list<int> res = sequential_quick_sort<int>(m_list);
+    for (auto const& item : res) {
+        cout << item << " ";
+    }
+    cout << endl;
+    //4 4 6 6 7 12 23 34 43 75
+    return 0;
+}
+```
+
+并发版本  
+
+```cpp
+#include <list>
+#include <algorithm>
+#include <future>
+#include<iostream>
+using namespace std;
+
+template<typename T>
+std::list<T> parallel_quick_sort(std::list<T> input)
+{
+    if (input.empty())
+    {
+        return input;
+    }
+    std::list<T> result;
+    result.splice(result.begin(), input, input.begin());
+    T const& pivot = *result.begin();
+    //划分
+    auto divide_point = std::partition(input.begin(), input.end(),
+        [&](T const& t) {return t < pivot; });
+    std::list<T> lower_part;
+    lower_part.splice(lower_part.end(), input, input.begin(),
+        divide_point);
+    //开启异步任务对做部分快速排序
+    std::future<std::list<T> > new_lower(
+        std::async(&parallel_quick_sort<T>, std::move(lower_part)));
+    //主线程对右边排序
+    auto new_higher(
+        parallel_quick_sort(std::move(input)));
+    result.splice(result.end(), new_higher);
+    result.splice(result.begin(), new_lower.get());//future.get
+    return result;
+}
+
+int main3() {
+    list<int> m_list = { 23,43,12,4,4,6,7,34,6,75 };
+    list<int> res = parallel_quick_sort<int>(m_list);
+    for (auto const& item : res) {
+        cout << item << " ";
+    }
+    cout << endl;
+    //4 4 6 6 7 12 23 34 43 75
+    return 0;
+}
+```
+
+### 封装spawn_task
+
+```cpp
+#include <future>
+#include <iostream>
+#include <thread>
+#include <type_traits>
+
+using namespace std;
+
+template<typename F, typename A>
+std::future<std::result_of<F(A&&)>::type>
+spawn_task(F&& f, A&& a)
+{
+    typedef std::result_of<F(A&&)>::type result_type;
+    std::packaged_task<result_type(A&&)> task(std::move(f));//pack
+    std::future<result_type> res(task.get_future());
+    std::thread t(std::move(task), std::move(a));//run package
+    t.detach();//线程分离
+    return res;//return future
+}
+
+void task(int a) {
+    cout << a << endl;
+}
+
+int main4() {
+    future<void> res = spawn_task(task, a);
+    res.get();
+    return 0;
+}
+```
+
