@@ -66,6 +66,7 @@
     * [🤩 桥接模式(Bridge模式)](c++-even-better/she-ji-mo-shi/jie-gou-xing-mo-shi/qiao-jie-mo-shi-bridge-mo-shi.md)
     * [🙄 适配器模式(Adapter模式)](c++-even-better/she-ji-mo-shi/jie-gou-xing-mo-shi/shi-pei-qi-mo-shi-adapter-mo-shi.md)
     * [🤖 装饰者模式(Decrator模式)](c++-even-better/she-ji-mo-shi/jie-gou-xing-mo-shi/zhuang-shi-zhe-mo-shi-decrator-mo-shi.md)
+    * [🐸 组合模式(Composite模式)](c++-even-better/she-ji-mo-shi/jie-gou-xing-mo-shi/zu-he-mo-shi.md)
 
 ## 🍏 数据结构与算法
 
