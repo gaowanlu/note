@@ -1683,6 +1683,244 @@ int main(int argc, char **argv)
 不可移植的特性是指，因为机器不同的特性，将含有不可移植特性的程序从一台机器转移到另一台机器通常会重新编写程序\
 主要有从C语言继承的特性，位域和volatile，还有C++的特性 链接指示
 
+### 内存字节对齐
+
+推荐讲解视频 <https://www.bilibili.com/video/BV1JB4y1W7oR> 
+
+什么是内存对齐呢，先来看一个对比  
+
+```cpp
+#include<iostream>
+using namespace std;
+
+#pragma pack(show)//16
+
+struct PackA {
+ char a;
+ int b;
+ short c;
+};
+
+struct PackB
+{
+ int b;
+ char a;
+ short c;
+};
+
+int main() {
+ cout << sizeof(PackA) << endl;//12
+ cout << sizeof(PackB) << endl;//8
+ return 0;
+}
+```
+
+我们可能会说What fuck? Why?,为了CPU高效的读取内存，系统可不是一个字节一个字节读取的，如果每次读取四个字节
+
+```cpp
+0x0 char c1
+0x1 char c2
+0x2 char c3     //读取内存可不是从0x3然后读取4个字节，而是先读取0x0四个字节
+0x3 int a       //再读0x3四个字节，然后拼凑出想要的4个字节
+0x4 a           //这样想一下，效率比较低，有没有好一点的办法呢
+0x5 a
+0x6 a
+```
+
+可以将,a后移动  
+
+```cpp
+0x0 char c1
+0x1 char c2
+0x2 char c3
+0x3 
+0x4 int a   //可见占用的总空间是不一样的
+0x5 a
+0x6 a
+0x7 a
+```
+
+首先有一个基本的原则，变量的地址只能是其类型大小的整数倍,这是直接为变量时的简单情况  
+
+```cpp
+#include<iostream>
+using namespace std;
+
+int main() {
+ int a, b, c;
+ double e;
+ short f;
+ cout << (long long) & a << endl;//184479120452 % 4 = 0
+ cout << (long long) & b << endl;//184479120484 % 4 = 0
+ cout << (long long) & c << endl;//184479120516 % 4 = 0
+ cout << (long long)&e << endl;//184479120552 % 8 = 0
+ cout << (long long)&f << endl;//184479120580 % 2 = 0
+ return 0;
+}
+```
+
+下面重新回到结构体的例子中  
+
+```cpp
+#include<iostream>
+using namespace std;
+
+#pragma pack(show)//16
+
+struct PackA {
+ char a; //0x00
+   //0x01
+   //0x02
+   //0x03
+ int b; //0x04
+   //0x05
+   //0x06
+   //0x07
+ short c;//0x08
+   //0x09         //这不是10个吗，为什么是12呢，因为结构体本身也有字节对齐大小
+   //0x0A     //其对齐大小为，内部最大的对齐大小，此案例则为int 4byte
+   //0x0B     //所以其对齐大小应该为4byte的整数倍
+             //最小满足的大小为12byte
+};
+
+struct PackB
+{
+ int b;//0x00
+    //0x01
+       //0x02
+       //0x03
+ char a;//0x04
+     //0x05
+ short c;//0x06
+   //0x07        //同理结构体也要字节对齐大小为int 大小的整数倍,正好满足要求
+};
+
+int main() {
+ cout << sizeof(PackA) << endl;//12
+ cout << sizeof(PackB) << endl;//8
+
+ char* buffer = new char[sizeof(PackA)];
+ PackA packa;
+ cout << "packa_addr " << (long long)&packa % sizeof(int) << endl;//永远为0因为PackA字节对齐大小为4byte
+ packa.a = 'a';
+ packa.b = 1;
+ packa.c = 2;//内存序列化
+ memcpy(buffer, &packa, sizeof(packa));
+ //解包操作
+ PackA packa_copy;
+ memcpy(&packa_copy, buffer, sizeof(packa_copy));
+ cout << packa_copy.a << " " << packa_copy.b << " " << packa_copy.c << endl;
+ //a 1 2
+ delete[] buffer;
+ return 0;
+}
+```
+
+内存中如果有数组呢,数组按照其元素类型的对齐大小对每一项对齐，数组内内存地址连续  
+
+```cpp
+#include<iostream>
+using namespace std;
+
+#pragma pack(show)//16
+
+struct PackA {
+ char a;//0x00
+     //0x01
+     //0x02
+     //0x03
+ int arr_int[2];//0x04 0x05 0x06 0x07
+       //0x08 0x09 0x0A 0x0B
+   //0x0C
+   //0x0D
+   //0x0E
+   //0x0F
+ int b;//0x10 0x11 0x12 0x13
+ short arr_short[2]; //0x14 0x15 0x16 0x17 现在为18大小 结构体对齐大小为4
+   //0x18
+   //0x19 20%4=0 所以大小为20
+};
+
+int main() {
+ cout << sizeof(PackA) << endl;//20
+ return 0;
+}
+```
+
+如果结构体嵌套结构体呢,结构体对齐大小则为其内存最大的对齐大小  
+
+```cpp
+#include<iostream>
+using namespace std;
+
+#pragma pack(show)//16
+
+struct PackA {
+ char a;//0x00
+     //0x01
+     //0x02
+     //0x03
+ int arr_int[2];//0x04 0x05 0x06 0x07
+       //0x08 0x09 0x0A 0x0B
+   //0x0C
+   //0x0D
+   //0x0E
+   //0x0F
+ int b;//0x10 0x11 0x12 0x13
+ short arr_short[2]; //0x14 0x15 0x16 0x17 现在为18大小 结构体对齐大小为4
+   //0x18
+   //0x19 20%4=0 所以大小为20
+};
+
+struct PackB {
+ char a;//0x00 因为PackA对齐大小为4
+     //0x01
+        //0x02
+        //0x03
+ PackA packa;//0x04 ... 0x15
+ //PackB 的对齐大小则为PackA的对齐大小 4
+ //因为a对齐大小1<4
+ //24%4=0 正好对齐
+};
+
+int main() {
+ cout << sizeof(PackB) << endl;//24
+ return 0;
+}
+```
+
+对齐大小是根据不同的平台变化的，有些时候我们会一劳永逸，使用预处理命令进行指定pack的大小  
+
+```cpp
+#include<iostream>
+using namespace std;
+
+#pragma pack(show)//16
+#pragma pack(1) //设置pack大小
+
+struct PackA {
+ char a;//0x00
+ int arr_int[2];//0x02 0x03 0x04 0x05 min(4,1) 选择1作为对齐大小
+       //0x06 0x07 0x08 0x09
+ int b;//0x0A 0x0B 0x0C 0x0D min(4,1)做对齐大小
+ short arr_short[2]; //0x0E 0x0F 0x10 0x11
+};//则PackA的对齐大小为1 内部使用的最大的对齐大小为1
+
+struct PackB {
+ char a;//0x00 min(1,1)做对齐大小
+ PackA packa;//0x01 ... 0x12 min(PackA,1)做对齐大小
+};//同理PackB的对齐大小为1
+
+int main() {
+ cout << sizeof(PackB) << endl;//18
+ //如果将pack设置为2，就大于2的对齐大小则必须使用2作为对齐大小
+ //小于2的对齐大小则使用其本身即可
+ return 0;
+}
+```
+
+上面的默认pack大小为16一般没有那种数据类型的对齐大小超过16  
+
 ### 位域
 
 什么是位域？如果你是一位嵌入式工程师可能会更熟悉，类或结构体可以将非静态数据成员定义为位域，每个位域含有一定的二进制位，通常用于串口通信等，位域在内存的布局与机器相关
@@ -1772,6 +2010,121 @@ int main(int argc, char **argv)
     block.setWrite();
     cout << block.mode << endl;
     return 0;
+}
+```
+
+### 位域与字节对齐
+
+上面有学习过结构体中的字节对齐问题，那么含有位域的结构体的内存对齐情况又是怎样的呢？  
+
+```cpp
+#include<iostream>
+using namespace std;
+
+//位域只能方整形或枚举
+
+struct PackA {
+ int a : 4;//4bit
+ int : 2; //2bit
+ int b : 4;//4bit
+ unsigned c : 2;//2bit
+ char d;//8bit
+};
+
+int main() {
+ cout << sizeof(PackA) << endl;//8
+ //What fuck. 怎么回事
+ return 0;
+}
+```
+
+下面来分析一下
+
+```cpp
+//错误的分析方法
+#include<iostream>
+using namespace std;
+
+struct PackA {
+ int a : 4;//4bit 0 1 2 3
+ int : 2; //2bit  4 5
+ //因为前面用了6bit 还有2bit凑一个字节
+ //凑不下b了故直接跳过这2bit
+ // 6 7
+ int b : 4;//8 9 10 11
+ unsigned c : 2;//12 13
+    //跳过 14 15
+ char d;//8bit 
+ //16 17 18 19 20 21 22 23
+};//这么分析也就才3字节啊
+
+int main() {
+ cout << sizeof(PackA) << endl;//8
+ //What fuck. 怎么回事
+ 
+ return 0;
+}
+```
+
+1、一个位域必须存储在同一个字节中，不能跨字节存储。如一个字节所剩空间不能存储下一个位域的时候，应从下一个字节开始存储。也可以有意使某个位域从下一单元开始  
+2、由于位域不允许跨两个字节，因此位域的长度不能大于一个字节的长度，
+也就是说位域的不能超过8bit；
+3、位域可以无位域名，这时它只用作填充或调整位置。无名的位域是不能使用的  
+4、位域结构的成员不能单独被取sizeof值  
+5、如果相邻位域字段的类型相同，且其位宽之和小于类型的sizeof大小，则后面的字段将紧邻前一个字段存储，直到不能容纳为止；  
+6、如果相邻位域字段的类型相同，且其位宽之和大于类型的sizeof大小，则后面的字段将从新的存储单元开始，其偏移量为其类型大小的整数倍；  
+7、如果相邻位域字段的类型不同，则各个编译器的具体实现有所差异，VC不压缩，而Dev C++压缩；  
+8、如果位域字段之间插着非位域字段，则不进行压缩；  
+9、整个位域结构体的总体大小为最宽的基本类型成员大小的整数倍。  
+
+VC正确的分析方法  
+
+```cpp
+#include<iostream>
+using namespace std;
+
+struct PackA {
+ int a : 4;//4bit 0 1 2 3
+ int : 2; //2bit  4 5
+ //因为前面用了6bit 还有2bit凑一个字节
+ //凑不下b了故直接跳过这2bit
+ // 6 7
+ int b : 4;//8 9 10 11
+ unsigned c : 2;//12 13
+     //14 15
+     //16 17 18 19
+     //20 21 22 23
+     //24 25 26 27
+     //28 29 30 31 跳过 前面大小共4byte
+ char d;//8bit 
+};//这么分析也就才5字节啊，因为要结构体对齐，最大为int的4byte，如为4的整数倍
+//为对齐大小为8
+
+struct PackB {
+ short a : 4;//开启2byte
+ int b : 4;//开启4byte int与short不能共用
+};//结构体对齐大小为8
+
+struct PackC {
+ char a : 2;
+ char : 1;
+ char b : 5;
+};
+
+struct PackD {
+ long a : 4;
+ int b : 4;
+ unsigned c : 8;//因为long int unsigned的对齐大小都为4，
+ //所以即使其类型不同也可以共享内存
+};
+
+int main() {
+ cout << sizeof(PackA) << endl;//8
+ //What fuck. 怎么回事
+ cout << sizeof(PackB) << endl;//8
+ cout << sizeof(PackC) << endl;//1
+ cout << sizeof(PackD) << endl;//4
+ return 0;
 }
 ```
 
