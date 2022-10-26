@@ -56,6 +56,7 @@
   * [UNIX基础知识](c++-even-better/unix-env/unix-ji-chu-zhi-shi.md)
 * [UNIX进程通信编程](c++-even-better/unix-ipc/README.md)
   * [第1章 简介](c++-even-better/unix-ipc/第1章简介.md)
+  * [第2章 Posix IPC](c++-even-better/unix-ipc/第2章PosixIPC.md)
 * [设计模式](c++-even-better/she-ji-mo-shi/README.md)
   * [创建型模式](c++-even-better/she-ji-mo-shi/chuang-jian-xing-mo-shi/README.md)
     * [🍎 工厂模式(Factory模式)](c++-even-better/she-ji-mo-shi/chuang-jian-xing-mo-shi/gong-chang-mo-shi-factory-mo-shi.md)
