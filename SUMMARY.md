@@ -58,6 +58,7 @@
   * [第1章 简介](c++-even-better/unix-ipc/第1章简介.md)
   * [第2章 Posix IPC](c++-even-better/unix-ipc/第2章PosixIPC.md)
   * [第3章 System V IPC](c++-even-better/unix-ipc/第3章SystemVIPC.md)
+  * [第4章 管道和FIFO](c++-even-better/unix-ipc/第4章管道和FIFO.md)
 * [设计模式](c++-even-better/she-ji-mo-shi/README.md)
   * [创建型模式](c++-even-better/she-ji-mo-shi/chuang-jian-xing-mo-shi/README.md)
     * [🍎 工厂模式(Factory模式)](c++-even-better/she-ji-mo-shi/chuang-jian-xing-mo-shi/gong-chang-mo-shi-factory-mo-shi.md)
