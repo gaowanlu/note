@@ -316,7 +316,7 @@ weak_ptr    <memory>
 
 ### 简单查找算法 find、find\_if、find\_if\_not、count、count\_if、all\_of、any\_of、none\_of
 
-![简单查找算法](<../../../../.gitbook/assets/屏幕截图 2022-08-08 180101.jpg>)
+![简单查找算法](<../../../../.gitbook/assets/屏幕截图 2022-08-08 180101 (1).jpg>)
 
 ### 查找重复值的算法 adjacent\_find、search\_n
 

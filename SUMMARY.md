@@ -1,6 +1,6 @@
 # Table of contents
 
-* [The Perfect Handbook On Cours](README.md)
+* [THE NICE BOOK](README.md)
 
 ## 🍊 c++ even better
 
@@ -28,7 +28,7 @@
       * [🧸 第16章 模板与泛型编程](c++-even-better/yu-yan-ji-chu/c++-primer-ting-shuo-hen-nan/di-san-bu-fen-lei-she-ji-zhe-de-gong-ju/di-16-zhang-mo-ban-yu-fan-xing-bian-cheng.md)
     * [📷 第四部分 高级主题](c++-even-better/yu-yan-ji-chu/c++-primer-ting-shuo-hen-nan/di-si-bu-fen-gao-ji-zhu-ti/README.md)
       * [🏍 第17章 标准库特殊设施](c++-even-better/yu-yan-ji-chu/c++-primer-ting-shuo-hen-nan/di-si-bu-fen-gao-ji-zhu-ti/di-17-zhang-biao-zhun-ku-te-shu-she-shi.md)
-      * [🇨🇳 🇨🇳 第18章 用于大型程序的工具](c++-even-better/yu-yan-ji-chu/c++-primer-ting-shuo-hen-nan/di-si-bu-fen-gao-ji-zhu-ti/di-18-zhang-yong-yu-da-xing-cheng-xu-de-gong-ju.md)
+      * [🇨🇳 🇨🇳 🇨🇳 第18章 用于大型程序的工具](c++-even-better/yu-yan-ji-chu/c++-primer-ting-shuo-hen-nan/di-si-bu-fen-gao-ji-zhu-ti/di-18-zhang-yong-yu-da-xing-cheng-xu-de-gong-ju.md)
       * [🚌 第19章 特殊工具与技术](c++-even-better/yu-yan-ji-chu/c++-primer-ting-shuo-hen-nan/di-si-bu-fen-gao-ji-zhu-ti/di-19-zhang-te-shu-gong-ju-yu-ji-shu.md)
     * [🏍 第五部分 接口手册](c++-even-better/yu-yan-ji-chu/c++-primer-ting-shuo-hen-nan/di-wu-bu-fen-jie-kou-shou-ce/README.md)
       * [🚴 第20章 接口手册](c++-even-better/yu-yan-ji-chu/c++-primer-ting-shuo-hen-nan/di-wu-bu-fen-jie-kou-shou-ce/di-20-zhang-jie-kou-shou-ce.md)
@@ -55,7 +55,7 @@
   * [第4章 同步操作](bing-fa-bian-cheng/di-4-zhang-tong-bu-cao-zuo.md)
   * [第5章 C++内存模型和原子操作](bing-fa-bian-cheng/di-5-zhang-cpp-内存模型和原子操作.md)
 
-## 操作系统
+## 💻 操作系统
 
 * [UNIX进程通信编程](cao-zuo-xi-tong/unix-ipc/README.md)
   * [第1章 简介](cao-zuo-xi-tong/unix-ipc/第1章简介.md)
@@ -66,7 +66,7 @@
 * [UNIX环境编程](cao-zuo-xi-tong/unix-env/README.md)
   * [UNIX基础知识](cao-zuo-xi-tong/unix-env/unix-ji-chu-zhi-shi.md)
 
-## 计算机网络
+## 🎆 计算机网络
 
 * [UNIX网络套接字编程](ji-suan-ji-wang-luo/unix-socket/README.md)
   * [第1章 简介](ji-suan-ji-wang-luo/unix-socket/第1章简介.md)
@@ -156,6 +156,6 @@
 ## 🪅 数据库
 
 * [数据库](shu-ju-ku/shu-ju-ku/README.md)
-  * [🤡 SQL](shu-ju-ku/shu-ju-ku/sql.md)
-  * [🐼 高性能MySQL](shu-ju-ku/shu-ju-ku/gao-xing-neng-mysql.md)
-  * [👻 Redis](shu-ju-ku/shu-ju-ku/redis.md)
+  * [SQL](shu-ju-ku/shu-ju-ku/sql.md)
+  * [高性能MySQL](shu-ju-ku/shu-ju-ku/gao-xing-neng-mysql.md)
+  * [Redis](shu-ju-ku/shu-ju-ku/redis.md)

@@ -468,7 +468,7 @@ m_list.emplace_back(19,"she");//传递元素构造参数
 
 ### 访问元素
 
-![在顺序容器中访问元素的操作](<../../../../.gitbook/assets/屏幕截图 2022-05-29 112914 (1).jpg>)
+![在顺序容器中访问元素的操作](<../../../../.gitbook/assets/屏幕截图 2022-05-29 112914 (2) (1).jpg>)
 
 ### at(n)
 
@@ -568,7 +568,7 @@ m_list.erase(m_list.begin(), m_list.end());
 
 forward\_list就是我们在数据结构中所学习的单向链表，因此就有了对于forward\_list中插入或者元素删除的特殊操作
 
-![在forward\_list中插入或删除元素的操作](<../../../../.gitbook/assets/屏幕截图 2022-05-29 142535.jpg>)
+![在forward\_list中插入或删除元素的操作](<../../../../.gitbook/assets/屏幕截图 2022-05-29 142535 (1).jpg>)
 
 ### before\_begin与cbefore\_begin
 
@@ -785,7 +785,7 @@ try{
 
 下面只是对于string特殊的操作，string同样有顺序容器的接口如insert的各种插入形式，需要结合前面的接口进行学习，下面有列举replace与insert的重载表格可以参考对比
 
-![修改string的操作](<../../../../.gitbook/assets/屏幕截图 2022-05-31 225113 (1).jpg>)
+![修改string的操作](<../../../../.gitbook/assets/屏幕截图 2022-05-31 225113.jpg>)
 
 ### string.insert(pos,args)
 
