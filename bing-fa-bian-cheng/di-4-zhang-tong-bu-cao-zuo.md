@@ -811,7 +811,7 @@ int main() {
 
 ### C++标准库中接收超时时限的函数
 
-<figure><img src="../../.gitbook/assets/5A5A4B0DD74266C5F81502E0B6037F68.png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../.gitbook/assets/5A5A4B0DD74266C5F81502E0B6037F68.png" alt=""><figcaption></figcaption></figure>
 
 ```cpp
 #include<iostream>

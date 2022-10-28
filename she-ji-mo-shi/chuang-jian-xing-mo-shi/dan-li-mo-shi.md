@@ -5,7 +5,7 @@ coverY: 0
 
 # ☺ 单例模式(Singleton模式)
 
-<figure><img src="../../../.gitbook/assets/ClassDiagram27.png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/ClassDiagram27.png" alt=""><figcaption></figcaption></figure>
 
 特点：针对一个类的唯一实例
 

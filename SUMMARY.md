@@ -45,34 +45,47 @@
     * [STL源码剖析](c++-even-better/yu-yan-ji-chu/be-a-pro/stl-yuan-ma-pou-xi.md)
     * [C++沉思录](c++-even-better/yu-yan-ji-chu/be-a-pro/c++-chen-si-lu.md)
     * [C系列编程](c++-even-better/yu-yan-ji-chu/be-a-pro/c-xi-lie-bian-cheng.md)
-* [并发编程](c++-even-better/bing-fa-bian-cheng/README.md)
-  * [第1章 你好并发世界](c++-even-better/bing-fa-bian-cheng/di-1-zhang-ni-hao-bing-fa-shi-jie.md)
-  * [第2章 线程管理](c++-even-better/bing-fa-bian-cheng/di-2-zhang-xian-cheng-guan-li.md)
-  * [第3章 共享数据](c++-even-better/bing-fa-bian-cheng/di-3-zhang-gong-xiang-shu-ju.md)
-  * [第4章 同步操作](c++-even-better/bing-fa-bian-cheng/di-4-zhang-tong-bu-cao-zuo.md)
-  * [第5章 C++内存模型和原子操作](c++-even-better/bing-fa-bian-cheng/di-5-zhang-cpp-内存模型和原子操作.md)
-* [UNIX网络套接字编程](c++-even-better/unix-socket/README.md)
-  * [第1章 简介](c++-even-better/unix-socket/第1章简介.md)
-  * [第2章 传输层TCP、UDP、SCTP](c++-even-better/unix-socket/第2章传输层.md)
-* [UNIX环境编程](c++-even-better/unix-env/README.md)
-  * [UNIX基础知识](c++-even-better/unix-env/unix-ji-chu-zhi-shi.md)
-* [UNIX进程通信编程](c++-even-better/unix-ipc/README.md)
-  * [第1章 简介](c++-even-better/unix-ipc/第1章简介.md)
-  * [第2章 Posix IPC](c++-even-better/unix-ipc/第2章PosixIPC.md)
-  * [第3章 System V IPC](c++-even-better/unix-ipc/第3章SystemVIPC.md)
-  * [第4章 管道和FIFO](c++-even-better/unix-ipc/第4章管道和FIFO.md)
-* [设计模式](c++-even-better/she-ji-mo-shi/README.md)
-  * [创建型模式](c++-even-better/she-ji-mo-shi/chuang-jian-xing-mo-shi/README.md)
-    * [🍎 工厂模式(Factory模式)](c++-even-better/she-ji-mo-shi/chuang-jian-xing-mo-shi/gong-chang-mo-shi-factory-mo-shi.md)
-    * [🤩 抽象工厂模式(AbstractFactory模式)](c++-even-better/she-ji-mo-shi/chuang-jian-xing-mo-shi/chou-xiang-gong-chang-mo-shi.md)
-    * [☺ 单例模式(Singleton模式)](c++-even-better/she-ji-mo-shi/chuang-jian-xing-mo-shi/dan-li-mo-shi.md)
-    * [🥳 建造者模式(Builder模式)](c++-even-better/she-ji-mo-shi/chuang-jian-xing-mo-shi/jian-zao-zhe-mo-shi-builder-mo-shi.md)
-    * [👾 原型模式(Prototype模式)](c++-even-better/she-ji-mo-shi/chuang-jian-xing-mo-shi/yuan-xing-mo-shi-prototype-mo-shi.md)
-  * [结构型模式](c++-even-better/she-ji-mo-shi/jie-gou-xing-mo-shi/README.md)
-    * [🤩 桥接模式(Bridge模式)](c++-even-better/she-ji-mo-shi/jie-gou-xing-mo-shi/qiao-jie-mo-shi-bridge-mo-shi.md)
-    * [🙄 适配器模式(Adapter模式)](c++-even-better/she-ji-mo-shi/jie-gou-xing-mo-shi/shi-pei-qi-mo-shi-adapter-mo-shi.md)
-    * [🤖 装饰者模式(Decrator模式)](c++-even-better/she-ji-mo-shi/jie-gou-xing-mo-shi/zhuang-shi-zhe-mo-shi-decrator-mo-shi.md)
-    * [🐸 组合模式(Composite模式)](c++-even-better/she-ji-mo-shi/jie-gou-xing-mo-shi/zu-he-mo-shi.md)
+
+## 并发编程
+
+* [并发编程](bing-fa-bian-cheng/README.md)
+  * [第1章 你好并发世界](bing-fa-bian-cheng/di-1-zhang-ni-hao-bing-fa-shi-jie.md)
+  * [第2章 线程管理](bing-fa-bian-cheng/di-2-zhang-xian-cheng-guan-li.md)
+  * [第3章 共享数据](bing-fa-bian-cheng/di-3-zhang-gong-xiang-shu-ju.md)
+  * [第4章 同步操作](bing-fa-bian-cheng/di-4-zhang-tong-bu-cao-zuo.md)
+  * [第5章 C++内存模型和原子操作](bing-fa-bian-cheng/di-5-zhang-cpp-内存模型和原子操作.md)
+
+## 操作系统
+
+* [UNIX进程通信编程](cao-zuo-xi-tong/unix-ipc/README.md)
+  * [第1章 简介](cao-zuo-xi-tong/unix-ipc/第1章简介.md)
+  * [第2章 Posix IPC](cao-zuo-xi-tong/unix-ipc/第2章PosixIPC.md)
+  * [第3章 System V IPC](cao-zuo-xi-tong/unix-ipc/第3章SystemVIPC.md)
+  * [第4章 管道和FIFO](cao-zuo-xi-tong/unix-ipc/第4章管道和FIFO.md)
+  * [第5章 Posix消息队列](cao-zuo-xi-tong/unix-ipc/第5章Posix消息队列.md)
+* [UNIX环境编程](cao-zuo-xi-tong/unix-env/README.md)
+  * [UNIX基础知识](cao-zuo-xi-tong/unix-env/unix-ji-chu-zhi-shi.md)
+
+## 计算机网络
+
+* [UNIX网络套接字编程](ji-suan-ji-wang-luo/unix-socket/README.md)
+  * [第1章 简介](ji-suan-ji-wang-luo/unix-socket/第1章简介.md)
+  * [第2章 传输层TCP、UDP、SCTP](ji-suan-ji-wang-luo/unix-socket/第2章传输层.md)
+
+## 设计模式
+
+* [设计模式](she-ji-mo-shi/README.md)
+  * [创建型模式](she-ji-mo-shi/chuang-jian-xing-mo-shi/README.md)
+    * [🍎 工厂模式(Factory模式)](she-ji-mo-shi/chuang-jian-xing-mo-shi/gong-chang-mo-shi-factory-mo-shi.md)
+    * [🤩 抽象工厂模式(AbstractFactory模式)](she-ji-mo-shi/chuang-jian-xing-mo-shi/chou-xiang-gong-chang-mo-shi.md)
+    * [☺ 单例模式(Singleton模式)](she-ji-mo-shi/chuang-jian-xing-mo-shi/dan-li-mo-shi.md)
+    * [🥳 建造者模式(Builder模式)](she-ji-mo-shi/chuang-jian-xing-mo-shi/jian-zao-zhe-mo-shi-builder-mo-shi.md)
+    * [👾 原型模式(Prototype模式)](she-ji-mo-shi/chuang-jian-xing-mo-shi/yuan-xing-mo-shi-prototype-mo-shi.md)
+  * [结构型模式](she-ji-mo-shi/jie-gou-xing-mo-shi/README.md)
+    * [🤩 桥接模式(Bridge模式)](she-ji-mo-shi/jie-gou-xing-mo-shi/qiao-jie-mo-shi-bridge-mo-shi.md)
+    * [🙄 适配器模式(Adapter模式)](she-ji-mo-shi/jie-gou-xing-mo-shi/shi-pei-qi-mo-shi-adapter-mo-shi.md)
+    * [🤖 装饰者模式(Decrator模式)](she-ji-mo-shi/jie-gou-xing-mo-shi/zhuang-shi-zhe-mo-shi-decrator-mo-shi.md)
+    * [🐸 组合模式(Composite模式)](she-ji-mo-shi/jie-gou-xing-mo-shi/zu-he-mo-shi.md)
 
 ## 🍏 数据结构与算法
 
@@ -140,23 +153,9 @@
     * [😎 最佳归并树](shu-ju-jie-gou-yu-suan-fa/shu-ju-jie-gou/di-8-zhang-pai-xu/zui-jia-gui-bing-shu.md)
   * [第9章 高级数据结构](shu-ju-jie-gou-yu-suan-fa/shu-ju-jie-gou/di-9-zhang-gao-ji-shu-ju-jie-gou.md)
 
-## 🎆 计算机网络
-
-* [TCP/IP](ji-suan-ji-wang-luo/ji-suan-ji-wang-luo.md)
-* [HTTP](ji-suan-ji-wang-luo/http.md)
-
-## 💻 操作系统
-
-* [操作系统](cao-zuo-xi-tong/cao-zuo-xi-tong-csapp.md)
-
-## 🖨 计算机组成原理
-
-* [计算机组成原理](ji-suan-ji-zu-cheng-yuan-li/ji-suan-ji-zu-cheng-yuan-li.md)
-* [编码](ji-suan-ji-zu-cheng-yuan-li/bian-ma.md)
-
 ## 🪅 数据库
 
 * [数据库](shu-ju-ku/shu-ju-ku/README.md)
-  * [SQL](shu-ju-ku/shu-ju-ku/sql.md)
-  * [高性能MySQL](shu-ju-ku/shu-ju-ku/gao-xing-neng-mysql.md)
-  * [Redis](shu-ju-ku/shu-ju-ku/redis.md)
+  * [🤡 SQL](shu-ju-ku/shu-ju-ku/sql.md)
+  * [🐼 高性能MySQL](shu-ju-ku/shu-ju-ku/gao-xing-neng-mysql.md)
+  * [👻 Redis](shu-ju-ku/shu-ju-ku/redis.md)

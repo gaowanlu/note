@@ -7,7 +7,7 @@ coverY: 0
 
 特点：如何创建一个组合的对象
 
-<figure><img src="../../../.gitbook/assets/ClassDiagram26.png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/ClassDiagram26.png" alt=""><figcaption></figcaption></figure>
 
 ```cpp
 #include<iostream>

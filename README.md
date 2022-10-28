@@ -1,21 +1,23 @@
 ---
-description: 一个好像C++的学习路线
+description: 快乐每一天
 cover: .gitbook/assets/屏幕截图 2022-05-02 031105.jpg
 coverY: 0
 ---
 
-# THE NICE BOOK FOR C++
+# THE NICE BOOK FOR YOU
 
-## wanlu's note for CS
+VISTORS  
 
-* C++
-* unix网络编程
-* unix进程通信
-* unix环境编程
-* c++并发编程
-* 数据结构与算法
-* 计算机网络
-* 操作系统
-* 计算机组成原理
-* 数据库
-* 其他
+![Visitor Count](https://profile-counter.glitch.me/gaowanlu/count.svg)  
+
+MY LANGUAGES SKILLS  
+
+[![Top Langs](https://github-readme-stats.vercel.app/api/top-langs/?username=gaowanlu)](https://github.com/gaowanlu/github-readme-stats)   
+
+## PERSONAL HOBBIES
+
+Road bike riding\jogging
+
+## EMAIL
+
+heizuboriyo@gmail.com  

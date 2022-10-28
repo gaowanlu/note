@@ -5,7 +5,7 @@ coverY: 0
 
 # 🤩 桥接模式(Bridge模式)
 
-<figure><img src="../../../.gitbook/assets/ClassDiagram24.png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/ClassDiagram24.png" alt=""><figcaption></figcaption></figure>
 
 ```cpp
 #include<iostream>

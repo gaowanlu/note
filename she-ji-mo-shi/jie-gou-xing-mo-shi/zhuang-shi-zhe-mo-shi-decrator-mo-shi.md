@@ -4,7 +4,7 @@ coverY: 0
 
 # 🤖 装饰者模式(Decrator模式)
 
-<figure><img src="../../../.gitbook/assets/ClassDiagram2.png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/ClassDiagram2.png" alt=""><figcaption></figcaption></figure>
 
 ```cpp
 #include<iostream>
