@@ -64,7 +64,7 @@
   * [第4章 管道和FIFO](cao-zuo-xi-tong/unix-ipc/第4章管道和FIFO.md)
   * [第5章 Posix消息队列](cao-zuo-xi-tong/unix-ipc/第5章Posix消息队列.md)
 * [UNIX环境编程](cao-zuo-xi-tong/unix-env/README.md)
-  * [UNIX基础知识](cao-zuo-xi-tong/unix-env/unix-ji-chu-zhi-shi.md)
+  * [第1章 UNIX基础知识](cao-zuo-xi-tong/unix-env/unix-ji-chu-zhi-shi.md)
 
 ## 🎆 计算机网络
 
