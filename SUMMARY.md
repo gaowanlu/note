@@ -65,6 +65,7 @@
   * [第5章 Posix消息队列](cao-zuo-xi-tong/unix-ipc/第5章Posix消息队列.md)
 * [UNIX环境编程](cao-zuo-xi-tong/unix-env/README.md)
   * [第1章 UNIX基础知识](cao-zuo-xi-tong/unix-env/第1章UNIX基础知识.md)
+  * [第2章 UNIX标准及实现](cao-zuo-xi-tong/unix-env/第2章UNIX标准及实现.md)
 
 ## 🎆 计算机网络
 
