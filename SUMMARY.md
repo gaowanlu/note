@@ -77,6 +77,7 @@
   - [第 3 章 套接字编程简介](ji-suan-ji-wang-luo/unix-socket/第3章套接字编程简介.md)
   - [第 4 章 基本 TCP 套接字编程](ji-suan-ji-wang-luo/unix-socket/第4章基本TCP套接字编程.md)
   - [第 5 章 TCP 客户/服务器程序实例](ji-suan-ji-wang-luo/unix-socket/第5章TCP客户服务器程序.md)
+  - [第 6 章 I/O 复用 select 和 poll 函数](ji-suan-ji-wang-luo/unix-socket/第6章IO复用select和poll函数.md)
 
 ## 设计模式
 
