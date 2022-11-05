@@ -160,9 +160,12 @@
     - [😎 最佳归并树](shu-ju-jie-gou-yu-suan-fa/shu-ju-jie-gou/di-8-zhang-pai-xu/zui-jia-gui-bing-shu.md)
   - [第 9 章 高级数据结构](shu-ju-jie-gou-yu-suan-fa/shu-ju-jie-gou/di-9-zhang-gao-ji-shu-ju-jie-gou.md)
 
-## 🪅 数据库
+## 🪅 其他
 
-- [数据库](shu-ju-ku/shu-ju-ku/README.md)
-  - [SQL](shu-ju-ku/shu-ju-ku/sql.md)
-  - [高性能 MySQL](shu-ju-ku/shu-ju-ku/gao-xing-neng-mysql.md)
-  - [Redis](shu-ju-ku/shu-ju-ku/redis.md)
+- [其他](qita/shu-ju-ku/README.md)
+  - [MySQL](qita/shu-ju-ku/gao-xing-neng-mysql.md)
+  - [Redis](qita/shu-ju-ku/redis.md)
+  - [MongoDB](qita/README.md)
+  - [MQ](qita/README.md)
+  - [JavaScript](qita/README.md)
+  - [nodejs](qita/README.md)
