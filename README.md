@@ -6,13 +6,16 @@ coverY: 0
 
 # THE NICE BOOK FOR YOU
 
-VISTORS  
+VISTORS
 
-![Visitor Count](https://profile-counter.glitch.me/gaowanlu/count.svg)  
+![Visitor Count](https://profile-counter.glitch.me/gaowanlu/count.svg)
 
-MY LANGUAGES SKILLS  
+## READING
 
-[![Top Langs](https://github-readme-stats.vercel.app/api/top-langs/?username=gaowanlu)](https://github.com/gaowanlu/github-readme-stats)   
+- unix-env 第 5 章
+- unix-ipc 第 5 章
+- unix-socket 第 7 章
+- cpp concurrency 第 5 章
 
 ## PERSONAL HOBBIES
 
@@ -20,4 +23,4 @@ Road bike riding\jogging
 
 ## EMAIL
 
-heizuboriyo@gmail.com  
+heizuboriyo@gmail.com
