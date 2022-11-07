@@ -12,7 +12,7 @@ VISTORS
 
 ## READING
 
-- unix-env 第 5 章
+- unix-env 第 6 章
 - unix-ipc 第 5 章
 - unix-socket 第 7 章
 - cpp concurrency 第 5 章
