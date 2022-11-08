@@ -69,6 +69,7 @@
   - [第 3 章 文件 I/O](cao-zuo-xi-tong/unix-env/第3章文件IO.md)
   - [第 4 章 文件和目录](cao-zuo-xi-tong/unix-env/第4章文件和目录.md)
   - [第 5 章 标准 IO 库](cao-zuo-xi-tong/unix-env/第5章标准IO库.md)
+  - [第 6 章 系统数据文件和信息](cao-zuo-xi-tong/unix-env/第6章系统数据文件和信息.md)
 
 ## 🎆 计算机网络
 
