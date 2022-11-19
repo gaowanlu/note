@@ -199,6 +199,71 @@ void *reallocarray(void *ptr, size_t nmemb, size_t size);//calloc与realloc的�
 
 ### typedef
 
-typedef：为已有的数据类型改名  
+typedef：为已有的数据类型改名
 
-typdef 已有的数据类型 新名字;  
+格式：typdef 已有的数据类型 新名字;
+
+typedef 与宏定义的区别
+
+```cpp
+#include <iostream>
+using namespace std;
+
+#define INT_DEFINE int *
+typedef int *INT_TYPEDEF;
+
+int main(int argc, char **argv)
+{
+    INT_DEFINE p1, q1;  // int*p1,q2;
+    INT_TYPEDEF p2, q2; // int*p2,*q2;
+    return 0;
+}
+```
+
+typedef 与数组
+
+```cpp
+#include <iostream>
+using namespace std;
+
+typedef int ARR[6];
+
+int main(int argc, char **argv)
+{
+    ARR a;
+    a[0] = 0;
+    a[5] = 5;
+    cout << a[0] << " " << a[5] << endl;//0 5
+    return 0;
+}
+```
+
+typedef 与结构体
+
+```cpp
+struct my_class{
+    int num;
+};
+typedef struct my_class CLASS;
+CLASS c;//struct my_class c;
+typedef struct my_class* CLASS_PTR;
+CLASS_PTR p;//struct my_class* p
+//等价于
+typedef struct {
+    int num;
+}CLASS,*CLASS_PTR;
+typedef struct my_class{
+    int num;
+}CLASS,*CLASS_PTR;
+```
+
+typedef 与函数
+
+```cpp
+typedef int FUNC(int);//-> int(int) FUNC;将int(int)类型的函数别命名
+FUNC f;//->int f(int)
+typedef int* FUNC_PTR(int);//指针函数 返回指针的函数
+FUNC_PTR p;//int* p(int)
+typedef int*(*FUNC_PTR)(int);//函数指针
+FUNC_PTR p;//int*(*p)(int);
+```
