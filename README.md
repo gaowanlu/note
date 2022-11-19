@@ -12,6 +12,7 @@ VISTORS
 
 ## READING
 
+- [李慧琴](https://www.bilibili.com/video/BV18p4y167Md) P64
 - unix-env 第 7 章
 - unix-ipc 第 5 章
 - unix-socket 第 7 章

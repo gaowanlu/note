@@ -1,2 +1,0 @@
-# More Effective C++
-

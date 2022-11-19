@@ -1,2 +1,0 @@
-# Effective Modern C++
-
