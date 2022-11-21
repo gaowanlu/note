@@ -37,6 +37,7 @@
   - [🚜 你可能不知道的 C++](c++-even-better/yu-yan-ji-chu/ni-ke-neng-bu-zhi-dao-de-c++.md)
 - [相关工具](c++-even-better/相关工具/README.md)
   - [GCC](c++-even-better/相关工具/gcc.md)
+  - [Make](c%2B%2B-even-better/相关工具/make.md)
 
 ## 并发编程
 
