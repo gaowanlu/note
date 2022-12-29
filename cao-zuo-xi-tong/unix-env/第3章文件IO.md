@@ -95,7 +95,20 @@ ssize_t pwrite(int fd, const void *buf, size_t count, off_t offset);
 ```cpp
 #include <unistd.h>
 int dup(int oldfd);
-int dup2(int oldfd, int newfd);
+int dup2(int oldfd, int newfd);//当oldfd==newfd时返回newfd
+
+//----------------------------------------
+//open时会先分配最小的没用的fd
+close(1);
+fd = open(FILE,O_WRONLY|O_CREAT|O_TRUNC,0600);
+puts("hello");//输出到了FILE中
+//与
+fd = open(FILE,O_WRONLY|O_CREAT|O_TRUNC,0600);
+close(1);
+dup(fd);//效果一样，只不过后者将fd副本复制到fd 1上
+//但不能保证close与dup的原子性
+//所以有了函数dup2
+dup2(fd,1);//close(1);dup(fd);
 ```
 
 不同的文件描述符指向同一个内核中维护的文件表  
@@ -127,4 +140,19 @@ int fcntl(int fd, int cmd, ... /* arg */ );
 
 ```cpp
 fd=open("/dev/fd/0",O_RDWR) //标准输入
+```
+
+* 将得到文件指针所对应的文件描述符  
+
+```cpp
+int fileno(FILE *stream);
+```
+
+* 截断文件到指定长度大小
+
+```cpp
+#include <unistd.h>
+#include <sys/types.h>
+int truncate(const char *path, off_t length);
+int ftruncate(int fd, off_t length);
 ```

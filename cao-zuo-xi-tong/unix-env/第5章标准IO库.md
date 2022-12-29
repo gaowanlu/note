@@ -87,6 +87,8 @@ char *fgets(char *s, int size, FILE *stream);
 int getc(FILE *stream);//宏
 int getchar(void);//等价于getc(stdin)
 int ungetc(int c, FILE *stream);
+ssize_t getline(char **lineptr, size_t *n, FILE *stream);//读取一行
+ssize_t getdelim(char **lineptr, size_t *n, int delim, FILE *stream);
 ```
 
 getc 为什么返回 int，而不是 unsigned char,因为可能返回 EOF，EOF 通常为-1，标识文件末尾
