@@ -113,7 +113,7 @@ dup2(fd,1);//close(1);dup(fd);
 
 不同的文件描述符指向同一个内核中维护的文件表  
 
-* sync、fsync、fdatasync函数  
+* sync、fsync、fdatasync 同步函数  
 
 ```cpp
 #include <unistd.h>
@@ -133,10 +133,23 @@ fync支持同步文件属性修改与文件数据，而fdatasync只支持数据�
 int fcntl(int fd, int cmd, ... /* arg */ );
 ```
 
-功能主要有1、复制一个已有的描述符 2、获取与设置文件描述符标志 3、获取设置文件状态标志 就是以O_开头的一些宏如O_RDWR等 4、获取设置异步IO所有权 5、获取设置记录锁  
+功能主要有  
+1、复制一个已有的描述符  
+2、获取与设置文件描述符标志  
+3、获取设置文件状态标志 就是以O_开头的一些宏如O_RDWR等  
+4、获取设置异步IO所有权  
+5、获取设置记录锁  
 
 * ioctl函数：IO操作杂物箱，后面再学，一般用得少  
+
+```
+#include <sys/ioctl.h>
+int ioctl(int fd, unsigned long request, ...);
+```
+
 * /dev/fd/{{n}} n 0 1 2 ，打开文件/dev/fd/n等效于复制描述符n  
+
+/dev/fd/是一个虚目录，当前进程的描述符信息  
 
 ```cpp
 fd=open("/dev/fd/0",O_RDWR) //标准输入
