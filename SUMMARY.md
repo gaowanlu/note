@@ -166,7 +166,3 @@
 - [其他](qita/shu-ju-ku/README.md)
   - [MySQL](qita/shu-ju-ku/gao-xing-neng-mysql.md)
   - [Redis](qita/shu-ju-ku/redis.md)
-  - [MongoDB](qita/README.md)
-  - [MQ](qita/README.md)
-  - [JavaScript](qita/README.md)
-  - [nodejs](qita/README.md)
