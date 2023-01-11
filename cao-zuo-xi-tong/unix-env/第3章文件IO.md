@@ -6,6 +6,8 @@ coverY: 0
 
 ## 文件I/O
 
+### 文件创建与打开
+
 * 主要内容有open、read、write、lseek、close的使用，这五个函数并不是ISOC、而是POSIX的标准  
 * 文件描述符，在进程中默认0为标准输入、1为标准输出、2为标准错误输出，分别定义在头文件unistd,STDIN_FILENO、STDOUT_FILENO、STDERR_FILENO  
 * 每个进程打开的文件数量是有限制的  
@@ -24,6 +26,8 @@ int openat(int dirfd, const char *pathname, int flags, mode_t mode);
 
 open与openat的区别在于，openat支持指定文件目录然后pathname为相对于指定目录的文件路径，flags有许多规则，读写打开类型、追加、不存在则创建，是否非阻塞打开、写是否等待物理IO完成，等等
 
+### create创建文件
+
 * create函数，用于创建文件  
 
 ```cpp
@@ -33,6 +37,8 @@ open与openat的区别在于，openat支持指定文件目录然后pathname为�
 int creat(const char *pathname, mode_t mode);
 ```
 
+### close关闭文件
+
 * close函数用于关闭一个打开文件  
 
 ```cpp
@@ -41,6 +47,8 @@ int close(int fd);
 ```
 
 注意的是，关闭一个文件还会释放此进程在文件上加的锁、当一个进程终止时其打开的文件将会被关闭  
+
+### lseek调整文件偏移量
 
 * lseek用于调整当前文件偏移量  
 
@@ -54,8 +62,13 @@ off_t lseek(int fd, off_t offset, int whence);
 
 lseek仅将当前的文件的偏移量记录在内核，不会引起IO操作、文件偏移量可以大于文件的当前长度  
 
+### 空洞文件
+
 * 空洞文件：例如当写文件时，移动偏移量超过文件本身大小，再写时中间的哪些位置称为空洞，空洞是否占用磁盘空间，这取决于操作系统的优化  
 * 不同系统平台的offset的数据类型可能不同  
+
+### read读取数据
+
 * read函数：从打开的文件中读取数据  
 
 ```cpp
@@ -64,6 +77,8 @@ ssize_t read(int fd, void *buf, size_t count);
 ```
 
 返回读出的字节数、读到文件末尾返回0，出错返回-1。当从网络读取时，网络中的缓冲机制可能造成返回值小于所要求读的长度，千万不要用size_t接收read返回参数，因为read可能返回-1  
+
+### write写数据
 
 * write函数  
 
@@ -77,7 +92,8 @@ ssize_t write(int fd,const void*fd,size_t nbytes);
 * 关于程序的读写数据缓冲不宜过大也不能太小，根据情况自己把握  
 * 文件共享：在PCB中有进程表项，存储fd标志与文件指针的对应关系，所以文件标识符是对进程而言的，内核中维护文件表项例如当前文件偏移量，控制权限、v节点指针等等，一个进程可以有多个fd指向同一个文件表项目，不同进程在内核中的文件表项可以指向同一个v节点表项  
 * lseek可能会引起竞争问题，例如要在文件末尾加数据，一个进程刚设置偏移量到末尾，然后另一个进程在此时在末尾写入了数据，这使得另一个进程加数据时加到的位置不是末尾。解决办法是使用O_APPEND标志打开文件追加模式  
-* 函数pread与pwrite  
+
+### 函数pread与pwrite  
 
 ```cpp
 #include <unistd.h>
@@ -88,7 +104,7 @@ ssize_t pwrite(int fd, const void *buf, size_t count, off_t offset);
 
 * 在创建文件时也是，先检查文件是否存在、不存在则创建，检查与创建过程中可能出现中断，这样会引发问题  
 
-* dup和dup2函数  
+### dup和dup2函数  
 
 用于复制文件描述符  
 
@@ -113,7 +129,7 @@ dup2(fd,1);//close(1);dup(fd);
 
 不同的文件描述符指向同一个内核中维护的文件表  
 
-* sync、fsync、fdatasync 同步函数  
+### sync、fsync、fdatasync 同步函数  
 
 ```cpp
 #include <unistd.h>
@@ -125,7 +141,7 @@ int fdatasync(int fd);
 sync只是将修改过的块缓冲区排入写队列，然后返回、并不等待实际磁盘写完毕再返回  
 fync支持同步文件属性修改与文件数据，而fdatasync只支持数据，二者等待磁盘实际操作OK后再返回，可以保证数据一致性  
 
-* fcntl函数用于修改已经打开文件的属性  
+### fcntl函数用于修改已经打开文件的属性  
 
 ```cpp
 #include <unistd.h>
@@ -140,7 +156,7 @@ int fcntl(int fd, int cmd, ... /* arg */ );
 4、获取设置异步IO所有权  
 5、获取设置记录锁  
 
-* ioctl函数：IO操作杂物箱，后面再学，一般用得少  
+### ioctl函数：IO操作杂物箱，后面再学，一般用得少  
 
 ```
 #include <sys/ioctl.h>
@@ -155,13 +171,13 @@ int ioctl(int fd, unsigned long request, ...);
 fd=open("/dev/fd/0",O_RDWR) //标准输入
 ```
 
-* 将得到文件指针所对应的文件描述符  
+### 将得到文件指针所对应的文件描述符  
 
 ```cpp
 int fileno(FILE *stream);
 ```
 
-* 截断文件到指定长度大小
+### 截断文件到指定长度大小
 
 ```cpp
 #include <unistd.h>

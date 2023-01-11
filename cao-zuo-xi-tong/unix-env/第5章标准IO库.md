@@ -6,9 +6,15 @@ coverY: 0
 
 ## 标准 I/O 库
 
-- 流和对象:打开一个文件，返回一个文件描述符，对于标准 IO 库而言，他们的操作是围绕流进行的，一个字符可能是一个字节，也可能是宽字符需要多个字节。
-- 流的定向：决定了所读、写的字符是单字节还是多字节的宽字符，当一个流创建时时没有被定向，若在流上使用一个宽字符则变为宽定向，使用单字节的 IO 函数，则将流定向设为字节定向的
-- fwide 函数用于设置流的定向
+### 流和对象
+
+打开一个文件，返回一个文件描述符，对于标准 IO 库而言，他们的操作是围绕流进行的，一个字符可能是一个字节，也可能是宽字符需要多个字节。
+
+### 流的定向
+
+决定了所读、写的字符是单字节还是多字节的宽字符，当一个流创建时时没有被定向，若在流上使用一个宽字符则变为宽定向，使用单字节的 IO 函数，则将流定向设为字节定向的
+
+### fwide 函数用于设置流的定向
 
 ```cpp
 #include <wchar.h>
@@ -17,7 +23,7 @@ int fwide(FILE *stream, int mode);
 mode 负为字节定向 正为宽字符 0为未定向
 ```
 
-- 标准输入、标准输出、标准错误
+### 标准输入、标准输出、标准错误
 
 ```cpp
 STDIN_FILENO STDOUT_FILENO STDERR_FILENO
@@ -25,12 +31,15 @@ stdin        stdout        stderr
 #include<stdio>
 ```
 
+### 缓冲
+
 - 缓冲：标准 IO 有三种类型，全缓冲、行缓冲、不带缓冲
 - 全缓冲：当填满标准 IO 缓冲区后才进行实际的 I/O 操作
 - 行缓冲：在输入和输出中遇到换行符时，标准 I/O 库执行 I/O 操作，缓冲区大小有限当行大小超过缓冲大小即使没换行符也会 I/O 操作，通过标准 I/O 库要求从一个不带缓冲的流或行缓冲流得到输入数据，会冲洗所有行缓冲输出流
 - 冲洗：flush、在进行写操作时，冲洗就是将缓冲区中的内容写到磁盘上，可以调用 fflush 函数冲洗一个流
 - 不带缓冲，stderr 不带缓冲
-- 更改缓冲类型
+
+### 更改缓冲类型
 
 ```cpp
 #include <stdio.h>
@@ -41,7 +50,7 @@ int setvbuf(FILE *stream, char *buf, int mode, size_t size);
 //mode： _IOFBF全缓冲 _IOLBF行缓冲 _IONBF不带缓冲
 ```
 
-- fflush 函数，强制冲洗一个流
+### fflush 函数，强制冲洗一个流
 
 ```cpp
 #include <stdio.h>
@@ -49,7 +58,7 @@ int fflush(FILE *stream);
 //该函数使得所有未写的数据都被传送到内核
 ```
 
-- fopen 打开流
+### fopen 打开流
 
 ```cpp
 #include <stdio.h>
@@ -76,9 +85,11 @@ int main(void)
 
 ![打开一个标准I/O流的6种不同方式](../../.gitbook/assets/屏幕截图2022-11-06233308.jpg)
 
-- fclose 关闭流，在关闭前将冲洗缓冲中的输出数据，缓冲区种的输入数据将会被清空，因为关闭流了，用户也不会再读数据了，进程正常终止时 exit 调用或 main 返回，都会自动 close
+### fclose 关闭流
 
-- I/O 读写有三种选择，每次操作一个字符、每次操作一行、直接 I/O 指定大小
+在关闭前将冲洗缓冲中的输出数据，缓冲区种的输入数据将会被清空，因为关闭流了，用户也不会再读数据了，进程正常终止时 exit 调用或 main 返回，都会自动 close
+
+### I/O 读写有三种选择，每次操作一个字符、每次操作一行、直接 I/O 指定大小
 
 ```cpp
 #include <stdio.h>
@@ -101,7 +112,9 @@ int ferror(FILE *stream);    //检测出错标志
 int fileno(FILE *stream);    //获得文件描述符
 ```
 
-- 压回字符，从流中读出数据后，可以将数据在返回到缓冲区
+### 压回字符
+
+从流中读出数据后，可以将数据在返回到缓冲区
 
 ```cpp
 int ungetc(int c, FILE *stream);
@@ -150,9 +163,11 @@ int main(void)
 }
 ```
 
-gets 不要使用，其不能指定 buf 大小，可能回造成缓冲区溢出
+### gets 不要使用
 
-- 每次输出一行
+其不能指定 buf 大小，可能回造成缓冲区溢出
+
+### 每次输出一行
 
 ```cpp
 #include <stdio.h>
@@ -171,7 +186,7 @@ int main(void)
 }
 ```
 
-- 二进制 I/O
+### 二进制 I/O
 
 常见的用法为，读或者写一个二进制数组、读或写一个结构
 
@@ -198,7 +213,7 @@ if(fwrite(&item,sizeof(item),1,fp)!=1){
 }
 ```
 
-- 定位流
+### 定位流
 
 ```cpp
 #include <stdio.h>
@@ -214,7 +229,7 @@ int fgetpos(FILE *stream, fpos_t *pos);
 int fsetpos(FILE *stream, const fpos_t *pos);
 ```
 
-- 格式化 I/O，包括格式化输出与输入两部分
+### 格式化 I/O，包括格式化输出与输入两部分
 
 格式化输出
 
@@ -253,7 +268,7 @@ int vfscanf(FILE *stream, const char *format, va_list ap);
 
 - 实现细节，书中进行了实践 demo，使用 getchar、fputs、fopen、getc、检测 FILE 的缓冲类型，缓冲区大小等
 
-- 临时文件
+### 临时文件
 
 ISOC 标准提供了创建临时文件的函数
 
@@ -284,7 +299,7 @@ int mkstemp(char *template);
 //template:如 /tmp/dirXXXXXX 不自动唯一生成XXXXXX
 ```
 
-- 内存流,fmemopen 创建内存缓冲区
+### 内存流,fmemopen 创建内存缓冲区
 
 ```cpp
 //重点难点为放null机制与冲洗内存流的策略

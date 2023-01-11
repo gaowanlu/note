@@ -6,6 +6,8 @@ coverY: 0
 
 ## UNIX标准及实现
 
+### 系统限制
+
 * UNIX标准化在C的标准上ISOC、POSIX标准提供了头文件以及库函数  
 * 了解不同类UNIX种类，如FreeBSD、Linux、MacOSX等  
 * UNIX系统通常有许多的限制，两种类型的限制是必须的，编译时的限制、运行时的限制。有三种方法，编译时限制使用头文件通常有很多宏、与文件或目录无关运行时限制使用sysconf、与文件或目录相关限制hi用pathconf、fpathconf函数  
@@ -33,7 +35,7 @@ name为系统提供的一堆宏，sysconf相关的name是与文件无关的，pa
 man sysconf
 ```
 
-* 编译时定义宏
+### 编译时定义宏
 
 ```cpp
 #include<iostream>

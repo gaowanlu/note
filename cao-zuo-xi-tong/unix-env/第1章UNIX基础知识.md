@@ -6,6 +6,8 @@ coverY: 0
 
 ## UNIX基础知识
 
+### 常见术语
+
 * UNIX体系结构:应用程序、shell、公用函数库、内核、系统调用之间的层级关系  
 * 登录: 类UNIX系统的登录  
 * shell: shell类型  
