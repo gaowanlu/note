@@ -12,7 +12,7 @@ VISTORS
 
 ## READING
 
-- [李慧琴](https://www.bilibili.com/video/BV1yJ411S7r6) P33
+- [李慧琴](https://www.bilibili.com/video/BV1yJ411S7r6?p=36&spm_id_from=pageDriver) P36
 - unix-env 第 7 章
 - unix-ipc 第 5 章
 - unix-socket 第 7 章
