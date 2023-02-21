@@ -75,7 +75,7 @@
   - [第 10 章 信号](cao-zuo-xi-tong/unix-env/%E7%AC%AC10%E7%AB%A0%E4%BF%A1%E5%8F%B7.md)
   - [第 11 章 线程](cao-zuo-xi-tong/unix-env/%E7%AC%AC11%E7%AB%A0%E7%BA%BF%E7%A8%8B.md)
   - [第 12 章 线程控制](cao-zuo-xi-tong/unix-env/%E7%AC%AC12%E7%AB%A0%E7%BA%BF%E7%A8%8B%E6%8E%A7%E5%88%B6.md)
-  - [第 13 章 守护线程](cao-zuo-xi-tong/unix-env/%E7%AC%AC13%E7%AB%A0%E5%AE%88%E6%8A%A4%E7%BA%BF%E7%A8%8B.md)
+  - [第 13 章 守护进程](cao-zuo-xi-tong/unix-env/%E7%AC%AC13%E7%AB%A0%E5%AE%88%E6%8A%A4%E8%BF%9B%E7%A8%8B.md)
   - [第 14 章 高级 IO](cao-zuo-xi-tong/unix-env/%E7%AC%AC14%E7%AB%A0%E9%AB%98%E7%BA%A7IO.md)
   - [第 15 章 进程间通信](cao-zuo-xi-tong/unix-env/%E7%AC%AC15%E7%AB%A0%E8%BF%9B%E7%A8%8B%E9%97%B4%E9%80%9A%E4%BF%A1.md)
   - [第 16 章 网络 IPC 套接字](cao-zuo-xi-tong/unix-env/%E7%AC%AC16%E7%AB%A0%E7%BD%91%E7%BB%9CIPC%E5%A5%97%E6%8E%A5%E5%AD%97.md)
