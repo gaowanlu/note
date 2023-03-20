@@ -56,6 +56,13 @@
 
 ## 💻 操作系统
 
+- [UNIX 网络套接字编程](cao-zuo-xi-tong/unix-socket/README.md)
+  - [第 1 章 简介](cao-zuo-xi-tong/unix-socket/第1章简介.md)
+  - [第 2 章 传输层 TCP、UDP、SCTP](cao-zuo-xi-tong/unix-socket/第2章传输层.md)
+  - [第 3 章 套接字编程简介](cao-zuo-xi-tong/unix-socket/第3章套接字编程简介.md)
+  - [第 4 章 基本 TCP 套接字编程](cao-zuo-xi-tong/unix-socket/第4章基本TCP套接字编程.md)
+  - [第 5 章 TCP 客户/服务器程序实例](cao-zuo-xi-tong/unix-socket/第5章TCP客户服务器程序.md)
+  - [第 6 章 I/O 复用 select 和 poll 函数](cao-zuo-xi-tong/unix-socket/第6章IO复用select和poll函数.md)
 - [UNIX 进程通信编程](cao-zuo-xi-tong/unix-ipc/README.md)
   - [第 1 章 简介](cao-zuo-xi-tong/unix-ipc/第1章简介.md)
   - [第 2 章 Posix IPC](cao-zuo-xi-tong/unix-ipc/第2章PosixIPC.md)
@@ -82,16 +89,6 @@
   - [第 17 章 高级进程间通信](cao-zuo-xi-tong/unix-env/%E7%AC%AC17%E7%AB%A0%E9%AB%98%E7%BA%A7%E8%BF%9B%E7%A8%8B%E9%97%B4%E9%80%9A%E4%BF%A1.md)
   - [第 18 章 终端 IO](cao-zuo-xi-tong/unix-env/%E7%AC%AC18%E7%AB%A0%E7%BB%88%E7%AB%AFIO.md)
   - [第 19 章 伪终端](cao-zuo-xi-tong/unix-env/%E7%AC%AC19%E7%AB%A0%E4%BC%AA%E7%BB%88%E7%AB%AF.md)
-
-## 🎆 计算机网络
-
-- [UNIX 网络套接字编程](ji-suan-ji-wang-luo/unix-socket/README.md)
-  - [第 1 章 简介](ji-suan-ji-wang-luo/unix-socket/第1章简介.md)
-  - [第 2 章 传输层 TCP、UDP、SCTP](ji-suan-ji-wang-luo/unix-socket/第2章传输层.md)
-  - [第 3 章 套接字编程简介](ji-suan-ji-wang-luo/unix-socket/第3章套接字编程简介.md)
-  - [第 4 章 基本 TCP 套接字编程](ji-suan-ji-wang-luo/unix-socket/第4章基本TCP套接字编程.md)
-  - [第 5 章 TCP 客户/服务器程序实例](ji-suan-ji-wang-luo/unix-socket/第5章TCP客户服务器程序.md)
-  - [第 6 章 I/O 复用 select 和 poll 函数](ji-suan-ji-wang-luo/unix-socket/第6章IO复用select和poll函数.md)
 
 ## 设计模式
 
