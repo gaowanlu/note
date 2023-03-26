@@ -12,7 +12,7 @@ VISTORS
 
 ## READING
 
-- [李慧琴](https://www.bilibili.com/video/BV1yJ411S7r6?p=68&spm_id_from=pageDriver) P68
+- [李慧琴](https://www.bilibili.com/video/BV1yJ411S7r6?p=94&spm_id_from=pageDriver&vd_source=0d24d1529ac7f38c08b67c3298ab14a0) P94
 - [redis](https://www.bilibili.com/video/BV1S54y1R7SB?p=4&spm_id_from=pageDriver) P4 到底什么是 NoSQL
 - unix-env 第 8 章
 - unix-ipc 第 5 章
