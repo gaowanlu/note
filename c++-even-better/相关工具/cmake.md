@@ -1,0 +1,396 @@
+# CMake
+
+很棒的CMake学习项目推荐,内容的许多出处来自于，请多支持原作者 https://github.com/eglinuxer/study_cmake  本人仅用作于记录学习
+
+## cmake_minimum_required
+
+cmake_minimum_required是一个CMake命令，用于指定需要使用的CMake版本的最小版本号。这个命令通常会放在CMakeLists.txt文件的顶部，以确保使用的CMake版本能够支持这个项目所需的所有功能。
+
+```cmake
+cmake_minimum_required(VERSION 3.26 FATAL_ERROR)
+```
+
+## project
+
+project是一个CMake命令，用于定义一个CMake项目。它通常会被放在CMakeLists.txt文件的顶部，紧接着cmake_minimum_required命令。
+
+```cmake
+project(MyProject)
+```
+
+还可以接受一些可选的参数，用于指定项目的一些属性，如版本号、描述等。例如：
+
+```cmake
+project(MyProject VERSION 1.0 DESCRIPTION "My awesome project")
+```
+
+还可以用来指定编程语言，例如：
+
+```cmake
+project(MyProject LANGUAGES CXX)
+```
+
+这个命令会将项目语言设置为C++。在这种情况下，CMake会根据设置自动为项目添加C++编译器和链接器，并且会自动使用CMake中的一些内置变量（如CMAKE_CXX_COMPILER、CMAKE_CXX_FLAGS等）来设置编译器和编译选项。
+
+## add_executable
+
+将原文件加入到可执行文件
+
+```cmake
+add_executable(<executable_name> <source_file> [<source_file>...])
+```
+
+例如
+
+```cpp
+add_executable(MyProject main.cpp)
+```
+
+## add_library
+
+生成库
+
+```cmake
+add_library(<library_name> [STATIC | SHARED | MODULE] <source_file> [<source_file>...])
+```
+
+STATIC: 静态库，也就是.a文件，库的代码会被编译到可执行文件中。  
+SHARED: 共享库，也就是.so或.dylib文件，库的代码会被编译成独立的动态链接库文件，可供多个可执行文件使用。  
+MODULE：模块库，也就是.so或.dylib文件，库的代码会被编译成动态链接库文件，但不会被链接到可执行文件中，而是在运行时通过dlopen等函数进行加载。  
+
+例如:
+
+```cmake
+add_library(mylib STATIC lib1.cpp lib2.cpp)
+```
+
+## target_link_libraries
+
+用于将一个目标（例如可执行文件或库）与一个或多个库进行链接
+
+```cmake
+target_link_libraries(<target> <library>...)
+```
+
+例如：
+
+```cpp
+target_link_libraries(MyProgram Library1 Library2)
+```
+
+## set与unset
+
+用于设置一个变量的值
+
+```cmake
+set(<variable> <value> [CACHE <type> <docstring> [FORCE]])
+```
+
+<variable>是要设置的变量的名称，<value>是变量的值。CACHE选项用于将变量的值存储在CMake缓存中，这样可以在后续的构建中保留变量的值。<type>是变量的类型，可以是STRING、FILEPATH、PATH、BOOL、INTERNAL等类型。<docstring>是变量的描述信息，可以用于生成CMake缓存中的变量描述。FORCE选项用于在设置变量时，无论变量是否已存在，都强制设置变量的值。
+
+例如:
+
+```cpp
+set(MYVARABLE "HELLO WORLD")
+```
+
+放入CMake缓存中
+
+```cpp
+set(MYVARABLE "HELLO WORLD" CACHE STRING "my message" FORCE)
+```
+
+unset为取消变量定义
+
+```cpp
+unset(MYVARABLE)
+```
+
+定义变量样例
+
+```cmake
+cmake_minimum_required(VERSION 3.0.0 FATAL_ERROR)
+project(tubekit)
+
+set(MY_VAR "HELLO WORLD")
+message(AUTHOR_WARNING "${MY_VAR}")#HELLO WORLD
+
+set(MY_VAR main.cpp a.cpp)#创建列表
+message(AUTHOR_WARNING "${MY_VAR}") # main.cpp;a.cpp
+
+set(MY_VAR "main.cpp;a.cpp")#字符串
+message(AUTHOR_WARNING "${MY_VAR}") # main.cpp;a.cpp
+
+set(MY_VAR "main.cpp a.cpp")
+message(AUTHOR_WARNING "${MY_VAR}") # main.cpp a.cpp
+
+# 多行
+set(MY_CMD [[
+#!/bin/bash
+
+echo "ls"
+echo "cmake"
+]])
+message(AUTHOR_WARNING "${MY_CMD}")
+```
+
+关于分隔符 `[[`与`]]`，`[=[`与`]=]`
+
+[[ 分隔符用于定义 CMake 中的逻辑表达式。在逻辑表达式中，可以使用一些逻辑运算符（如 && 和 ||），以及一些常用的比较符（如 ==、!=、<、>、<=、>= 等）。逻辑表达式通常用于条件判断，如 if 命令中。
+
+[=[ 和 ]=] 分隔符用于定义 CMake 中的字符串字面值（string literal）
+
+## ENV{}
+
+在cmake中可以使用系统环境变量，CMake设置的环境变量只在此CMake构建进程中有效
+
+```cmake
+# 定义环境变量
+set(ENV{PATH} "$ENV{PATH}:/opt/main")
+```
+
+样例
+
+```cpp
+cmake_minimum_required(VERSION 3.0.0 FATAL_ERROR)
+project(tubekit)
+
+message(STATUS "PATH=$ENV{PATH}")
+set(ENV{PATH} "$ENV{PATH}:/opt/Main")
+message(STATUS "$ENV{PATH}")
+```
+
+## option
+
+定义BOOL缓存变量，ON、TRUE、1、OFF、FALSE、0
+
+```cpp
+option(my_opt "select status" OFF)
+# 修改my_opt
+set(my_opt ON CACHE BOOL "select status" FORCE)
+message(STATUS ${my_opt})# ON
+```
+
+## 变量作用域
+
+add_subdirectory、定义函数、使用block()时产生新作用域  
+缓存变量、环境变量作用域是全局的
+
+## block
+
+局部作用域相当于，C++中的{},只不过要CMake>=3.25
+
+```cpp
+block()
+    set(x 1)
+    set(y 2)
+endblock()
+```
+
+block 还提供了相关参数，去选择使用引用外部的x、y变量等机制
+
+总之用处不大
+
+## 字符串
+
+CMake有字符串类型，而且提供了许多字符串内置操作
+
+### 查找
+
+```cmake
+string(FIND inputString subString outVar [REVERSE])
+```
+
+* 在 inputString 中查找 subString，将查找到的索引存在 outVar 中，索引从 0 开始。
+* 如果没有 REVERSE 选项，则保存第一个查找到的索引，否则保存最后一个查找到的索引。
+* 如果没有找到则保存 -1。
+
+需要注意的是，string(FIND) 将所有字符串都作为 ASCII 字符，outVar 中存储的索引也会以字节为单位计算，因此包含多字节字符的字符串可能会导致意想不到的结果。
+
+```cmake
+string(FIND abcdefabcdef def fwdIndex)
+string(FIND abcdefabcdef def revIndex REVERSE)
+message("fwdIndex = ${fwdIndex}\n"
+        "revIndex = ${revIndex}")
+```
+
+### 替换
+
+```cmake
+string(REPLACE matchString replaceWith outVar input...)
+```
+
+* 将 input 中所有匹配 matchString 的都用 replaceWith 替换，并将结果保存到 outVar 中。
+* 如果有多个 input，它们是直接连接在一起的，没有任何分隔符。
+
+还支持则正则表达式替换字符串
+
+```cmake
+string(REGEX MATCH    regex outVar input...)
+string(REGEX MATCHALL regex outVar input...)
+string(REGEX REPLACE  regex replaceWith outVar input...)
+```
+
+* input 字符串同样会在开始匹配正则表达式前进行串联。
+* MATCH 只查找第一个匹配的字符串，并保存到 outVar 中。
+* MATCHALL 会查找所有匹配的字符串，并保存到 outVar 中，如果匹配到多个，outVar 将是一个列表，列表我们后面会讲。
+* REPLACE 会将每一个匹配到的字符串用 replaceWith 替换后，将替换后的完整字符串放到 outVar 中。
+
+```cmake
+string(REGEX MATCH    "[ace]"           matchOne abcdefabcdef)
+string(REGEX MATCHALL "[ace]"           matchAll abcdefabcdef)
+string(REGEX REPLACE  "([de])" "X\\1Y"  replVar1 abc def abcdef)
+string(REGEX REPLACE  "([de])" [[X\1Y]] replVar2 abcdefabcdef)
+message("matchOne = ${matchOne}\n"
+        "matchAll = ${matchAll}\n"
+        "replVar1 = ${replVar1}\n"
+        "replVar2 = ${replVar2}")
+```
+
+### 截取
+
+```cmake
+string(SUBSTRING input index length outVar)
+```
+
+* 将 input 字符串从 index 处截取 length 长度放到 outVar 中。
+* 如果 length 为 -1 的话，将从 index 到 input 结尾的字符串串保存到 outVar 中。
+
+### 其他
+
+```cmake
+# 字符串查找和替换
+  string(FIND <string> <substring> <out-var> [...])
+  string(REPLACE <match-string> <replace-string> <out-var> <input>...)
+  string(REGEX MATCH <match-regex> <out-var> <input>...)
+  string(REGEX MATCHALL <match-regex> <out-var> <input>...)
+  string(REGEX REPLACE <match-regex> <replace-expr> <out-var> <input>...)
+
+# 操作字符串
+  string(APPEND <string-var> [<input>...])
+  string(PREPEND <string-var> [<input>...])
+  string(CONCAT <out-var> [<input>...])
+  string(JOIN <glue> <out-var> [<input>...])
+  string(TOLOWER <string> <out-var>)
+  string(TOUPPER <string> <out-var>)
+  string(LENGTH <string> <out-var>)
+  string(SUBSTRING <string> <begin> <length> <out-var>)
+  string(STRIP <string> <out-var>)
+  string(GENEX_STRIP <string> <out-var>)
+  string(REPEAT <string> <count> <out-var>)
+
+# 字符串比较
+  string(COMPARE <op> <string1> <string2> <out-var>)
+
+# 计算字符串的 hash 值
+  string(<HASH> <out-var> <input>)
+
+# 生成字符串
+  string(ASCII <number>... <out-var>)
+  string(HEX <string> <out-var>)
+  string(CONFIGURE <string> <out-var> [...])
+  string(MAKE_C_IDENTIFIER <string> <out-var>)
+  string(RANDOM [<option>...] <out-var>)
+  string(TIMESTAMP <out-var> [<format string>] [UTC])
+  string(UUID <out-var> ...)
+
+# json 相关的字符串操作
+  string(JSON <out-var> [ERROR_VARIABLE <error-var>]
+         {GET | TYPE | LENGTH | REMOVE}
+         <json-string> <member|index> [<member|index> ...])
+  string(JSON <out-var> [ERROR_VARIABLE <error-var>]
+         MEMBER <json-string>
+         [<member|index> ...] <index>)
+  string(JSON <out-var> [ERROR_VARIABLE <error-var>]
+         SET <json-string>
+         <member|index> [<member|index> ...] <value>)
+  string(JSON <out-var> [ERROR_VARIABLE <error-var>]
+         EQUAL <json-string1> <json-string2>)
+```
+
+## 列表
+
+上面set可知道，可以定义列表变量，cmake中提供了大量的列表相关的操作
+
+```cmake
+# 读取
+  list(LENGTH <list> <out-var>)
+  list(GET <list> <element index> [<index> ...] <out-var>)
+  list(JOIN <list> <glue> <out-var>)
+  list(SUBLIST <list> <begin> <length> <out-var>)
+
+# 搜索
+  list(FIND <list> <value> <out-var>)
+
+# 修改
+  list(APPEND <list> [<element>...])
+  list(FILTER <list> {INCLUDE | EXCLUDE} REGEX <regex>)
+  list(INSERT <list> <index> [<element>...])
+  list(POP_BACK <list> [<out-var>...])
+  list(POP_FRONT <list> [<out-var>...])
+  list(PREPEND <list> [<element>...])
+  list(REMOVE_ITEM <list> <value>...)
+  list(REMOVE_AT <list> <index>...)
+  list(REMOVE_DUPLICATES <list>)
+  list(TRANSFORM <list> <ACTION> [...])
+
+# 排序
+  list(REVERSE <list>)
+  list(SORT <list> [...])
+```
+
+简单样例
+
+```cpp
+cmake_minimum_required(VERSION 3.16 FATAL_ERROR)
+
+project(main)
+
+set(m_list)
+list(APPEND m_list "a" "c" "b")
+foreach(var IN LISTS m_list)
+    message(STATUS ${var})    
+endforeach()
+
+# a c b
+set(var)
+list(GET m_list 0 var)
+message(STATUS ${var}) #a
+
+# 追加
+list(APPEND m_list 1)
+
+# 排序
+list(SORT m_list)
+
+foreach(var IN LISTS m_list)
+    message(STATUS ${var})
+endforeach()
+# 1 a b c
+```
+
+## math
+
+cmake提供了数学计算，使用math函数实现
+
+```cmake
+math(EXPR outVar mathExpr [OUTPUT_FORMAT format])
+```
+
+直接通过 CMake 变量结合数学运算符组成 mathExpr，然后计算结果会保存到 outVar 中。
+
+OUTPUT_FORMAT 是可选参数，代表输出结果的格式，可以是 HEXADECIMAL：输出 16 进制结果，DECIMAL：输出 10 进制结果。
+
+样例
+
+```cmake
+cmake_minimum_required(VERSION 3.16 FATAL_ERROR)
+
+project(main)
+
+set(x 1)
+set(y 3)
+math(EXPR outVar "(${x}*${y}) + 10" OUTPUT_FORMAT DECIMAL)
+message(STATUS ${outVar})
+# 13
+```

@@ -38,6 +38,8 @@
 - [相关工具](c++-even-better/相关工具/README.md)
   - [GCC](c++-even-better/相关工具/gcc.md)
   - [Make](c%2B%2B-even-better/相关工具/make.md)
+  - [CMake](c++-even-better/相关工具/cmake.md)
+  - [GDB](c++-even-better/相关工具/gdb.md)
 
 ## 服务端开发
 
