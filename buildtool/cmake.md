@@ -394,3 +394,293 @@ math(EXPR outVar "(${x}*${y}) + 10" OUTPUT_FORMAT DECIMAL)
 message(STATUS ${outVar})
 # 13
 ```
+
+## if
+
+像编程语言一样cmake中可以使用流程控制
+
+```cmake
+if(expression1)
+  # commands
+elseif(expression2)
+  # commands
+else()
+    # commands
+endif()
+```
+
+### 基本条件表达式
+
+```
+if(value)
+```
+
+ON、YES、TRUE、Y 被视为真  
+OFF、NO、FALSE、N、IGNORE、NOTFOUND、空字符串、以 -NOTFOUND 结尾的字符串被视为假。  
+如果是一个数字，将根据 C 语言的规则转换成 bool 值。  
+如果上述三种情况都不适用，那该条件表达式将被当作一个变量的名字。  
+如果没有使用引号，那该变量的值会和为假的值对比，如果匹配上则为假，否则为真。  
+如果其值是空字符串则为假。  
+如果使用引号  
+cmake 3.1 及以后，如果该字符串不匹配任何为真的值，那该条件表达式为假。  
+cmake 3.1 以前，如果该字符串匹配到任何存在的变量名字，则会按照变量处理。  
+if(ENV{some_var}) 这种形式的条件表达式永远为假，所以不要使用环境变量。  
+
+### 逻辑表达式
+
+```cmake
+# Logical operators
+if(NOT expression)
+if(expression1 AND expression2)
+if(expression1 OR expression2)
+
+# Example with parentheses
+if(NOT (expression1 AND (expression2 OR expression3)))
+```
+
+### 比较表达式
+
+```cmake
+if(value1 OPERATOR value2)
+```
+
+| Numeric | String | Version numbers | Path |
+| --- | --- | --- | --- |
+| LESS | STRLESS | VERSION_LESS |  |
+| GREATER | STRGREATER | VERSION_GREATER |  |
+| EQUAL | STREQUAL | VERSION_EQUAL | PATH_EQUAL |
+| LESS_EQUAL | STRLESS_EQUAL | VERSION_LESS_EQUAL |  |
+| GREATER_EQUAL | STRGREATER_EQUAL | VERSION_GREATER_EQUAL |  |
+
+### 正则表达式
+
+```cmake
+if(value MATCHES regex)
+if("Hi from ${who}" MATCHES "Hi from (Fred|Barney).*")
+  message("${CMAKE_MATCH_1} says hello")
+endif()
+```
+
+### 文件系统相关表达式
+
+```cmake
+if(EXISTS pathToFileOrDir)
+if(IS_DIRECTORY pathToDir)
+if(IS_SYMLINK fileName)
+if(IS_ABSOLUTE path)
+if(file1 IS_NEWER_THAN file2)
+```
+
+在没有变量引用符号时，不会执行任何变量替换。
+
+```cmake
+set(firstFile "/full/path/to/somewhere")
+set(secondFile "/full/path/to/another/file")
+
+if(NOT EXISTS ${firstFile})
+        message(FATAL_ERROR "${firstFile} is missing")
+elseif(NOT EXISTS ${secondFile} OR NOT ${secondFile} IS_NEWER_THAN ${firstFile})
+        # ... commands to recreate secondFile
+endif()
+```
+
+为什么要用 NOT IS_NEWER_THAN？
+
+```cmake
+# WARNING: Very likely to be wrong
+if(${firstFile} IS_NEWER_THAN ${secondFile})
+		# ... commands to recreate secondFile
+endif()
+```
+
+
+### 判断是否存在表达式
+
+```cmake
+if(DEFINED name)
+if(COMMAND name)
+if(POLICY name)
+if(TARGET name)
+if(TEST name)               # Available since CMake 3.4
+if(value IN_LIST listVar)   # Available since CMake 3.3
+if(DEFINED SOMEVAR)           # Checks for a CMake variable (regular or cache)
+if(DEFINED CACHE{SOMEVAR})    # Checks for a CMake cache variable
+if(DEFINED ENV{SOMEVAR})      # Checks for an environment variable
+```
+
+## for
+
+对一个列表的元素进行遍历，或者需要对一堆的值进行相似的操作
+
+### foreach
+
+```cmake
+foreach(loopVar arg1 arg2 ...)
+    # ...
+endforeach()
+
+foreach(loopVar IN [LISTS listVar1 ...] [ITEMS item1 ...])
+    # ...
+endforeach()
+```
+
+第一种形式很简单，每一次循环，loopVar 都讲从 arg1 arg2 ... 中取出一个值，然后在循环体中使用。
+
+第二种形式比较通用，但是只要有 IN 关键字，那后面的 [LISTS listVar1 ...] [ITEMS item1 ...] 就必须有其一或者都有，当两者都有的时候，[ITEMS item1 ...] 需要全部放在 [LISTS listVar1 ...] 后面。
+
+还有一点需要注意的是，[ITEMS item1 ...] 中的 item1 ... 都不会作为变量使用，就仅仅是字符串或者值。
+
+```cmake
+set(list1 A B)
+set(list2)
+set(foo WillNotBeShown)
+
+foreach(loopVar IN LISTS list1 list2 ITEMS foo bar)
+    message("Iteration for: ${loopVar}")
+endforeach()
+```
+
+Cmake 3.17 中添加了一种特殊的形式，可以在一次循环多个列表，其形式如下：
+
+```cmake
+foreach(loopVar... IN ZIP_LISTS listVar...)
+    # ...
+endforeach()
+```
+
+如果只给出一个 loopVar，则该命令将在每次迭代时设置 loopVar_N 形式的变量，其中 N 对应于 listVarN 变量。编号从 0 开始。如果每个 listVar 都有一个 loopVar，那么该命令会一对一映射它们，而不是创建 loopVar_N 变量。以下示例演示了这两种情况：
+
+```cmake
+set(list0 A B)
+set(list1 one two)
+
+foreach(var0 var1 IN ZIP_LISTS list0 list1)
+    message("Vars: ${var0} ${var1}")
+endforeach()
+
+foreach(var IN ZIP_LISTS list0 list1)
+    message("Vars: ${var_0} ${var_1}")
+endforeach()
+```
+
+以这种方式“压缩”的列表不必长度相同。当迭代超过较短列表的末尾时，关联的迭代变量将未定义。取未定义变量的值会导致空字符串。下一个示例演示了行为：
+
+```cmake
+set(long  A B C)
+set(short justOne)
+
+foreach(varLong varShort IN ZIP_LISTS long short)
+    message("Vars: ${varLong} ${varShort}")
+endforeach()
+```
+
+CMake 的 for 循环还有一种类似于 C 语言的 for 循环的形式，如下：
+
+```cmake
+foreach(loopVar RANGE start stop [step])
+foreach(loopVar RANGE value)
+```
+
+第一种形式，在 start 到 stop 之间迭代，可以指定步长 step。 第二种形式等价于：
+
+```cmake
+foreach(loopVar RANGE 0 value)
+```
+
+## while
+
+```cmake
+while(condition)
+    # ...
+endwhile()
+```
+
+condition 的判断规则同 if() 命令
+
+```cmake
+set(num 10)
+while(num GREATER 0)
+    message(STATUS "current num = ${num}")
+    math(EXPR num "${num} - 1")
+endwhile()
+```
+
+## break与continue
+
+while 循环和 foreach 循环都支持提前退出循环
+
+```cmake
+foreach(outerVar IN ITEMS a b c)
+    unset(s)
+    foreach(innerVar IN ITEMS 1 2 3)
+        # Stop inner loop once string s gets long
+        list(APPEND s "${outerVar}${innerVar}")
+        string(LENGTH "${s}" length)
+        if(length GREATER 5)
+            # End the innerVar foreach loop early
+            break()
+        endif()
+        # Do no more processing if outerVar is "b"
+        if(outerVar STREQUAL "b")
+            # End current innerVar iteration and move on to next innerVar item
+            continue()
+        endif()
+        message("Processing ${outerVar}-${innerVar}")
+    endforeach()
+    message("Accumulated list: ${s}")
+endforeach()
+```
+
+block() 和 endblock() 命令定义的块内也允许 break() 和 continue() 命令
+
+```cmake
+set(log "Value: ")
+set(values one two skipMe three stopHere four)
+set(didSkip FALSE)
+while(NOT values STREQUAL "")
+    list(POP_FRONT values next)
+    # Modifications to "log" will be discarded
+    block(PROPAGATE didSkip)
+        string(APPEND log "${next}")
+        if(next MATCHES "skip")
+            set(didSkip TRUE)
+            continue()
+        elseif(next MATCHES "stop")
+            break()
+        elseif(next MATCHES "t")
+            string(APPEND log ", has t")
+        endif()
+        message("${log}")
+    endblock()
+endwhile()
+message("Did skip: ${didSkip}")
+message("Remaining values: ${values}")
+```
+
+## 如何使用子目录
+
+## 子目录相关的作用域详解
+
+## 子目录定义project
+
+## include
+
+## 项目相关的变量
+
+## 提前结束处理return
+
+## 函数和宏基础
+
+## 函数和宏的参数处理基础
+
+## 函数和宏之关键字参数
+
+## 函数和宏返回值
+
+## cmake命令覆盖详解
+
+## 函数相关的特殊变量
+
+## 复用cmake代码
+
+## cmake处理参数时的一些问题
