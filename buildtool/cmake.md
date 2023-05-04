@@ -883,7 +883,99 @@ message("Child  (after):  myVar = ${myVar}")
 
 ## 子目录定义project
 
+project() 命令对于一个项目来说是必须的，如果开发人员没有显式的调用 project() 命令，在运行 cmake 进行项目配置的时候会收到警告信息，同时，cmake 会隐式地添加 project() 命令的调用。强烈建议在顶层 CMakeLists.txt 中适当的位置显式的调用 project() 命令。
+
+porject() 命令可不可以调用多次？  
+
+可以的，但是需要有 add_subdirectory() 命令调用的情况下才行，也就是说，我们不能在同一个 CMakeLists.txt 中调用 project() 命令多次，但是可以在 add_subdirectory() 命令调用时引入的子目录中的 CMakeLists.txt 中再次调用 project() 命令。通常这样做没有什么坏处，但是会导致 CMake 生成更多的项目文件。
+
 ## include
+
+CMake 可以通过include命令引入子目录，然后子目录中必须有一个 CMakeLists.txt，这相当于给顶层的 CMakeLists.txt 引入了新的 CMake 内容。
+
+### fileName
+
+```cmake
+include(fileName [OPTIONAL] [RESULT_VARIABLE myVar] [NO_POLICY_SCOPE])
+```
+
+其中 <file> 指定要包含的文件名或路径，可以是相对路径或绝对路径。
+
+OPTIONAL 选项表示如果找不到指定的文件，不会抛出错误，而是继续执行脚本。
+
+RESULT_VARIABLE 选项指定一个变量名，用于接收 include 命令的结果。如果指定了该选项，CMake 将会在执行指定文件后将结果存储在该变量中。如果指定的文件不存在，则该变量将被设置为空字符串。
+
+NO_POLICY_SCOPE参数表示在包含给定的脚本时，不应用此命令之前设置的策略或变量范围。也就是说，该选项会在一个新的独立作用域中执行给定的脚本文件，而不会受到任何外部策略或变量的影响。
+
+使用 include 命令时需要注意避免文件循环包含，即 A 包含 B，B 又包含 A，这样会导致 CMake 陷入无限递归。
+
+样例
+
+~/CMakeLists.txt
+
+```cmake
+cmake_minimum_required(VERSION 3.16 FATAL_ERROR)
+project(main)
+
+# ~
+message(${CMAKE_CURRENT_BINARY_DIR})
+#~
+message(${CMAKE_CURRENT_SOURCE_DIR})
+
+set(ENABLE_FEATURE ON)
+#本质就是把syvdir/CMakeLists.txt的内容搬到此处
+include(subdir/CMakeLists.txt OPTIONAL)
+
+#Feature is disabled
+if(ENABLE_FEATURE)
+    message("Feature is enabled")
+else()
+    message("Feature is disabled")
+endif()
+```
+
+~/subdir/CMakeLists.txt
+
+```cmake
+#ON
+message(${ENABLE_FEATURE})
+set(ENABLE_FEATURE OFF)
+#OFF
+message(${ENABLE_FEATURE})
+#~
+message(${CMAKE_CURRENT_BINARY_DIR})
+#~
+message(${CMAKE_CURRENT_SOURCE_DIR})
+```
+
+### 相关变量
+
+CMAKE_CURRENT_LIST_DIR： 类似于 CMAKE_CURRENT_SOURCE_DIR，只是在处理 include 的文件时会更新。这是需要处理的当前文件的目录时使用的变量，无论它是如何添加到构建的。它将永远是一个绝对路径。
+
+CMAKE_CURRENT_LIST_FILE： 始终提供当前正在处理的文件的名称。它始终持有文件的绝对路径，而不仅仅是文件名。
+
+CMAKE_CURRENT_LIST_LINE： 保存当前正在处理的文件的行号。这个变量很少需要，但在某些调试场景中是很有用的。
+
+~/CMakeLists.txt
+
+```cmake
+cmake_minimum_required(VERSION 3.16 FATAL_ERROR)
+project(main)
+
+message(${CMAKE_CURRENT_LIST_DIR})# ~
+message(${CMAKE_CURRENT_LIST_FILE})#~/CMakeLists.txt
+message(${CMAKE_CURRENT_LIST_LINE})#6
+
+include(subdir/CMakeLists.txt OPTIONAL)
+```
+
+~/subdir/CMakeLists.txt
+
+```cmake
+message(${CMAKE_CURRENT_LIST_DIR})#~/subdir
+message(${CMAKE_CURRENT_LIST_FILE})#~/subdir/CMakeLists.txt
+message(${CMAKE_CURRENT_LIST_LINE})#3
+```
 
 ## 项目相关的变量
 
@@ -904,3 +996,7 @@ message("Child  (after):  myVar = ${myVar}")
 ## 复用cmake代码
 
 ## cmake处理参数时的一些问题
+
+## cmake预设
+
+## cmake工具链

@@ -185,6 +185,7 @@
   - [Redis](zhongjianjian/redis.md)
   - [Nginx](zhongjianjian/nginx.md)
   - [RabbitMQ](zhongjianjian/rabbitmq.md)
+  - [Memcached](zhongjianjian/memcached.md)
 
 ## 🪅 Shell
 
