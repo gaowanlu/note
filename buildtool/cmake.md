@@ -659,7 +659,227 @@ message("Remaining values: ${values}")
 
 ## 如何使用子目录
 
+CMake提供了两个命令来解决多级目录的问题，分别为add_subdirectory和include
+
+### add_subdirectory
+
+函数原型
+
+```cmake
+add_subdirectory(sourceDir [binaryDir] [EXCLUDE_FROM_ALL] [SYSTEM])
+# [SYSTEM] 需要 CMake >= 3.25
+```
+
+sourceDir 通常是当前 CMakeLists.txt 所在目录的子目录，但是它也可以是其它路径下的目录。可以指定绝对路径或者相对路径，如果是相对路径的话，是相对于当前目录的。
+
+通常 binaryDir 不需要指定，不指定的情况下，CMake 会在构建目录中对应的位置创建和源码目录对应的目录，用于存放构建输出。但是当 sourceDir 是源外路径的话，binaryDir 需要明确指定。
+
+其中：  
+source_dir 是子目录的路径，包含一个 CMakeLists.txt 文件。  
+binary_dir 是一个可选参数，指定在其中生成二进制文件的目录。  
+EXCLUDE_FROM_ALL 是一个可选参数，指定将该目录排除在 all 编译选项之外。  
+如果省略 binary_dir 参数，则使用与 source_dir 相同的目录来生成二进制文件。如果指定了
+EXCLUDE_FROM_ALL 参数，则该目录中的构建规则不会包括在 all 编译选项中。  
+
+注意，add_subdirectory 命令只适用于在同一 CMake 构建中构建的子目录。如果要构建另一个独立的项目，则应该使用 ExternalProject_Add 命令。
+
+### EXCLUDE_FROM_ALL 场景案例
+
+一个常见的例子是，在一个项目中可能会包含多个子目录，其中有些子目录是可选的或只在特定条件下才需要编译。如果没有使用EXCLUDE_FROM_ALL参数，那么CMake将默认构建所有子目录，这可能会浪费时间和资源。
+
+例如，假设一个项目包含以下子目录：
+
+```cpp
+root/
+├── CMakeLists.txt
+├── lib/
+│   ├── CMakeLists.txt
+│   └── lib_source.cpp
+└── app/
+    ├── CMakeLists.txt
+    └── app_source.cpp
+```
+
+其中lib是一个可选的库，只有在某些条件下才需要编译。如果没有使用EXCLUDE_FROM_ALL，则在执行cmake和make时，CMake会自动构建lib和app目录中的所有内容。
+
+可以使用EXCLUDE_FROM_ALL来指定lib子目录不应被默认构建。例如，在root/CMakeLists.txt中添加以下内容：
+
+```cmake
+add_subdirectory(lib EXCLUDE_FROM_ALL)
+add_subdirectory(app)
+```
+
+现在，在执行cmake和make时，CMake仅会构建app目录中的内容，lib目录中的内容则不会被默认构建。
+
+如果需要构建lib目录，可以使用以下命令：
+
+```shell
+make lib
+```
+
+### 相关变量
+
+CMake 提供了一些变量来跟踪当前正在处理的 CMakeLists.txt 文件的源和二进制目录。以下是一些只读变量，随着每个文件被 CMake 处理，这些变量会自动更新。它们始终包含绝对路径。
+
+* CMAKE_SOURCE_DIR  
+  源代码的最顶级目录（即最顶级 CMakeLists.txt 文件所在的位置）。这个变量的值永远不会改变。
+* CMAKE_BINARY_DIR  
+  构建目录的最顶级目录。这个变量的值永远不会改变。
+* CMAKE_CURRENT_SOURCE_DIR
+  当前正在被 CMake 处理的 CMakeLists.txt 文件所在的目录。每当由 add_subdirectory() 调用处理新文件时，它都会更新，当处理该目录完成时，它会被还原回原来的值。
+* CMAKE_CURRENT_BINARY_DIR  
+  由 CMake 处理的当前 CMakeLists.txt 文件所对应的构建目录。每次调用 add_subdirectory() 时都会更改该目录，当 add_subdirectory() 返回时将其恢复。
+
+~/CMakeLists.txt
+
+```cmake
+cmake_minimum_required(VERSION 3.16)
+
+project(MyApp)
+
+# ~
+message("top: CMAKE_SOURCE_DIR              = ${CMAKE_SOURCE_DIR}")
+# ~
+message("top: CMAKE_BINARY_DIR              = ${CMAKE_BINARY_DIR}")
+# ~
+message("top: CMAKE_CURRENT_SOURCE_DIR      = ${CMAKE_CURRENT_SOURCE_DIR}")
+# ~
+message("top: CMAKE_CURRENT_BINARY_DIR      = ${CMAKE_CURRENT_BINARY_DIR}")
+
+add_subdirectory(subdir)
+
+# ~
+message("top: CMAKE_CURRENT_SOURCE_DIR      = ${CMAKE_CURRENT_SOURCE_DIR}")
+# ~
+message("top: CMAKE_CURRENT_BINARY_DIR      = ${CMAKE_CURRENT_BINARY_DIR}")
+```
+
+~/subdir/CMakeLists.txt
+
+```cmake
+# ~
+message("mysub: CMAKE_SOURCE_DIR            = ${CMAKE_SOURCE_DIR}")
+# ~
+message("mysub: CMAKE_BINARY_DIR            = ${CMAKE_BINARY_DIR}")
+# ~/subdir
+message("mysub: CMAKE_CURRENT_SOURCE_DIR    = ${CMAKE_CURRENT_SOURCE_DIR}")
+# ~/subdir
+message("mysub: CMAKE_CURRENT_BINARY_DIR    = ${CMAKE_CURRENT_BINARY_DIR}")
+```
+
+### 实际构建工程简单样例
+
+假设有一个多级目录的C++工程，其目录结构如下
+
+```cmake
+CMakeLists.txt
+src/
+├── CMakeLists.txt
+├── main.cpp
+├── sub1/
+│   ├── CMakeLists.txt
+│   ├── sub1.cpp
+│   └── sub1.h
+└── sub2/
+    ├── CMakeLists.txt
+    ├── sub2.cpp
+    └── sub2.h
+```
+
+其中，最外层的 CMakeLists.txt 的内容如下：
+
+```cmake
+cmake_minimum_required(VERSION 3.0)
+project(my_project)
+add_subdirectory(src)
+```
+
+src/CMakeLists.txt 的内容如下：
+
+```cmake
+add_subdirectory(sub1)
+add_subdirectory(sub2)
+add_executable(my_project main.cpp)
+target_link_libraries(my_project sub1 sub2)
+```
+
+src/sub1/CMakeLists.txt 的内容如下：
+
+```cmake
+add_library(sub1 sub1.cpp sub1.h)
+# 默认为STATIC库
+```
+
+src/sub2/CMakeLists.txt 的内容如下
+
+```cmake
+add_library(sub2 sub2.cpp sub2.h)
+```
+
 ## 子目录相关的作用域详解
+
+add_subdirectory() 命令引入一个新的子目录的同时，也引入了新的作用域，相对于调用 add_subdirectory() 命令的 CMakeLists.txt 所在的作用域来说，通过 add_subdirectory() 命令引入的新的作用域叫做子作用域。其行为类似于 C/C++ 语言中调用一个新的函数。
+
+调用 add_subdirectory() 命令的时候，当前作用域内的变量均会复制一份到子作用域，子作用域中对这些复制的变量进行操作不会影响到当前作用域中这些变量的值。
+
+在子作用域中定义的新的变量对父作用域是不可见的。
+
+### 样例
+
+CMakeLists.txt
+
+```cmake
+set(myVar foo)
+#foo
+message("Parent (before): myVar    = ${myVar}")
+#
+message("Parent (before): childVar = ${childVar}")
+add_subdirectory(subdir)
+#foo
+message("Parent (after):  myVar    = ${myVar}")
+#
+message("Parent (after):  childVar = ${childVar}")
+```
+
+subdir/CMakeLists.txt
+
+```cmake
+#foo
+message("Child  (before): myVar    = ${myVar}")
+#
+message("Child  (before): childVar = ${childVar}")
+set(myVar bar)
+set(childVar fuzz)
+#bar
+message("Child  (after):  myVar    = ${myVar}")
+#fuzz
+message("Child  (after):  childVar = ${childVar}")
+```
+
+### 如何写父作用域变量
+
+set函数支持 PARENT_SCOPE 选项
+
+CMakeLists.txt
+
+```cmake
+set(myVar foo)
+#foo
+message("Parent (before): myVar = ${myVar}")
+add_subdirectory(subdir)
+#bar
+message("Parent (after):  myVar = ${myVar}")
+```
+
+subdir/CMakeLists.txt
+
+```cmake
+#foo
+message("Child  (before): myVar = ${myVar}")
+set(myVar bar PARENT_SCOPE)
+#foo 因为子作用域拷贝的myVar没有改变
+message("Child  (after):  myVar = ${myVar}")
+```
 
 ## 子目录定义project
 
