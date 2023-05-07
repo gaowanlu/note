@@ -14,7 +14,7 @@ Linux系统编程中，网络套接字（socket）是一个重要的概念。套
 
 网络套接字在Linux系统编程中是一个非常重要的概念，它是实现网络通信的基础。了解套接字的概念和相关系统函数的使用方法，可以帮助开发人员编写高效、可靠的网络应用程序。
 
-### 大小端字节序
+## 大小端字节序
 
 大小端字节序是指在多字节数据类型（如int、long、float等）的存储过程中，字节的存储顺序不同。  
 
@@ -32,7 +32,7 @@ Linux系统编程中，网络套接字（socket）是一个重要的概念。套
 
 重点：IO和网络IO时永远是低地址的内容先出去
 
-#### 字节序转换函数
+## 字节序转换函数
 
 网络通信中通常使用大端字节序（也称为网络字节序）作为标准字节序。为了保证跨平台通信的正确性，需要将本地字节序（即处理器架构字节序）与网络字节序进行转换。可以使用htonl()、htons()、ntohl()和ntohs()等系统函数来完成字节序的转换。
 
@@ -46,13 +46,13 @@ uint32_t ntohl(uint32_t netlong);
 uint16_t ntohs(uint16_t netshort);
 ```
 
-### 字节对齐
+## 字节对齐
 
 请见C++内容中的字节对齐，在网络编程中一般会采取不对齐处理
 
 [字节对齐跳转](/c++-even-better/yu-yan-ji-chu/c++-primer-ting-shuo-hen-nan/di-si-bu-fen-gao-ji-zhu-ti/di-19-zhang-te-shu-gong-ju-yu-ji-shu#nei-cun-zi-jie-dui-qi)
 
-### 类型长度问题
+## 类型长度问题
 
 在C中int、char等，并没有规定一定的长度大小，可能不同环境下会有不同，为了解决此问题，一般会采取以下固定长度整数类型进行使用
 
@@ -68,13 +68,13 @@ uint16_t ntohs(uint16_t netshort);
 //uint64_t: 64 位无符号整数，定义在 stdint.h 或 cstdint 头文件中
 ```
 
-### 套接字描述符
+## 套接字描述符
 
 在Linux系统编程中，套接字描述符是一种重要的概念，它是一种用于进行网络通信的抽象概念，类似于文件描述符，用于标识和管理网络连接
 
 在Linux中，套接字描述符是一个整数，它唯一标识一个网络连接。套接字描述符通常由socket()函数创建，bind()和connect()函数绑定和连接网络端点，send()和recv()函数进行数据传输，close()函数关闭套接字。
 
-#### socket函数
+## socket函数
 
 socket()函数是用于创建套接字的系统调用。套接字是一种抽象的通信机制，用于在网络上进行数据传输和通信。
 
@@ -147,11 +147,11 @@ int main(int argc, char **argv)
 }
 ```
 
-#### 文件描述符函数使用套接字时的行为
+## 文件描述符函数使用套接字时的行为
 
 ![文件描述符函数使用套接字时的行为](../../.gitbook/assets/屏幕截图2023-04-23003354.jpg)
 
-#### shutdown函数
+## shutdown函数
 
 shutdown函数是一个系统调用，用于关闭一个已经连接的套接字或禁止其读写操作。它位于头文件<sys/socket.h>中，并具有以下原型：
 
@@ -172,11 +172,11 @@ shutdown函数可以用于关闭一个已连接的套接字或禁止其读写操
 
 如果shutdown函数调用成功，返回值为0。如果发生错误，返回值为-1，并设置相应的错误代码，可以通过errno变量获取。
 
-### 寻址
+## 寻址
 
 进程标识由两部分组成，一部分是计算机的网络地址，它可以帮助标识网络上我们想与之通信的计算机；另一部分是该计算机上用端口号表示的服务，它可以帮助标识特定的进程。
 
-#### 地址格式
+## 地址格式
 
 网络地址通常使用IPv4或IPv6地址格式。IPv4地址是32位的地址，通常表示为四个数字，每个数字之间用点号分隔。例如，192.168.1.1就是一个IPv4地址。
 
@@ -235,7 +235,7 @@ printf("IP address: %s\n", ip);
 */
 ```
 
-#### inet_ntop函数
+## inet_ntop函数
 
 inet_ntop()函数是一个网络编程中常用的函数，用于将网络字节序的IP地址转换为字符串格式
 
@@ -295,7 +295,7 @@ int main()
 
 ```
 
-#### inet_pton函数
+## inet_pton函数
 
 用于将字符串格式的IP地址转换为网络字节序的二进制格式
 
@@ -355,7 +355,7 @@ int main()
 }
 ```
 
-#### /etc/hosts文件
+## /etc/hosts文件
 
 /etc/hosts文件是一个文本文件，用于将主机名映射到IP地址，或者将别名映射到主机名。在Linux和Unix系统中，每个主机都有一个/etc/hosts文件，用于本地解析域名。
 
@@ -390,7 +390,7 @@ ff02::1 ip6-allnodes
 ff02::2 ip6-allrouters
 ```
 
-#### 解析/etc/hosts内容
+## 解析/etc/hosts内容
 
 1、结构体struct hostent 用于存储主机的信息
 
@@ -467,7 +467,7 @@ addr: 127.0.0.1
 */
 ```
 
-#### /etc/networks文件
+## /etc/networks文件
 
 /etc/networks是一个文本文件，包含已知网络的名称、网络号、子网掩码等信息，是一个网络数据库(network database),用于在系统中解析网络名称和地址
 
@@ -486,7 +486,7 @@ link-local      169.254     # link-local network for address autoconfiguration
 localnet        192.168.0   # local network
 ```
 
-#### 解析/etc/networks文件
+## 解析/etc/networks文件
 
 1、结构体struct netent
 
@@ -594,7 +594,7 @@ address: 0.0.254.169
 */
 ```
 
-#### /etc/protocols文件
+## /etc/protocols文件
 
 系统的协议数据库文件，即/etc/protocols文件。该文件是一个文本文件，其中每一行表示一个协议条目，具有如下格式：
 
@@ -613,7 +613,7 @@ tcp     6   TCP
 udp     17  UDP
 ```
 
-#### 解析/etc/protocols文件
+## 解析/etc/protocols文件
 
 1、struct protent
 
@@ -662,7 +662,7 @@ int main()
 }
 ```
 
-#### /etc/services文件
+## /etc/services文件
 
 /etc/services文件，存储服务条目的信息，其每一行表示一个服务条目
 
@@ -683,7 +683,7 @@ smtp          25/tcp    mail
 http          80/tcp    www httpd
 ```
 
-#### 解析/etc/services文件
+## 解析/etc/services文件
 
 1、struct servent
 
@@ -733,57 +733,244 @@ int main()
 }
 ```
 
-#### getaddrinfo、freeaddrinfo、struct addrinfo、addrinfo结构的标志  
+## getaddrinfo与addrinfo
 
-```cpp
+getaddrinfo可以很好的代替gethostbyname和gethostbyaddr函数，其作用为知道主机名或服务名，查找其地址结构信息
 
+man手册解释
+
+```txt
+getaddrinfo, freeaddrinfo, gai_strerror - network address and service translation
 ```
 
-#### gai_strerror、getnameinfo、getnameinfo函数的标志
-
 ```cpp
-
+struct addrinfo {
+    int              ai_flags;       // AI_PASSIVE, AI_CANONNAME, etc.
+    int              ai_family;      // AF_UNSPEC, AF_INET, AF_INET6, etc.
+    int              ai_socktype;    // SOCK_STREAM, SOCK_DGRAM, SOCK_RAW, etc.
+    int              ai_protocol;    // IPPROTO_TCP, IPPROTO_UDP, IPPROTO_RAW, etc.
+    size_t           ai_addrlen;     // length of ai_addr
+    struct sockaddr *ai_addr;        // struct sockaddr_in or _in6
+    char            *ai_canonname;   // canonical name for nodename
+    struct addrinfo *ai_next;        // linked list, next node
+};
+/*
+ai_flags选项
+AI_ADDRCONFIG 查询配置的地址类型(IPv4和IPv6)
+AI_ALL 查找IPv4和IPv6地址（仅用于AI_V4MAPPED）
+AI_CANONNAME 需要一个规范的名字（与别名相对）
+AI_NUMBERICHOST 以数字格式指定主机地址，不翻译
+AI_NUMBERICSERV 将服务指定为数字端口号，不翻译
+AI_PASSIVE 套接字地址用于监听绑定
+AI_V4MAPPED 如果没有找到IPV6地址，返回映射到IPv6格式的IPv4地址
+*/
 ```
 
-#### 将套接字与地址关联
+相关函数原型
+
+```cpp
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <netdb.h>
+int getaddrinfo(const char *node, const char *service,
+               const struct addrinfo *hints,
+               struct addrinfo **res);
+void freeaddrinfo(struct addrinfo *res);
+```
+
+样例,查找符合hint条件的主机名为"DESKTOP-QDLGRDB."对应的IP地址
+
+```cpp
+#include <stdio.h>
+#include <stdlib.h>
+#include <netdb.h>
+#include <cstring>
+#include <arpa/inet.h>
+
+int main(int argc, char *argv[])
+{
+
+    struct addrinfo hints; // 搜索限制参数
+    struct addrinfo *result, *rp;
+    int s;
+
+    /* 配置 addrinfo 结构体 */
+    memset(&hints, 0, sizeof(hints));
+    hints.ai_family = AF_UNSPEC;     /* IPv4 或 IPv6 */
+    hints.ai_socktype = SOCK_STREAM; /* 流式套接字 */
+
+    /* 获取主机名对应的 IP 地址列表 */
+    s = getaddrinfo("DESKTOP-QDLGRDB.", NULL, &hints, &result);
+    if (s != 0)
+    {
+        fprintf(stderr, "getaddrinfo: %s\n", gai_strerror(s));
+        exit(EXIT_FAILURE);
+    }
+
+    /* 遍历获取的地址列表 */
+    for (rp = result; rp != NULL; rp = rp->ai_next)
+    {
+        void *addr;
+        char ip_str[INET6_ADDRSTRLEN];
+
+        if (rp->ai_family == AF_INET)
+        { /* IPv4 */
+            struct sockaddr_in *ipv4 = (struct sockaddr_in *)rp->ai_addr;
+            addr = &(ipv4->sin_addr);
+        }
+        else
+        { /* IPv6 */
+            struct sockaddr_in6 *ipv6 = (struct sockaddr_in6 *)rp->ai_addr;
+            addr = &(ipv6->sin6_addr);
+        }
+
+        /* 将地址转换为字符串 */
+        if (inet_ntop(rp->ai_family, addr, ip_str, INET6_ADDRSTRLEN) == NULL)
+        {
+            perror("inet_ntop");
+            exit(EXIT_FAILURE);
+        }
+
+        /* 打印地址 */
+        printf("%s\n", ip_str);
+    }
+
+    /* 释放地址列表 */
+    freeaddrinfo(result);
+    return 0;
+}
+```
+
+## gai_strerror、getnameinfo、getnameinfo函数的标志
+
+如果getaddrinfo失败，不能使用perror或strerror生成错误信息，需要使用gai_strerror将返回的错误码转换成错误信息
+
+```cpp
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <netdb.h>
+const char *gai_strerror(int errcode);
+```
+
+样例请见上一个样例中的使用
+
+getnameinfo用于将一个地址转换成一个主机名和一个服务名
+
+```cpp
+#include <sys/socket.h>
+#include <netdb.h>
+int getnameinfo(const struct sockaddr *addr, socklen_t addrlen,
+               char *host, socklen_t hostlen,
+               char *serv, socklen_t servlen, int flags);
+/*flags参数选择：
+NI_DGRAM 服务基于数据报而非基于流
+NI_NAMEREQD 如果找不到主机名，将其作为一个错误对待
+NI_NOFQDN   对于本地主机，仅返回全限定域名的节点名部分
+NI_NUMERICHOST  返回主机地址的数字形式，而非主机名
+NI_NUMERICSCOPE 对于IPv6，返回范围ID的数字形式，而非名字
+NI_NUMERICSERV  返回服务地址的数字形式（即端口号），而非名字
+NI_NUMERICHOST 如果不能解析名称，则返回包含该地址的数字字符串。
+NI_IDN 如果主机名使用国际化域名，则进行IDN编码。
+*/
+```
+
+使用样例
+
+```cpp
+#include <stdio.h>
+#include <string.h>
+#include <sys/socket.h>
+#include <netdb.h>
+#include <arpa/inet.h>
+
+int main(int argc, char *argv[])
+{
+    struct sockaddr_in addr;
+    memset(&addr, 0, sizeof(addr));
+    addr.sin_family = AF_INET;
+    inet_pton(AF_INET, "192.168.0.107", &addr.sin_addr);
+    char host[NI_MAXHOST];
+    char service[NI_MAXSERV];
+    int flags = 0; // NI_NUMERICSERV | NI_NUMERICHOST;
+    int ret = getnameinfo((struct sockaddr *)&addr, sizeof(addr),
+                          host, NI_MAXHOST, service, NI_MAXSERV, flags);
+    if (ret != 0)
+    {
+        fprintf(stderr, "getnameinfo: %s\n", gai_strerror(ret));
+        return 1;
+    }
+    printf("Host: %s\n", host);       // Host: host.docker.internal
+    printf("Service: %s\n", service); // Service: 0
+    return 0;
+}
+```
+
+## bind函数
 
 ```cpp
 bind、getsockname、getpeername
 ```
+## getsockname函数
 
-### 建立连接
+## getpeername函数
 
-```cpp
-connect
-listen
-accept
-```
-
-### 数据传输
+## connect函数
 
 ```cpp
-send
-sendto
-struct msghdr
-recv
-recvfrom
-recvmsg
 ```
 
-### 套接字选项
+## listen函数
+
+## accept函数
+
+## 数据传输
+
+### send函数
+
+### sendto函数
+
+### struct msghdr
+
+```cpp
+```
+
+### recv函数
+
+### recvfrom函数
+
+### recvmsg函数
+
+
+## 套接字选项
+
+### setsockopt
 
 ```cpp
 setsockopt
 getsockopt
 ```
 
-### 带外数据
+### getsockopt
+
+## 带外数据
 
 ```cpp
 fcntl
 sockatmark
 ```
 
-### 非阻塞和异步 IO
+### fcntl
+
+### sockatmark
+
+## 非阻塞和异步 IO
 
 相关控制函数
+
+### fcntl
+
+```cpp
+fcntl ioctl
+```
+
+### ioctl
