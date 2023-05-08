@@ -6,17 +6,17 @@ coverY: 0
 
 ## 网络 IPC 套接字
 
-Linux系统编程中，网络套接字（socket）是一个重要的概念。套接字是一种在网络上进行通信的工具，通过套接字可以建立客户端和服务器之间的连接，并进行数据的传输。
+Linux 系统编程中，网络套接字（socket）是一个重要的概念。套接字是一种在网络上进行通信的工具，通过套接字可以建立客户端和服务器之间的连接，并进行数据的传输。
 
-在Linux系统中，网络套接字是一种特殊的文件描述符，可以通过调用系统函数来创建、连接、发送和接收数据。常用的套接字类型包括TCP套接字和UDP套接字，它们分别用于建立可靠的连接和不可靠的连接。
+在 Linux 系统中，网络套接字是一种特殊的文件描述符，可以通过调用系统函数来创建、连接、发送和接收数据。常用的套接字类型包括 TCP 套接字和 UDP 套接字，它们分别用于建立可靠的连接和不可靠的连接。
 
-在编程中，需要使用套接字相关的系统函数来进行网络通信。常用的系统函数包括socket()、bind()、listen()、accept()、connect()、send()和recv()等。其中，socket()函数用于创建套接字，bind()函数用于将套接字与一个地址绑定，listen()函数用于监听连接请求，accept()函数用于接受连接，connect()函数用于建立连接，send()函数用于发送数据，recv()函数用于接收数据。
+在编程中，需要使用套接字相关的系统函数来进行网络通信。常用的系统函数包括 socket()、bind()、listen()、accept()、connect()、send()和 recv()等。其中，socket()函数用于创建套接字，bind()函数用于将套接字与一个地址绑定，listen()函数用于监听连接请求，accept()函数用于接受连接，connect()函数用于建立连接，send()函数用于发送数据，recv()函数用于接收数据。
 
-网络套接字在Linux系统编程中是一个非常重要的概念，它是实现网络通信的基础。了解套接字的概念和相关系统函数的使用方法，可以帮助开发人员编写高效、可靠的网络应用程序。
+网络套接字在 Linux 系统编程中是一个非常重要的概念，它是实现网络通信的基础。了解套接字的概念和相关系统函数的使用方法，可以帮助开发人员编写高效、可靠的网络应用程序。
 
 ## 大小端字节序
 
-大小端字节序是指在多字节数据类型（如int、long、float等）的存储过程中，字节的存储顺序不同。  
+大小端字节序是指在多字节数据类型（如 int、long、float 等）的存储过程中，字节的存储顺序不同。
 
 在大端字节序中，高位字节存放在低地址，低位字节存放在高地址；  
 而在小端字节序中，低位字节存放在低地址，高位字节存放在高地址。
@@ -28,13 +28,13 @@ Linux系统编程中，网络套接字（socket）是一个重要的概念。套
     低地址--------->高地址
 ```
 
-在Linux系统编程中，处理器架构可能是大端字节序或小端字节序，因此需要特别注意在网络通信中字节序的处理。
+在 Linux 系统编程中，处理器架构可能是大端字节序或小端字节序，因此需要特别注意在网络通信中字节序的处理。
 
-重点：IO和网络IO时永远是低地址的内容先出去
+重点：IO 和网络 IO 时永远是低地址的内容先出去
 
 ## 字节序转换函数
 
-网络通信中通常使用大端字节序（也称为网络字节序）作为标准字节序。为了保证跨平台通信的正确性，需要将本地字节序（即处理器架构字节序）与网络字节序进行转换。可以使用htonl()、htons()、ntohl()和ntohs()等系统函数来完成字节序的转换。
+网络通信中通常使用大端字节序（也称为网络字节序）作为标准字节序。为了保证跨平台通信的正确性，需要将本地字节序（即处理器架构字节序）与网络字节序进行转换。可以使用 htonl()、htons()、ntohl()和 ntohs()等系统函数来完成字节序的转换。
 
 ```cpp
 //本地字节序转网络字节序
@@ -48,13 +48,13 @@ uint16_t ntohs(uint16_t netshort);
 
 ## 字节对齐
 
-请见C++内容中的字节对齐，在网络编程中一般会采取不对齐处理
+请见 C++内容中的字节对齐，在网络编程中一般会采取不对齐处理
 
 [字节对齐跳转](/c++-even-better/yu-yan-ji-chu/c++-primer-ting-shuo-hen-nan/di-si-bu-fen-gao-ji-zhu-ti/di-19-zhang-te-shu-gong-ju-yu-ji-shu#nei-cun-zi-jie-dui-qi)
 
 ## 类型长度问题
 
-在C中int、char等，并没有规定一定的长度大小，可能不同环境下会有不同，为了解决此问题，一般会采取以下固定长度整数类型进行使用
+在 C 中 int、char 等，并没有规定一定的长度大小，可能不同环境下会有不同，为了解决此问题，一般会采取以下固定长度整数类型进行使用
 
 ```cpp
 #include <stdint.h>
@@ -70,11 +70,11 @@ uint16_t ntohs(uint16_t netshort);
 
 ## 套接字描述符
 
-在Linux系统编程中，套接字描述符是一种重要的概念，它是一种用于进行网络通信的抽象概念，类似于文件描述符，用于标识和管理网络连接
+在 Linux 系统编程中，套接字描述符是一种重要的概念，它是一种用于进行网络通信的抽象概念，类似于文件描述符，用于标识和管理网络连接
 
-在Linux中，套接字描述符是一个整数，它唯一标识一个网络连接。套接字描述符通常由socket()函数创建，bind()和connect()函数绑定和连接网络端点，send()和recv()函数进行数据传输，close()函数关闭套接字。
+在 Linux 中，套接字描述符是一个整数，它唯一标识一个网络连接。套接字描述符通常由 socket()函数创建，bind()和 connect()函数绑定和连接网络端点，send()和 recv()函数进行数据传输，close()函数关闭套接字。
 
-## socket函数
+## socket 函数
 
 socket()函数是用于创建套接字的系统调用。套接字是一种抽象的通信机制，用于在网络上进行数据传输和通信。
 
@@ -87,7 +87,7 @@ int socket(int domain, int type, int protocol);
 返回值：若成功，返回文件描述符；若出错，返回-1
 ```
 
-套接字通信域domain：
+套接字通信域 domain：
 
 ```cpp
 AF_INET IPv4因特网域
@@ -96,7 +96,7 @@ AF_UNIX UNIX域
 AF_UNSPEC 未指定
 ```
 
-套接字类型type：
+套接字类型 type：
 
 ```cpp
 SOCK_DGRAM 固定长度的、无连接的、不可靠的报文传递
@@ -105,7 +105,7 @@ SOCK_SEQPACKET 固定长度的、有序的、可靠的、面向连接的报文�
 SOCK_STREAM 有序的、可靠的、双向的、面向连接的字节流
 ```
 
-为因特网域套接字定义的协议protocol：
+为因特网域套接字定义的协议 protocol：
 
 ```cpp
 IPPROTO_IP  IPv4网际协议
@@ -151,16 +151,16 @@ int main(int argc, char **argv)
 
 ![文件描述符函数使用套接字时的行为](../../.gitbook/assets/屏幕截图2023-04-23003354.jpg)
 
-## shutdown函数
+## shutdown 函数
 
-shutdown函数是一个系统调用，用于关闭一个已经连接的套接字或禁止其读写操作。它位于头文件<sys/socket.h>中，并具有以下原型：
+shutdown 函数是一个系统调用，用于关闭一个已经连接的套接字或禁止其读写操作。它位于头文件<sys/socket.h>中，并具有以下原型：
 
 ```cpp
 #include <sys/socket.h>
 int shutdown(int socket, int how);
 ```
 
-socket为已经连接的套接字描述符，how指定关闭的方式：
+socket 为已经连接的套接字描述符，how 指定关闭的方式：
 
 ```cpp
 SHUT_RD:关闭套接字的读取功能，即禁止套接字接收数据。
@@ -168,9 +168,9 @@ SHUT_WR：关闭套接字的写入功能，即禁止套接字发送数据。
 SHUT_RDWR：关闭套接字的读写功能，即禁止套接字读取和发送数据。
 ```
 
-shutdown函数可以用于关闭一个已连接的套接字或禁止其读写操作，以此来表示通信结束或出现错误等情况。需要注意的是，调用该函数不会立即关闭套接字，而是将套接字置于一个特殊的状态，直到所有未发送的数据都被发送完毕或者被丢弃为止。在调用shutdown函数之后，应用程序仍然需要通过close函数关闭套接字描述符。
+shutdown 函数可以用于关闭一个已连接的套接字或禁止其读写操作，以此来表示通信结束或出现错误等情况。需要注意的是，调用该函数不会立即关闭套接字，而是将套接字置于一个特殊的状态，直到所有未发送的数据都被发送完毕或者被丢弃为止。在调用 shutdown 函数之后，应用程序仍然需要通过 close 函数关闭套接字描述符。
 
-如果shutdown函数调用成功，返回值为0。如果发生错误，返回值为-1，并设置相应的错误代码，可以通过errno变量获取。
+如果 shutdown 函数调用成功，返回值为 0。如果发生错误，返回值为-1，并设置相应的错误代码，可以通过 errno 变量获取。
 
 ## 寻址
 
@@ -178,11 +178,11 @@ shutdown函数可以用于关闭一个已连接的套接字或禁止其读写操
 
 ## 地址格式
 
-网络地址通常使用IPv4或IPv6地址格式。IPv4地址是32位的地址，通常表示为四个数字，每个数字之间用点号分隔。例如，192.168.1.1就是一个IPv4地址。
+网络地址通常使用 IPv4 或 IPv6 地址格式。IPv4 地址是 32 位的地址，通常表示为四个数字，每个数字之间用点号分隔。例如，192.168.1.1 就是一个 IPv4 地址。
 
-IPv6地址是128位的地址，通常表示为8组4位十六进制数，每组之间用冒号分隔。例如，2001:0db8:85a3:0000:0000:8a2e:0370:7334就是一个IPv6地址。
+IPv6 地址是 128 位的地址，通常表示为 8 组 4 位十六进制数，每组之间用冒号分隔。例如，2001:0db8:85a3:0000:0000:8a2e:0370:7334 就是一个 IPv6 地址。
 
-此外，还有一些其他的网络地址格式，如MAC地址和网络掩码等。MAC地址是48位的地址，通常表示为12个十六进制数，每个数之间用冒号或连字符分隔。网络掩码是用于子网划分的一种地址格式，它通常与IPv4地址一起使用，表示一个子网的地址范围。
+此外，还有一些其他的网络地址格式，如 MAC 地址和网络掩码等。MAC 地址是 48 位的地址，通常表示为 12 个十六进制数，每个数之间用冒号或连字符分隔。网络掩码是用于子网划分的一种地址格式，它通常与 IPv4 地址一起使用，表示一个子网的地址范围。
 
 1、struct sockaddr
 
@@ -235,20 +235,20 @@ printf("IP address: %s\n", ip);
 */
 ```
 
-## inet_ntop函数
+## inet_ntop 函数
 
-inet_ntop()函数是一个网络编程中常用的函数，用于将网络字节序的IP地址转换为字符串格式
+inet_ntop()函数是一个网络编程中常用的函数，用于将网络字节序的 IP 地址转换为字符串格式
 
 ```cpp
 #include <arpa/inet.h>
 const char *inet_ntop(int af, const void *src, char *dst, socklen_t size);
 ```
 
-其中，af参数指定了地址族类型，可以是AF_INET（IPv4）或AF_INET6（IPv6）；src参数是指向存储IP地址的指针；dst参数是指向存储转换后的字符串的指针；size参数指定了dst指针指向的缓冲区的大小。
+其中，af 参数指定了地址族类型，可以是 AF_INET（IPv4）或 AF_INET6（IPv6）；src 参数是指向存储 IP 地址的指针；dst 参数是指向存储转换后的字符串的指针；size 参数指定了 dst 指针指向的缓冲区的大小。
 
-inet_ntop()函数成功转换IP地址时，返回值是指向转换后的字符串的指针。如果出现错误，返回值为NULL，并且可以通过调用errno来获取错误码。
+inet_ntop()函数成功转换 IP 地址时，返回值是指向转换后的字符串的指针。如果出现错误，返回值为 NULL，并且可以通过调用 errno 来获取错误码。
 
-IPv4代码样例
+IPv4 代码样例
 
 ```cpp
 #include <arpa/inet.h>
@@ -269,7 +269,7 @@ int main()
 }
 ```
 
-IPv6代码样例
+IPv6 代码样例
 
 ```cpp
 #include <arpa/inet.h>
@@ -295,20 +295,20 @@ int main()
 
 ```
 
-## inet_pton函数
+## inet_pton 函数
 
-用于将字符串格式的IP地址转换为网络字节序的二进制格式
+用于将字符串格式的 IP 地址转换为网络字节序的二进制格式
 
 ```cpp
 #include <arpa/inet.h>
 int inet_pton(int af, const char *src, void *dst);
 ```
 
-其中，af参数指定了地址族类型，可以是AF_INET（IPv4）或AF_INET6（IPv6）；src参数是指向存储字符串格式IP地址的指针；dst参数是指向存储转换后的二进制格式IP地址的指针。
+其中，af 参数指定了地址族类型，可以是 AF_INET（IPv4）或 AF_INET6（IPv6）；src 参数是指向存储字符串格式 IP 地址的指针；dst 参数是指向存储转换后的二进制格式 IP 地址的指针。
 
-inet_pton()函数成功转换IP地址时，返回值为1。如果出现错误，返回值为0，并且可以通过调用errno来获取错误码。
+inet_pton()函数成功转换 IP 地址时，返回值为 1。如果出现错误，返回值为 0，并且可以通过调用 errno 来获取错误码。
 
-IPv4样例
+IPv4 样例
 
 ```cpp
 #include <arpa/inet.h>
@@ -329,7 +329,7 @@ int main()
 }
 ```
 
-IPv6样例
+IPv6 样例
 
 ```cpp
 #include <arpa/inet.h>
@@ -355,17 +355,17 @@ int main()
 }
 ```
 
-## /etc/hosts文件
+## /etc/hosts 文件
 
-/etc/hosts文件是一个文本文件，用于将主机名映射到IP地址，或者将别名映射到主机名。在Linux和Unix系统中，每个主机都有一个/etc/hosts文件，用于本地解析域名。
+/etc/hosts 文件是一个文本文件，用于将主机名映射到 IP 地址，或者将别名映射到主机名。在 Linux 和 Unix 系统中，每个主机都有一个/etc/hosts 文件，用于本地解析域名。
 
-/etc/hosts文件中每一行都表示一条主机名和地址的映射关系，格式如下：
+/etc/hosts 文件中每一行都表示一条主机名和地址的映射关系，格式如下：
 
 ```cpp
 IP地址 主机名 别名
 ```
 
-其中，IP地址是指主机的IP地址，主机名是指主机的名称，别名是指主机的别名，可以有多个别名。每个字段之间使用空格或制表符进行分隔。
+其中，IP 地址是指主机的 IP 地址，主机名是指主机的名称，别名是指主机的别名，可以有多个别名。每个字段之间使用空格或制表符进行分隔。
 
 例如
 
@@ -390,9 +390,9 @@ ff02::1 ip6-allnodes
 ff02::2 ip6-allrouters
 ```
 
-## 解析/etc/hosts内容
+## 解析/etc/hosts 内容
 
-1、结构体struct hostent 用于存储主机的信息
+1、结构体 struct hostent 用于存储主机的信息
 
 ```cpp
 struct hostent {
@@ -409,7 +409,7 @@ struct hostent {
 //h_addr_list：地址列表，一个指向字符指针数组的指针，其中每个元素都是一个指向主机地址的字符指针。
 ```
 
-2、gethostent、sethostent、endhostent函数
+2、gethostent、sethostent、endhostent 函数
 
 ```cpp
 #include <iostream>
@@ -467,9 +467,9 @@ addr: 127.0.0.1
 */
 ```
 
-## /etc/networks文件
+## /etc/networks 文件
 
-/etc/networks是一个文本文件，包含已知网络的名称、网络号、子网掩码等信息，是一个网络数据库(network database),用于在系统中解析网络名称和地址
+/etc/networks 是一个文本文件，包含已知网络的名称、网络号、子网掩码等信息，是一个网络数据库(network database),用于在系统中解析网络名称和地址
 
 文件内容格式
 
@@ -486,9 +486,9 @@ link-local      169.254     # link-local network for address autoconfiguration
 localnet        192.168.0   # local network
 ```
 
-## 解析/etc/networks文件
+## 解析/etc/networks 文件
 
-1、结构体struct netent
+1、结构体 struct netent
 
 ```cpp
 struct netent {
@@ -504,37 +504,37 @@ struct netent {
 ```
 
 2、getnetbyaddr、getnetbyname、getnetent、setnetent、
-endnetent函数
+endnetent 函数
 
-getnetbyaddr函数用于获取指定网络地址的网络条目信息。net参数是网络地址，以网络字节序存储，type参数表示地址类型，通常为AF_INET（IPv4）。如果找到对应的网络条目，则返回一个指向struct netent结构体的指针，否则返回NULL。
+getnetbyaddr 函数用于获取指定网络地址的网络条目信息。net 参数是网络地址，以网络字节序存储，type 参数表示地址类型，通常为 AF_INET（IPv4）。如果找到对应的网络条目，则返回一个指向 struct netent 结构体的指针，否则返回 NULL。
 
 ```cpp
 #include <netdb.h>
 struct netent *getnetbyaddr(uint32_t net, int type);
 ```
 
-getnetbyname函数用于获取指定网络名称的网络条目信息。name参数是网络名称。如果找到对应的网络条目，则返回一个指向struct netent结构体的指针，否则返回NULL。
+getnetbyname 函数用于获取指定网络名称的网络条目信息。name 参数是网络名称。如果找到对应的网络条目，则返回一个指向 struct netent 结构体的指针，否则返回 NULL。
 
 ```cpp
 #include <netdb.h>
 struct netent *getnetbyname(const char *name);
 ```
 
-getnetent函数用于按顺序读取网络数据库中的每个条目。如果找到下一个网络条目，则返回一个指向struct netent结构体的指针，否则返回NULL。
+getnetent 函数用于按顺序读取网络数据库中的每个条目。如果找到下一个网络条目，则返回一个指向 struct netent 结构体的指针，否则返回 NULL。
 
 ```cpp
 #include <netdb.h>
 struct netent *getnetent(void);
 ```
 
-setnetent函数用于打开网络数据库文件/etc/networks，并将文件指针设置为文件开头，以便逐条读取网络条目信息。如果stayopen参数不为0，则保持数据库打开状态以供后续函数使用；否则在每次打开和读取时打开和关闭数据库。
+setnetent 函数用于打开网络数据库文件/etc/networks，并将文件指针设置为文件开头，以便逐条读取网络条目信息。如果 stayopen 参数不为 0，则保持数据库打开状态以供后续函数使用；否则在每次打开和读取时打开和关闭数据库。
 
 ```cpp
 #include <netdb.h>
 void setnetent(int stayopen);
 ```
 
-endnetent函数用于关闭网络数据库文件/etc/networks，以便释放资源。
+endnetent 函数用于关闭网络数据库文件/etc/networks，以便释放资源。
 
 ```cpp
 #include <netdb.h>
@@ -594,9 +594,9 @@ address: 0.0.254.169
 */
 ```
 
-## /etc/protocols文件
+## /etc/protocols 文件
 
-系统的协议数据库文件，即/etc/protocols文件。该文件是一个文本文件，其中每一行表示一个协议条目，具有如下格式：
+系统的协议数据库文件，即/etc/protocols 文件。该文件是一个文本文件，其中每一行表示一个协议条目，具有如下格式：
 
 ```cpp
 <protocol name> <protocol number> <alias list>
@@ -613,7 +613,7 @@ tcp     6   TCP
 udp     17  UDP
 ```
 
-## 解析/etc/protocols文件
+## 解析/etc/protocols 文件
 
 1、struct protent
 
@@ -662,9 +662,9 @@ int main()
 }
 ```
 
-## /etc/services文件
+## /etc/services 文件
 
-/etc/services文件，存储服务条目的信息，其每一行表示一个服务条目
+/etc/services 文件，存储服务条目的信息，其每一行表示一个服务条目
 
 ```cpp
 <service name> <port number>/<protocol name> <alias list>
@@ -683,7 +683,7 @@ smtp          25/tcp    mail
 http          80/tcp    www httpd
 ```
 
-## 解析/etc/services文件
+## 解析/etc/services 文件
 
 1、struct servent
 
@@ -696,7 +696,7 @@ struct servent {
 };
 ```
 
-2、getservbyname、getserbyport、getservent、setservent、endservent 函数 
+2、getservbyname、getserbyport、getservent、setservent、endservent 函数
 
 综合使用样例
 
@@ -733,11 +733,11 @@ int main()
 }
 ```
 
-## getaddrinfo与addrinfo
+## getaddrinfo 与 addrinfo
 
-getaddrinfo可以很好的代替gethostbyname和gethostbyaddr函数，其作用为知道主机名或服务名，查找其地址结构信息
+getaddrinfo 可以很好的代替 gethostbyname 和 gethostbyaddr 函数，其作用为知道主机名或服务名，查找其地址结构信息
 
-man手册解释
+man 手册解释
 
 ```txt
 getaddrinfo, freeaddrinfo, gai_strerror - network address and service translation
@@ -778,7 +778,7 @@ int getaddrinfo(const char *node, const char *service,
 void freeaddrinfo(struct addrinfo *res);
 ```
 
-样例,查找符合hint条件的主机名为"DESKTOP-QDLGRDB."对应的IP地址
+样例,查找符合 hint 条件的主机名为"DESKTOP-QDLGRDB."对应的 IP 地址
 
 ```cpp
 #include <stdio.h>
@@ -841,9 +841,9 @@ int main(int argc, char *argv[])
 }
 ```
 
-## gai_strerror、getnameinfo、getnameinfo函数的标志
+## gai_strerror、getnameinfo、getnameinfo 函数的标志
 
-如果getaddrinfo失败，不能使用perror或strerror生成错误信息，需要使用gai_strerror将返回的错误码转换成错误信息
+如果 getaddrinfo 失败，不能使用 perror 或 strerror 生成错误信息，需要使用 gai_strerror 将返回的错误码转换成错误信息
 
 ```cpp
 #include <sys/types.h>
@@ -854,7 +854,7 @@ const char *gai_strerror(int errcode);
 
 样例请见上一个样例中的使用
 
-getnameinfo用于将一个地址转换成一个主机名和一个服务名
+getnameinfo 用于将一个地址转换成一个主机名和一个服务名
 
 ```cpp
 #include <sys/socket.h>
@@ -905,41 +905,681 @@ int main(int argc, char *argv[])
 }
 ```
 
-## bind函数
+## bind 函数
+
+使用 bind 函数来关联地址和套接字,即将套接字和 IP 地址与端口号绑定起来，使得套接字可以接受特定地址发来的数据报
 
 ```cpp
-bind、getsockname、getpeername
+// bind a name to a socket
+#include <sys/types.h>          /* See NOTES */
+#include <sys/socket.h>
+int bind(int sockfd, const struct sockaddr *addr,
+         socklen_t addrlen);
 ```
-## getsockname函数
 
-## getpeername函数
+注意事项：
 
-## connect函数
+1、指定的地址必须有效，在进程运行的主机上应该有效  
+2、地址必须和创建套接字时的地址族所支持的格式相匹配  
+3、地址端口一般不小于 1024，除非该进程具有相应权限  
+4、一般只能将一个套接字端点绑定到一个给定地址上，尽管有些协议允许多重绑定  
+5、bind 函数之前必须先创建套接字，并且套接字处于未连接状态，对于 TCP 套接字必须出与 LISTEN 状态之前  
+6、如果要绑定的地址为 INADDR_ANY 或 IN6ADDR_ANY,则表示该套接字可以接受来自任何 IP 地址的数据包  
+7、在多次使用同一个地址和端口号绑定套接字时，必须使用 SO_REUSEADDR 套接字选项，否则会报错
+
+简单使用样例
 
 ```cpp
+#include <iostream>
+#include <cstdio>
+#include <cstdlib>
+#include <cstring>
+#include <unistd.h>
+#include <arpa/inet.h>
+#include <sys/socket.h>
+
+using namespace std;
+
+int main(int argc, char **argv)
+{
+    int socketfd;
+    struct sockaddr_in server_addr; // IPv4
+    // 创建套接字
+    socketfd = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP); // TCP
+    if (socketfd < 0)
+    {
+        cerr << "socket " << strerror(errno) << endl;
+        exit(EXIT_FAILURE);
+    }
+    // 绑定地址
+    memset(&server_addr, 0, sizeof(server_addr));
+    server_addr.sin_family = AF_INET;
+    server_addr.sin_port = htons(20023);
+    server_addr.sin_addr.s_addr = htonl(INADDR_ANY);
+    if (bind(socketfd, (struct sockaddr *)&server_addr, sizeof(server_addr)) < 0)
+    {
+        cerr << "bind " << strerror(errno) << endl;
+        close(socketfd);
+        exit(EXIT_FAILURE);
+    }
+    cout << "server started,listening on port " << 20023 << endl;
+    //...
+    close(socketfd);
+    return 0;
+}
 ```
 
-## listen函数
+## SO_REUSEADDR 选项
 
-## accept函数
+SO_REUSEADDR 是一个 socket 选项，用于在 bind() 函数中重用本地地址（IP 地址和端口号），即使之前连接仍然存在于 TIME_WAIT 状态。这个选项通常在服务器程序中使用，以便能够更快地重启服务器。
+
+当一个 TCP 连接被关闭时，它可能处于 TIME_WAIT 状态，这是因为 TCP 协议需要确保该连接的所有数据都已传输完成，并且双方都已经确认了这一点。这个状态默认持续 2 \* MSL（最大报文段生存时间，通常为 30 秒） 的时间，以确保在这段时间内任何迟到的数据包都能够被丢弃。
+
+但是，这个状态下的端口无法被重复使用，这可能会导致服务器无法在短时间内重启，因为旧的连接仍然存在于 TIME_WAIT 状态。使用 SO_REUSEADDR 选项可以绕过这个问题，从而使服务器可以更快地重启并绑定到相同的地址和端口。
+
+需要注意的是，使用 SO_REUSEADDR 选项会有一些安全风险。因为它可以绕过 TIME_WAIT 状态下的端口使用限制，因此可能会导致新的连接接收到旧的数据包，或者让攻击者冒充旧连接的一方。因此，使用该选项时需要仔细评估安全风险，并且只在确保安全的情况下使用。
+
+```cpp
+int listen_fd = socket(AF_INET, SOCK_STREAM, 0);
+if (listen_fd == -1) {
+    perror("socket");
+    exit(1);
+}
+int optval = 1;
+if (setsockopt(listen_fd, SOL_SOCKET, SO_REUSEADDR, &optval, sizeof(optval)) < 0) {
+    perror("setsockopt");
+    exit(1);
+}
+```
+
+## TIME_WAIT 阶段
+
+TIME_WAIT 状态是指在套接字连接断开之后，等待一段时间以确保所有分组都被正确处理之后才彻底关闭套接字。在这个状态下，套接字不能被重新使用，直到经过足够长的时间。
+
+在套接字编程中，TIME_WAIT 状态通常发生在主动关闭连接的一方，即调用 close() 函数来关闭连接的一方。在关闭连接之后，套接字会进入 TIME_WAIT 状态并等待 2MSL 的时间（MSL 是 Maximum Segment Lifetime 的缩写，代表一个 TCP 分组在网络中最大存活时间）。
+
+TIME_WAIT 状态主要是为了保证网络传输的可靠性和数据完整性。当 TCP 连接的一端发送了 FIN 报文后，进入了 FIN_WAIT_1 状态，并等待另一端的 ACK 报文。如果这个 ACK 报文因为网络原因丢失了，那么这个连接就会一直处于 FIN_WAIT_1 状态，直到超时，这样会使得另一端的 TCP 无法再次连接这个端口，从而导致网络阻塞。为了避免这种情况的发生，TCP 协议规定当一个 TCP 连接被关闭时，必须经过一段时间的 TIME_WAIT 状态，这个状态下，TCP 连接仍然保持着最后一次传输的数据，以及最后一次发送和接收到的序列号等信息，如果另一端有需要，就可以进行重传，从而保证数据的可靠传输。因此，TIME_WAIT 状态对于网络传输的可靠性和数据完整性至关重要。
+
+## getsockname 函数
+
+用于获取一个已绑定的套接字的本地地址信息，包括 IP 地址和端口号。
+
+```cpp
+#include <sys/socket.h>
+int getsockname(int sockfd, struct sockaddr *addr, socklen_t *addrlen);
+//函数返回值为 0 表示成功，-1 表示出错。
+```
+
+使用样例
+
+```cpp
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
+
+int main()
+{
+    int sockfd = socket(AF_INET, SOCK_STREAM, 0);
+    if (sockfd < 0) {
+        perror("socket creation failed");
+        exit(EXIT_FAILURE);
+    }
+    struct sockaddr_in addr;
+    addr.sin_family = AF_INET;
+    addr.sin_addr.s_addr = htonl(INADDR_ANY);
+    addr.sin_port = htons(12345);
+    if (bind(sockfd, (struct sockaddr*)&addr, sizeof(addr)) < 0) {
+        perror("bind failed");
+        exit(EXIT_FAILURE);
+    }
+    struct sockaddr_in local_addr;
+    socklen_t addr_len = sizeof(local_addr);
+    if (getsockname(sockfd, (struct sockaddr*)&local_addr, &addr_len) < 0) {
+        perror("getsockname failed");
+        exit(EXIT_FAILURE);
+    }
+    char ip_str[INET_ADDRSTRLEN];
+    if (inet_ntop(AF_INET, &(local_addr.sin_addr), ip_str, INET_ADDRSTRLEN) == NULL) {
+        perror("inet_ntop failed");
+        exit(EXIT_FAILURE);
+    }
+    printf("Local IP address: %s\n", ip_str);
+    printf("Local port: %d\n", ntohs(local_addr.sin_port));
+    close(sockfd);
+    return 0;
+}
+```
+
+## getpeername 函数
+
+用于获取已连接套接字的远程地址信息
+
+```cpp
+#include <sys/socket.h>
+int getpeername(int sockfd, struct sockaddr *addr, socklen_t *addrlen);
+//若调用成功，返回0，addr 存储了对端套接字的地址信息，addrlen 已经被更新为 addr 结构体的实际长度。
+//若出现错误，返回-1，并设置 errno 变量来指示错误类型。
+```
+
+使用样例 demo
+
+```cpp
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
+
+int main()
+{
+    int sockfd, newsockfd, portno;
+    socklen_t clilen;
+    char buffer[256];
+    struct sockaddr_in serv_addr, cli_addr;
+    int n;
+
+    sockfd = socket(AF_INET, SOCK_STREAM, 0);
+    if (sockfd < 0)
+    {
+        perror("ERROR opening socket");
+        exit(1);
+    }
+
+    bzero((char *)&serv_addr, sizeof(serv_addr));
+    portno = 5001;
+
+    serv_addr.sin_family = AF_INET;
+    serv_addr.sin_addr.s_addr = INADDR_ANY;
+    serv_addr.sin_port = htons(portno);
+
+    if (bind(sockfd, (struct sockaddr *)&serv_addr, sizeof(serv_addr)) < 0)
+    {
+        perror("ERROR on binding");
+        exit(1);
+    }
+
+    listen(sockfd, 5);
+
+    clilen = sizeof(cli_addr);
+    newsockfd = accept(sockfd, (struct sockaddr *)&cli_addr, &clilen);
+    if (newsockfd < 0)
+    {
+        perror("ERROR on accept");
+        exit(1);
+    }
+
+    struct sockaddr_in remote_addr;
+    socklen_t addrlen = sizeof(remote_addr);
+    getpeername(newsockfd, (struct sockaddr *)&remote_addr, &addrlen);
+
+    printf("Connection accepted from %s:%d\n", inet_ntoa(remote_addr.sin_addr), ntohs(remote_addr.sin_port));
+
+    close(newsockfd);
+    close(sockfd);
+    return 0;
+}
+```
+
+## TCP 套接字状态
+
+常见的状态
+
+```cpp
+CLOSED：初始状态，未连接
+LISTEN：套接字正在监听连接请求
+SYN_SENT：向对方发起连接请求，并等待对方确认
+SYN_RECEIVED：接收到对方的连接请求，并已发送确认
+ESTABLISHED：连接已建立，双方可以进行通信
+FIN_WAIT_1：关闭连接，等待对方发送关闭请求
+FIN_WAIT_2：等待对方发送关闭请求或确认已发送的关闭请求
+CLOSE_WAIT：等待对方发送关闭请求
+CLOSING：发送关闭请求，并等待对方的确认
+LAST_ACK：等待对方的关闭请求的确认
+TIME_WAIT：等待一段时间，确保对方已收到自己发送的关闭请求的确认
+CLOSED：连接已关闭，处于最终状态
+```
+
+常见的状态转换
+
+```txt
+客户端                                   服务器
+socket         SYN J,MSS=536
+connect（阻塞）------------------->  socket,bind,listen(LISTEN)
+SYN_SENT                            accept(阻塞) SYN_RCVD
+              <-------------------
+             SYN K,ACK J+1 MSS=1460
+ESTABLISHED
+ connect返回  ---------------------> ESTABLISHED accept返回，read（阻塞）
+                   ACK K+1
+write
+read阻塞      ----------------------> read 返回
+                     数据请求
+
+read返回      <--------------------- write read阻塞
+                  数据应答，请求ACK
+
+              --------------------->
+                       应答ACK
+
+close主动关闭  ---------------------> CLOSE_WAIT(被动关闭) read返回0
+FIN_WAIT_1              FIN M
+
+FIN_WAIT2     <--------------------
+                       ACK M+1
+
+TIME_WAIT     <---------------------close LAST_ACK
+                      FIN N
+
+              ----------------------> CLOSED
+                    ACK N+1
+(2MSL)CLOSED
+
+特殊的CLOSING状态:对于主动关闭方，CLOSING状态表示你发送FIN报文后，并没有收到对方的ACK报文，反而却也收到了对方的FIN报文
+```
+
+## connect 函数
+
+用于建立与远程主机的连接。
+
+```cpp
+#include <sys/types.h>          /* See NOTES */
+#include <sys/socket.h>
+int connect(int sockfd, const struct sockaddr *addr,
+           socklen_t addrlen);
+```
+
+调用 connect 函数会使系统尝试与远程主机建立连接，如果连接建立成功，则返回 0。如果连接建立失败，则返回-1，并设置相应的错误码，可以通过 perror 函数来输出错误信息。
+
+需要注意的是，如果 connect 函数返回-1 并设置了错误码 EINPROGRESS，则说明连接建立请求已经被发送到远程主机，但连接还未建立完成。此时可以调用 select 函数来等待连接完成，或者调用 poll 函数、epoll_wait 函数等待连接完成。
+
+另外，如果使用非阻塞的套接字进行连接操作，也需要先调用 connect 函数，然后通过 select 函数等待连接完成。在这种情况下，connect 函数可能会立即返回，并设置错误码为 EINPROGRESS。
+
+样例 demo
+
+```cpp
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
+
+#define PORT 20023
+
+int main()
+{
+    int sockfd = socket(AF_INET, SOCK_STREAM, 0);
+    if (sockfd < 0)
+    {
+        perror("socket");
+        exit(EXIT_FAILURE);
+    }
+
+    struct sockaddr_in servaddr;
+    memset(&servaddr, 0, sizeof(servaddr));
+
+    servaddr.sin_family = AF_INET;
+    servaddr.sin_port = htons(PORT);
+
+    if (inet_pton(AF_INET, "61.171.51.135", &servaddr.sin_addr) <= 0)
+    {
+        perror("inet_pton");
+        exit(EXIT_FAILURE);
+    }
+
+    if (connect(sockfd, (struct sockaddr *)&servaddr, sizeof(servaddr)) < 0)
+    {
+        perror("connect");
+        exit(EXIT_FAILURE);
+    }
+
+    printf("Connected to server\n");
+
+    close(sockfd);
+    return 0;
+}
+```
+
+## listen 函数
+
+用于将指定的套接字设置为从客户端接受连接请求的状态
+
+```cpp
+#include <sys/types.h>          /* See NOTES */
+#include <sys/socket.h>
+int listen(int sockfd, int backlog);
+/*
+sockfd：需要设置为监听状态的套接字描述符。
+backlog：内核为相应套接字排队的最大连接个数。
+该函数调用成功时返回0，失败时返回-1，并设置errno为相应的错误码。
+backlog: 它指定了可以在已完成连接队列中等待接受的尚未被 accept 函数处理的连接请求的数量。
+*/
+```
+
+样例 demo
+
+```cpp
+#include <sys/socket.h>
+#include <arpa/inet.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
+#include <errno.h>
+
+#define SERVER_PORT 8080
+#define BACKLOG 5
+
+int main() {
+    int listenfd, connfd;
+    struct sockaddr_in servaddr, cliaddr;
+    socklen_t clilen;
+    // 创建监听套接字
+    listenfd = socket(AF_INET, SOCK_STREAM, 0);
+    if (listenfd == -1) {
+        perror("socket error");
+        exit(EXIT_FAILURE);
+    }
+    // 初始化服务器地址结构体
+    bzero(&servaddr, sizeof(servaddr));
+    servaddr.sin_family = AF_INET;
+    servaddr.sin_addr.s_addr = htonl(INADDR_ANY);
+    servaddr.sin_port = htons(SERVER_PORT);
+    // 将套接字绑定到服务器地址结构体上
+    if (bind(listenfd, (struct sockaddr *) &servaddr, sizeof(servaddr)) == -1) {
+        perror("bind error");
+        exit(EXIT_FAILURE);
+    }
+    // 将套接字设置为监听状态，等待客户端连接请求
+    if (listen(listenfd, BACKLOG) == -1) {
+        perror("listen error");
+        exit(EXIT_FAILURE);
+    }
+    // 处理客户端连接请求
+    while (1) {
+        clilen = sizeof(cliaddr);
+        connfd = accept(listenfd, (struct sockaddr *) &cliaddr, &clilen);
+        if (connfd == -1) {
+            perror("accept error");
+            exit(EXIT_FAILURE);
+        }
+        // 处理连接
+        // ...
+        // 关闭连接
+        close(connfd);
+    }
+    // 关闭监听套接字
+    close(listenfd);
+    return 0;
+}
+```
+
+## accept 函数
+
+accept 函数用于从已经建立连接的套接字队列中取出一个客户端连接，创建一个新的套接字并返回该套接字的文件描述符，用于与客户端进行通信。
+
+```cpp
+#include <sys/types.h>          /* See NOTES */
+#include <sys/socket.h>
+int accept(int sockfd, struct sockaddr *addr, socklen_t *addrlen);
+/*
+sockfd：表示监听套接字的文件描述符；
+addr：表示用于存储连接到的客户端地址信息的指针，通常是一个 struct sockaddr_in 类型的指针；
+addrlen：表示 addr 指针指向的地址结构体的长度，需要传入一个指向 socklen_t 类型的变量的指针。
+如果连接成功，返回一个新的套接字的文件描述符，这个套接字用于与客户端进行通信；
+如果出错，返回 -1。
+*/
+```
+
+如果 sockfd 处于非阻塞模式，accept 返回-1，并将 errno 设置为 EAGAIN 或 EWOULDBLOCK
+
+使用样例可见上一个样例
 
 ## 数据传输
 
-### send函数
+在套接字的数据传输中，完全可以使用 read 与 write 函数，如果想指定选项，从多少个客户端接收数据包，或者发送带外数据，就需要使用 6 个为数据传递而设计的套接字函数
 
-### sendto函数
+### send 函数
 
-### struct msghdr
+send 函数用于发送数据到已连接的套接字
+
+send 函数的返回值是发送数据的实际字节数，如果发生错误，则返回 -1，并设置 errno 变量来指示错误类型。
 
 ```cpp
+#include <sys/types.h>
+#include <sys/socket.h>
+ssize_t send(int sockfd, const void *buf, size_t len, int flags);
+/*
+sockfd：已连接的套接字描述符。
+buf：发送数据缓冲区的指针。
+len：发送数据缓冲区的大小。
+flags：可选参数，指定发送数据的行为。
+flags：
+MSG_CONFIRM 提供链路层反馈以保持地址映射有效
+MSG_DONTROUTE 勿将数据包路由出本地网络
+MSG_DONTWAIT 允许非阻塞操作（等价于使用O_NONBLOCK）
+MSG_EOF 发送数据后关闭套接字的发送端
+MSG_EOR 如果协议支持，标记记录结束
+MSG_MORE 延迟发送数据包允许写更多数据
+MSG_NOSIGNAL 在写无连接的套接字时不产生SIGPIPE信息
+MSG_OOB 如果协议支持，发送带外数据
+*/
 ```
 
-### recv函数
+注意事项
 
-### recvfrom函数
+应该检查返回值，以确保所有数据都被发送出去了。  
+如果需要，应该在调用 send 函数之前设置套接字选项。  
+应该考虑对数据进行分段处理，以免发送的数据过大。
 
-### recvmsg函数
+```cpp
+#include <sys/socket.h>
+#include <unistd.h>
+#define BUF_SIZE 1024
+int main(int argc, char *argv[]) {
+    int sockfd;
+    char buf[BUF_SIZE];
+    ssize_t bytes_sent;
+    // 创建套接字并连接到远程主机
+    sockfd = socket(AF_INET, SOCK_STREAM, 0);
+    // ...
+    // connect(sockfd, ...);
+    // 发送数据
+    bytes_sent = send(sockfd, buf, BUF_SIZE, 0);
+    if (bytes_sent == -1) {
+        perror("send error");
+        return -1;
+    }
+    // 关闭套接字
+    close(sockfd);
+    return 0;
+}
+```
 
+### sendto 函数
+
+sendto 函数用于 DUP 套接字发送数据的函数
+
+```cpp
+#include <sys/types.h>
+#include <sys/socket.h>
+ssize_t sendto(int sockfd, const void *buf, size_t len, int flags,
+                      const struct sockaddr *dest_addr, socklen_t addrlen);
+/*
+sockfd：已连接套接字的文件描述符。
+buf：指向要发送数据的缓冲区。
+len：发送数据的长度。
+flags：额外的选项，可以设置为 0。与send的参数类似。
+dest_addr：目标地址结构体的指针，包含了目标 IP 和端口信息。
+addrlen：目标地址结构体的大小。
+*/
+```
+
+使用 sendto() 函数发送数据，一般不需要事先建立连接。如果已经建立了连接，也可以使用该函数发送数据，只需要忽略 dest_addr 和 addrlen 参数即可。
+
+函数返回值为发送的字节数，如果出现错误，返回值为 -1。可以通过 errno 全局变量获取错误代码。
+
+sendto 函数使用样例
+
+```cpp
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
+#include <string.h>
+#include <unistd.h>
+#include <stdio.h>
+
+#define PORT 12345
+
+int main() {
+    int sockfd;
+    struct sockaddr_in server_addr;
+    char buffer[] = "Hello, World!";
+    // 创建套接字
+    sockfd = socket(AF_INET, SOCK_DGRAM, 0);
+    // 设置服务器地址
+    server_addr.sin_family = AF_INET;
+    server_addr.sin_port = htons(PORT);
+    server_addr.sin_addr.s_addr = inet_addr("127.0.0.1");
+    memset(&(server_addr.sin_zero), 0, 8);
+    // 发送数据
+    sendto(sockfd, buffer, strlen(buffer), 0, (struct sockaddr *)&server_addr, sizeof(struct sockaddr));
+    // 关闭套接字
+    close(sockfd);
+    return 0;
+}
+
+```
+
+### sendmsg
+
+再通过套接字发送数据时，可以调用带有 msghdr 结构的 sendmsg 来指定多重缓冲区传输数据，和 writev 类似
+
+```cpp
+#include <sys/types.h>
+#include <sys/socket.h>
+ssize_t sendmsg(int sockfd, const struct msghdr *msg, int flags);
+```
+
+struct msghdr
+
+```cpp
+struct iovec {
+    void *iov_base;    // 数据缓冲区的起始地址
+    size_t iov_len;    // 数据缓冲区的长度
+};
+struct msghdr
+{
+    void *msg_name;        /* Optional address */
+    socklen_t msg_namelen; /* Size of address */
+    struct iovec *msg_iov; /* Scatter/gather array */
+    size_t msg_iovlen;     /* # elements in msg_iov */
+    void *msg_control;     /* Ancillary data, see below */
+    size_t msg_controllen; /* Ancillary data buffer len */
+    int msg_flags;         /* Flags (unused) */
+};
+/*
+void *msg_name：一个指向存放目标协议地址的缓冲区的指针。在发送数据时，这个字段可以为 NULL。在接收数据时，这个字段指向一个套接字地址结构体，例如 struct sockaddr_in 或 struct sockaddr_un。
+socklen_t msg_namelen：存放目标协议地址缓冲区的长度。这个字段只在 msg_name 不为 NULL 时有用。
+struct iovec *msg_iov：一个指向 struct iovec 结构体的指针，用于指定要发送或接收的数据缓冲区和缓冲区大小。
+int msg_iovlen：msg_iov 数组中元素的个数。
+void *msg_control：一个指向辅助数据的指针，例如控制消息。在发送和接收数据时，这个字段通常为 NULL。
+socklen_t msg_controllen：辅助数据的长度。
+int msg_flags：一组标志位，用于指定如何处理消息。
+*/
+```
+
+### recv 函数
+
+用于从套接字接收数据的函数
+
+```cpp
+#include <sys/types.h>
+#include <sys/socket.h>
+ssize_t recv(int sockfd, void *buf, size_t len, int flags);
+/*
+sockfd：表示要接收数据的套接字文件描述符；
+buf：表示接收数据的缓冲区地址；
+len：表示缓冲区长度；
+flags：通常设置为0，表示默认行为。
+recv函数的返回值为实际接收到的字节数，如果返回0表示对端已关闭连接，如果返回-1表示出现错误，此时需要通过errno变量查看具体错误原因。
+*/
+```
+
+flags 参数
+
+```cpp
+MSG_CMSG_CLOEXEC    为UNIX域套接字上接收的文件描述符设置执行时关闭标志
+MSG_DONTWAIT    启用非阻塞操作（相当于使用O_NONBLOCK）
+MSG_ERRQUEUE    接收错误信息作为辅助数据
+MSG_OOB 如果协议支持，获取带外数据
+MSG_PEEK    返回数据包内容而不真正取走数据包
+MSG_TRUNC   即使数据包被阶段，也返回数据包的实际长度
+MSG_WAITALL 等待直到所有的数据可用（仅SOCK_STREAM）
+```
+
+样例
+
+```cpp
+#include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <sys/types.h>
+#include <sys/socket.h>
+
+#define BUF_SIZE 1024
+
+int main()
+{
+    int sockfd, connfd, n;
+    char buf[BUF_SIZE];
+    struct sockaddr_in servaddr;
+    // 创建套接字
+    sockfd = socket(AF_INET, SOCK_STREAM, 0);
+    if (sockfd == -1) {
+        perror("socket error");
+        exit(EXIT_FAILURE);
+    }
+    // 设置服务器地址
+    servaddr.sin_family = AF_INET;
+    servaddr.sin_port = htons(12345);
+    servaddr.sin_addr.s_addr = htonl(INADDR_ANY);
+    // 绑定套接字
+    if (bind(sockfd, (struct sockaddr *)&servaddr, sizeof(servaddr)) == -1) {
+        perror("bind error");
+        exit(EXIT_FAILURE);
+    }
+    // 监听套接字
+    if (listen(sockfd, 10) == -1) {
+        perror("listen error");
+        exit(EXIT_FAILURE);
+    }
+    // 接受客户端连接
+    connfd = accept(sockfd, NULL, NULL);
+    if (connfd == -1) {
+        perror("accept error");
+        exit(EXIT_FAILURE);
+    }
+    // 接收客户端发送的数据
+    while ((n = recv(connfd, buf, BUF_SIZE, 0)) > 0) {
+        printf("receive %d bytes: %s\n", n, buf);
+    }
+    // 关闭连接
+    close(connfd);
+    close(sockfd);
+    return 0;
+}
+```
+
+### recvfrom 函数
+
+### recvmsg 函数
 
 ## 套接字选项
 
@@ -967,10 +1607,6 @@ sockatmark
 
 相关控制函数
 
-### fcntl
-
 ```cpp
 fcntl ioctl
 ```
-
-### ioctl
