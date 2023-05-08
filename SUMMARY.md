@@ -116,8 +116,6 @@
 ## 🍏 数据结构与算法
 
 - [数据结构](shu-ju-jie-gou-yu-suan-fa/shu-ju-jie-gou/README.md)
-  - [前言](shu-ju-jie-gou-yu-suan-fa/shu-ju-jie-gou/qian-yan.md)
-  - [绪论](shu-ju-jie-gou-yu-suan-fa/shu-ju-jie-gou/xu-lun.md)
   - [第 1 章 线性表](shu-ju-jie-gou-yu-suan-fa/shu-ju-jie-gou/di-1-zhang-xian-xing-biao/README.md)
     - [🐽 顺序表](shu-ju-jie-gou-yu-suan-fa/shu-ju-jie-gou/di-1-zhang-xian-xing-biao/shun-xu-biao.md)
     - [🐧 单链表](shu-ju-jie-gou-yu-suan-fa/shu-ju-jie-gou/di-1-zhang-xian-xing-biao/dan-lian-biao.md)
