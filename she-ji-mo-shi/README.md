@@ -15,8 +15,8 @@
 - [装饰者模式(Decrator 模式)](./jie-gou-xing-mo-shi/zhuang-shi-zhe-mo-shi-decrator-mo-shi.md)
 - [组合模式(Composite 模式)](./jie-gou-xing-mo-shi/zu-he-mo-shi.md)
 - [享元模式(Flyweight 模式)](./jie-gou-xing-mo-shi/xiang-yuan-mo-shi.md)
-- 外观模式(Facade 模式)
-- 代理模式(Proxy 模式)
+- [外观模式(Facade 模式)](./jie-gou-xing-mo-shi/wai-guan-mo-shi.md)
+- [代理模式(Proxy 模式)](./jie-gou-xing-mo-shi/dai-li-mo-shi.md)
 
 ## 行为模式
 
