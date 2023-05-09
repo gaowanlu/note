@@ -51,6 +51,7 @@
 
 - [服务器开发](server-dev/README.md)
   - [C++必知必会](server-dev/cpp_bizhibihui.md)
+  - [工具和调试](server-dev/tool_debug.md)
 
 ## 并发编程
 
@@ -99,20 +100,21 @@
 
 ## 设计模式
 
-- [设计模式](she-ji-mo-shi/README.md)
-  - [创建型模式](she-ji-mo-shi/chuang-jian-xing-mo-shi/README.md)
-    - [🍎 工厂模式(Factory 模式)](she-ji-mo-shi/chuang-jian-xing-mo-shi/gong-chang-mo-shi-factory-mo-shi.md)
-    - [🤩 抽象工厂模式(AbstractFactory 模式)](she-ji-mo-shi/chuang-jian-xing-mo-shi/chou-xiang-gong-chang-mo-shi.md)
-    - [☺ 单例模式(Singleton 模式)](she-ji-mo-shi/chuang-jian-xing-mo-shi/dan-li-mo-shi.md)
-    - [🥳 建造者模式(Builder 模式)](she-ji-mo-shi/chuang-jian-xing-mo-shi/jian-zao-zhe-mo-shi-builder-mo-shi.md)
-    - [👾 原型模式(Prototype 模式)](she-ji-mo-shi/chuang-jian-xing-mo-shi/yuan-xing-mo-shi-prototype-mo-shi.md)
-  - [结构型模式](she-ji-mo-shi/jie-gou-xing-mo-shi/README.md)
-    - [🤩 桥接模式(Bridge 模式)](she-ji-mo-shi/jie-gou-xing-mo-shi/qiao-jie-mo-shi-bridge-mo-shi.md)
-    - [🙄 适配器模式(Adapter 模式)](she-ji-mo-shi/jie-gou-xing-mo-shi/shi-pei-qi-mo-shi-adapter-mo-shi.md)
-    - [🤖 装饰者模式(Decrator 模式)](she-ji-mo-shi/jie-gou-xing-mo-shi/zhuang-shi-zhe-mo-shi-decrator-mo-shi.md)
-    - [🐸 组合模式(Composite 模式)](she-ji-mo-shi/jie-gou-xing-mo-shi/zu-he-mo-shi.md)
-    - [🙄 享元模式(Flyweight 模式)](she-ji-mo-shi/jie-gou-xing-mo-shi/xiang-yuan-mo-shi.md)
-    - [🤖 外观模式(Facade 模式)](she-ji-mo-shi/jie-gou-xing-mo-shi/wai-guan-mo-shi.md)
+- [设计模式](designpattern/README.md)
+  - [创建型模式](designpattern/chuang-jian-xing-mo-shi/README.md)
+    - [🍎 工厂模式(Factory 模式)](designpattern/chuang-jian-xing-mo-shi/gong-chang-mo-shi-factory-mo-shi.md)
+    - [🤩 抽象工厂模式(AbstractFactory 模式)](designpattern/chuang-jian-xing-mo-shi/chou-xiang-gong-chang-mo-shi.md)
+    - [☺ 单例模式(Singleton 模式)](designpattern/chuang-jian-xing-mo-shi/dan-li-mo-shi.md)
+    - [🥳 建造者模式(Builder 模式)](designpattern/chuang-jian-xing-mo-shi/jian-zao-zhe-mo-shi-builder-mo-shi.md)
+    - [👾 原型模式(Prototype 模式)](designpattern/chuang-jian-xing-mo-shi/yuan-xing-mo-shi-prototype-mo-shi.md)
+  - [结构型模式](designpattern/jie-gou-xing-mo-shi/README.md)
+    - [🤩 桥接模式(Bridge 模式)](designpattern/jie-gou-xing-mo-shi/qiao-jie-mo-shi-bridge-mo-shi.md)
+    - [🙄 适配器模式(Adapter 模式)](designpattern/jie-gou-xing-mo-shi/shi-pei-qi-mo-shi-adapter-mo-shi.md)
+    - [🤖 装饰者模式(Decrator 模式)](designpattern/jie-gou-xing-mo-shi/zhuang-shi-zhe-mo-shi-decrator-mo-shi.md)
+    - [🐸 组合模式(Composite 模式)](designpattern/jie-gou-xing-mo-shi/zu-he-mo-shi.md)
+    - [🙄 享元模式(Flyweight 模式)](designpattern/jie-gou-xing-mo-shi/xiang-yuan-mo-shi.md)
+    - [🤖 外观模式(Facade 模式)](designpattern/jie-gou-xing-mo-shi/wai-guan-mo-shi.md)
+    - [🤩 代理模式(Proxy 模式)](designpattern/jie-gou-xing-mo-shi/dai-li-mo-shi.md)
 
 ## 🍏 数据结构与算法
 

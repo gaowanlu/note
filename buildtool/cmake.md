@@ -64,6 +64,146 @@ MODULE：模块库，也就是.so或.dylib文件，库的代码会被编译成�
 add_library(mylib STATIC lib1.cpp lib2.cpp)
 ```
 
+## link_directories
+
+用于向项目中添加额外的库文件路径，以便在构建时链接这些库文件，个函数并不会直接链接库文件，它只是告诉链接器在搜索库文件时应该搜索哪些路径
+
+```cmake
+link_directories(directory1 directory2 ...)
+```
+
+```cmake
+# CMake 最低版本号要求
+cmake_minimum_required(VERSION 3.10)
+# 项目信息
+project(demo)
+# 添加库文件搜索路径
+link_directories(/usr/local/lib)
+# 指定生成目标
+add_executable(demo main.cpp)
+# 链接库文件
+target_link_libraries(demo mylib)
+```
+
+## aux_source_directory
+
+可以自动将指定目录下的所有源文件添加到一个变量中，方便在构建时使用
+
+```cmake
+aux_source_directory(dir variable)
+```
+
+样例
+
+```cmake
+# CMake 最低版本号要求
+cmake_minimum_required(VERSION 3.10)
+# 项目信息
+project(demo)
+# 添加源文件
+aux_source_directory(src DIR_SRCS)
+# 指定生成目标
+add_executable(demo ${DIR_SRCS})
+```
+
+## find
+
+使用 aux_source_directory 只能自动查找目录下的源文件，无法查找子目录中的源文件。如果需要包含子目录中的源文件，可以使用 aux_source_directory 结合 file 命令来实现，例如：
+
+```cpp
+# 添加当前目录及子目录下的所有源文件
+file(GLOB_RECURSE DIR_SRCS "*.cpp" "*.c")
+# 指定生成目标
+add_executable(demo ${DIR_SRCS})
+```
+
+这样可以递归地查找当前目录及其子目录下的所有 .cpp 和 .c 文件，并将它们的文件名添加到 DIR_SRCS 变量中。但是，由于使用 GLOB_RECURSE 命令存在一些问题，因此不推荐在 CMake 中使用这种方法。
+
+## add_definitions
+
+add_definitions 是 CMake 提供的一个函数，用于向 C/C++ 编译器添加预定义的宏定义。这些宏定义将在编译源代码时生效，可以用于控制代码的编译行为，例如启用或禁用某些功能、设置特定的编译选项等。
+
+```cmake
+add_definitions(-D<DEFINE> [<DEFINE> ...])
+```
+
+样例
+
+```cmake
+# CMake 最低版本号要求
+cmake_minimum_required(VERSION 3.10)
+# 项目信息
+project(demo)
+# 添加宏定义
+add_definitions(-DDEBUG -DVERSION="1.0")
+# 指定生成目标
+add_executable(demo main.cpp)
+```
+
+需要注意的是，add_definitions 添加的宏定义是全局的，将影响整个项目的编译。如果需要只在某个目标中添加宏定义，可以使用 target_compile_definitions 函数，例如：
+
+```cmake
+# 添加宏定义
+target_compile_definitions(target
+    <INTERFACE|PUBLIC|PRIVATE> [items1...]
+    [<INTERFACE|PUBLIC|PRIVATE> [items2...] ...])
+```
+
+```cmake
+# CMake 最低版本号要求
+cmake_minimum_required(VERSION 3.10)
+# 项目信息
+project(demo)
+# 添加宏定义
+target_compile_definitions(demo PUBLIC DEBUG)
+# 指定生成目标
+add_executable(demo main.cpp)
+```
+
+## include_directories
+
+用于向 C/C++ 编译器添加头文件搜索路径。当编译源代码时，编译器将在指定的搜索路径中查找所需的头文件，如果找到则编译通过，否则编译失败。
+
+```cmake
+include_directories([AFTER|BEFORE] [SYSTEM] dir1 [dir2 ...])
+```
+
+其中，dir1、dir2 等是要添加的头文件搜索路径，可以是一个或多个，多个路径之间用空格分隔。AFTER 和 BEFORE 选项用于指定添加路径的位置，AFTER 表示添加在已有搜索路径的后面，BEFORE 表示添加在已有搜索路径的前面。SYSTEM 选项用于将添加的路径标记为系统路径，这样编译器在搜索头文件时将不会产生警告。
+
+样例
+
+```cmake
+# CMake 最低版本号要求
+cmake_minimum_required(VERSION 3.10)
+# 项目信息
+project(demo)
+# 添加头文件搜索路径
+include_directories(include)
+# 指定生成目标
+add_executable(demo main.cpp)
+```
+
+需要注意的是，include_directories 添加的头文件搜索路径是全局的，将影响整个项目的编译。如果需要只在某个目标中添加头文件搜索路径，可以使用 target_include_directories 函数，例如：
+
+```cmake
+# 添加头文件搜索路径
+target_include_directories(target
+    [SYSTEM|BEFORE|AFTER]
+    <INTERFACE|PUBLIC|PRIVATE> [items1...]
+    [<INTERFACE|PUBLIC|PRIVATE> [items2...] ...])
+```
+
+```cmake
+# CMake 最低版本号要求
+cmake_minimum_required(VERSION 3.10)
+# 项目信息
+project(demo)
+# 添加头文件搜索路径
+target_include_directories(demo PUBLIC include)
+# 指定生成目标
+add_executable(demo main.cpp)
+```
+
 ## target_link_libraries
 
 用于将一个目标（例如可执行文件或库）与一个或多个库进行链接
