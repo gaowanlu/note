@@ -1,10 +1,10 @@
 # CMake
 
-很棒的CMake学习项目推荐,内容的许多出处来自于，请多支持原作者 https://github.com/eglinuxer/study_cmake  本人仅用作于记录学习
+很棒的 CMake 学习项目推荐,内容的许多出处来自于，请多支持原作者 https://github.com/eglinuxer/study_cmake 本人仅用作于记录学习
 
 ## cmake_minimum_required
 
-cmake_minimum_required是一个CMake命令，用于指定需要使用的CMake版本的最小版本号。这个命令通常会放在CMakeLists.txt文件的顶部，以确保使用的CMake版本能够支持这个项目所需的所有功能。
+cmake_minimum_required 是一个 CMake 命令，用于指定需要使用的 CMake 版本的最小版本号。这个命令通常会放在 CMakeLists.txt 文件的顶部，以确保使用的 CMake 版本能够支持这个项目所需的所有功能。
 
 ```cmake
 cmake_minimum_required(VERSION 3.26 FATAL_ERROR)
@@ -12,7 +12,7 @@ cmake_minimum_required(VERSION 3.26 FATAL_ERROR)
 
 ## project
 
-project是一个CMake命令，用于定义一个CMake项目。它通常会被放在CMakeLists.txt文件的顶部，紧接着cmake_minimum_required命令。
+project 是一个 CMake 命令，用于定义一个 CMake 项目。它通常会被放在 CMakeLists.txt 文件的顶部，紧接着 cmake_minimum_required 命令。
 
 ```cmake
 project(MyProject)
@@ -30,7 +30,7 @@ project(MyProject VERSION 1.0 DESCRIPTION "My awesome project")
 project(MyProject LANGUAGES CXX)
 ```
 
-这个命令会将项目语言设置为C++。在这种情况下，CMake会根据设置自动为项目添加C++编译器和链接器，并且会自动使用CMake中的一些内置变量（如CMAKE_CXX_COMPILER、CMAKE_CXX_FLAGS等）来设置编译器和编译选项。
+这个命令会将项目语言设置为 C++。在这种情况下，CMake 会根据设置自动为项目添加 C++编译器和链接器，并且会自动使用 CMake 中的一些内置变量（如 CMAKE_CXX_COMPILER、CMAKE_CXX_FLAGS 等）来设置编译器和编译选项。
 
 ## add_executable
 
@@ -54,9 +54,9 @@ add_executable(MyProject main.cpp)
 add_library(<library_name> [STATIC | SHARED | MODULE] <source_file> [<source_file>...])
 ```
 
-STATIC: 静态库，也就是.a文件，库的代码会被编译到可执行文件中。  
-SHARED: 共享库，也就是.so或.dylib文件，库的代码会被编译成独立的动态链接库文件，可供多个可执行文件使用。  
-MODULE：模块库，也就是.so或.dylib文件，库的代码会被编译成动态链接库文件，但不会被链接到可执行文件中，而是在运行时通过dlopen等函数进行加载。  
+STATIC: 静态库，也就是.a 文件，库的代码会被编译到可执行文件中。  
+SHARED: 共享库，也就是.so 或.dylib 文件，库的代码会被编译成独立的动态链接库文件，可供多个可执行文件使用。  
+MODULE：模块库，也就是.so 或.dylib 文件，库的代码会被编译成动态链接库文件，但不会被链接到可执行文件中，而是在运行时通过 dlopen 等函数进行加载。
 
 例如:
 
@@ -218,7 +218,7 @@ target_link_libraries(<target> <library>...)
 target_link_libraries(MyProgram Library1 Library2)
 ```
 
-## set与unset
+## set 与 unset
 
 用于设置一个变量的值
 
@@ -226,7 +226,7 @@ target_link_libraries(MyProgram Library1 Library2)
 set(<variable> <value> [CACHE <type> <docstring> [FORCE]])
 ```
 
-<variable>是要设置的变量的名称，<value>是变量的值。CACHE选项用于将变量的值存储在CMake缓存中，这样可以在后续的构建中保留变量的值。<type>是变量的类型，可以是STRING、FILEPATH、PATH、BOOL、INTERNAL等类型。<docstring>是变量的描述信息，可以用于生成CMake缓存中的变量描述。FORCE选项用于在设置变量时，无论变量是否已存在，都强制设置变量的值。
+<variable>是要设置的变量的名称，<value>是变量的值。CACHE 选项用于将变量的值存储在 CMake 缓存中，这样可以在后续的构建中保留变量的值。<type>是变量的类型，可以是 STRING、FILEPATH、PATH、BOOL、INTERNAL 等类型。<docstring>是变量的描述信息，可以用于生成 CMake 缓存中的变量描述。FORCE 选项用于在设置变量时，无论变量是否已存在，都强制设置变量的值。
 
 例如:
 
@@ -234,13 +234,13 @@ set(<variable> <value> [CACHE <type> <docstring> [FORCE]])
 set(MYVARABLE "HELLO WORLD")
 ```
 
-放入CMake缓存中
+放入 CMake 缓存中
 
 ```cpp
 set(MYVARABLE "HELLO WORLD" CACHE STRING "my message" FORCE)
 ```
 
-unset为取消变量定义
+unset 为取消变量定义
 
 ```cpp
 unset(MYVARABLE)
@@ -282,7 +282,7 @@ message(AUTHOR_WARNING "${MY_CMD}")
 
 ## ENV{}
 
-在cmake中可以使用系统环境变量，CMake设置的环境变量只在此CMake构建进程中有效
+在 cmake 中可以使用系统环境变量，CMake 设置的环境变量只在此 CMake 构建进程中有效
 
 ```cmake
 # 定义环境变量
@@ -302,7 +302,7 @@ message(STATUS "$ENV{PATH}")
 
 ## option
 
-定义BOOL缓存变量，ON、TRUE、1、OFF、FALSE、0
+定义 BOOL 缓存变量，ON、TRUE、1、OFF、FALSE、0
 
 ```cpp
 option(my_opt "select status" OFF)
@@ -313,12 +313,12 @@ message(STATUS ${my_opt})# ON
 
 ## 变量作用域
 
-add_subdirectory、定义函数、使用block()时产生新作用域  
+add_subdirectory、定义函数、使用 block()时产生新作用域  
 缓存变量、环境变量作用域是全局的
 
 ## block
 
-局部作用域相当于，C++中的{},只不过要CMake>=3.25
+局部作用域相当于，C++中的{},只不过要 CMake>=3.25
 
 ```cpp
 block()
@@ -327,13 +327,13 @@ block()
 endblock()
 ```
 
-block 还提供了相关参数，去选择使用引用外部的x、y变量等机制
+block 还提供了相关参数，去选择使用引用外部的 x、y 变量等机制
 
 总之用处不大
 
 ## 字符串
 
-CMake有字符串类型，而且提供了许多字符串内置操作
+CMake 有字符串类型，而且提供了许多字符串内置操作
 
 ### 查找
 
@@ -341,9 +341,9 @@ CMake有字符串类型，而且提供了许多字符串内置操作
 string(FIND inputString subString outVar [REVERSE])
 ```
 
-* 在 inputString 中查找 subString，将查找到的索引存在 outVar 中，索引从 0 开始。
-* 如果没有 REVERSE 选项，则保存第一个查找到的索引，否则保存最后一个查找到的索引。
-* 如果没有找到则保存 -1。
+- 在 inputString 中查找 subString，将查找到的索引存在 outVar 中，索引从 0 开始。
+- 如果没有 REVERSE 选项，则保存第一个查找到的索引，否则保存最后一个查找到的索引。
+- 如果没有找到则保存 -1。
 
 需要注意的是，string(FIND) 将所有字符串都作为 ASCII 字符，outVar 中存储的索引也会以字节为单位计算，因此包含多字节字符的字符串可能会导致意想不到的结果。
 
@@ -360,8 +360,8 @@ message("fwdIndex = ${fwdIndex}\n"
 string(REPLACE matchString replaceWith outVar input...)
 ```
 
-* 将 input 中所有匹配 matchString 的都用 replaceWith 替换，并将结果保存到 outVar 中。
-* 如果有多个 input，它们是直接连接在一起的，没有任何分隔符。
+- 将 input 中所有匹配 matchString 的都用 replaceWith 替换，并将结果保存到 outVar 中。
+- 如果有多个 input，它们是直接连接在一起的，没有任何分隔符。
 
 还支持则正则表达式替换字符串
 
@@ -371,10 +371,10 @@ string(REGEX MATCHALL regex outVar input...)
 string(REGEX REPLACE  regex replaceWith outVar input...)
 ```
 
-* input 字符串同样会在开始匹配正则表达式前进行串联。
-* MATCH 只查找第一个匹配的字符串，并保存到 outVar 中。
-* MATCHALL 会查找所有匹配的字符串，并保存到 outVar 中，如果匹配到多个，outVar 将是一个列表，列表我们后面会讲。
-* REPLACE 会将每一个匹配到的字符串用 replaceWith 替换后，将替换后的完整字符串放到 outVar 中。
+- input 字符串同样会在开始匹配正则表达式前进行串联。
+- MATCH 只查找第一个匹配的字符串，并保存到 outVar 中。
+- MATCHALL 会查找所有匹配的字符串，并保存到 outVar 中，如果匹配到多个，outVar 将是一个列表，列表我们后面会讲。
+- REPLACE 会将每一个匹配到的字符串用 replaceWith 替换后，将替换后的完整字符串放到 outVar 中。
 
 ```cmake
 string(REGEX MATCH    "[ace]"           matchOne abcdefabcdef)
@@ -393,8 +393,8 @@ message("matchOne = ${matchOne}\n"
 string(SUBSTRING input index length outVar)
 ```
 
-* 将 input 字符串从 index 处截取 length 长度放到 outVar 中。
-* 如果 length 为 -1 的话，将从 index 到 input 结尾的字符串串保存到 outVar 中。
+- 将 input 字符串从 index 处截取 length 长度放到 outVar 中。
+- 如果 length 为 -1 的话，将从 index 到 input 结尾的字符串串保存到 outVar 中。
 
 ### 其他
 
@@ -450,7 +450,7 @@ string(SUBSTRING input index length outVar)
 
 ## 列表
 
-上面set可知道，可以定义列表变量，cmake中提供了大量的列表相关的操作
+上面 set 可知道，可以定义列表变量，cmake 中提供了大量的列表相关的操作
 
 ```cmake
 # 读取
@@ -489,7 +489,7 @@ project(main)
 set(m_list)
 list(APPEND m_list "a" "c" "b")
 foreach(var IN LISTS m_list)
-    message(STATUS ${var})    
+    message(STATUS ${var})
 endforeach()
 
 # a c b
@@ -511,7 +511,7 @@ endforeach()
 
 ## math
 
-cmake提供了数学计算，使用math函数实现
+cmake 提供了数学计算，使用 math 函数实现
 
 ```cmake
 math(EXPR outVar mathExpr [OUTPUT_FORMAT format])
@@ -537,7 +537,7 @@ message(STATUS ${outVar})
 
 ## if
 
-像编程语言一样cmake中可以使用流程控制
+像编程语言一样 cmake 中可以使用流程控制
 
 ```cmake
 if(expression1)
@@ -564,7 +564,7 @@ OFF、NO、FALSE、N、IGNORE、NOTFOUND、空字符串、以 -NOTFOUND 结尾�
 如果使用引号  
 cmake 3.1 及以后，如果该字符串不匹配任何为真的值，那该条件表达式为假。  
 cmake 3.1 以前，如果该字符串匹配到任何存在的变量名字，则会按照变量处理。  
-if(ENV{some_var}) 这种形式的条件表达式永远为假，所以不要使用环境变量。  
+if(ENV{some_var}) 这种形式的条件表达式永远为假，所以不要使用环境变量。
 
 ### 逻辑表达式
 
@@ -584,13 +584,13 @@ if(NOT (expression1 AND (expression2 OR expression3)))
 if(value1 OPERATOR value2)
 ```
 
-| Numeric | String | Version numbers | Path |
-| --- | --- | --- | --- |
-| LESS | STRLESS | VERSION_LESS |  |
-| GREATER | STRGREATER | VERSION_GREATER |  |
-| EQUAL | STREQUAL | VERSION_EQUAL | PATH_EQUAL |
-| LESS_EQUAL | STRLESS_EQUAL | VERSION_LESS_EQUAL |  |
-| GREATER_EQUAL | STRGREATER_EQUAL | VERSION_GREATER_EQUAL |  |
+| Numeric       | String           | Version numbers       | Path       |
+| ------------- | ---------------- | --------------------- | ---------- |
+| LESS          | STRLESS          | VERSION_LESS          |            |
+| GREATER       | STRGREATER       | VERSION_GREATER       |            |
+| EQUAL         | STREQUAL         | VERSION_EQUAL         | PATH_EQUAL |
+| LESS_EQUAL    | STRLESS_EQUAL    | VERSION_LESS_EQUAL    |            |
+| GREATER_EQUAL | STRGREATER_EQUAL | VERSION_GREATER_EQUAL |            |
 
 ### 正则表达式
 
@@ -632,7 +632,6 @@ if(${firstFile} IS_NEWER_THAN ${secondFile})
 		# ... commands to recreate secondFile
 endif()
 ```
-
 
 ### 判断是否存在表达式
 
@@ -745,7 +744,7 @@ while(num GREATER 0)
 endwhile()
 ```
 
-## break与continue
+## break 与 continue
 
 while 循环和 foreach 循环都支持提前退出循环
 
@@ -799,7 +798,7 @@ message("Remaining values: ${values}")
 
 ## 如何使用子目录
 
-CMake提供了两个命令来解决多级目录的问题，分别为add_subdirectory和include
+CMake 提供了两个命令来解决多级目录的问题，分别为 add_subdirectory 和 include
 
 ### add_subdirectory
 
@@ -819,13 +818,13 @@ source_dir 是子目录的路径，包含一个 CMakeLists.txt 文件。
 binary_dir 是一个可选参数，指定在其中生成二进制文件的目录。  
 EXCLUDE_FROM_ALL 是一个可选参数，指定将该目录排除在 all 编译选项之外。  
 如果省略 binary_dir 参数，则使用与 source_dir 相同的目录来生成二进制文件。如果指定了
-EXCLUDE_FROM_ALL 参数，则该目录中的构建规则不会包括在 all 编译选项中。  
+EXCLUDE_FROM_ALL 参数，则该目录中的构建规则不会包括在 all 编译选项中。
 
 注意，add_subdirectory 命令只适用于在同一 CMake 构建中构建的子目录。如果要构建另一个独立的项目，则应该使用 ExternalProject_Add 命令。
 
 ### EXCLUDE_FROM_ALL 场景案例
 
-一个常见的例子是，在一个项目中可能会包含多个子目录，其中有些子目录是可选的或只在特定条件下才需要编译。如果没有使用EXCLUDE_FROM_ALL参数，那么CMake将默认构建所有子目录，这可能会浪费时间和资源。
+一个常见的例子是，在一个项目中可能会包含多个子目录，其中有些子目录是可选的或只在特定条件下才需要编译。如果没有使用 EXCLUDE_FROM_ALL 参数，那么 CMake 将默认构建所有子目录，这可能会浪费时间和资源。
 
 例如，假设一个项目包含以下子目录：
 
@@ -840,18 +839,18 @@ root/
     └── app_source.cpp
 ```
 
-其中lib是一个可选的库，只有在某些条件下才需要编译。如果没有使用EXCLUDE_FROM_ALL，则在执行cmake和make时，CMake会自动构建lib和app目录中的所有内容。
+其中 lib 是一个可选的库，只有在某些条件下才需要编译。如果没有使用 EXCLUDE_FROM_ALL，则在执行 cmake 和 make 时，CMake 会自动构建 lib 和 app 目录中的所有内容。
 
-可以使用EXCLUDE_FROM_ALL来指定lib子目录不应被默认构建。例如，在root/CMakeLists.txt中添加以下内容：
+可以使用 EXCLUDE_FROM_ALL 来指定 lib 子目录不应被默认构建。例如，在 root/CMakeLists.txt 中添加以下内容：
 
 ```cmake
 add_subdirectory(lib EXCLUDE_FROM_ALL)
 add_subdirectory(app)
 ```
 
-现在，在执行cmake和make时，CMake仅会构建app目录中的内容，lib目录中的内容则不会被默认构建。
+现在，在执行 cmake 和 make 时，CMake 仅会构建 app 目录中的内容，lib 目录中的内容则不会被默认构建。
 
-如果需要构建lib目录，可以使用以下命令：
+如果需要构建 lib 目录，可以使用以下命令：
 
 ```shell
 make lib
@@ -861,13 +860,13 @@ make lib
 
 CMake 提供了一些变量来跟踪当前正在处理的 CMakeLists.txt 文件的源和二进制目录。以下是一些只读变量，随着每个文件被 CMake 处理，这些变量会自动更新。它们始终包含绝对路径。
 
-* CMAKE_SOURCE_DIR  
+- CMAKE_SOURCE_DIR  
   源代码的最顶级目录（即最顶级 CMakeLists.txt 文件所在的位置）。这个变量的值永远不会改变。
-* CMAKE_BINARY_DIR  
+- CMAKE_BINARY_DIR  
   构建目录的最顶级目录。这个变量的值永远不会改变。
-* CMAKE_CURRENT_SOURCE_DIR
+- CMAKE_CURRENT_SOURCE_DIR
   当前正在被 CMake 处理的 CMakeLists.txt 文件所在的目录。每当由 add_subdirectory() 调用处理新文件时，它都会更新，当处理该目录完成时，它会被还原回原来的值。
-* CMAKE_CURRENT_BINARY_DIR  
+- CMAKE_CURRENT_BINARY_DIR  
   由 CMake 处理的当前 CMakeLists.txt 文件所对应的构建目录。每次调用 add_subdirectory() 时都会更改该目录，当 add_subdirectory() 返回时将其恢复。
 
 ~/CMakeLists.txt
@@ -909,7 +908,7 @@ message("mysub: CMAKE_CURRENT_BINARY_DIR    = ${CMAKE_CURRENT_BINARY_DIR}")
 
 ### 实际构建工程简单样例
 
-假设有一个多级目录的C++工程，其目录结构如下
+假设有一个多级目录的 C++工程，其目录结构如下
 
 ```cmake
 CMakeLists.txt
@@ -998,7 +997,7 @@ message("Child  (after):  childVar = ${childVar}")
 
 ### 如何写父作用域变量
 
-set函数支持 PARENT_SCOPE 选项
+set 函数支持 PARENT_SCOPE 选项
 
 CMakeLists.txt
 
@@ -1021,17 +1020,17 @@ set(myVar bar PARENT_SCOPE)
 message("Child  (after):  myVar = ${myVar}")
 ```
 
-## 子目录定义project
+## 子目录定义 project
 
 project() 命令对于一个项目来说是必须的，如果开发人员没有显式的调用 project() 命令，在运行 cmake 进行项目配置的时候会收到警告信息，同时，cmake 会隐式地添加 project() 命令的调用。强烈建议在顶层 CMakeLists.txt 中适当的位置显式的调用 project() 命令。
 
-porject() 命令可不可以调用多次？  
+porject() 命令可不可以调用多次？
 
 可以的，但是需要有 add_subdirectory() 命令调用的情况下才行，也就是说，我们不能在同一个 CMakeLists.txt 中调用 project() 命令多次，但是可以在 add_subdirectory() 命令调用时引入的子目录中的 CMakeLists.txt 中再次调用 project() 命令。通常这样做没有什么坏处，但是会导致 CMake 生成更多的项目文件。
 
 ## include
 
-CMake 可以通过include命令引入子目录，然后子目录中必须有一个 CMakeLists.txt，这相当于给顶层的 CMakeLists.txt 引入了新的 CMake 内容。
+CMake 可以通过 include 命令引入子目录，然后子目录中必须有一个 CMakeLists.txt，这相当于给顶层的 CMakeLists.txt 引入了新的 CMake 内容。
 
 ### fileName
 
@@ -1045,7 +1044,7 @@ OPTIONAL 选项表示如果找不到指定的文件，不会抛出错误，而�
 
 RESULT_VARIABLE 选项指定一个变量名，用于接收 include 命令的结果。如果指定了该选项，CMake 将会在执行指定文件后将结果存储在该变量中。如果指定的文件不存在，则该变量将被设置为空字符串。
 
-NO_POLICY_SCOPE参数表示在包含给定的脚本时，不应用此命令之前设置的策略或变量范围。也就是说，该选项会在一个新的独立作用域中执行给定的脚本文件，而不会受到任何外部策略或变量的影响。
+NO_POLICY_SCOPE 参数表示在包含给定的脚本时，不应用此命令之前设置的策略或变量范围。也就是说，该选项会在一个新的独立作用域中执行给定的脚本文件，而不会受到任何外部策略或变量的影响。
 
 使用 include 命令时需要注意避免文件循环包含，即 A 包含 B，B 又包含 A，这样会导致 CMake 陷入无限递归。
 
@@ -1119,7 +1118,28 @@ message(${CMAKE_CURRENT_LIST_LINE})#3
 
 ## 项目相关的变量
 
-## 提前结束处理return
+CMAKE_SOURCE_DIR，这个变量的值代表的是源码的顶级目录。但是这个变量的值可能会发生变化。
+
+第三方依赖，CMAKE_SOURCE_DIR 情况：有一个新的项目 A，它的顶级目录是 /root/workspace/code/a，同时我们的项目 A 依赖项目 B，所以我们通过某种方式将项目 B 作为项目 A 的依赖，假设这个时候项目 A 依赖的项目 B 的源码在 /root/workspace/code/b/3rd/b 目录中。那这个时候，我们在项目 B 中获取到的 CMAKE_SOURCE_DIR 的值就不是我们期望的 /root/workspace/code/a/3rd/b，而是变成了 /root/workspace/code/a。所以我们的项目如果可能会被作为第三方项目使用，那 CMAKE_SOURCE_DIR 的值可能就会不可靠，同样 CMAKE_BINARY_DIR 变量也有这样的问题。
+
+当调用 project 时，cmake 对自动设置一些和 project 相关的变量
+
+- `PROJECT_SOURCE_DIR`:值是在当前作用域或者父作用域中最近的一处调用 project() 命令的那个 CMakeLists.txt 所在的目录
+- `PROJECT_BINARY_DIR`:PROJECT_SOURCE_DIR 目录对应的构建目录
+- `projectName_SOURCE_DIR`:projectName 是在调用 project() 命令时传入的名字，加上 \_SOURCE_DIR 后缀可以特指某个项目的 CMakeLists.txt 所在的目录
+- `projectName_BINARY_DIR`:projectName_BINARY_DIR 目录对应的构建目录
+
+```cmake
+if(CMAKE_CURRENT_SOURCE_DIR STREQUAL CMAKE_SOURCE_DIR)
+    # 是单独构建，没有被第三方作为子模块
+endif()
+```
+
+CMake 3.21 版本开始，CMake 提供了一个变量：`PROJECT_IS_TOP_LEVEL`，如果这个变量为真，就代表当前项目是单独构建的，或者是项目中顶级 project。
+
+也有 `projectName_IS_TOP_LEVEL` 变量。每当我们调用 project() 命令的时候，就会创建对应的 `projectName_IS_TOP_LEVEL` 缓存变量。
+
+## 提前结束处理 return
 
 ## 函数和宏基础
 
@@ -1129,14 +1149,20 @@ message(${CMAKE_CURRENT_LIST_LINE})#3
 
 ## 函数和宏返回值
 
-## cmake命令覆盖详解
+## cmake 命令覆盖详解
 
 ## 函数相关的特殊变量
 
-## 复用cmake代码
+## 复用 cmake 代码
 
-## cmake处理参数时的一些问题
+## cmake 处理参数时的一些问题
 
-## cmake预设
+## cmake 属性通用命令
 
-## cmake工具链
+## cmake 全局属性
+
+## cmake 目录属性
+
+## cmake 预设
+
+## cmake 工具链
