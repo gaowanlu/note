@@ -1141,6 +1141,72 @@ CMake 3.21 版本开始，CMake 提供了一个变量：`PROJECT_IS_TOP_LEVEL`�
 
 ## 提前结束处理 return
 
+1、如果调用return命令的地方不再函数中，则结束当前文件的处理，回到引入当前文件的地方，可以为include或add_subdirectory  
+2、在函数中使用return比较复杂，后面再说
+
+return 在3.25前没有返回值，从 CMake 3.25 开始，return() 命令有了一个类似 block() 命令的参数关键字：PROPAGATE，在这个关键字后面我们可以给出列出一些变量，这些变量在调用 return() 命令的时候会更新其值。
+
+样例一
+
+```cmake
+#<file>CMakeLists.txt
+set(x 1)
+set(y 2)
+add_subdirectory(subdir)
+# x为3 y未定义
+
+#<file>subdir/CMakeLists.txt
+# This ensures that we have a version of CMake that supports
+# PROPAGATE and that the CMP0140 policy is set to NEW.
+cmake_minimum_required(VERSION 3.25)
+set(x 3)
+unset(y)
+return(PROPAGATE x y)
+```
+
+样例二
+
+```cmake
+#<file>CMakeLists.txt
+set(x 1)
+set(y 2)
+block()
+  add_subdirectory(subdir)
+  # x为3 y未定义
+endblock()
+#x为1 y为2
+
+#<file>subdir/CMakeLists.txt
+cmake_minimum_required(VERSION 3.25)
+# This block does not affect the propagation of x and y to
+# the parent CMakeLists.txt file's scope
+block()
+    set(x 3)
+    unset(y)
+    return(PROPAGATE x y)
+endblock()
+```
+
+样例三
+
+```cmake
+#<file>CMakeLists.txt
+set(x 1)
+set(y 2)
+add_subdirectory(subdir)
+#x为3 y未定义
+
+#<file>subdir/CMakeLists.txt
+cmake_minimum_required(VERSION 3.25)
+# This block does not affect the propagation of x and y to
+# the parent CMakeLists.txt file's scope
+block()
+    set(x 3)
+    unset(y)
+    return(PROPAGATE x y)
+endblock()
+```
+
 ## 函数和宏基础
 
 ## 函数和宏的参数处理基础

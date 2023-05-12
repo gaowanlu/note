@@ -45,13 +45,19 @@
   - [GCC](buildtool/gcc.md)
   - [Make](buildtool/make.md)
   - [CMake](buildtool/cmake.md)
-  - [GDB](buildtool/gdb.md)
 
 ## 服务器开发
 
 - [服务器开发](server-dev/README.md)
   - [C++必知必会](server-dev/cpp_bizhibihui.md)
   - [工具和调试](server-dev/tool_debug.md)
+  - [多线程编程与资源同步](server-dev/multi_thread_resource_synchronization.md)
+  - [网络编程重点]()
+  - [网络通信故障排查命令]()
+  - [网络通信协议设计]()
+  - [单个服务的基本结构]()
+  - [Redis网络通信模块经验]()
+  - [服务器开发中的常用模块]()
 
 ## 并发编程
 
