@@ -21,7 +21,7 @@
 ## 行为模式
 
 - [13、模板模式(Template 模式)](./xing-wei-mo-shi/template.md)
-- [14、策略模式(Strategy 模式)]()
+- [14、策略模式(Strategy 模式)](./xing-wei-mo-shi/strategy.md)
 - [15、状态模式(State 模式)]()
 - [16、观察者模式(Observer 模式)]()
 - [17、备忘录模式(Memento 模式)]()

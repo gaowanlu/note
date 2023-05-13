@@ -123,6 +123,7 @@
     - [🤩 代理模式(Proxy 模式)](designpattern/jie-gou-xing-mo-shi/dai-li-mo-shi.md)
   - [行为模式](designpattern/xing-wei-mo-shi/README.md)
     - [🤖 模板模式(Template 模式)](designpattern/xing-wei-mo-shi/template.md)
+    - [🤡 策略模式(Strategy 模式)](designpattern/xing-wei-mo-shi/strategy.md)
 
 ## 🍏 数据结构与算法
 
