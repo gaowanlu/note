@@ -1141,10 +1141,10 @@ CMake 3.21 版本开始，CMake 提供了一个变量：`PROJECT_IS_TOP_LEVEL`�
 
 ## 提前结束处理 return
 
-1、如果调用return命令的地方不再函数中，则结束当前文件的处理，回到引入当前文件的地方，可以为include或add_subdirectory  
-2、在函数中使用return比较复杂，后面再说
+1、如果调用 return 命令的地方不再函数中，则结束当前文件的处理，回到引入当前文件的地方，可以为 include 或 add_subdirectory  
+2、在函数中使用 return 比较复杂，后面再说
 
-return 在3.25前没有返回值，从 CMake 3.25 开始，return() 命令有了一个类似 block() 命令的参数关键字：PROPAGATE，在这个关键字后面我们可以给出列出一些变量，这些变量在调用 return() 命令的时候会更新其值。
+return 在 3.25 前没有返回值，从 CMake 3.25 开始，return() 命令有了一个类似 block() 命令的参数关键字：PROPAGATE，在这个关键字后面我们可以给出列出一些变量，这些变量在调用 return() 命令的时候会更新其值。
 
 样例一
 
@@ -1209,6 +1209,58 @@ endblock()
 
 ## 函数和宏基础
 
+CMakeLists 很像一门编程语言，其本身支持了计算、内置数据类型、判断、循环，那么支持定义函数也在情理之中
+
+### 格式
+
+```cmake
+function(name [arg1 [arg2 [...]]])
+    # Function body (i.e. commands) ...
+endfunction()
+
+macro(name [arg1 [arg2 [...]]])
+    # Macro body (i.e. commands) ...
+endmacro()
+```
+
+### 定义函数
+
+```cmake
+function(my_print)
+    message("hello world")
+    message("here is my_print function")
+endfunction()
+
+my_print()
+# hello world
+# hereis my_print function
+```
+
+### 使用宏
+
+```cmake
+macro(my_print)
+    message("hello world")
+    message("here is my_print function")
+endmacro()
+
+my_print()
+#hello world
+#here is my_print function
+```
+
+CMake 在定义函数和宏的时候，对于函数和宏的名字是不区分大小写的，但是有一个约定俗成的习惯，都使用小写字母 🏠 下划线的形式命名
+
+返回值与参数往后在学习
+
+### 函数与宏的区别
+
+- 展开方式： 宏是通过文本替换的方式展开的，而函数是通过函数调用的方式执行的。当调用宏时，其定义中的代码会被复制到调用处，而函数会在调用时执行相应的代码块。
+- 参数传递： 宏的参数传递是基于文本替换的，即将调用处的参数直接替换到宏定义中的相应位置。而函数的参数传递是通过参数列表进行传递，可以像调用普通函数一样传递参数。
+- 作用域： 宏的展开是在展开位置进行的，没有函数的作用域概念。而函数具有自己的作用域，在函数内部定义的变量和逻辑只在函数内部有效。
+- 变量访问： 宏可以访问调用处的变量和 CMake 全局变量。而函数可以访问调用处的变量、函数内部定义的变量以及 CMake 全局变量。
+- 返回值： 函数可以有返回值，而宏没有返回值的概念。
+
 ## 函数和宏的参数处理基础
 
 ## 函数和宏之关键字参数
@@ -1228,6 +1280,8 @@ endblock()
 ## cmake 全局属性
 
 ## cmake 目录属性
+
+## target 属性
 
 ## cmake 预设
 
