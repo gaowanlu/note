@@ -56,7 +56,7 @@
   - [网络通信故障排查命令]()
   - [网络通信协议设计]()
   - [单个服务的基本结构]()
-  - [Redis网络通信模块经验]()
+  - [Redis 网络通信模块经验]()
   - [服务器开发中的常用模块]()
 
 ## 并发编程
@@ -121,6 +121,8 @@
     - [🙄 享元模式(Flyweight 模式)](designpattern/jie-gou-xing-mo-shi/xiang-yuan-mo-shi.md)
     - [🤖 外观模式(Facade 模式)](designpattern/jie-gou-xing-mo-shi/wai-guan-mo-shi.md)
     - [🤩 代理模式(Proxy 模式)](designpattern/jie-gou-xing-mo-shi/dai-li-mo-shi.md)
+  - [行为模式](designpattern/xing-wei-mo-shi/README.md)
+    - [🤖 模板模式(Template 模式)](designpattern/xing-wei-mo-shi/template.md)
 
 ## 🍏 数据结构与算法
 
