@@ -125,9 +125,102 @@ mov dword ptr [a], eax
 
 ## Linux 线程同步对象
 
+### linux 互斥体
+
+主要有，pthread_mutex_t、pthread_mutex_init、pthread_mutex_destroy、pthread_mutex_lock、pthread_mutex_trylock、pthread_mutex_unlock、
+pthread_mutexattr_init、pthread_mutexattr_destroy、pthread_mutexattr_settype、pthread_mutexattr_gettype 需要了解掌握
+
+### 锁的类型
+
+- PTHREAD_MUTEX_NORMAL 普通锁
+
+普通锁 (PTHREAD_MUTEX_NORMAL) 是最基本的互斥锁类型，它没有附加的特性或保证。它遵循以下规则：
+
+当一个线程持有普通锁时，其他试图获取锁的线程将被阻塞，直到持有锁的线程释放它。  
+如果多个线程同时试图获取锁，系统无法保证哪个线程会获得锁。这可能会导致不公平性，即某些线程可能会连续多次获得锁，而其他线程则无法获得锁。  
+普通锁不提供死锁检测或递归锁定。
+
+- PTHREAD_MUTEX_ERRORCHECK 检错锁
+
+使用检错锁时，以下是一些特点和行为：  
+当一个线程持有检错锁时，其他试图获取锁的线程将被阻塞，直到持有锁的线程释放它。  
+如果同一个线程多次尝试获取同一个检错锁，系统将会检测到这种递归行为，并返回一个错误码。  
+如果同一个线程尝试再次获取已经持有的检错锁，系统将会检测到死锁情况，并返回一个错误码。  
+如果一个线程试图释放它不持有的检错锁，系统也会检测到这个错误，并返回一个错误码。
+
+- PTHREAD_MUTEX_RECURSIVE 可重入锁
+
+可重入锁允许同一线程多次获取锁，而不会导致死锁。当同一线程多次请求锁时，该锁会保持计数，并在每次解锁时递减计数。只有当计数为零时，锁才会被完全释放，其他线程才能获取锁。
+
+### linux 信号量
+
+主要需要掌握以下 API，可以到 UNIX 环境编程笔记进行复习
+
+```cpp
+#include <semaphore.h>
+int sem_init(sem_t* sem,int pshared,unsigned int value);
+int sem_destroy(sem_t* sem);
+int sem_post(sem_t* sem);
+int sem_wait(sem_t* sem);
+int sem_trywait(sem_t* sem);
+int sem_timewait(sem_t* sem,const struct timespec* abs_timeout);
+```
+
+### 条件变量
+
+主要掌握，pthread_cond_t、pthread_cond_init、pthread_cond_destroy、pthread_cond_wait、pthread_cond_timedwait、pthread_cond_signal、pthread_cond_broadcast
+
+条件变量信号丢失问题，如果一个条件变量信号在产生时没有相关线程调用 pthread_cond_wait 捕获该信号，该信号就会永远丢失，在此调用 pthread_cond_wait 将会导致永久阻塞
+
+### 读写锁
+
+主要掌握，pthread_rwlock_init、pthread_rwlock_destroy、pthread_rwlock_t、pthread_rwlock_rdlock、pthread_rwlock_tryrdlock、pthread_rwlock_timedrdlock、pthread_rwlock_wrlock、pthread_rwlock_trywrlock、pthread_rwlock_timedwrlock、pthread_rwlock_unlock
+
+属性设置，pthread_rwlockattr_setkind_np、pthread_rwlockattr_getkind_np、pthread_rwlockattr_init、pthread_rwlockattr_destroy
+
+pthread_rwlockattr_setkind_np 第二个参数，设置读写锁类型
+
+```cpp
+enum {
+    //读者优先，同时请求读锁和写锁时，请求读锁的线程优先获得锁
+    PTHREAD_RWLOCK_PREFER_READER_NP,
+    //读者优先
+    PTHREAD_RWLOCK_PREFER_WRITER_NP,
+    //写着优先
+    PTHREAD_RWLOCK_PREFER_WRITER_NONRECURSIVE_NP,
+    PTHREAD_RWLOCK_DEFAULT_NP = PTHREAD_RWLOCK_PREFER_READER_NP
+};
+```
+
 ## C++11/14/17 线程同步对象
 
+1、内置的 mutex 主要有，样例去看
+
+| 互斥量                | 版本  | 作用                                |
+| --------------------- | ----- | ----------------------------------- |
+| mutex                 | C++11 | 基本的互斥量                        |
+| timed_mutex           | C++11 | 有超时机制的互斥量                  |
+| recursive_mutex       | C++11 | 可重入的互斥量                      |
+| recursive_timed_mutex | C++11 | 结合 timed_mutex 与 recursive_mutex |
+| shared_timed_mutex    | C++14 | 具有超时机制的共享互斥量，读写锁    |
+| shared_mutex          | C++17 | 共享的互斥量，读写锁                |
+
+2、互斥量管理，RAII 风格
+
+| 互斥量管理  | 版本  | 作用                   |
+| ----------- | ----- | ---------------------- |
+| lock_guard  | C++11 | 基于作用域的互斥量管理 |
+| unique_lock | C++11 | 更加灵活的互斥量管理   |
+| shared_lock | C++14 | 共享互斥量的管理       |
+| scoped_lock | C++17 | 多互斥量避免锁的管理   |
+
+3、条件变量，std::condition_variable
+
+https://en.cppreference.com/w/cpp/thread/condition_variable
+
 ## 如何确保创建的线程一定能运行
+
+使用条件变量通知不就行了吗，哈哈
 
 ## 多线程使用锁经验
 
