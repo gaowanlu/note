@@ -26,7 +26,7 @@
   - [🧸 第 18 章 用于大型程序的工具](c++/di-18-zhang-yong-yu-da-xing-cheng-xu-de-gong-ju.md)
   - [🚌 第 19 章 特殊工具与技术](c++/di-19-zhang-te-shu-gong-ju-yu-ji-shu.md)
   - [🚴 第 20 章 接口手册](c++/di-20-zhang-jie-kou-shou-ce.md)
-  - [🚴 第 21 章 关于 C 的补充](c++/di-wu-bu-fen-jie-kou-shou-ce/di-21-about-c.md)
+  - [🚴 第 21 章 关于 C 的补充](c++/di-21-about-c.md)
   - [⏰ 文件系统库 filesystem](c++/wen-jian-xi-tong-ku.md)
   - [🚜 你可能不知道的 C++](c++/ni-ke-neng-bu-zhi-dao-de-c++.md)
   - [C++ 11 补充](c++/cpp11-patch.md)
