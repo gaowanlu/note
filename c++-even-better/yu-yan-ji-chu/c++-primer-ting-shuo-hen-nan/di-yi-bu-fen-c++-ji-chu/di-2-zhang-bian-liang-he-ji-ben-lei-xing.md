@@ -4,9 +4,9 @@ cover: >-
 coverY: 0
 ---
 
-# 😜 第2章 变量和基本类型
+# 😜 第 2 章 变量和基本类型
 
-## 第2章 变量和基础类型
+## 第 2 章 变量和基础类型
 
 ### 基本内置类型
 
@@ -28,7 +28,7 @@ double      双精度浮点数 10位有效数字
 long double 扩展精度浮点数 10位有效数字
 ```
 
-使用sizeof函数
+使用 sizeof 函数
 
 ```cpp
 //example.1
@@ -54,7 +54,7 @@ int main(int argc, char **argv)
 
 ### 带符号类型和无符号类型
 
-除了bool和扩展字符类型外，其他基本类型都可以划分为带符号signed和无符号unsigned两种、signed可表示正数 0 负数，无符号表示大于等于0的数
+除了 bool 和扩展字符类型外，其他基本类型都可以划分为带符号 signed 和无符号 unsigned 两种、signed 可表示正数 0 负数，无符号表示大于等于 0 的数
 
 ```cpp
 //example2.cpp
@@ -189,7 +189,7 @@ int main(int argc, char **argv)
 回车符 \r       进纸符  \f
 ```
 
-也可以使用ASCII码表达方式
+也可以使用 ASCII 码表达方式
 
 ```
 \a:\7   \n:\12  \40:空格
@@ -242,7 +242,7 @@ l or L      long double
 
 ### 变量定义
 
-c++是`静态类型语言`(在编译阶段检查类型，检查类型的过程称为类型检查)不想python、javascript它们不进行声明就能使用甚至不需要给定类型，而C++是一个严格的语言
+c++是`静态类型语言`(在编译阶段检查类型，检查类型的过程称为类型检查)不想 python、javascript 它们不进行声明就能使用甚至不需要给定类型，而 C++是一个严格的语言
 
 ```cpp
 //example7.cpp
@@ -260,11 +260,11 @@ int main(int argc, char **argv)
 }
 ```
 
-上面使用了std里面的string类型、先了解他是存储可变长字符串的就好
+上面使用了 std 里面的 string 类型、先了解他是存储可变长字符串的就好
 
 ### 关于初始化
 
-C++11列表初始化方式及其初始化类型自动转换
+C++11 列表初始化方式及其初始化类型自动转换
 
 ```cpp
 //example8.cpp
@@ -318,7 +318,7 @@ int main(int argc, char **argv)
 
 ### 变量声明和定义的关系
 
-在C++中允许程序进行分离式编译:程序分割为若干个文件、每个文件可被独立编译。C++将定义与声明分开。`声明`使得名字让程序所知，一个文件想使用别处定义的名字必须包含其声明，而`定义`负责创建于名字关联的实体
+在 C++中允许程序进行分离式编译:程序分割为若干个文件、每个文件可被独立编译。C++将定义与声明分开。`声明`使得名字让程序所知，一个文件想使用别处定义的名字必须包含其声明，而`定义`负责创建于名字关联的实体
 
 ```cpp
 // example10.cpp
@@ -396,10 +396,10 @@ int _a=12,your_num=8,_your_num2=12;
 
 ### C++变量命名规范
 
-* 标识符要能体现其实际含义
-* 变量名一般用小写，如index，不要使用Index或INDEX（常量除外）
-* 用户自定义的类名一般以大写字母开头，如Sales\_item
-* 如果标识符有多个单词组成，则单词间应有明显区分,如student\_loan或studentLoan，不要使用studentloan
+- 标识符要能体现其实际含义
+- 变量名一般用小写，如 index，不要使用 Index 或 INDEX（常量除外）
+- 用户自定义的类名一般以大写字母开头，如 Sales_item
+- 如果标识符有多个单词组成，则单词间应有明显区分,如 student_loan 或 studentLoan，不要使用 studentloan
 
 C++保留关键词
 
@@ -484,25 +484,25 @@ while        C++98 do-while循环语句
 代替标识符，有些运算符可以使用英文标识符代替
 
 ```cpp
-and && 
+and &&
 and_eq &=
-bitand & 
+bitand &
 bitor |
-compl ~ 
+compl ~
 not !
-not_eq != 
+not_eq !=
 or ||
-or_eq |= 
+or_eq |=
 xor ^
-xor_eq ^=  
+xor_eq ^=
 ```
 
 ### 名字的作用域
 
-* 全局作用域
-* 函数作用域
-* 块作用域
-* 嵌套作用域
+- 全局作用域
+- 函数作用域
+- 块作用域
+- 嵌套作用域
 
 ```cpp
 // example12.cpp
@@ -538,7 +538,7 @@ void printI()
 }
 ```
 
-到这里还没有接触过编写自定义的函数、再此我们认为会调用printI函数内的代码就好了
+到这里还没有接触过编写自定义的函数、再此我们认为会调用 printI 函数内的代码就好了
 
 ### 复合类型
 
@@ -599,7 +599,7 @@ int main(int argc, char **argv)
 
 ### 指针
 
-指针是C/C++的精髓,指针是一个存储内存地址的变量
+指针是 C/C++的精髓,指针是一个存储内存地址的变量
 
 ### 取地址、指针存地址、已知地址读数据
 
@@ -728,7 +728,7 @@ int main(int argc, char **argv)
 
 其实理解了，指针就是存储相应类型变量的内存的头地址的最跟根本的道理，这里并不难理解
 
-### void指针
+### void 指针
 
 我们现在知道指针变量是由类型的，但有没有通用的呢
 
@@ -750,7 +750,7 @@ int main(int argc, char **argv)
 }
 ```
 
-void指针有什么用，不要急他会在在后面的函数传递指针变量以及函数指针运用中大放光彩
+void 指针有什么用，不要急他会在在后面的函数传递指针变量以及函数指针运用中大放光彩
 
 ### 理解复合类型的声明
 
@@ -797,9 +797,9 @@ int main(int argc, char **argv)
 
 分别懂了指针和引用，理解指针的引用是很简单的
 
-我们发现引用和指针有点类似，但是有不同。指针是C的内容，引用是C++特有的，引用更像是指针的语法糖，我们暂且认为有C++背后在支持为我们自动使用\* &就好了，这样引用对于指针就有些能说通了对吧
+我们发现引用和指针有点类似，但是有不同。指针是 C 的内容，引用是 C++特有的，引用更像是指针的语法糖，我们暂且认为有 C++背后在支持为我们自动使用\* &就好了，这样引用对于指针就有些能说通了对吧
 
-### const限定符
+### const 限定符
 
 有时我们需要定义一个变量，其一旦被初始化后就不能被改变
 
@@ -822,27 +822,21 @@ int main(int argc, char **argv)
 }
 ```
 
-这也代表const变量在定义的时候就应该进行初始化
+这也代表 const 变量在定义的时候就应该进行初始化
 
-### const对象仅在文件内有效
+### const 对象仅在文件内有效
 
-这个怎么理解呢，我们上面有接触到两个cpp文件分辨编译然后链接的情况，如果不同的文件需要公用同一个const 变量应该怎么做呢
-
-```cpp
-//example25.h
-extern const int bufSize;
-```
+这个怎么理解呢，我们上面有接触到两个 cpp 文件分辨编译然后链接的情况，如果不同的文件需要公用同一个 const 变量应该怎么做呢
 
 ```cpp
 //example25.cpp
-#include"./example25.h"
-extern const int bufSize=888;
+extern const int bufSize = 888;
 ```
 
 ```cpp
 //example26.cpp
 #include<iostream>
-#include"./example25.h"
+extern const int bufSize;
 using namespace std;
 int main(int argc,char**argv){
     cout<<bufSize<<endl;//888
@@ -851,13 +845,13 @@ int main(int argc,char**argv){
 ```
 
 ```bash
-g++ example25.cpp example26.cpp -o example25.exe 
+g++ example25.cpp example26.cpp -o example25.exe
 ./example25.exe
 ```
 
-### const的引用
+### const 的引用
 
-我们知道引用被初始化后是可以改变的，也就是换一个变量进行绑定 const引用使得其初始化后不能改变
+我们知道引用被初始化后是可以改变的，也就是换一个变量进行绑定 const 引用使得其初始化后不能改变
 
 ```cpp
 // example27.cpp
@@ -873,18 +867,20 @@ int main(int argc, char **argv)
     refer_a = b;
     refer_a = 55;
     cout << b << endl; // 44
-    //可见引用绑定的变量是可以被更改的
-    //使用const的引用
+    // 可见引用绑定的变量是可以被更改的
+    // 使用const的引用
     const int &const_refer_a = a;
     cout << const_refer_a << endl; // 55
-    //尝试改变引用的绑定
-    // const_refer_a = b;
-    // error: assignment of read-only reference 'const_refer_a'
+    // 尝试改变引用绑定的变量的值
+    //  const_refer_a = b;
+    //  error: assignment of read-only reference 'const_refer_a'
+    a = 999;
+    cout << const_refer_a << endl; // 999
     return 0;
 }
 ```
 
-### 初始化const的引用
+### 初始化 const 的引用
 
 ```cpp
 //example28.cpp
@@ -907,11 +903,11 @@ int main(int argc, char **argv)
 }
 ```
 
-背后发生了什么，当我们为const的引用初始化为一个常量是时，编译器生成相对应的数据类型变量，用生成的这个变量来存储这个常量，然后将引用绑定为生成的那个变量。
+背后发生了什么，当我们为 const 的引用初始化为一个常量是时，编译器生成相对应的数据类型变量，用生成的这个变量来存储这个常量，然后将引用绑定为生成的那个变量。
 
-### 指针和const
+### 指针和 const
 
-与const引用类似、指针变量也有const
+与 const 引用类似、指针变量也有 const
 
 ### 指向常量的指针
 
@@ -927,7 +923,7 @@ int main(int argc, char **argv)
 
     //有两种情况一种是指向常量的指针
     const int const_num = 999;
-    const int *const_num_ptr = &const_num;
+    const int *const_num_ptr = &const_num;//const_num_ptr是指针指向const int类型
     // int *num_ptr = &const_num;
     // error: invalid conversion from 'const int*' to 'int*'
 
@@ -943,7 +939,7 @@ int main(int argc, char **argv)
 }
 ```
 
-### const指针
+### const 指针
 
 使得指针变量存储的地址一旦被初始化、就不能在被改变
 
@@ -954,7 +950,7 @@ using namespace std;
 int main(int argc, char **argv)
 {
     int a = 999;
-    int *const refer_a = &a;
+    int *const refer_a = &a;//refer_a是const的，类型为int*
     cout << *refer_a << endl; // 999
     int b = 888;
 
@@ -969,15 +965,15 @@ int main(int argc, char **argv)
 }
 ```
 
-### 顶层const
+### 顶层 const
 
-现在我们知道了，有一种限制是对相应地址内存操作进行了限制，也就是常量的指针，我们可以改变指针存储的地址，但不能改变相应地址变量存储的数据，这种const被称为底层const(low-level const)
+现在我们知道了，有一种限制是对相应地址内存操作进行了限制，也就是常量的指针，我们可以改变指针存储的地址，但不能改变相应地址变量存储的数据，这种 const 被称为底层 const(low-level const)
 
-顶层const(top-level const) 则是，一个指针本身也是一个变量，const作用为一旦指针存储的地址被初始化，则不能再被改变。
+顶层 const(top-level const) 则是，一个指针本身也是一个变量，const 作用为一旦指针存储的地址被初始化，则不能再被改变。
 
-### constexpr和常量表达式
+### constexpr 和常量表达式
 
-常量表达式为在编译过程中就能得到计算结果的表达式，字面值属于常量表达式，常量表达式初始化的const对象也是常量表达式。
+常量表达式为在编译过程中就能得到计算结果的表达式，字面值属于常量表达式，常量表达式初始化的 const 对象也是常量表达式。
 
 ### 常量表达式
 
@@ -1006,7 +1002,7 @@ int main(int argc, char **argv){
 
 ### constexpr 变量
 
-可见写代码时很难确定是不是常量表达式，C++11为我们提供了一种机制，将变量定义为constexpr变量其被定义的时候需要初始化，且右值必须为常量表达式，也就是我们提供了判断常量表达式的方式
+可见写代码时很难确定是不是常量表达式，C++11 为我们提供了一种机制，将变量定义为 constexpr 变量其被定义的时候需要初始化，且右值必须为常量表达式，也就是我们提供了判断常量表达式的方式
 
 ```cpp
 //example32.cpp
@@ -1027,15 +1023,46 @@ int main(int argc, char **argv)
 }
 ```
 
-使用规则：如果你认为一个变量是常量表达式，那就把它声明成constexpr类型
+使用规则：如果你认为一个变量是常量表达式，那就把它声明成 constexpr 类型
+
+### 使用 constexpr 的好处
+
+constexpr 是一个关键字，用于声明能够在编译时求值的常量表达式，有以下好处
+
+1、编译时求值：constexpr 变量的值在编译时就能够确定，而不是在运行时计算。这意味着编译器可以在编译期间对 constexpr 变量进行优化，从而提高程序的性能。
+
+2、常量折叠：constexpr 变量可以用于进行常量折叠。在编译时，对于多个 constexpr 变量的组合和运算，编译器会将它们合并为一个单独的常量表达式，从而减少运行时的计算开销。
+
+3、值的确定性：constexpr 变量的值在编译时就确定了，因此它们是不可变的。这提供了更强的类型安全性，防止在运行时意外修改变量的值。
+
+4、作为常量表达式的要求：在某些上下文中，需要使用常量表达式，如数组大小、模板参数等。通过将变量声明为 constexpr，可以确保其在这些上下文中可用。
+
+```cpp
+#include <iostream>
+
+constexpr int factorial(int n) {
+//  std::cout << "factorial" << std::endl;//如果有这条语句，tag a处无法调用
+    if (n <= 1)
+        return 1;
+    else
+        return n * factorial(n - 1);
+}
+
+int main() {
+    constexpr int num = 5;
+    constexpr int result = factorial(num);//tag a
+    std::cout << "Factorial of " << num << " is " << result << std::endl;
+    return 0;
+}
+```
 
 ### 字面值类型
 
 常量表达式值需要在编译时就能得到计算，我们把它们称为“字面值类型”(literal type)
 
-### 指针和constexpr
+### 指针和 constexpr
 
-如果指针变量声明时前面加了constexpr,则仅对指针变量本身有效，与指针的指向无关
+如果指针变量声明时前面加了 constexpr,则仅对指针变量本身有效，与指针的指向无关
 
 ```cpp
 //example33.cpp
@@ -1071,29 +1098,30 @@ int main(int argc, char **argv)
 //example34.cpp
 #include <iostream>
 using namespace std;
-//全局变量的内存地址在编译时就被确定了
+// 全局变量的内存地址在编译时就被确定了
 const int i = 10;
 int j = 0;
 int main(int argc, char **argv)
 {
     constexpr int *np = nullptr;
     constexpr int k = 42;
-    //等号右边必须为常量表达式，且加上了顶层const显示
+    // 等号右边必须为常量表达式，且加上了顶层const显示
 
     constexpr const int *p = &i;
-    //等号右边比须为常量表达式，且理论上i须为const int变量，且加了顶层const限制
+    // 等号右边比须为常量表达式，且i须为const int变量
 
-    constexpr int *p1 = &j; //等号右边必须为常量表达式，且加了顶层const限制
-
+    constexpr int *p1 = &j; // 等号右边必须为常量表达式
+    cout << *p1 << endl;    // 0
+    cout << "over" << endl; // over
     return 0;
 }
 ```
 
-可能看到要说脏话了，什么鬼，不要急现在弄不懂可以先跳过。其实理解constexpr作用就是等号右边是常量表达式，且同时加上了顶层const就好了。还有新的知识，全局变量在编译时就确定了其内存地址。
+新的知识，全局变量在编译时就确定了其内存地址。
 
 ### 处理类型
 
-数据类型的名称可能有时候差强人意，难以记忆，再在C/C++内提供了强大处理类型的方式
+数据类型的名称可能有时候差强人意，难以记忆，再在 C/C++内提供了强大处理类型的方式
 
 ### 类型别名 typedef 与 using
 
@@ -1106,7 +1134,7 @@ using namespace std;
 typedef int age;
 typedef int *age_p;            // age_p等价于int*
 typedef age my_age, *my_age_p; // my_age等价于int my_age_p等价于int*
-typedef const int const_int;
+typedef const int const_int;   // const_int等价于const int
 
 int main(int argc, char **argv)
 {
@@ -1123,7 +1151,7 @@ int main(int argc, char **argv)
 }
 ```
 
-可见我们能够玩的非常花里胡哨，但是在实际的开发中我们要根据自己的需要来使用typeof，而不是一昧的追求新颖
+可见我们能够玩的非常花里胡哨，但是在实际的开发中我们要根据自己的需要来使用 typeof，而不是一昧的追求新颖
 
 ### 用 using 起别名
 
@@ -1144,7 +1172,7 @@ int main(int argc, char **argv)
 
 ### 指针、常量和类型别名
 
-让你直喊cao的功能
+让你直喊 cao 的功能
 
 ```cpp
 //example37.cpp
@@ -1154,31 +1182,28 @@ typedef int *int_p;
 int main(int argc, char **argv)
 {
     int a = 12;
-    const int_p ptr = &a; // int * const 本质是限制ptr不能被赋值
-    //上面意思是什么呢 定义一个int_p类型的变量也就时int*即int_p变量用来存储int变量的地址
-    //并为变量加上了顶层const限制
+    const int_p ptr = &a; // ptr是指向int的指针类型，且有const
     cout << *ptr << endl; // 12
     *ptr = 999;
     // ptr = nullptr; error: assignment of read-only variable 'ptr'
     // ptr是一个指向int的常量指针
 
-    const int_p *p = &ptr; // const (int*)*
+    const int_p *p = &ptr; // const (int*)* p是一个指针类型，指向cosnt (int*)类型
     cout << **p << endl;   // 999
-    //*p = nullptr; error: assignment of read-only location '* p'
-    //可见这个const是一个底层const 也就是 const (int*)*的效果
+    //*p = nullptr; // error: assignment of read-only location '* p'
+    // 可见这个const是一个底层const 也就是 const (int*)*的效果
     p = nullptr;
     // p是一个指向const char的指针
-
-    //真实tmd屁股里放鞭炮开了眼了
+    // 真实tmd屁股里放鞭炮开了眼了
     return 0;
 }
 ```
 
 到底怎么回事？这真是一个鸡肋的东西，像我这种菜鸡我选择在实际应用中避免使用这种写法
 
-### auto类型说明符
+### auto 类型说明符
 
-编译器自动为我们判断类型，auto变量定时必须被初始化
+编译器自动为我们判断类型，auto 变量定时必须被初始化
 
 ```cpp
 //example38.cpp
@@ -1210,9 +1235,9 @@ int main(int argc, char **argv)
 }
 ```
 
-### 复合类型、常量和auto
+### 复合类型、常量和 auto
 
-用引用变量初始化auto变量会是怎样的情况
+用引用变量初始化 auto 变量会是怎样的情况
 
 ```cpp
 //example39.cpp
@@ -1221,7 +1246,7 @@ using namespace std;
 int main(int argc, char **argv)
 {
     int i = 10, &r = i;
-    auto a = r;
+    auto a = r;        // int a
     cout << a << endl; // 10
     // a是引用变量还是int变量
     a = 99;
@@ -1232,7 +1257,7 @@ int main(int argc, char **argv)
 }
 ```
 
-auto忽略顶层const保留底层const
+auto 忽略顶层 const 保留底层 const
 
 ```cpp
 //example40.cpp
@@ -1241,25 +1266,28 @@ using namespace std;
 int main(int argc, char **argv)
 {
     int i = 0;
-    const int ci = i, &cr = ci;
+    const int ci = i, &cr = ci; // cr为const int类型变量的引用
+    auto b = ci;                // int b 忽略ci的顶层const
+    auto c = cr;                // int c cr为ci的别名，忽略顶层const
+    auto d = &i;                // int *d
+    auto e = &ci;               // const int *e
 
-    auto b = ci;  // b为int 忽略ci的顶层const
-    auto c = cr;  // cr为ci的别名，忽略顶层const
-    auto d = &i;  // d为int*
-    auto e = &ci; // e为一个const int*
-
-    //如果希望加上顶层const
+    // 如果希望加上顶层const
     const int g = 34;
-    const auto k = g; // v有顶层const
+    const auto k = g; // const int k
     // k = 99; error: assignment of read-only variable 'k'
-    auto v = g; // v无顶层const
+    auto v = g; // int v v无顶层const
     v = 33;
 
+    const int num = 999;
+    const int *const num_ptr = &num; // const int *const num_ptr
+    auto num_ptr_auto = num_ptr;     // const int *num_ptr_auto
+    // 去掉了顶层const，保留底层const
     return 0;
 }
 ```
 
-auto引用
+auto 引用
 
 ```cpp
 //example41.cpp
@@ -1281,9 +1309,9 @@ int main(int argc, char **argv)
 }
 ```
 
-### decltype类型指示符
+### decltype 类型指示符
 
-C++11特性、作用为选择并返回操作数的数据类型
+C++11 特性、作用为选择并返回操作数的数据类型
 
 ```cpp
 //example42.cpp
@@ -1313,11 +1341,11 @@ int main(int agrc, char **argv)
 }
 ```
 
-decltype并没有auto那样变化多端、auto与const 引用 指针配和起来很容易把开发者搞晕
+decltype 并没有 auto 那样变化多端、auto 与 const 引用 指针配和起来很容易把开发者搞晕
 
-### decltype和引用
+### decltype 和引用
 
-当decltype参数表达式有解引用操作，则类型是引用类型
+当 decltype 参数表达式有解引用操作，则类型是引用类型
 
 ```cpp
 //example43.cpp
@@ -1327,16 +1355,16 @@ int main(int argc, char **argv)
 {
     int i = 42, *p = &i, &r = i;
     decltype(r + 0) b; // int b ,因为 r+0为int类型
-    // decltype(*p) c;    //error int&c 必须被初始化
+    // decltype(*p) c;    //error int&c 必须被初始化,对指针使用*返回引用
     //*p 是解引用操作、decltype得到的是引用类型
     //因为我们可以*p=232;为p存的地址赋值则*p则相当于引用
     return 0;
 }
 ```
 
-### decltype和auto的重要区别
+### decltype 和 auto 的重要区别
 
-decltype得到的类型与其参表达式密切相关
+decltype 得到的类型与其参表达式密切相关
 
 ```cpp
 //example44.cpp
@@ -1356,11 +1384,11 @@ int main(int argc, char **argv)
 }
 ```
 
-经过复合类型、const、auto、decltype肯定有曾经充满自信的小伙子要弃坑了，心里想C++怎么这么多花里胡哨的东西，如果用过其他的语言比如javascript、python等动态语言或者java会发现它们是调api玩的花里胡哨，而c++是基础语法本身乱如麻，总之这些东西非常有难度，而且有些写法我们平时用不到以至于我们忘记他，但是可能将来工作面试就要知道，然后我们去看什么八股文去了，所以平时我们还是要把基础打好，一步一个脚印，把这些难点用好就超过了很多的开发者。
+经过复合类型、const、auto、decltype 肯定有曾经充满自信的小伙子要弃坑了，心里想 C++怎么这么多花里胡哨的东西，如果用过其他的语言比如 javascript、python 等动态语言或者 java 会发现它们是调 api 玩的花里胡哨，而 c++是基础语法本身乱如麻，总之这些东西非常有难度，而且有些写法我们平时用不到以至于我们忘记他，但是可能将来工作面试就要知道，然后我们去看什么八股文去了，所以平时我们还是要把基础打好，一步一个脚印，把这些难点用好就超过了很多的开发者。
 
 ### 自定义数据结构
 
-struct结构体允许我们构建复杂的数据结构
+struct 结构体允许我们构建复杂的数据结构
 
 ### 定义与使用自定义的类型
 
@@ -1370,10 +1398,10 @@ struct结构体允许我们构建复杂的数据结构
 using namespace std;
 struct Person
 {
-    std::string name = "null";
+    std::string name{"null"};
     unsigned age;
-    double weight = 0.;
-} me, he;//自定义类型时，同时定义变量
+    double weight{0.};
+} me, he; // 自定义类型时，同时定义变量
 
 int main(int argc, char **argv)
 {
@@ -1406,9 +1434,9 @@ struct Person
 #endif
 ```
 
-头文件里的#ifndef #define #endif什么作用呢?
+头文件里的#ifndef #define #endif 什么作用呢?
 
-当源程序文件include一个头文件时，会将头文件整体替换掉#include"./example46.h" 但是我们知道一个程序可以有多个源文件，但是我们多次include那个头文件怎么办，那不就多次重复定义了吗，#ifndef检测如果没有被define过则将#ifndef至#endif中间的代码生效，否则则直接跳过#ifndef至#endif的内容
+当源程序文件 include 一个头文件时，会将头文件整体替换掉#include"./example46.h" 但是我们知道一个程序可以有多个源文件，但是我们多次 include 那个头文件怎么办，那不就多次重复定义了吗，#ifndef 检测如果没有被 define 过则将#ifndef 至#endif 中间的代码生效，否则则直接跳过#ifndef 至#endif 的内容
 
 ```cpp
 //example46.cpp
@@ -1441,7 +1469,7 @@ struct Person
 };
 void printPerson(Person person);
 const int i = 0;
-const std::string auth = "gaowanlu";
+const std::string auth = "gaowanlu";//const变量仅在源文件内有效
 #endif
 ```
 
@@ -1473,7 +1501,7 @@ int main(int argc, char **argv)
 }
 ```
 
-使用g++构建程序
+使用 g++构建程序
 
 ```bash
 g++ example47.cpp example48.cpp -o main
@@ -1482,6 +1510,22 @@ g++ example47.cpp example48.cpp -o main
 
 头文件到底干嘛用的，在编译器编译多源程序文件程序时，它们会一个一个单独进行编译，最后编译器对其一个个编译生成的中间代码,最后连接到一块形成一个可执行文件
 
-> 注：当我们在一个头文件内定义一个变量，然后被include到多个cpp内，编译时则会报错提示我们定义冲突，多次重复定义？。为什么呢，在编译时多个cp被单独编译，则它们每个cpp都有了一个自己的变量（全局），则将他们连接时，编译器遇到多个名字一样的全局变量，则不知道用哪一个。总之，如果一个头文件定义了全局变量，且被多个cpp include，那么则会定义冲突,但是如果那个变量是不可变的，则不会冲突。
+> 注：当我们在一个头文件内定义一个变量，然后被 include 到多个 cpp 内，编译时则会报错提示我们定义冲突，多次重复定义？。为什么呢，在编译时多个 cp 被单独编译，则它们每个 cpp 都有了一个自己的变量（全局），则将他们连接时，编译器遇到多个名字一样的全局变量，则不知道用哪一个。总之，如果一个头文件定义了全局变量，且被多个 cpp include，那么则会定义冲突,但是如果那个变量是不可变的，则不会冲突。
 
 头文件干嘛用的，就是写声明的,要定义全局变量就定义常量。
+
+### pragma once
+
+`#pragma once` 是一个预处理指令，用于在 C++ 中确保头文件只被编译一次。它是一种非标准的、编译器特定的指令，但被广泛支持，并且成为了常用的头文件保护机制。
+
+使用 `#pragma once` 的好处包括：
+
+简洁性：相对于传统的头文件保护方式（使用条件编译指令，如 `#ifndef`、`#define`、`#endif`），`#pragma once` 更加简洁和清晰。只需在头文件的开头加上一行 `#pragma once`，就能确保该头文件只被编译一次。
+
+可读性：`#pragma once` 的语义清晰明确，易于阅读和理解。它表达了对头文件的唯一性要求，避免了头文件重复包含可能引发的问题。
+
+性能：由于 `#pragma once` 在编译器级别执行头文件的唯一性检查，省去了条件编译的开销。这可以提高编译速度，尤其对于大型项目和包含多个头文件的源文件来说。
+
+需要注意的是，尽管 `#pragma once` 在大多数主流编译器上都能正常工作，但它并非 C++ 标准的一部分，因此并不保证在所有编译器和平台上都被支持。为了确保最大的可移植性，有些项目仍然使用传统的条件编译方式。
+
+总之，`#pragma once` 是一种方便且常用的头文件保护方式，它能确保头文件只被编译一次，提高编译速度并简化头文件管理。在大多数情况下，使用 `#pragma once` 是一个不错的选择。
