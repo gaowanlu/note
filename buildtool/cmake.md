@@ -2,7 +2,7 @@
 
 很棒的 CMake 学习项目推荐,内容的许多出处来自于，请多支持原作者 https://github.com/eglinuxer/study_cmake 本人仅用作于记录学习
 
-## cmake_minimum_required
+## 1、cmake_minimum_required
 
 cmake_minimum_required 是一个 CMake 命令，用于指定需要使用的 CMake 版本的最小版本号。这个命令通常会放在 CMakeLists.txt 文件的顶部，以确保使用的 CMake 版本能够支持这个项目所需的所有功能。
 
@@ -10,7 +10,7 @@ cmake_minimum_required 是一个 CMake 命令，用于指定需要使用的 CMak
 cmake_minimum_required(VERSION 3.26 FATAL_ERROR)
 ```
 
-## project
+## 2、project
 
 project 是一个 CMake 命令，用于定义一个 CMake 项目。它通常会被放在 CMakeLists.txt 文件的顶部，紧接着 cmake_minimum_required 命令。
 
@@ -32,7 +32,7 @@ project(MyProject LANGUAGES CXX)
 
 这个命令会将项目语言设置为 C++。在这种情况下，CMake 会根据设置自动为项目添加 C++编译器和链接器，并且会自动使用 CMake 中的一些内置变量（如 CMAKE_CXX_COMPILER、CMAKE_CXX_FLAGS 等）来设置编译器和编译选项。
 
-## add_executable
+## 3、add_executable
 
 将原文件加入到可执行文件
 
@@ -46,7 +46,7 @@ add_executable(<executable_name> <source_file> [<source_file>...])
 add_executable(MyProject main.cpp)
 ```
 
-## add_library
+## 4、add_library
 
 生成库
 
@@ -64,7 +64,7 @@ MODULE：模块库，也就是.so 或.dylib 文件，库的代码会被编译成
 add_library(mylib STATIC lib1.cpp lib2.cpp)
 ```
 
-## link_directories
+## 5、link_directories
 
 用于向项目中添加额外的库文件路径，以便在构建时链接这些库文件，个函数并不会直接链接库文件，它只是告诉链接器在搜索库文件时应该搜索哪些路径
 
@@ -85,7 +85,7 @@ add_executable(demo main.cpp)
 target_link_libraries(demo mylib)
 ```
 
-## aux_source_directory
+## 6、aux_source_directory
 
 可以自动将指定目录下的所有源文件添加到一个变量中，方便在构建时使用
 
@@ -106,7 +106,7 @@ aux_source_directory(src DIR_SRCS)
 add_executable(demo ${DIR_SRCS})
 ```
 
-## find
+## 7、find
 
 使用 aux_source_directory 只能自动查找目录下的源文件，无法查找子目录中的源文件。如果需要包含子目录中的源文件，可以使用 aux_source_directory 结合 file 命令来实现，例如：
 
@@ -119,7 +119,7 @@ add_executable(demo ${DIR_SRCS})
 
 这样可以递归地查找当前目录及其子目录下的所有 .cpp 和 .c 文件，并将它们的文件名添加到 DIR_SRCS 变量中。但是，由于使用 GLOB_RECURSE 命令存在一些问题，因此不推荐在 CMake 中使用这种方法。
 
-## add_definitions
+## 8、add_definitions
 
 add_definitions 是 CMake 提供的一个函数，用于向 C/C++ 编译器添加预定义的宏定义。这些宏定义将在编译源代码时生效，可以用于控制代码的编译行为，例如启用或禁用某些功能、设置特定的编译选项等。
 
@@ -160,7 +160,7 @@ target_compile_definitions(demo PUBLIC DEBUG)
 add_executable(demo main.cpp)
 ```
 
-## include_directories
+## 9、include_directories
 
 用于向 C/C++ 编译器添加头文件搜索路径。当编译源代码时，编译器将在指定的搜索路径中查找所需的头文件，如果找到则编译通过，否则编译失败。
 
@@ -204,7 +204,7 @@ target_include_directories(demo PUBLIC include)
 add_executable(demo main.cpp)
 ```
 
-## target_link_libraries
+## 10、target_link_libraries
 
 用于将一个目标（例如可执行文件或库）与一个或多个库进行链接
 
@@ -218,7 +218,7 @@ target_link_libraries(<target> <library>...)
 target_link_libraries(MyProgram Library1 Library2)
 ```
 
-## set 与 unset
+## 11、set 与 unset
 
 用于设置一个变量的值
 
@@ -280,7 +280,7 @@ message(AUTHOR_WARNING "${MY_CMD}")
 
 [=[ 和 ]=] 分隔符用于定义 CMake 中的字符串字面值（string literal）
 
-## ENV{}
+## 12、ENV{}
 
 在 cmake 中可以使用系统环境变量，CMake 设置的环境变量只在此 CMake 构建进程中有效
 
@@ -300,7 +300,7 @@ set(ENV{PATH} "$ENV{PATH}:/opt/Main")
 message(STATUS "$ENV{PATH}")
 ```
 
-## option
+## 13、option
 
 定义 BOOL 缓存变量，ON、TRUE、1、OFF、FALSE、0
 
@@ -311,12 +311,12 @@ set(my_opt ON CACHE BOOL "select status" FORCE)
 message(STATUS ${my_opt})# ON
 ```
 
-## 变量作用域
+## 14、变量作用域
 
 add_subdirectory、定义函数、使用 block()时产生新作用域  
 缓存变量、环境变量作用域是全局的
 
-## block
+## 15、block
 
 局部作用域相当于，C++中的{},只不过要 CMake>=3.25
 
@@ -331,7 +331,7 @@ block 还提供了相关参数，去选择使用引用外部的 x、y 变量等�
 
 总之用处不大
 
-## 字符串
+## 16、字符串
 
 CMake 有字符串类型，而且提供了许多字符串内置操作
 
@@ -448,7 +448,7 @@ string(SUBSTRING input index length outVar)
          EQUAL <json-string1> <json-string2>)
 ```
 
-## 列表
+## 17、列表
 
 上面 set 可知道，可以定义列表变量，cmake 中提供了大量的列表相关的操作
 
@@ -509,7 +509,7 @@ endforeach()
 # 1 a b c
 ```
 
-## math
+## 18、math
 
 cmake 提供了数学计算，使用 math 函数实现
 
@@ -535,7 +535,7 @@ message(STATUS ${outVar})
 # 13
 ```
 
-## if
+## 19、if
 
 像编程语言一样 cmake 中可以使用流程控制
 
@@ -647,7 +647,7 @@ if(DEFINED CACHE{SOMEVAR})    # Checks for a CMake cache variable
 if(DEFINED ENV{SOMEVAR})      # Checks for an environment variable
 ```
 
-## for
+## 20、for
 
 对一个列表的元素进行遍历，或者需要对一堆的值进行相似的操作
 
@@ -726,7 +726,7 @@ foreach(loopVar RANGE value)
 foreach(loopVar RANGE 0 value)
 ```
 
-## while
+## 21、while
 
 ```cmake
 while(condition)
@@ -744,7 +744,7 @@ while(num GREATER 0)
 endwhile()
 ```
 
-## break 与 continue
+## 22、break 与 continue
 
 while 循环和 foreach 循环都支持提前退出循环
 
@@ -796,7 +796,7 @@ message("Did skip: ${didSkip}")
 message("Remaining values: ${values}")
 ```
 
-## 如何使用子目录
+## 23、如何使用子目录
 
 CMake 提供了两个命令来解决多级目录的问题，分别为 add_subdirectory 和 include
 
@@ -955,7 +955,7 @@ src/sub2/CMakeLists.txt 的内容如下
 add_library(sub2 sub2.cpp sub2.h)
 ```
 
-## 子目录相关的作用域详解
+## 24、子目录相关的作用域详解
 
 add_subdirectory() 命令引入一个新的子目录的同时，也引入了新的作用域，相对于调用 add_subdirectory() 命令的 CMakeLists.txt 所在的作用域来说，通过 add_subdirectory() 命令引入的新的作用域叫做子作用域。其行为类似于 C/C++ 语言中调用一个新的函数。
 
@@ -1020,7 +1020,7 @@ set(myVar bar PARENT_SCOPE)
 message("Child  (after):  myVar = ${myVar}")
 ```
 
-## 子目录定义 project
+## 25、子目录定义 project
 
 project() 命令对于一个项目来说是必须的，如果开发人员没有显式的调用 project() 命令，在运行 cmake 进行项目配置的时候会收到警告信息，同时，cmake 会隐式地添加 project() 命令的调用。强烈建议在顶层 CMakeLists.txt 中适当的位置显式的调用 project() 命令。
 
@@ -1028,7 +1028,7 @@ porject() 命令可不可以调用多次？
 
 可以的，但是需要有 add_subdirectory() 命令调用的情况下才行，也就是说，我们不能在同一个 CMakeLists.txt 中调用 project() 命令多次，但是可以在 add_subdirectory() 命令调用时引入的子目录中的 CMakeLists.txt 中再次调用 project() 命令。通常这样做没有什么坏处，但是会导致 CMake 生成更多的项目文件。
 
-## include
+## 26、include
 
 CMake 可以通过 include 命令引入子目录，然后子目录中必须有一个 CMakeLists.txt，这相当于给顶层的 CMakeLists.txt 引入了新的 CMake 内容。
 
@@ -1116,7 +1116,7 @@ message(${CMAKE_CURRENT_LIST_FILE})#~/subdir/CMakeLists.txt
 message(${CMAKE_CURRENT_LIST_LINE})#3
 ```
 
-## 项目相关的变量
+## 27、项目相关的变量
 
 CMAKE_SOURCE_DIR，这个变量的值代表的是源码的顶级目录。但是这个变量的值可能会发生变化。
 
@@ -1139,7 +1139,7 @@ CMake 3.21 版本开始，CMake 提供了一个变量：`PROJECT_IS_TOP_LEVEL`�
 
 也有 `projectName_IS_TOP_LEVEL` 变量。每当我们调用 project() 命令的时候，就会创建对应的 `projectName_IS_TOP_LEVEL` 缓存变量。
 
-## 提前结束处理 return
+## 28、提前结束处理 return
 
 1、如果调用 return 命令的地方不再函数中，则结束当前文件的处理，回到引入当前文件的地方，可以为 include 或 add_subdirectory  
 2、在函数中使用 return 比较复杂，后面再说
@@ -1207,7 +1207,7 @@ block()
 endblock()
 ```
 
-## 函数和宏基础
+## 29、函数和宏基础
 
 CMakeLists 很像一门编程语言，其本身支持了计算、内置数据类型、判断、循环，那么支持定义函数也在情理之中
 
@@ -1261,27 +1261,136 @@ CMake 在定义函数和宏的时候，对于函数和宏的名字是不区分�
 - 变量访问： 宏可以访问调用处的变量和 CMake 全局变量。而函数可以访问调用处的变量、函数内部定义的变量以及 CMake 全局变量。
 - 返回值： 函数可以有返回值，而宏没有返回值的概念。
 
-## 函数和宏的参数处理基础
+## 30、函数和宏的参数处理基础
 
-## 函数和宏之关键字参数
+函数与宏是可以传参数的，怎么用呢？  
+CMake 函数：把每个参数都当作是 CMake 变量，并且参数都有 CMake 变量的行为  
+CMake 宏：把每个参数都当作字符串
 
-## 函数和宏返回值
+```cmake
+set(foobar 1)
 
-## cmake 命令覆盖详解
+function(func arg) # arg为"foobar"
+    if(DEFINED arg)
+        message("function arg is a defined variable ${arg}")
+    else()
+        message("function arg is not a defined variable")
+    endif()
+endfunction()
 
-## 函数相关的特殊变量
+macro(macr arg) # arg为"foobar"
+    if(DEFINED arg)# if(DEFINED arg) 肯定错误啊
+        message("Macro arg is a defined variable")
+    else()
+        message("Macro arg is not a defined variable")
+    endif()
+endmacro()
 
-## 复用 cmake 代码
+func(foobar) # function arg is a defined variable foobar
+macr(foobar) # Macro arg is not a defined variable
+```
 
-## cmake 处理参数时的一些问题
+变量的使用
 
-## cmake 属性通用命令
+```cmake
+set(foobar 10)
+function (func arg)
+    if(DEFINED arg)
+        message("function arg is a defined variable ${${arg}}")
+        set(${arg} 11)
+        message("${${arg}}")
+    else()
+        message("function arg is not a defined variable")
+    endif()
+endfunction()
 
-## cmake 全局属性
+macro(macr arg)
+    if(DEFINED ${arg})
+        message("Macro arg is a defined variable ${${arg}}")
+        set(${arg} 999)
+    else()
+        message("Macro arg is not a defined variable")
+    endif()
+endmacro()
 
-## cmake 目录属性
+func(foobar)#function arg is a defined variable 10
+#11
+macr(foobar)#Macro arg is not a defined variable 10
+message(${foobar})#999
+```
 
-## target 属性
+ARGC、ARGV、ARGN 支持
+
+ARGC：这个默认参数是一个值，代表的是传递给函数或者宏的所有参数的个数  
+ARGV：这个默认参数是一个列表，其中保存的是传递给函数或者宏的所有参数  
+ARGN：这个默认参数和 ARGV 一样，但是它只包含命名参数之外的参数（也就是可选参数和未命名的参数）
+
+```cmake
+function(func arg1)
+    message(${arg1})
+    message(${ARGC})
+    foreach(item IN LISTS ARGV)
+        message(${item})
+    endforeach()
+    foreach(item IN LISTS ARGN)
+        message(${item})
+    endforeach()
+endfunction()
+
+func(we a.cpp b.cpp c.cpp)
+#we
+#4
+#we a.cpp b.cpp c.cpp
+#a.cpp b.cpp c.cpp
+```
+
+在函数内使用宏应该注意
+
+```cmake
+# WARNING: This macro is misleading
+macro(dangerous)
+    # Which ARGN?
+    foreach(arg IN LISTS ARGN)
+        message("Argument: ${arg}")
+    endforeach()
+endmacro()
+function(func)
+    dangerous(1 2)
+endfunction()
+func(3)
+#输出 Argument: 3
+#因为等同于
+function(func)
+    # Now it is clear, ARGN here will use the arguments from func
+    foreach(arg IN LISTS ARGN)
+        message("Argument: ${arg}")
+    endforeach()
+endfunction()
+```
+
+## 31、函数和宏之关键字参数
+
+## 32、函数和宏返回值
+
+## 33、cmake 命令覆盖详解
+
+## 34、函数相关的特殊变量
+
+## 35、复用 cmake 代码
+
+## 36、cmake 处理参数时的一些问题
+
+## 37、cmake 属性通用命令
+
+## 38、cmake 全局属性
+
+## 39、cmake 目录属性
+
+## 40、target 属性
+
+## 41、源文件属性
+
+## 42、cmake 其他属性
 
 ## cmake 预设
 
