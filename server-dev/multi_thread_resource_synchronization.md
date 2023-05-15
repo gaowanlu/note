@@ -224,12 +224,100 @@ https://en.cppreference.com/w/cpp/thread/condition_variable
 
 ## 多线程使用锁经验
 
+1、减少锁的使用
+
+* 加锁和解锁操作，本身有一定的开销
+* 临界区的代码不能并发执行
+* 进入临界区次数过于频繁，线程之间对临界区的争夺太过激烈，若线程竞争互斥体失败，则会陷入阻塞让出CPU、所以执行上下文切换的次数要远远多于不适用互斥体的次数
+
+2、明确锁的范围
+
+3、减少锁的使用粒度，指的是尽量减少锁作用的临界区代码范围，临界区的代码范围小，多个线程排队进入临界区的时间就会短
+
+4、避免死锁的建议
+
+* 在一个函数中如果有一个加锁操作，在函数退出时记得解锁
+* 在线程退出时一定要及时释放其持有的锁
+* 多线程请求锁的方向要一致，避免死锁
+* 当需要同一个线程重复请求一个锁时，就需要明白使用锁的行为是递增锁引用计数，还是阻塞或者直接获得锁
+
 ## 线程局部存储
+
+### POSIX
+
+对于存在多个线程的进程，有时需要每个线程都操作自己的这份数据，把这样的数据称为线程局部存储(Thread Local Storage,TLS),将对应的存储区域称为线程局部存储区  
+相关API
+
+```cpp
+#include <pthread.h>
+int pthread_key_create(pthread_key_t *key, void (*destr_function) (void *));
+int pthread_key_delete(pthread_key_t key);
+int pthread_setspecific(pthread_key_t key, const void *pointer);
+void * pthread_getspecific(pthread_key_t key);
+```
+
+将pthread_key_t定义为全局变量，每个线程可以使用setspecific、getspecifi设置与获取自己线程的pointer
+
+### std::thread_local
+
+C++11提供了thread_local来定义一个线程变量
+
+```cpp
+std::thread_local int g_mydata = 1;
+//每个线程都有自己单独的g_mydata变量
+```
+
+* 对于线程变量，每个线程都会有变量的一个拷贝，互不影响，该局部变量一直存在，直到线程退出
+* 系统的线程局部存储区域的内存空间并不大，尽量不要用这个空间存储大的数据块
 
 ## C 库的非线程安全函数
 
+```cpp
+#include <time.h>
+{
+    time_t tNow = time(nullptr);
+    time_t tEnd = tNow + 1800;
+    struct tm* ptm = localtime(&tNow);
+    struct tm* ptmEnd = localtime(&tEnd);
+}
+//会发现ptm与ptmEnd地址是一样的
+```
+
+函数的返回值是一指针类型，外部不需要释放这个指针存储的地址对应的内存，所以这个函数内部一定使用了一个全局变量或者函数内部的静态变量，在此调用函数时把上一次的结果覆盖了  
+如果当多个线程同时调用时，可能会出现很大的问题，此函数是非线程安全函数，类似的还有socket、strtok、gethostbyname等
+
+```cpp
+struct tm* localtime(cnost time_t* timep);
+```
+
+常见的函数,这些线程安全版本的函数一般会接受额外的参数来存储结果，而不是使用静态缓冲区。这样，每个线程都可以使用自己的缓冲区，避免了线程间的竞争条件。
+
+```cpp
+strtok\strtok_r
+asctime\asctime_r
+ctime\ctime_r
+gmtime\gmtime_r
+localtime\localtime_r
+gethostbyname\gethostbyname_r gethostbyname2_r
+getpwuid\getpwuid_r
+```
+
 ## 线程池与队列系统的设计
 
-## 纤程 Fiber
+1、线程池，这都是经典操作了吧，C++服务器开发精髓P270有样例代码用C++11写的，网上也有很多  
+2、环形队列，如果生产者和消费者的速度差不多，可以将队列改为环形队列，可以节省内存空间  
+3、消息中间件，建议学习RabbitMQ  
 
 ## 协程 Routine
+
+协程（Coroutine）是一种轻量级的线程替代方案，它可以在一个线程中实现多个并发执行的任务，而无需使用多线程的上下文切换开销。在协程中，任务的切换是由程序主动控制的，而不是由操作系统或调度器决定的。
+
+协程通常被称为“用户级线程”或“轻量级线程”，它提供了一种更加灵活、高效的并发编程模型。协程的主要特点包括：
+
+1、轻量级：协程是非常轻量级的执行单元，它的创建和切换开销相对较小，不像线程那样需要操作系统的调度和管理。
+
+2、非抢占式：协程的切换是由程序员显式控制的，不像线程那样会被操作系统抢占。在协程中，任务之间的切换是协作式的，需要主动释放执行权。
+
+3、共享状态：协程通常在同一个地址空间中共享状态，这使得协程之间的通信和数据共享更加简单。但也需要注意对共享状态进行正确的同步和互斥操作，以避免竞态条件。
+
+4、高度可控：由于协程的切换是由程序主动控制的，可以更精确地控制任务的执行顺序和调度策略，从而实现更灵活的并发编程。
