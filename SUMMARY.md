@@ -119,6 +119,7 @@
     - [🤖 模板模式(Template 模式)](designpattern/xing-wei-mo-shi/template.md)
     - [🤡 策略模式(Strategy 模式)](designpattern/xing-wei-mo-shi/strategy.md)
     - [🐼 状态模式(State 模式)](designpattern/xing-wei-mo-shi/state.md)
+    - [🐸 观察者模式(Observer 模式)](designpattern/xing-wei-mo-shi/observer.md)
 
 ## 🍏 数据结构与算法
 

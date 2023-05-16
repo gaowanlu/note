@@ -23,7 +23,7 @@
 - [13、模板模式(Template 模式)](./xing-wei-mo-shi/template.md)
 - [14、策略模式(Strategy 模式)](./xing-wei-mo-shi/strategy.md)
 - [15、状态模式(State 模式)](./xing-wei-mo-shi/state.md)
-- [16、观察者模式(Observer 模式)]()
+- [16、观察者模式(Observer 模式)](./xing-wei-mo-shi/observer.md)
 - [17、备忘录模式(Memento 模式)]()
 - [18、中介者模式(Mediator 模式)]()
 - [19、命令模式(Command 模式)]()
