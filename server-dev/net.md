@@ -364,6 +364,119 @@ EPOLLONESHOT，使得其注册监听的事件如EPOLLIN在触发一次后再也�
 
 去看UNIX环境编程部分吧
 
+```cpp
+#include <sys/uio.h>
+ssize_t readv(int fd, const struct iovec *iov, int iovcnt);
+ssize_t writev(int fd, const struct iovec *iov, int iovcnt);
+ssize_t preadv(int fd, const struct iovec *iov, int iovcnt,
+               off_t offset);
+ssize_t pwritev(int fd, const struct iovec *iov, int iovcnt,
+                off_t offset);
+ssize_t preadv2(int fd, const struct iovec *iov, int iovcnt,
+                off_t offset, int flags);
+ssize_t pwritev2(int fd, const struct iovec *iov, int iovcnt,
+                 off_t offset, int flags);
+```
+
 ## 主机字节序和网络字节序  
 
+详细的介绍请看UNIX环境编程部分，有趣的是如何判断本机字节序是大端还是小端
+
+```cpp
+#include <iostream>
+using namespace std;
+
+bool isNetByteOrder()
+{
+    unsigned short mode = 0x1234;
+    // 如果是大端（网络字节序）时，34所在字节被存储在高地址
+    // 如果是小端，34所在字节被存储在低地址
+    char *pmode = (char *)&mode;
+    if (*pmode == 0x34) // 0x34在低地址
+    {
+        return false;
+    }
+    return true; // 0x34在高地址
+}
+
+int main(int argc, char **argv)
+{
+    // false
+    std::cout << boolalpha << isNetByteOrder() << std::endl;
+    return 0;
+}
+```
+
 ## 域名解析 API
+
+常用的有gethostbyname函数
+
+```cpp
+#include <netdb.h>
+struct hostent *gethostbyname(const char *name);
+struct hostent {
+   char  *h_name;            /* official name of host */
+   char **h_aliases;         /* alias list */
+   int    h_addrtype;        /* host address type */
+   int    h_length;          /* length of address */
+   char **h_addr_list;       /* list of addresses */
+}
+```
+
+使用样例
+
+```cpp
+#include <iostream>
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
+#include <netdb.h>
+
+using namespace std;
+
+bool connect_to_server(const char *server, short port)
+{
+    int m_socket = socket(AF_INET, SOCK_STREAM, 0);
+    if (m_socket == -1)
+    {
+        return false;
+    }
+    struct sockaddr_in addrSrv = {0};
+    struct hostent *phostent = nullptr;
+    // 域名形式
+    if (addrSrv.sin_addr.s_addr = inet_addr(server) == INADDR_NONE)
+    {
+        phostent = gethostbyname(server);
+        if (phostent == nullptr)
+        {
+            return false;
+        }
+        // 可能有多个IP地址
+        addrSrv.sin_addr.s_addr = *((unsigned long *)phostent->h_addr_list[0]);
+    }
+    addrSrv.sin_family = AF_INET;
+    addrSrv.sin_port = htons(port);
+    int ret = connect(m_socket, (struct sockaddr *)&addrSrv, sizeof(addrSrv));
+    if (ret == -1)
+    {
+        return false;
+    }
+    return true;
+}
+
+int main(int argc, char **argv)
+{
+    if (connect_to_server("baidu.com", 80))
+    {
+        cout << "connect successfully" << endl;
+    }
+    else
+    {
+        cout << "connect failed" << endl;
+    }
+    return 0;
+}
+```
+
+在新的Linux中，gethostbyname与gethostbyaddr已经废弃，应该使用较新的getaddrinfo进行代替，可以看下UNIX环境编程部分

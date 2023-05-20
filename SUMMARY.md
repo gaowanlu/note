@@ -47,7 +47,7 @@
   - [工具和调试](server-dev/tool_debug.md)
   - [多线程编程与资源同步](server-dev/multi_thread_resource_synchronization.md)
   - [网络编程重点](server-dev/net.md)
-  - [网络通信故障排查命令]()
+  - [网络通信故障排查命令](server-dev/trouble_shooting.md)
   - [网络通信协议设计]()
   - [单个服务的基本结构]()
   - [Redis 网络通信模块经验]()
