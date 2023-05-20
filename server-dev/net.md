@@ -84,15 +84,286 @@ recv 函数本质上不是从网络取数据，而实从内核缓冲区中数据
 | 0            | 对端关闭                                                                                                                           |
 | 小于 0（-1） | 出错（不是后三者）、被信号中断（EINTR）、对端 TCP 窗口太小导致数据发送不出去或当前网卡缓冲区已经无数据可接收（EWOUDBLOCK、EAGAIN） |
 
-## 待办
+## 发送 0 字节数据效果
 
-1、发送 0 字节数据效果  
-2、connect 在阻塞和非阻塞下行为  
-3、连接时顺便接收第一组数据  
-4、获取 socket 对应缓冲区中的可读数据量  
-5、EINTR 错误码  
-6、SIGPIPE 信号  
-7、poll  
-8、epoll  
-9、主机字节序和网络字节序  
-10、域名解析 API
+两种情形让send函数的返回值为0：  
+1、对端关闭连接时，正好尝试调用send函数发送数据  
+2、本段尝试调用send函数时发送0字节数据
+
+## connect 在阻塞和非阻塞下的行为
+
+阻塞：连接成功才会返回  
+非阻塞：无论是否连接成功都会返回，返回-1并不一定表示连接出错，如果此时错误码为EINProGRESS则表示正在尝试连接，可以用select函数判断socket是否可写，可写则连接成功否则失败
+
+```cpp
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
+#include <fcntl.h>
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
+
+#define SERVER_IP "127.0.0.1"
+#define SERVER_PORT 8080
+
+int set_nonblocking(int sockfd) {
+    int flags = fcntl(sockfd, F_GETFL, 0);
+    if (flags == -1) {
+        perror("fcntl");
+        return -1;
+    }
+    if (fcntl(sockfd, F_SETFL, flags | O_NONBLOCK) == -1) {
+        perror("fcntl");
+        return -1;
+    }
+    return 0;
+}
+
+int main() {
+    int sockfd;
+    struct sockaddr_in server_addr;
+
+    // 创建socket
+    sockfd = socket(AF_INET, SOCK_STREAM, 0);
+    if (sockfd == -1) {
+        perror("socket");
+        exit(EXIT_FAILURE);
+    }
+
+    // 设置非阻塞
+    if (set_nonblocking(sockfd) == -1) {
+        exit(EXIT_FAILURE);
+    }
+
+    // 初始化服务器地址
+    memset(&server_addr, 0, sizeof(server_addr));
+    server_addr.sin_family = AF_INET;
+    server_addr.sin_port = htons(SERVER_PORT);
+    if (inet_pton(AF_INET, SERVER_IP, &(server_addr.sin_addr)) <= 0) {
+        perror("inet_pton");
+        exit(EXIT_FAILURE);
+    }
+
+    // 非阻塞连接
+    int ret = connect(sockfd, (struct sockaddr *)&server_addr, sizeof(server_addr));
+    if (ret == -1) {
+        if (errno == EINPROGRESS) {
+            printf("Connecting...\n");
+            fd_set write_fds;
+            FD_ZERO(&write_fds);
+            FD_SET(sockfd, &write_fds);
+            struct timeval timeout;
+            timeout.tv_sec = 5;  // 设置超时时间为5秒
+            timeout.tv_usec = 0;
+            ret = select(sockfd + 1, NULL, &write_fds, NULL, &timeout);
+            if (ret == -1) {
+                perror("select");
+                exit(EXIT_FAILURE);
+            } else if (ret == 0) {
+                fprintf(stderr, "Connection timeout\n");
+                exit(EXIT_FAILURE);
+            } else {
+                if (!FD_ISSET(sockfd, &write_fds)) {
+                    fprintf(stderr, "Connection failed\n");
+                    exit(EXIT_FAILURE);
+                }
+            }
+        } else {
+            perror("connect");
+            exit(EXIT_FAILURE);
+        }
+    }
+
+    printf("Connected successfully\n");
+
+    // 关闭socket
+    close(sockfd);
+
+    return 0;
+}
+```
+
+## 连接时顺便接收第一组数据
+
+Linux提供了TCP_DEFER_ACCEPT的socket选项，设置该选项后只有连接建立成功且接收到第一组对端数据时，accept函数才会返回
+
+```cpp
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
+
+#define SERVER_IP "127.0.0.1"
+#define SERVER_PORT 8080
+
+int main() {
+    int sockfd;
+    struct sockaddr_in server_addr;
+
+    // 创建socket
+    sockfd = socket(AF_INET, SOCK_STREAM, 0);
+    if (sockfd == -1) {
+        perror("socket");
+        exit(EXIT_FAILURE);
+    }
+
+    // 设置TCP_DEFER_ACCEPT选项
+    int defer_accept = 1;
+    if (setsockopt(sockfd, IPPROTO_TCP, TCP_DEFER_ACCEPT, &defer_accept, sizeof(defer_accept)) == -1) {
+        perror("setsockopt");
+        exit(EXIT_FAILURE);
+    }
+
+    // 初始化服务器地址
+    memset(&server_addr, 0, sizeof(server_addr));
+    server_addr.sin_family = AF_INET;
+    server_addr.sin_port = htons(SERVER_PORT);
+    if (inet_pton(AF_INET, SERVER_IP, &(server_addr.sin_addr)) <= 0) {
+        perror("inet_pton");
+        exit(EXIT_FAILURE);
+    }
+
+    // 绑定地址和端口
+    if (bind(sockfd, (struct sockaddr *)&server_addr, sizeof(server_addr)) == -1) {
+        perror("bind");
+        exit(EXIT_FAILURE);
+    }
+
+    // 监听连接
+    if (listen(sockfd, SOMAXCONN) == -1) {
+        perror("listen");
+        exit(EXIT_FAILURE);
+    }
+
+    printf("Server is listening on %s:%d\n", SERVER_IP, SERVER_PORT);
+
+    while (1) {
+        // 接受连接
+        int client_sockfd;
+        struct sockaddr_in client_addr;
+        socklen_t client_addrlen = sizeof(client_addr);
+
+        client_sockfd = accept(sockfd, (struct sockaddr *)&client_addr, &client_addrlen);
+        if (client_sockfd == -1) {
+            perror("accept");
+            exit(EXIT_FAILURE);
+        }
+
+        printf("Accepted connection from %s:%d\n", inet_ntoa(client_addr.sin_addr), ntohs(client_addr.sin_port));
+
+        // 处理连接，可以在这里进行读写操作
+
+        // 关闭连接
+        close(client_sockfd);
+    }
+
+    // 关闭监听socket
+    close(sockfd);
+
+    return 0;
+}
+```
+
+## 获取 socket 对应缓冲区中的可读数据量  
+
+在Linux网络编程中，可以使用ioctl函数的FIONREAD参数来获取套接字对应缓冲区中的可读数据量。
+
+```cpp
+#include <sys/ioctl.h>
+int ioctl(int fd, unsigned long request, ...);
+```
+
+请注意，获取可读数据量的值是一个估计值，因为在调用ioctl后和实际读取数据之前，缓冲区中的数据量可能会发生变化。因此，在实际读取数据之前，可以再次调用ioctl来获取最新的可读数据量。
+
+```cpp
+#include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <sys/ioctl.h>
+
+int main() {
+    int sockfd;
+    ssize_t available_data;
+
+    // 创建socket
+    sockfd = socket(AF_INET, SOCK_STREAM, 0);
+    if (sockfd == -1) {
+        perror("socket");
+        exit(EXIT_FAILURE);
+    }
+
+    // 假设 sockfd 已经连接到远程服务器
+
+    // 获取可读数据量
+    if (ioctl(sockfd, FIONREAD, &available_data) == -1) {
+        perror("ioctl");
+        exit(EXIT_FAILURE);
+    }
+
+    printf("Available data in socket buffer: %zd bytes\n", available_data);
+
+    // 关闭socket
+    close(sockfd);
+
+    return 0;
+}
+```
+
+## EINTR 错误码  
+
+像socket相关函数，connect、send、recv、epoll_wait等，出了函数调用出错时返回-1，当函数调用被信号中断时也会返回-1，可以通过错误码errno判断是不是EINTR,确定是不是由于信号中断产生的假错误
+
+## SIGPIPE 信号  
+
+假设A与B为TCP连接状态，当A关闭连接时，B继续向A发送数据则B收到A的RST报文应答，若接收到RST后仍然向A发送数据系统会产生一个SIGPIPE信号给B，代表这个连接已经断开了，SIGPIPE的默认处理行为是进程退出
+
+根据四次挥手，当对端关闭时，虽然本意是关闭读写两个通道，但会本端只收到FIN包，按照TCP规定，表示对端只关闭了其所负责的哪一个单通道即不再发送数据，但是仍然可以接收
+
+由于TCP限制，通信的一方无法判断对端socket是调用了close还是shutdown
+
+```cpp
+#include <sys/socket.h>
+int shutdown(int sockfd, int how);
+//SHUT_RD SHUT_WR SHUT_RDWR
+```
+
+如果已经接收到对方的FIN包，调用read或recv如果缓冲区为空则返回0，接收到FIN后第一次调用write或send时，如果缓冲区没问题则发送成功返回大于0的值，但是会导致接收到对方的RST报文，再次调用write或send时，会产生SIGPIPE信号，一般都是忽略信号处理
+
+```cpp
+signal(SIGPIPE,SIG_IGN)
+```
+
+## poll  
+
+不再介绍，看UNIX环境编程部分吧
+
+## epoll  
+
+特别回顾的是epoll的LT与ET模式，EPOLLONESHOT
+
+1、水平触发模式（LT），一个事件只要有，就会一直触发  
+2、边缘触发模式（ET），一个事件从无到有时才会触发
+
+LT模式，监听读如果可从缓冲区读到数据就会触发，读不完，下次还会触发  
+ET模式，只有在不可读到可读变化时才会触发，可读到可读是不会触发的  
+LT模式，如果对端是可写的，则有写事件一直触发  
+ET模式，监听写只会触发一次，触发完成后只有再次注册、检测可写事件时，才会继续触发
+
+EPOLLONESHOT，使得其注册监听的事件如EPOLLIN在触发一次后再也不会触发，除非重新注册监听该事件类型,一般用不到，好像用处不大
+
+## readv 与 writev
+
+去看UNIX环境编程部分吧
+
+## 主机字节序和网络字节序  
+
+## 域名解析 API
