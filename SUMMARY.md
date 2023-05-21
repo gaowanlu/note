@@ -49,9 +49,9 @@
   - [网络编程重点](server-dev/net.md)
   - [网络通信故障排查命令](server-dev/trouble_shooting.md)
   - [网络通信协议设计](server-dev/protocol.md)
-  - [单个服务的基本结构]()
-  - [Redis 网络通信模块经验]()
+  - [单个服务的基本结构](server-dev/service.md)
   - [服务器开发中的常用模块]()
+  - [Redis 网络通信模块经验]()
 
 ## 并发编程
 

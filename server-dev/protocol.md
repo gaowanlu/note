@@ -174,12 +174,309 @@ POCO库提供了类似的功能 https://github.com/pocoproject/poco
 
 ## 包分片
 
+就是将一个主体内容分为多个片，也就是在协议头中定义一些总共有多少个分片，此时往后是否还有分片，此时的分片序号等字段，来标识。利用包分片其实还可以实现如文件中断重传功能
+
 ## XML与JSON格式的协议
 
-## 一个自定义协议示例
+两种常见的格式就不再详细探讨，一般的使用情况就是将XML或者JSON格式的数据作为主体部分
+
+```cpp
+struct msg{
+    msgheader header;//说明包大小 主体类型
+    int32_t cmd;
+    int32_t seq;
+    char* buf;//XML or JSON
+};
+```
 
 ## 理解HTTP
 
+1、作为曾经的一个前端小子，HTTP基本的格式不再详细记录，像GET、POST、PUT、DELETE之类的不再详细记录
+
+2、HTTP chunk编码,不用指定Content-Length,头部设置Transfer-Encoding:chunked,主体部分为
+
+```cpp
+[chunkSize][\r\n][chunkData][\r\n][chunkSize][\r\n][chunkData][\r\n][chunkSize][\r\n][chunkData][\r\n][chunkSize=0][\r\n][\r\n]
+```
+
+3、HTTP与长连接
+
+4、libcurl常用于发送HTTP请求的第三方C/C++库
+
 ## SMTP、POP3与邮件客户端
 
+邮件有关的协议一般有，IMAP、SMTP、POP3三种协议
+
+1、SMTP协议
+
+SMTP用于发送邮件，格式为
+
+```cpp
+关键字 自定义内容\r\n
+```
+
+客户端向服务器发送
+
+```cpp
+//服务端响应220
+//连接邮件服务器后登录服务器之前向服务器发送的问候信息
+HELO 自定义问候语\r\n
+//服务端响应250
+//请求登录邮件服务器
+AUTH LOGIN\r\n
+//服务端响应334
+base64形式的用户名\r\n
+//服务端响应334
+base64形式的密码\r\n
+//服务端响应235
+//设置发件人的邮箱地址
+MAIL FROM:发件人地址\r\n
+//服务端响应250
+//设置收件人地址，每次发送时都可以设置一个收件人地址，如果有多个收件人就要设置多次
+rcpt to:收件人地址\r\n
+//服务端响应250
+//发送邮件正文的开始标志
+DATA\r\n
+//服务端响应354
+//发送邮件正文，正文以.\r\n结束
+邮件正文\r\n和国家答复客户看\r\n.\r\n
+//服务端响应250
+//退出登录
+QUIT\r\n
+//服务端响应221
+```
+
+SMTP服务器响应格式
+
+```cpp
+应答码 自定义消息\r\n
+```
+
+常见的应答码
+
+```cpp
+211 帮助返回系统状态
+214 帮助信息
+220 服务准备就绪
+221 关闭连接
+235 用户验证成功
+250 请求操作就绪
+251 用户不在本地，转寄到其他路径
+334 等待用户输入验证信息
+354 开始邮件输入
+421 服务不可用
+450 操作未执行，邮箱忙
+451 操作中止，本地错误
+452 操作未执行，存储空间不足
+500 命令不可识别或语言错误
+501 参数语法错误
+502 命令不支持
+503 命令顺序错误
+504 命令参数不支持
+550 操作未执行，邮箱不可用
+551 非本地用户
+552 因存储空间不足而中止
+553 操作未执行，邮箱名不正确
+554 传输失败
+```
+
+2、POP3协议
+
+POP3（Post Office Protocol version 3）是一种用于接收电子邮件的标准协议。它允许电子邮件客户端从邮件服务器上下载邮件到本地计算机。下面是POP3协议的基本工作流程：
+
+```cpp
+建立与POP3服务器的连接：
+telnet pop3.example.com 110
+发送问候消息：
+USER username
+输入用户名：
+PASS password
+身份验证成功后，获取邮件数量和大小：
+STAT
+获取特定邮件的详细信息（可选）：
+LIST
+获取特定邮件的内容：
+RETR message_number
+删除特定邮件：
+DELE message_number
+断开与POP3服务器的连接：
+QUIT
+```
+
 ## WebSocket协议
+
+1、简介
+
+* 建立WebSocket连接：客户端通过发送特定的HTTP请求（称为WebSocket握手请求）来与服务器建立WebSocket连接。该请求包含一些特殊的HTTP头部，以指示客户端希望升级到WebSocket协议。
+* 握手过程：服务器接收到WebSocket握手请求后，会进行验证和处理。如果验证通过，服务器将返回一个特定的HTTP响应（称为WebSocket握手响应），其中包含一些头部信息，表明连接已成功升级到WebSocket协议。
+* WebSocket通信：一旦WebSocket连接建立，服务器和客户端就可以通过该连接进行双向通信。双方可以通过发送帧（Frames）来交换数据。这些帧可以包含文本、二进制数据或控制信息。服务器和客户端都可以在任何时候发送帧，并且可以以异步方式进行通信。
+* 关闭连接：当其中一方决定关闭连接时，它可以发送一个特定的关闭帧（Close Frame）来表示关闭连接的意图。对方收到关闭帧后，也会发送关闭帧进行响应，然后双方都关闭连接。
+
+2、Websocket协议的握手过程
+
+请求端先发送的格式
+
+```cpp
+GET /chat HTTP/1.1\r\n
+Host: example.com\r\n
+Upgrade: websocket\r\n
+Connection: Upgrade\r\n
+Sec-WebSocket-Key: dGhlIHNhbXBsZSBub25jZQ==\r\n
+Sec-WebSocket-Version: 13\r\n
+\r\n
+```
+
+* Upgrade: websocket：指示服务器该请求是为了升级到WebSocket协议。
+* Connection: Upgrade：指示服务器将连接升级为WebSocket协议。
+* Sec-WebSocket-Key: dGhlIHNhbXBsZSBub25jZQ==：是一个Base64编码的随机字符串，用于握手过程中的安全验证。
+* Sec-WebSocket-Version: 13：指定所使用的WebSocket协议版本。
+
+以上示例是一种基本的握手请求格式，实际的WebSocket握手请求可能会包含其他头部字段，如Origin、Sec-WebSocket-Protocol等，具体字段的使用取决于实际的应用需求和服务器要求。
+
+服务端回复的格式
+
+```cpp
+HTTP/1.1 101 Switching Protocols\r\n
+Upgrade: websocket\r\n
+Connection: Upgrade\r\n
+Sec-WebSocket-Accept: s3pPLMBiTxaQ9kYGzzhZRbK+xOo=\r\n
+\r\n
+```
+Sec-WebSocket-Accept内容是经过Sec-WebSocket-Key进行转换后的内容,算法流程为
+
+将Sec-WebSocket-Key的值与固定的字符串"258EAFA5-E914-47DA-95CA-C5AB0DC85B11"拼接  
+然后将拼接后的字符串进行SHA-1处理，然后转为base64编码
+
+```cpp
+mask = "258EAFA5-E914-47DA-95CA-C5AB0DC85B11";
+accept = base64(sha1(Sec-WebSocket-Key + mask))
+```
+
+3、Websocket协议的格式
+
+* 数据帧格式
+
+```cpp
+ 0                   1                   2                   3
+ 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
++-+-+-+-+-------+-+-------------+-------------------------------+
+|F|R|R|R| opcode|M| Payload len |    Extended payload length    |
+|I|S|S|S|  (4)  |A|     (7)     |            (16/64)            |
+|N|V|V|V|       |S|             |   (if payload len==126/127)   |
+| |1|2|3|       |K|             |                               |
++-+-+-+-+-------+-+-------------+ - - - - - - - - - - - - - - - +
+|     Extended payload length continued, if payload len == 127  |
++ - - - - - - - - - - - - - - - +-------------------------------+
+|                               |Masking-key, if MASK set to 1  |
++-------------------------------+-------------------------------+
+| Masking-key (continued)       |          Payload Data         |
++-------------------------------+-------------------------------+
+|           Payload Data continued...                           |
++-------------------------------+-------------------------------+
+|           Payload Data continued...                           |
++-------------------------------+-------------------------------+
+```
+
+FIN：1位，指示消息是否为消息的最后一个帧。  
+RSV1, RSV2, RSV3：各占1位，保留给扩展使用。  
+Opcode：4位，指示帧的类型，如文本、二进制数据等。  
+Mask：1位，指示Payload Data是否经过掩码处理。  
+Payload length：7位或16位或64位，表示Payload Data的长度。  
+Extended payload length：当Payload length的值为126或127时，使用16位或64位来表示更大范围的Payload Data长度。  
+Masking-key：当Mask为1时，使用4个字节的掩码密钥进行Payload Data的解码。  
+Payload Data：实际的数据载荷。  
+
+* 控制帧格式
+
+```cpp
+ 0                   1                   2                   3
+ 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
++-+-+-+-+-------+-+-------------+-------------------------------+
+|F|R|R|R| opcode|M| Payload len |    Extended payload length    |
+|I|S|S|S|  (8)  |A|     (7)     |            (16/64)            |
+|N|V|V|V|       |S|             |   (if payload len==126/127)   |
+| |1|2|3|       |K|             |                               |
++-+-+-+-+-------+-+-------------+ - - - - - - - - - - - - - - - +
+|     Extended payload length continued, if payload len == 127  |
++ - - - - - - - - - - - - - - - +-------------------------------+
+|                               |Masking-key, if MASK set to 1  |
++-------------------------------+-------------------------------+
+| Masking-key (continued)       |          Payload Data         |
++-------------------------------+-------------------------------+
+```
+
+控制帧的格式与数据帧相似，但Opcode字段的值表示控制帧类型，用于WebSocket的控制操作，如连接关闭、心跳等。
+
+在帧的格式中，Payload Data部分可能会经过掩码处理，需要使用4个字节的掩码密钥进行解码。
+
+```cpp
+enum OpCode {
+    CONTINUATION_FRAME = 0x0,
+    TEXT_FRAME = 0x1,
+    BINARY_FRAME = 0x2,
+    CONNECTION_CLOSE_FRAME = 0x8,
+    PING_FRAME = 0x9,
+    PONG_FRAME = 0xA,
+    // 扩展操作码
+    RESERVED_3 = 0x3,
+    RESERVED_4 = 0x4,
+    RESERVED_5 = 0x5,
+    RESERVED_6 = 0x6,
+    RESERVED_7 = 0x7,
+    RESERVED_B = 0xB,
+    RESERVED_C = 0xC,
+    RESERVED_D = 0xD,
+    RESERVED_E = 0xE,
+    RESERVED_F = 0xF
+};
+```
+
+CONTINUATION_FRAME：用于指示消息的后续帧。  
+TEXT_FRAME：用于传输文本数据。  
+BINARY_FRAME：用于传输二进制数据。  
+CONNECTION_CLOSE_FRAME：用于关闭连接。  
+PING_FRAME：用于发起心跳检测。  
+PONG_FRAME：用于对心跳检测进行响应。  
+RESERVED_3 ~ RESERVED_7：WebSocket协议保留的扩展操作码。  
+RESERVED_B ~ RESERVED_F：WebSocket协议保留的扩展操作码。  
+
+4、Websocket协议的压缩格式
+
+WebSocket协议支持对数据帧进行压缩，以减少数据传输的大小和带宽消耗。压缩是通过在数据帧的Payload Data部分应用压缩算法来实现的。以下是WebSocket协议中常见的压缩格式：
+
+没有压缩：在没有启用压缩的情况下，Payload Data部分是原始的数据。  
+Per-Message Compression Extension（PMCE）：WebSocket协议定义了Per-Message Compression Extension，允许使用压缩扩展来对整个消息进行压缩。在使用PMCE时，数据帧的Payload Data部分会经过压缩算法进行压缩，然后发送到对方。PMCE的压缩扩展由应用层协议自行定义和实现，常见的压缩扩展包括Deflate压缩算法和LZ77等。
+
+主动发起一方的包内容
+
+```cpp
+GET /realtime HTTP/1.1\r\n
+Host: 127.0.0.1:9989\r\n
+Connection: Upgrade\r\n
+Pragma: no-cache\r\n
+Cache-Control: no-cache\r\n
+User-Agent: Mozilia/5.0 (Windows NT 10.0; Win64; x64)\r\n
+Upgrade: websocket\r\n
+Origin: http://xyz.com\r\n
+Sec-WebSocket-Version: 13\r\n
+Accept-Encoding: gzip, deflate, br\r\n
+Accept-Language: zh-CN,zh;q=0.0,en;q=0.8\r\n
+Sec-WebSocket-Key: dGhlIHNhbXBsZSBub25jZQ==\r\n
+Sec-WebSocket-Extensions: permessage-deflate; client_max_window_bits\r\n
+\r\n
+```
+
+响应
+
+```cpp
+HTTP/1.1 101 Switching Protocols\r\n
+Upgrade: websocket\r\n
+Connection: Upgrade\r\n
+Sec-WebSocket-Accept: 5wC5L6joP6t131zpj901CNv9Jy4=\r\n
+Sec-WebSocket-Extensions: permessage-deflate; client_no_context_takeover\r\n
+\r\n
+```
+
+5、Websocket协议装包与解包示例,省略不详细探讨了，可能实际开发中因为不会造轮子
+
+6、解析握手协议，省略不详细探讨了，可能实际开发中因为不会造轮子
