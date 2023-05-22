@@ -7,5 +7,4 @@
 * [网络通信故障排查命令](./trouble_shooting.md)
 * [网络通信协议设计](./protocol.md)
 * [单个服务的基本结构](./service.md)
-* [服务器开发中的常用模块]
-* [Redis网络通信模块经验]
+* [服务器开发中的常用模块](./moudles.md)
