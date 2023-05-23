@@ -229,10 +229,105 @@ while(!m_bQuitFlag){
 
 ## 网络库的分层设计
 
+有句经典的话，“对于计算机科学领域中的任何问题，都可以通过增加一个间接的中间层来解决”
+
+### 网络库设计中的各个层
+
+一般有Session层、Connection层、Socket层
+
+```cpp
+Session 层       业务层
+----|-------------------
+Connection层
+    |
+Channel层        技术层
+    |
+Socket层
+```
+
+1、Session层
+
+用于记录各种业务状态数据和处理各种业务逻辑，抽象如下面例子
+
+```cpp
+class ChatSession
+{
+public:
+    int32_t m_id;        // session id
+    UserInfo m_userinfo; // 用户信息
+    bool logined;//是否已经登录
+    std::weak_ptr<TcpConnection> m_connection;
+    void send(char *source, int64_t size); // 调用connection层发送数据
+    void onHeartbeatResponse(TcpConnection &connection);
+    void onFindUserResponse(const std::string &data, TcpConnection &connection);
+    //...其他业务操作
+};
+```
+
+2、Connection层
+
+每个客户端连接都对应一个Connection对象，一般用于记录连接的各种状态信息有，连接状态、数据收发缓冲区信息、数据流量信息、本端和对端的地址和端口号信息等，同时提供各种对网络事件的处理接口、可以被本层使用或Session层使用，每个Connection持有一个Channel对象。且掌握着Channel对象的生命周期
+
+3、Channel层
+
+Channel层一般持有一个Socket句柄，是实际进行数据收发的地方，一个Channel对象会记录当前需要监听的各种网络事件（读写、出错）的状态，同时对这些事件状态提供查询和增删改接口，Channel对象管理着Socket对象的生命周期，需要提供创建和关闭socket对象的接口，Channel层不是必要的，将这些搞到Socket层
+
+4、Socket层
+
+一般是对Socket的封装，
+
+Session的管理一般由SessionManager或SessionFactory管理，让TcpServer来管理Connection
+
+```cpp
+class TcpServer{
+public:
+    //...
+    void addConnection(int sockfd,const InetAddress& peerAddr);
+    void removeConnection(const TcpConnection& conn);
+    typedef std::map<string,TcpConnectionPtr> ConnectionMap;
+
+private:
+    int m_nextConnId;
+    ConnectionMap m_connections;
+};
+```
+
+### 将Session进一步分层
+
+```cpp
+        ChatSession     业务逻辑处理
+            |
+        CompressSession 对数据进行压缩和解压    业务层
+            |
+        TcpSession 对数据进行装包、解包、校验等非业务上的处理
+------------|---------------------------------------------
+        TcpConnection   数据收发    技术层
+```
+
+### 连接信息与EventLoop/Thread的对应关系
+
+一个socket对应一个Channel对象、一个Connection对象对应一个Session对象，在one thread one loop中，每一路连接信息都只能属于一个Loop，一个Loop（一个线程）可以同时拥有多个连接信息
+
 ## 后端服务中的定时器设计
+
+### 最简单的定时器
+
+### 定时器设计的基本思路
+
+### 定时器逻辑的性能优化
+
+### 对时间的缓存
 
 ## 处理业务数据时是否一定要单独开线程
 
 ## 非入侵式结构与侵入式结构
 
+### 非侵入式结构
+
+### 侵入式结构
+
 ## 带有网络通信模块的服务器的经典结构
+
+### 为何将listenfd设置为非阻塞模式
+
+### 基于one thread one loop结构的经典服务器结构
