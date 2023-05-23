@@ -310,21 +310,548 @@ private:
 
 ## 后端服务中的定时器设计
 
-### 最简单的定时器
+直接上代码吧，定时器一般分为timer、timer_manager,timer为定时器任务，timer_manager用于对timer的管理检查与执行
 
-### 定时器设计的基本思路
+### timer
+
+```cpp
+//timer.h
+#pragma once
+#include <functional>
+#include <mutex>
+#include <cstdint>
+#include <ctime>
+
+/*
+*PLAN: 待提高时间精度
+*/
+
+namespace tubekit
+{
+    namespace timer
+    {
+        using timer_callback = std::function<void()>;
+        class timer
+        {
+        public:
+            timer(int32_t repeated_times, int64_t interval, timer_callback callback);
+            timer(const timer &) = delete;
+            virtual ~timer();
+            virtual void run();
+            bool is_expired() const;
+            int64_t get_id() const;
+            int32_t get_repeated_times() const;
+
+        public:
+            static int64_t generate_id();
+
+        private:
+            int64_t m_id;              // timer id
+            time_t m_expired_time;     // 到期时间
+            int32_t m_repeated_times;  // 重复次数
+            timer_callback m_callback; // 回调函数
+            int64_t m_interval;        // 时间间隔
+
+        private:
+            static int64_t s_initial_id;
+            static std::mutex s_mutex; // 保护 s_initial_id 线程安全
+        };
+    }
+}
+//timer.cpp
+#include "timer/timer.h"
+
+using namespace tubekit::timer;
+
+int64_t timer::s_initial_id = 0;
+std::mutex timer::s_mutex;
+
+timer::timer(int32_t repeated_times, int64_t interval, timer_callback callback)
+    : m_repeated_times(repeated_times), m_interval(interval), m_callback(callback)
+{
+    // 当前时间加上一个间隔时间,为下次到期时间
+    m_expired_time = (int64_t)time(nullptr) + interval; // seconds
+    m_id = generate_id();
+}
+
+timer::~timer()
+{
+}
+
+int64_t timer::get_id() const
+{
+    return m_id;
+}
+
+int32_t timer::get_repeated_times() const
+{
+    return m_repeated_times;
+}
+
+void timer::run()
+{
+    if (m_repeated_times == -1 || m_repeated_times >= 1)
+    {
+        m_callback();
+    }
+    if (m_repeated_times >= 1)
+    {
+        --m_repeated_times;
+    }
+    m_expired_time += m_interval;
+}
+
+bool timer::is_expired() const
+{
+    int64_t now = time(nullptr);
+    return now >= m_expired_time;
+}
+
+int64_t timer::generate_id()
+{
+    int64_t new_id;
+    s_mutex.lock();
+    ++s_initial_id;
+    new_id = s_initial_id;
+    s_mutex.unlock();
+    return new_id;
+}
+```
+
+### timer_manager
+
+```cpp
+//timer_manager.h
+#pragma once
+#include <list>
+#include <mutex>
+#include "timer/timer.h"
+
+/*
+* PLAN: 需要后续优化，使用优先队列解决，待提高时间精度
+*/
+
+namespace tubekit
+{
+    namespace timer
+    {
+        class timer_manager final
+        {
+        public:
+            timer_manager();
+            ~timer_manager();
+            /**
+             * @brief 添加新的定时器
+             *
+             * @param repeated_times 重复次数，为-1则一直重复下去
+             * @param interval 触发间隔
+             * @param callback 回调函数
+             * @return int64_t 返回新创建的定时器id
+             */
+            int64_t add(int32_t repeated_times, int64_t interval, const timer_callback callback);
+
+            /**
+             * @brief 删除定时器
+             *
+             * @param timer_id 定时器ID
+             * @return true
+             * @return false
+             */
+            bool remove(int64_t timer_id);
+
+            /**
+             * @brief 检测定时器，到期则触发执行
+             *
+             */
+            void check_and_handle();
+
+        private:
+            std::list<timer *> m_list;
+            std::mutex m_mutex;
+        };
+    }
+}
+//timer_manager.cpp
+#include "timer/timer_manager.h"
+
+using namespace tubekit::timer;
+
+timer_manager::timer_manager()
+{
+}
+
+timer_manager::~timer_manager()
+{
+    std::lock_guard<std::mutex> lock(m_mutex);
+    for (auto iter = m_list.begin(); iter != m_list.end(); ++iter)
+    {
+        timer *timer_ptr = (*iter);
+        delete timer_ptr;
+    }
+    m_list.clear();
+}
+
+int64_t timer_manager::add(int32_t repeated_times, int64_t interval, const timer_callback callback)
+{
+    std::lock_guard<std::mutex> lock(m_mutex);
+    timer *timer_ptr = new timer(repeated_times, interval, callback);
+    if (timer_ptr == nullptr)
+    {
+        return -1;
+    }
+    m_list.push_back(timer_ptr);
+    return timer_ptr->get_id();
+}
+
+bool timer_manager::remove(int64_t timer_id)
+{
+    std::lock_guard<std::mutex> lock(m_mutex);
+    if (timer_id < 0)
+    {
+        return false;
+    }
+    for (auto iter = m_list.begin(); iter != m_list.end(); ++iter)
+    {
+        if ((*iter)->get_id() == timer_id)
+        {
+            timer *timer_ptr = (*iter);
+            delete timer_ptr;
+            m_list.erase(iter);
+            return true;
+        }
+    }
+    return false;
+}
+
+void timer_manager::check_and_handle()
+{
+    std::lock_guard<std::mutex> lock(m_mutex);
+    for (auto iter = m_list.begin(); iter != m_list.end();)
+    {
+        if ((*iter)->is_expired())
+        {
+            (*iter)->run();
+            int32_t times = (*iter)->get_repeated_times();
+            if (times == 0)
+            {
+                timer *timer_ptr = *iter;
+                iter = m_list.erase(iter);
+                delete timer_ptr;
+            }
+        }
+        else
+        {
+            ++iter;
+        }
+    }
+}
+```
+
+### 使用样例
+
+```cpp
+#include <iostream>
+#include <thread>
+#include <memory>
+#include <unistd.h>
+
+#include "timer/timer.h"
+#include "timer/timer_manager.h"
+
+using namespace std;
+using namespace tubekit::timer;
+
+int main(int argc, char **argv)
+{
+    auto m_manager = make_shared<timer_manager>();
+    m_manager->add(-1, 1, []() -> void
+                   { cout << "-1 1" << endl; });
+    m_manager->add(3, 3, []() -> void
+                   { cout << "3 3" << endl; });
+    int loop_timer_id = m_manager->add(1, 5, []() -> void
+                                       { cout << "1 5" << endl; });
+    thread m_thread([&]() -> void
+                    {
+                        while(1){
+                            sleep(1);//can use select epoll nanosleep etc...
+                            m_manager->check_and_handle();
+                        } });
+    m_thread.detach();
+    // m_manager->remove(loop_timer_id);
+    sleep(20);
+    return 0;
+}
+// g++ timer.test.cpp ../src/timer/timer.cpp ../src/timer/timer_manager.cpp -o timer.test.exe -I"../src/" -lpthread
+```
 
 ### 定时器逻辑的性能优化
 
+1、定时器对象集合的数据结构优化一
+
+如果使用std::list存储timer的话，可以定义排序函数，每次添加timer时将list排序处理，则检查timer与执行时，就不需要顺序遍历全部timer了，遍历到不到期的即可停止，但是list不能高效解决从中查找目标timer删除的问题，可以使用std::map,并对std::map进行排序
+
+std::map基于红黑树，std::map会根据键的值进行自动排序，std::unordered_map是一个基于哈希表的关联容器，它提供了一种将键值对关联起来的方式，并且不对键进行排序
+
+std::multimap的底层实现通常使用红黑树，std::unordered_multimap使用哈希函数将键映射到桶(bucket)中，并使用链表或其他数据结构来解决哈希冲突
+
+2、定时器对象集合的数据结构优化二
+
+还有两种常见的为，时间轮和时间堆
+
+时间轮，有一个环形队列，每个位置之间为一个时间间隔interval,那么队列每个位置可以将相同时间的timer拉成链表，在系统检查时，先检查此时时间在那个位置，则之前的位置都是到期的，将多个链表的timer元素进行处理
+
+时间堆，使用小根堆，即每次取出都是时间最小的timer，可以使用stl中的std::priority_queue,std::priority_queue默认是大根堆（max heap
+
+```cpp
+#include <queue>
+#include <iostream>
+
+int main() {
+    std::priority_queue<int> pq;
+
+    // 插入元素
+    pq.push(30);
+    pq.push(10);
+    pq.push(50);
+    pq.push(20);
+
+    // 访问并弹出顶部元素
+    std::cout << "Top element: " << pq.top() << std::endl;
+    pq.pop();
+
+    // 迭代元素（无序）
+    std::cout << "Elements in priority queue: ";
+    while (!pq.empty()) {
+        std::cout << pq.top() << " ";
+        pq.pop();
+    }
+    std::cout << std::endl;
+
+    return 0;
+}
+//Top element: 50
+//Elements in priority queue: 30 20 10
+```
+
+小根堆
+
+```cpp
+#include <queue>
+#include <iostream>
+int main() {
+    std::priority_queue<int, std::vector<int>, std::greater<int>> pq;
+    // 插入元素
+    pq.push(30);
+    pq.push(10);
+    pq.push(50);
+    pq.push(20);
+    // 访问并弹出顶部元素
+    std::cout << "Top element: " << pq.top() << std::endl;
+    pq.pop();
+    // 迭代元素（无序）
+    std::cout << "Elements in priority queue: ";
+    while (!pq.empty()) {
+        std::cout << pq.top() << " ";
+        pq.pop();
+    }
+    std::cout << std::endl;
+    return 0;
+}
+//Top element: 10
+//Elements in priority queue: 20 30 50
+```
+
 ### 对时间的缓存
+
+对于定时器功能，会频繁地使用获取操作系统时间的函数，使用则会调用系统调用，在系统与进程间进行上向下文切换，消耗资源，one thread one loop结构可能花费更多时间
+
+```cpp
+while(!mQuitFlag)
+{
+    get_time_and_cache();//获取时间并缓存
+    do_something_quickly_with_system_timer();//利用上一步获取的系统时间进行些耗时短的操作
+    use_cached_time_to_check_and_handler_timers();//定时器使用缓存的时间，下面的函数也是
+    epoll_or_select_func();
+    handle_io_events();
+    handle_other_thing();
+}
+```
 
 ## 处理业务数据时是否一定要单独开线程
 
-## 非入侵式结构与侵入式结构
+前面知道一个loop的结构大概为
 
-### 非侵入式结构
+```cpp
+while(!m_quit_flag){
+    epoll_or_select_func();
+    handle_io_events();
+    handle_other_things();
+}
+```
 
-### 侵入式结构
+通常handle_io_events用于收发数据，也可以直接用来做业务逻辑的处理，但是不能是耗时较长的业务
+
+```cpp
+void handle_io_events(){
+    recv_or_send_data();
+    decode_packages_and_process();
+}
+```
+
+网络线程即Loop中，handle_io_events示意图  
+
+```cpp
+网络线程
+栈顶            do_bussiness_logic()//不能耗时过长
+                /
+            decode_packages_and_process()
+            /
+栈底   handle_io_events()
+```
+
+如果do_bussiness_logic需要消耗很长的时间该怎么办，应该用独立的线程进行处理
+
+```cpp
+网络线程                            业务线程
+调用I/O复用        业务数据队列     从业务数据队列
+函数检测事件                        中取任务
+    |                                  |
+处理I/O事件                         业务逻辑处理
+收发数据                                |
+    |                                   
+   解包 
+    |
+将业务数据包<----------------------> 处理后的结果数据如果需要通过网络发送，
+交给业务线程                         则再次交给网络线程
+```
+
+业务怎么将结果数据交给网络线程呢
+
+1、对Connection层发送数据进行加锁，这样业务线程可以将数据写到业务层缓冲区，网络线程也可以发送数据，这就要保证线程安全，需要对Connection层的发送数据进行加锁处理
+
+2、或者为业务线程在Conection层开一个缓冲区，利用Loop中的定时器任务，将数据从业务缓冲区读到Connection发送缓冲区
+
+3、和2类似，只不过把缓冲区数据的移动任务在handle_other_thing进行处理
+
+## 非侵入式结构
+
+非入侵结构，指的是一个服务中的所有通信或业务数据都在网络通信框架内部流动，也就是没有外部数据源注入网络通信模块或从网络通信模块中流出，例如A向B用户发送消息，实际上是从A的Connection传递到B的Connection，如果是群发则从一个Connection传递到多个用户的Connection，Connection对象都是网络通信模块的内部结构
+
+## 侵入式结构
+
+如果有外部消息流入网络通信模块或从网络通信模块流出，就相当于有外部消息“侵入”网络通信结构，常见的情况有
+
+1、业务线程（或称数据源线程）将数据处理后交给网络通信组件发送   
+2、网络解包后需要将任务交给专门的业务线程处理（Loop成了生产者），处理完后需要再次通过网络通信组件发送出去
+
+* 方法1
+
+可以通过对应的Session或Socket直接对数据进行发送
+
+```cpp
+//群发
+{
+    std::lock_guard<std::mutex> scoped_lock(m_mutexForSession);
+    for(auto& session:m_mapSessions){
+        session.second->pushSomeData(dataToPush);
+    }
+}
+```
+
+```cpp
+//发送到某用户
+{
+    std::lock_guard<std::mutex> scoped_lock(m_mutexForSession);
+    for(auto& session:m_mapSessions){
+        if(session.second->isAccountIdMatched(accountId)){
+            session.second->pushSomeData(dataToPush);
+            return true;
+        }
+    }
+}
+```
+
+这样的话，会发现业务线程可能占有存放session的数据据结构时间过长，网络线程如果更改session，就要等到业务线程任务完成后了，有些开发者会这样设计
+
+```cpp
+{
+    std::map<int64_t,BusinessSession*> mapLocalSessions;
+    {
+        std::lock_guard<std::mutex> scoped_lock(m_mutexForSession);
+        mapLocalSessions = m_mapSessions;//拷贝
+    }
+    for(auto& session:mapLocalSessions){
+        session.second->pushSomeData(dataToPush);
+    }
+}
+```
+
+缺点一：这样还是有问题，在拷贝后，session可能会进行销毁的，那么我们拷贝的session指针就成了野指针，mapLocalSessions中记录的Session对象可以使用waek_ptr,weak_ptr配和shared_ptr使用，用weak_ptr的expired方法可以检测对象的shared_ptr计数是否大于0，也就是对象还是否存在没有被释放
+
+```cpp
+std::map<int64_t,std::weak_ptr<BusinessSession>> mapLocalSessions;
+```
+
+缺点二：业务线程有数据发送，网络线程可能也有数据发送，虽然可以用锁保证包的完整性，但是不能保证包发送的顺序，显然方法一本身是不适合这种情况的
+
+```cpp
+//多个业务组件发送数据，且有顺序要求，方法一不适用
+业务组件1   业务组件2   业务组件3
+    \           |       /
+        数据发送模块(网络组件)
+```
+
+可以搞成这样
+
+```cpp
+业务组件1   业务组件2   业务组件3
+    \          |       /
+            排序组件 <----------------
+---------------|------------------   |
+          数据发送模块                |
+                                    |
+          产生数据的内部模块----------|
+                           (网络组件)
+------------------------------------
+```
+
+* 方法2
+
+将业务组件需要发送的数据交给网络组件发送，可以使用队列，业务组件将数据交给队列，然后告知对应的网络组件中的线程需要收取任务并执行，前面有说过唤醒机制执行handle_other_things
+
+```cpp
+void EventLoop::runInLoop(const Functor&taskCallback){
+    if(isInLoopThread){
+        taskCallback();//Loop线程执行
+    }else{
+        queueInLoop(taskCallback);//其他线程放入队列
+    }
+}
+void EventLoop::queueInLoop(const Functor& taskCallback){
+    {
+        std::unique_lock<std::mutex> lock(m_mutex);
+        m_pendingFunctors.push_back(taskCallback);
+    }
+    if(!isInLoopThread()||m_doingOtherThings){
+        wakeup();//唤醒Loop
+    }
+}
+void EventLoop::handle_other_things(){
+    std::vector<Functor> functors;
+    m_doingOtherThings = true;
+    {
+        std::unique_lock<std::mutex> lock(m_mutex);
+        functors.swap(m_pendingFunctors);
+    }
+    size_t size = functors.size();
+    for(size_t i=0;i<size;i++){
+        functors[i]();
+    }
+    m_doingOtherThings=false;
+}
+```
+
+这样就是实际由Loop线程进行数据发送，std::lock_guard是RAII获取锁释放锁，std::shared_lock是可重入的读取锁（配和shared_mutex、unique_lock使用），std::scoped_lock用于锁定多个互斥量可以避免死锁
 
 ## 带有网络通信模块的服务器的经典结构
 
