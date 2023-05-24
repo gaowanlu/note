@@ -857,4 +857,46 @@ void EventLoop::handle_other_things(){
 
 ### 为何将listenfd设置为非阻塞模式
 
+1、结构一：listenfd为阻塞模式，为listenfd独立分配一个接受连接线程,一般用主线程循环调用accept，当accept返回时得到新的clientfd，将clientfd加入到如list、vector的数据结构中（要加锁），处理clientfd的I/O线程（Loop线程），在handle_other_things的时候从list或vector中取出clientfd，为了高效在有多个clientfd时可以尝试唤醒Loop线程的epoll_wait(前面说过唤醒fd策略)
+
+2、结构二：listenfd为阻塞模式，使用同一个one thread one loop结构处理listenfd的事件，将listenfd放到一个Loop中监听读事件，在epoll_wait返回后，判断处理的fd是listenfd还是clientfd，如果是listenfd就进行accept处理，此时accept就不会阻塞了，每次循环只能调用一个accept（因为出第一次调用之外不知道是否会阻塞）
+
+3、结构三：listenfd为非阻塞模式，使用同一个one thread one loop结构处理listenfd，仍旧将listenfd放到Loop中进行epoll_wait在返回后如果是listenfd，则进行循环调用accept，知道返回-1且errno为EAGAIN（EWOULDBLOCK）则break，如果errno为EINTR则continue，在一次accept循环时还可以限制一次循环最多执行多少次accept
+
 ### 基于one thread one loop结构的经典服务器结构
+
+1、listenfd单独使用一个loop，clientfd被分配到其他loop
+
+这样可以设计clientfd分发的负载均衡，一般采用轮询策略（round-robin），可以将clientfd均匀的分配到其他工作线程
+
+2、listenfd不单独使用一个loop，将所有clientfd都按一定策略分配给各个loop
+
+如果有loop1,loop2,loop3,loop4,listenfd在loop1，在accept到新的clientfd时，将其提交给分配策略组件，分配策略组件再根据分配策略分配到loop1、loop2、loop3、loop4
+
+3、listenfd和所有clientfd均使用一个loop
+
+所有fd的事件监听采用一个线程处理，在有数据包收到后可以提交给业务处理线程
+
+### 常见的负载均衡策略
+
+1、轮询（Round Robin）算法：按照顺序依次将请求分配给每个后端服务器，循环往复。它是最简单和最常见的负载均衡算法。
+
+2、最少连接（Least Connection）算法：将请求分配给当前连接数最少的后端服务器，以实现负载均衡。这可以确保将负载较均匀地分配到各个服务器上。
+
+3、最快响应（Fastest Response）算法：将请求分配给响应时间最短的后端服务器，以提供最佳的用户体验。
+
+4、IP 哈希（IP Hash）算法：根据客户端的 IP 地址进行哈希计算，将同一 IP 的请求分配给同一台后端服务器。这样可以确保来自同一客户端的请求总是被发送到同一台服务器上，适用于一些需要保持会话状态的应用。
+
+5、加权轮询（Weighted Round Robin）算法：为每个后端服务器分配一个权重值，根据权重比例来决定请求的分配比例。具有较高权重的服务器将获得更多的请求。
+
+6、加权最少连接（Weighted Least Connection）算法：结合了最少连接和加权轮询的特点，根据服务器的权重和当前连接数来决定请求的分配。
+
+7、随机（Random）算法：随机选择一个后端服务器来处理请求。虽然简单，但无法保证负载的均衡性。
+
+### 服务器的性能瓶颈
+
+1、I/O密集型指的是程序业务上没有复杂的计算或者耗时的业务逻辑处理，大多数情况下为网络收发操作，如即时通信、交易系统行情推送、实时对战游戏
+
+2、计算密集型指的是在程序业务逻辑中存在耗时的计算，如数据处理服务、调度服务等
+
+根据不同类型的业务，就要使得有效的线程资源合理分配到网络通信组件还是业务模块，总之就是根据实际情况合理分配
