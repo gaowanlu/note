@@ -4,11 +4,14 @@ cover: .gitbook/assets/屏幕截图 2022-05-02 031105.jpg
 coverY: 0
 ---
 
-# THE NICE BOOK FOR YOU
+# Table of contents
 
-## 🍊 C++
+- [THE NICE BOOK](README.md)
 
-- [C++](c++/README.md)
+## 🍊 C++ 基础
+
+- [C++基础](c++/README.md)
+
   - [🚜 前言](c++/qian-yan.md)
   - [🚗 第 1 章 开始](c++/di-1-zhang-kai-shi.md)
   - [😜 第 2 章 变量和基本类型](c++/di-2-zhang-bian-liang-he-ji-ben-lei-xing.md)
@@ -37,16 +40,52 @@ coverY: 0
   - [C++ 17 补充](c++/cpp17-patch.md)
   - [C++ 20 补充](c++/cpp20-patch.md)
 
-## 构建工具
+## 🤡 C++ 进阶
+
+- [Google C++](cpppro/codestyle.md)
+- [C++ 沉思录](cpppro/codestyle.md)
+- [C 专家编程](cpppro/codestyle.md)
+- [Effective C++](cpppro/codestyle.md)
+- [Effective Modern C++](cpppro/codestyle.md)
+- [More Effective C++](cpppro/codestyle.md)
+- [并发编程](bing-fa-bian-cheng/README.md)
+
+  - [第 1 章 你好并发世界](bing-fa-bian-cheng/di-1-zhang-ni-hao-bing-fa-shi-jie.md)
+  - [第 2 章 线程管理](bing-fa-bian-cheng/di-2-zhang-xian-cheng-guan-li.md)
+  - [第 3 章 共享数据](bing-fa-bian-cheng/di-3-zhang-gong-xiang-shu-ju.md)
+  - [第 4 章 同步操作](bing-fa-bian-cheng/di-4-zhang-tong-bu-cao-zuo.md)
+  - [第 5 章 C++内存模型和原子操作](bing-fa-bian-cheng/di-5-zhang-cpp-内存模型和原子操作.md)
+
+- [设计模式](designpattern/README.md)
+  - [🍎 工厂模式(Factory 模式)](designpattern/chuang-jian-xing-mo-shi/gong-chang-mo-shi-factory-mo-shi.md)
+  - [🤩 抽象工厂模式(AbstractFactory 模式)](designpattern/chuang-jian-xing-mo-shi/chou-xiang-gong-chang-mo-shi.md)
+  - [☺ 单例模式(Singleton 模式)](designpattern/chuang-jian-xing-mo-shi/dan-li-mo-shi.md)
+  - [🥳 建造者模式(Builder 模式)](designpattern/chuang-jian-xing-mo-shi/jian-zao-zhe-mo-shi-builder-mo-shi.md)
+  - [👾 原型模式(Prototype 模式)](designpattern/chuang-jian-xing-mo-shi/yuan-xing-mo-shi-prototype-mo-shi.md)
+  - [🤩 桥接模式(Bridge 模式)](designpattern/jie-gou-xing-mo-shi/qiao-jie-mo-shi-bridge-mo-shi.md)
+  - [🙄 适配器模式(Adapter 模式)](designpattern/jie-gou-xing-mo-shi/shi-pei-qi-mo-shi-adapter-mo-shi.md)
+  - [🤖 装饰者模式(Decrator 模式)](designpattern/jie-gou-xing-mo-shi/zhuang-shi-zhe-mo-shi-decrator-mo-shi.md)
+  - [🐸 组合模式(Composite 模式)](designpattern/jie-gou-xing-mo-shi/zu-he-mo-shi.md)
+  - [🙄 享元模式(Flyweight 模式)](designpattern/jie-gou-xing-mo-shi/xiang-yuan-mo-shi.md)
+  - [🤖 外观模式(Facade 模式)](designpattern/jie-gou-xing-mo-shi/wai-guan-mo-shi.md)
+  - [🤩 代理模式(Proxy 模式)](designpattern/jie-gou-xing-mo-shi/dai-li-mo-shi.md)
+  - [🤖 模板模式(Template 模式)](designpattern/xing-wei-mo-shi/template.md)
+  - [🤡 策略模式(Strategy 模式)](designpattern/xing-wei-mo-shi/strategy.md)
+  - [🐼 状态模式(State 模式)](designpattern/xing-wei-mo-shi/state.md)
+  - [🐸 观察者模式(Observer 模式)](designpattern/xing-wei-mo-shi/observer.md)
+
+## 🅰️ 构建工具
 
 - [构建工具](buildtool/README.md)
+
   - [GCC](buildtool/gcc.md)
   - [Make](buildtool/make.md)
   - [CMake](buildtool/cmake.md)
 
-## 服务器开发
+## 🐼 服务器开发
 
 - [服务器开发](server-dev/README.md)
+
   - [C++必知必会](server-dev/cpp_bizhibihui.md)
   - [工具和调试](server-dev/tool_debug.md)
   - [多线程编程与资源同步](server-dev/multi_thread_resource_synchronization.md)
@@ -55,15 +94,6 @@ coverY: 0
   - [网络通信协议设计](server-dev/protocol.md)
   - [单个服务的基本结构](server-dev/service.md)
   - [服务器开发中的常用模块](server-dev/moudles.md)
-
-## 并发编程
-
-- [并发编程](bing-fa-bian-cheng/README.md)
-  - [第 1 章 你好并发世界](bing-fa-bian-cheng/di-1-zhang-ni-hao-bing-fa-shi-jie.md)
-  - [第 2 章 线程管理](bing-fa-bian-cheng/di-2-zhang-xian-cheng-guan-li.md)
-  - [第 3 章 共享数据](bing-fa-bian-cheng/di-3-zhang-gong-xiang-shu-ju.md)
-  - [第 4 章 同步操作](bing-fa-bian-cheng/di-4-zhang-tong-bu-cao-zuo.md)
-  - [第 5 章 C++内存模型和原子操作](bing-fa-bian-cheng/di-5-zhang-cpp-内存模型和原子操作.md)
 
 ## 💻 操作系统
 
@@ -101,28 +131,18 @@ coverY: 0
   - [第 18 章 网络 IPC 套接字](cao-zuo-xi-tong/unix-env/%E7%AC%AC18%E7%AB%A0%E7%BD%91%E7%BB%9CIPC%E5%A5%97%E6%8E%A5%E5%AD%97.md)
   - [第 19 章 高级进程间通信](cao-zuo-xi-tong/unix-env/%E7%AC%AC19%E7%AB%A0%E9%AB%98%E7%BA%A7%E8%BF%9B%E7%A8%8B%E9%97%B4%E9%80%9A%E4%BF%A1.md)
 
-## 设计模式
+## 🪅 中间件
 
-- [设计模式](designpattern/README.md)
-  - [创建型模式](designpattern/chuang-jian-xing-mo-shi/README.md)
-    - [🍎 工厂模式(Factory 模式)](designpattern/chuang-jian-xing-mo-shi/gong-chang-mo-shi-factory-mo-shi.md)
-    - [🤩 抽象工厂模式(AbstractFactory 模式)](designpattern/chuang-jian-xing-mo-shi/chou-xiang-gong-chang-mo-shi.md)
-    - [☺ 单例模式(Singleton 模式)](designpattern/chuang-jian-xing-mo-shi/dan-li-mo-shi.md)
-    - [🥳 建造者模式(Builder 模式)](designpattern/chuang-jian-xing-mo-shi/jian-zao-zhe-mo-shi-builder-mo-shi.md)
-    - [👾 原型模式(Prototype 模式)](designpattern/chuang-jian-xing-mo-shi/yuan-xing-mo-shi-prototype-mo-shi.md)
-  - [结构型模式](designpattern/jie-gou-xing-mo-shi/README.md)
-    - [🤩 桥接模式(Bridge 模式)](designpattern/jie-gou-xing-mo-shi/qiao-jie-mo-shi-bridge-mo-shi.md)
-    - [🙄 适配器模式(Adapter 模式)](designpattern/jie-gou-xing-mo-shi/shi-pei-qi-mo-shi-adapter-mo-shi.md)
-    - [🤖 装饰者模式(Decrator 模式)](designpattern/jie-gou-xing-mo-shi/zhuang-shi-zhe-mo-shi-decrator-mo-shi.md)
-    - [🐸 组合模式(Composite 模式)](designpattern/jie-gou-xing-mo-shi/zu-he-mo-shi.md)
-    - [🙄 享元模式(Flyweight 模式)](designpattern/jie-gou-xing-mo-shi/xiang-yuan-mo-shi.md)
-    - [🤖 外观模式(Facade 模式)](designpattern/jie-gou-xing-mo-shi/wai-guan-mo-shi.md)
-    - [🤩 代理模式(Proxy 模式)](designpattern/jie-gou-xing-mo-shi/dai-li-mo-shi.md)
-  - [行为模式](designpattern/xing-wei-mo-shi/README.md)
-    - [🤖 模板模式(Template 模式)](designpattern/xing-wei-mo-shi/template.md)
-    - [🤡 策略模式(Strategy 模式)](designpattern/xing-wei-mo-shi/strategy.md)
-    - [🐼 状态模式(State 模式)](designpattern/xing-wei-mo-shi/state.md)
-    - [🐸 观察者模式(Observer 模式)](designpattern/xing-wei-mo-shi/observer.md)
+- [中间件](zhongjianjian/README.md)
+  - [MySQL](zhongjianjian/mysql.md)
+  - [Redis](zhongjianjian/redis.md)
+  - [Nginx](zhongjianjian/nginx.md)
+  - [RabbitMQ](zhongjianjian/rabbitmq.md)
+  - [Memcached](zhongjianjian/memcached.md)
+
+## 🪅 Shell
+
+- [Shell](shell/README.md)
 
 ## 🍏 数据结构与算法
 
@@ -187,20 +207,3 @@ coverY: 0
     - [🥳 置换-选择排序](shu-ju-jie-gou-yu-suan-fa/shu-ju-jie-gou/di-8-zhang-pai-xu/zhi-huan-xuan-ze-pai-xu.md)
     - [😎 最佳归并树](shu-ju-jie-gou-yu-suan-fa/shu-ju-jie-gou/di-8-zhang-pai-xu/zui-jia-gui-bing-shu.md)
   - [第 9 章 高级数据结构](shu-ju-jie-gou-yu-suan-fa/shu-ju-jie-gou/di-9-zhang-gao-ji-shu-ju-jie-gou.md)
-
-## 🪅 中间件
-
-- [中间件](zhongjianjian/README.md)
-  - [MySQL](zhongjianjian/mysql.md)
-  - [Redis](zhongjianjian/redis.md)
-  - [Nginx](zhongjianjian/nginx.md)
-  - [RabbitMQ](zhongjianjian/rabbitmq.md)
-  - [Memcached](zhongjianjian/memcached.md)
-
-## 🪅 Shell
-
-- [Shell](shell/README.md)
-
-## 😍 代码风格
-
-- [C++](codestyle/codestyle.md)

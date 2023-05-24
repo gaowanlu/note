@@ -1,10 +1,10 @@
-# MySQL与C++
+# MySQL 与 C++
 
 ## 简介
 
-较好的文档https://www.tutorialspoint.com/mysql/index.htm
+较好的文档https://www.tutorialspoint.com/mysql/index.htm,好的书籍《高性能MySQL》
 
-## 在C++使用
+## 在 C++使用
 
 常用的函数
 
@@ -220,7 +220,7 @@ FROM products
 ORDER BY quantity_in_stock * unit_price DESC;
 ```
 
-### 3、where子句
+### 3、where 子句
 
 ```sql
 # WHERE 子句
@@ -410,7 +410,7 @@ MIN() 返回某列的最小值
 SUM() 返回某列值之和
 */
 # 使用样例
-SELECT 
+SELECT
 AVG(invoice_total) AS avg,
 COUNT(*) AS count,
 MAX(invoice_total) AS max,
@@ -432,7 +432,7 @@ FROM invoices;
 ```sql
 #复习上一节内容（汇总数据）ＡＶＧ ＳＵＭ ＭＩＮ ＭＡＸ ＣＯＵＮT 函数的使用
 USE sql_invoicing;
-SELECT AVG(distinct 
+SELECT AVG(distinct
 client_id),SUM(payment_total),MIN(payment_total),MAX(payment_total),COUNT(*)
 FROM invoices;
 #本节内容
@@ -457,7 +457,7 @@ num client_id
 6 5
 GROUP BY 子句更像是
 SELECT COUNT(*) AS num
-FROM 
+FROM
 WHERE alient_id=something
 的加强版
 */
@@ -492,7 +492,7 @@ client_id total_sales
 3 705.90
 5 980.02
  2590.60
- 
+
 -- ALL KEYWORD
 SELECT *
 FROM invoices
@@ -508,7 +508,7 @@ WHERE invoice_total>ALL(
  FROM invoices
  WHERE client_id=2;
 );
--- ANY 
+-- ANY
 SELECT *
 FROM invoices
 WHERE invoice_total>ANY(
@@ -519,7 +519,7 @@ WHERE invoice_total>ANY(
 --EXISTS
 SELECT *
 FROM clients c
-WHERE EXISTS( 
+WHERE EXISTS(
  SELECT client_id
  FROM invoices
  WHERE client_id=c.client_id
@@ -557,16 +557,16 @@ FROM film
 WHERE rental_duration>=6;
 /*输出列:SUM [ 32 ]*/
 #统计了 rental_duration>=6 的共有多少行
-SELECT film_id,title,(SELECT description FROM film WHERE film.film_id = film_text.film_id) 
+SELECT film_id,title,(SELECT description FROM film WHERE film.film_id = film_text.film_id)
 AS film_description
 FROM film_text;
 /*分析:
 从表 film_text 拿 title 与 film_id 在表 film 中拿 film_text 每行的 film_id 对应的 description
 */
 # IF()
-SELECT 
+SELECT
 12
-IF (COUNT(*)>2,'yes','no') AS u; 
+IF (COUNT(*)>2,'yes','no') AS u;
 #CASE WHEN
 SELECT
 CASE WHEN COUNT(*)>100 THEN '>100'
@@ -595,7 +595,7 @@ WHERE Vendors.vend_id=Products.vend_id;
 #内联结
 SELECT vend_name,prod_name,prod_price
 FROM Vendors
-INNER JOIN Products ON Vendors.vend_id=Products.vend_id;-- 不写 INNER 则默认 INNER 
+INNER JOIN Products ON Vendors.vend_id=Products.vend_id;-- 不写 INNER 则默认 INNER
 JOIN
 #联结多个表
 SELECT prod_name,vend_name,prod_price,quantity
@@ -631,7 +631,7 @@ JOIN ctable ON a.id=c.id;
 #多条联结条件
 SELECT *
 FROM atable a
-JOIN btable b ON a.id=b.id AND a.name=b.name; 
+JOIN btable b ON a.id=b.id AND a.name=b.name;
 #外联结-OUTER JOIN
 # |-左联结 LEFT OUTER JOIN 可缩写为 LEFT JOIN
 # |-右联结 RIGHT OUTER JOIN 可缩写为 RIGHT JOIN
@@ -936,47 +936,47 @@ call test(2,2);
 # todo
 #end if;
 #case 语句
-# -> case var 
-# -> when 0 then 
-# -> insert into t values(17); 
-# -> when 1 then 
-# -> insert into t values(18); 
-# -> else 
-# -> insert into t values(19); 
-# -> end case; 
+# -> case var
+# -> when 0 then
+# -> insert into t values(17);
+# -> when 1 then
+# -> insert into t values(18);
+# -> else
+# -> insert into t values(19);
+# -> end case;
 #循环语句
-# -> while var<6 do 
-# -> insert into t values(var); 
-# -> set var=var+1; 
+# -> while var<6 do
+# -> insert into t values(var);
+# -> set var=var+1;
 # -> end while;
 #do while 语句
-# -> repeat 
-# -> insert into t values(v); 
+# -> repeat
+# -> insert into t values(v);
 22
-# -> set v=v+1; 
-# -> until v>=5 
-# -> end repeat; 
-#loop 循环不需要初始条件，这点和 while 循环相似，同时和 repeat 循环一样不需要结束条件, 
+# -> set v=v+1;
+# -> until v>=5
+# -> end repeat;
+#loop 循环不需要初始条件，这点和 while 循环相似，同时和 repeat 循环一样不需要结束条件,
 leave 语句的意义是离开循环。
-# -> LOOP_LABLE:loop 
-# -> insert into t values(v); 
-# -> set v=v+1; 
-# -> if v >=5 then 
-# -> leave LOOP_LABLE; 
-# -> end if; 
+# -> LOOP_LABLE:loop
+# -> insert into t values(v);
+# -> set v=v+1;
+# -> if v >=5 then
+# -> leave LOOP_LABLE;
+# -> end if;
 # -> end loop;
 # ITERATE 迭代
 #ITERATE 通过引用复合语句的标号,来从新开始复合语句:
-# -> LOOP_LABLE:loop 
-# -> if v=3 then 
-# -> set v=v+1; 
-# -> ITERATE LOOP_LABLE; 
-# -> end if; 
-# -> insert into t values(v); 
-# -> set v=v+1; 
-# -> if v>=5 then 
-# -> leave LOOP_LABLE; 
-# -> end if; 
+# -> LOOP_LABLE:loop
+# -> if v=3 then
+# -> set v=v+1;
+# -> ITERATE LOOP_LABLE;
+# -> end if;
+# -> insert into t values(v);
+# -> set v=v+1;
+# -> if v>=5 then
+# -> leave LOOP_LABLE;
+# -> end if;
 # -> end loop;
 -- FUNCTIONS
 -- 建立自己的函数：像聚集函数一样例如 MIN MAX SUM 等
@@ -1029,7 +1029,7 @@ ON SCHEDULE
  --EVERY 1 HOUR-- 2 DAY --2 YEAR
 24
  --EVERY 1 YEAR STARTS '2019-01-01' ENDS '2029-01-01'
-DO BEGIN 
+DO BEGIN
  DELETE FROM payments_audit
  WHERE action_date<NOW()-INTERVAL 1 YEAR;
 END $$
@@ -1045,7 +1045,7 @@ ON SCHEDULE
  AT '2021-05-28'
  --EVERY 1 HOUR-- 2 DAY --2 YEAR
  --EVERY 1 YEAR STARTS '2019-01-01' ENDS '2029-01-01'
-DO BEGIN 
+DO BEGIN
  DELETE FROM payments_audit
  WHERE action_date<NOW()-INTERVAL 1 YEAR;
 END $$
@@ -1262,8 +1262,8 @@ GRANT SELECT,INSERT,UPDATE,DELETE,EXECUTE
 ON sql_store.*
 TO `john@允许访问的 ip`；
 --授予能够创建表\创建触发器\修改现有表
-PRIVILEGES provided by mysql,summary of available PRIVILEGES 
-GRANT ALL 
+PRIVILEGES provided by mysql,summary of available PRIVILEGES
+GRANT ALL
 ON sql_store.* -- *.*
 TO `john@允许访问的 ip`;
 -- width grant option(不仅允许用户拥有这个权限，还可以将授予的权限再授予给他人)
@@ -1273,7 +1273,7 @@ SHOW GRANTS FOR `john@允许访问的 ip`;
 SHOW GRANTS;
 32
 --撤销权限
-REVOKE CREATE VIEW 
+REVOKE CREATE VIEW
 ON sql_store.*
 FROM `john@允许访问的 ip`;
 1、with admin option 用于系统权限授权，with grant option 用于对象授权。
@@ -1282,7 +1282,7 @@ FROM `john@允许访问的 ip`;
 但收回这个用户的系统权限时，这个用户已经授予其他用户或角色的此系统权限不会因传播无效，
 如授予 A 系统权限 create session with admin option,然后 A 又把 create session 权限授予 B,
 但管理员收回 A 的 create session 权限时，B 依然拥有 create session 的权限，
-但管理员可以显式收回 B create session 的权限，即直接 revoke create session from B. 
+但管理员可以显式收回 B create session 的权限，即直接 revoke create session from B.
 而 with grant option 用于对象授权时，被授予的用户也可把此对象权限授予其他用户或角色，
 不同的是但管理员收回用 with grant option 授权的用户对象权限时，权限会因传播而失效，
 如：grant select on 表名 to A with grant option;，A 用户把此权限授予 B，但管理员收回 A 的权
@@ -1290,12 +1290,12 @@ FROM `john@允许访问的 ip`;
 B 的权限也会失效，但管理员不可以直接收回 B 的 SELECT ON TABLE 权限。 执行授权语句报错
 （ora-01031，ora-01929）时，可参考一下。
 相同点：
-- 两个都可以既可以赋予 user 权限时使用，也可以在赋予 role 时用 GRANT CREATE SESSION TO 
+- 两个都可以既可以赋予 user 权限时使用，也可以在赋予 role 时用 GRANT CREATE SESSION TO
 emi WITH ADMIN OPTION;
-GRANT CREATE SESSION TO role WITH ADMIN OPTION; GRANT role1 to role2 WITH 
-ADMIN OPTION; 
- GRANT select ON customers1 TO bob WITH GRANT OPTION; GRANT select ON 
-customers1 TO hr_manager(role) WITH GRANT OPTION; 
+GRANT CREATE SESSION TO role WITH ADMIN OPTION; GRANT role1 to role2 WITH
+ADMIN OPTION;
+ GRANT select ON customers1 TO bob WITH GRANT OPTION; GRANT select ON
+customers1 TO hr_manager(role) WITH GRANT OPTION;
  - 两个受赋予者，都可以把权限或者 role 再赋予 other users - 两个 option 都可以对 DBA 和
 APP ADMIN 管理带来方便性，但同时，
  都带来不安全的因素
@@ -1381,7 +1381,7 @@ FROM copy;
 #每 fetch 一回就会向下自动迭代一行，类似于 C 语言中的文件读取。
 ```
 
-### 22、高级sql特性
+### 22、高级 sql 特性
 
 ```sql
 USE gaowanlu;
