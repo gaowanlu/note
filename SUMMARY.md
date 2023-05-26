@@ -38,7 +38,9 @@
 
 - [Effective C++](cpppro/effective_cpp.md)
 - [Effective Modern C++](cpppro/effective_modern_cpp.md)
-- [C++ 沉思录](cpppro/codestyle.md)
+- [More Effective C++](cpppro/more_effective_cpp.md)
+- [深度探索 C++对象模型](cpppro/inside_the_cpp_object_model.md)
+- [C++ 沉思录](cpppro/rumination_on_cpp.md)
 - [Google C++](cpppro/codestyle.md)
 - [并发编程](bing-fa-bian-cheng/README.md)
 
