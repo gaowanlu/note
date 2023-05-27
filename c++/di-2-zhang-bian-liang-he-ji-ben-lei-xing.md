@@ -19,6 +19,7 @@ char        字符        8位
 wchar_t     宽字符      16位
 char16_t    Unicode字符 16位
 char32_t    Unicode字符 32位
+char8_t     字符        8位 （C++20）
 short       短整形      16位
 int         整形        16位
 long        长整形      32位
@@ -48,6 +49,23 @@ int main(int argc, char **argv)
     std::cout << "float " << sizeof(float) << std::endl;// float 4
     std::cout << "double " << sizeof(double) << std::endl;// double 8
     std::cout << "long double " << sizeof(long double) << std::endl;// long double 12
+    return 0;
+}
+```
+
+### 数值类型值范围
+
+可以使用宏或者模板
+
+```cpp
+#include <limits>
+
+using namespace std;
+
+int main(int argc, char **argv)
+{
+    cout << std::numeric_limits<long long>::max() << endl; // 9223372036854775807
+    cout << std::numeric_limits<int>::min() << endl;       //-2147483648
     return 0;
 }
 ```

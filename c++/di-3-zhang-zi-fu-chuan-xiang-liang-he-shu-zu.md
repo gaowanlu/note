@@ -125,6 +125,27 @@ int main(int argc, char **argv)
 }
 ```
 
+### 字符串对宽字符的支持
+
+可以使用basic_string模板类
+
+```cpp
+#include <string>
+using namespace std;
+
+int main(int argc, char **argv)
+{
+    basic_string<char16_t> str1;
+    basic_string<char32_t> str2;
+    basic_string<wchar_t> str3;
+    str1.append(u"cdsfd");
+    str2.append(U"cdfd");
+    str3.append(L"vfdvd");
+    wcout << str3 << endl; // vfdvd
+    return 0;
+}
+```
+
 ### 关于字符串长度的大坑
 
 如果我们需要存储含有\0的字符串数据，请勿使用std::string进行存储，因为一旦使用它是从\0后的字符进行了忽略，例如在http的报文内如果请求体或响应体内为二进制数据，那么我们按照字符来读取，极有可能造成大祸，甚至一整天不知道bug在哪里，所以我们应该在学习的时候就知道这回事
