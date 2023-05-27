@@ -1,14 +1,290 @@
 # Effective C++
 
+改善程序与设计的55个具体做法
+
 ## 让自己习惯 C++
 
 ### 1、视 C++为一个语言联邦
 
+C++是一个多重范型编程语言，支持过程形式、面向对象形式、函数形式、泛型形式、元编程形式，C++高效编程守则视状况而变化，取决于使用C++哪一个部分，在合适的场景选择使用合适的功能
+
 ### 2、尽量以 const、enum、inline 替换 define
+
+C开发中以前都在使用宏定义define,但是往往难以维护而且难以调试
+
+* 对于单纯常量，最好以const对象或enums替换define
+* 对于形似函数的宏，最好改用inline函数替换define
+
+```cpp
+#define ASPECT_RATIO 1.653
+//使用const替换
+const double AspectRatio = 1.653;
+```
+
+const的底层const与顶层const要知道
+
+```cpp
+const char* const authorName = "Scott Meyers";//字符串用const代替宏
+//cpp等推荐使用string,更加抽象
+const std::string authorName("Scott Meyers");
+```
+
+对于类内的可以使用静态成员变量
+
+```cpp
+class A{
+private:
+    static const int Num = 5;//常量声明式
+    int scores[Num];
+};
+```
+
+如果不使用A::Num的地址，那么只使用声明式即可，如果要用地址则需要定义式在源文件中
+
+```cpp
+const int A::Num;//Num定义，声明时已经提供初值，定义式不再需要提供初值
+//如果编译器不支持声明式初始化，则要在定义式提供初值
+```
+
+类内的enum更像define，不能取值
+
+```cpp
+class A
+{
+public:
+    enum
+    {
+        Num = 4
+    };
+    int arr[Num];
+};
+
+int main(int argc, char **argv)
+{
+    cout << A::Num << endl; // 4
+    return 0;
+}
+```
+
+关于define写函数形式的一些问题，尽量使用inline，一般inline函数写在头文件中，因为源文件编译时需要将函数展开
+
+```cpp
+#define MAX(a, b) (a) > (b) ? (a) : (b)
+
+int main(int argc, char **argv)
+{
+    int n = MAX(1, 2);
+    cout << n << endl; // 2
+    // int n1 = MAX(n++, ++n); 这种问题容易混乱
+    return 0;
+}
+//尽可能使用inline函数，也可以使用模板进行扩展
+//函数也能展开，而且利于开发维护
+template <typename T>
+inline T mymax(const T &a, const T &b)
+{
+    return a > b ? a : b;
+}
+```
 
 ### 3、尽可能使用 const
 
+* 将某些东西声明为const可帮助编译器侦测出错误用法，const可以被施加于任何作用域内的对象、函数参数、函数返回类型、成员函数本体
+* 虽然方法内禁止修改对象属性，但是可以返回属性的引用，如果方法为const的里应当返回const类型
+* 当const和non-const成员函数有着等价的实现时，令non-const版本调用const版本可以避免代码重复，用static_cast和const_cast解决
+
+const有顶层const（一般为指针不能修改）与底层const（数据不能修改），
+
+```cpp
+char greeting[] = "hello"; 
+char *p = greeting;//none-const pointer,non-const data
+const char* p =greeting;//non-const pointer,const data
+char* const p = greeting;//const pointer,non-const data
+const char* const p = greeting;//const pointer,const data
+```
+
+有两种形式的表达的意思是相同的,都是data const
+
+```cpp
+void func(char const *p);
+void func(const char*p);
+```
+
+函数返回常量值的作用
+
+```cpp
+class A
+{
+public:
+    A(const int &n) : num(n)
+    {
+    }
+    int num;
+    const A operator*(const A &o)
+    {
+        return A(this->num * o.num);
+    }
+};
+
+int main(int argc, char **argv)
+{
+    A a(1);
+    A b(2);
+    A c = a * b;
+    //(a * b) = 3;           // 错误：操作数类型为: const A = int，如果返回的不是const值则不报错
+    cout << c.num << endl; // 2
+    return 0;
+}
+```
+
+const成员函数
+
+```cpp
+class A
+{
+public:
+    static const int num{9};
+    char arr[num] = {0};
+    const char &operator[](std::size_t position) const
+    {
+        return arr[position];
+    }
+    char &operator[](std::size_t position)
+    {
+        return arr[position];
+    }
+};
+
+int main(int argc, char **argv)
+{
+    A a;
+    const A b;
+    cout << a[0] << endl; // 调用char &A::operator[]
+    cout << b[0] << endl; // 调用 const char &A::operator[]
+    // b[0] = '1'; 错误
+    a[0] = 'a';
+    cout << a[0] << endl; // a
+    return 0;
+}
+```
+
+在const和non-const成员函数中避免重复,可以让non-const调用const成员函数
+
+```cpp
+class A
+{
+public:
+    static const int num{9};
+    char arr[num] = {0};
+    const char &operator[](std::size_t position) const
+    {
+        //...
+        // ...
+        return arr[position];
+    }
+    char &operator[](std::size_t position)
+    {
+        return const_cast<char &>(static_cast<const A &>(*this)[position]);
+    }
+};
+```
+
 ### 4、确定对象被使用前已经被初始化
+
+* 为内置型对象进行手工初始化，因为C++不保证初始化它们
+* 构造函数最好使用成员初值列，而不是在构造函数本体使用赋值操作，初值列列出的成员变量，其排列次序应该和它们在class中的声明次序相同
+* 为免除“跨编译单元之初始化次序”问题，请以local static对象替换non-local static对象
+
+```cpp
+int n;
+cout << n << endl;
+```
+
+会输出什么，大部分都会说0，但是不一定，有随机性，不能相信机器与编译器，加上个初始值不会杀了你
+
+为什么要使用初始化列表，而不是在构造函数内赋值
+
+```cpp
+class A
+{
+public:
+    A()
+    {
+        cout << "A()" << endl;
+    }
+    A(const int &n)
+    {
+        cout << "A(const int &n)" << endl;
+    }
+    const A &operator=(const int &n)
+    {
+        cout << "const A &operator=(const int &n)" << endl;
+        return *this;
+    }
+};
+
+class B
+{
+public:
+    B()
+    {
+        a = 1; // 这是赋值不是初始化
+    }
+    A a;
+};
+
+int main(int argc, char **argv)
+{
+    B b;
+    // A()
+    // const A &operator=(const int &n)
+    return 0;
+}
+```
+
+如果使用构造函数列表,It's fucking cool.特别注意的是初始化列表为什么要与在类内声明的顺序相同，这是因为它们构造的现后顺序并不取决于在初始化列表中的顺序而是在类内声明的顺序所以我们写代码直接把二者顺序同步好了。
+
+```cpp
+class B
+{
+public:
+    B() : a(1)
+    {
+    }
+    A a;
+};
+
+int main(int argc, char **argv)
+{
+    B b;
+    // A(const int &n)
+    return 0;
+}
+```
+
+什么是local-static对象和non-local static对象，栈内存与堆内存对象都不是static对象。像全局对象、定义在命名空间作用域内的、在class内的、在函数内的、以及在源文件作用域内的被声明为static的对象。其中在函数内的为local-static其他为non-local static。程序结束时static会被自动销毁，析构函数在main返回前调用
+
+可能有时会使用extern访问在其他源文件定义的对象,如果一个源文件中某个non-local static对象初始化时用到了另一个源文件中的non-local static对象，可能会出现赋值操作右边的变量没有初始化过的情况，因为C++中：对于“定义于不同源文件内的non-local static对象”的初始化次序并无明确定义
+
+```cpp
+//mian.cpp
+extern int n;
+int n1=n;
+//main1.cpp
+int n;
+```
+
+怎样解决这一问题,推荐使用local static代替non-local static
+
+```cpp
+//main.cpp
+int n1=n();
+//main1.cpp
+int& n(){
+    static int v=100;
+    return v;
+}
+```
 
 ## 构造析构赋值运算
 
