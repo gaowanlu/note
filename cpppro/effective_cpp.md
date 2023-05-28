@@ -290,19 +290,543 @@ int& n(){
 
 ### 5、了解 C++默默编写并调用哪些函数
 
+* 编译器可以暗自为class创建default构造函数、copy构造函数、copy assignment操作符、析构函数，默认生成为inline的。
+
+默认生成这些函数是C++的基础知识，应该问题不大，当程序中使用这些函数时编译器才会生成，如果自己声明了自定义的相关函数则编译器不再自动生成默认的对应函数
+
+```cpp
+class A
+{
+public:
+    A() {}
+    ~A() {}
+    A(const A &a)
+    {
+        this->num = a.num;
+    }
+    A &operator=(const A &a)
+    {
+        this->num = a.num;
+        return *this;
+    }
+    int num;
+};
+```
+
 ### 6、若不想使用编译器自动生成的函数应明确拒绝
+
+* 为驳回编译器自动提供的机能，可将相应的成员函数声明为private并且不予实现，使用像Uncopyable这样的基类也是一种办法。
+
+```cpp
+//写为private,只声明不定义
+class A
+{
+public:
+    A() {}
+    ~A() {}
+
+private:
+    A(const A &a); // 只声明不定义
+    A &operator=(const A &a);
+};
+//使用delete关键词
+class B
+{
+public:
+    B() {}
+    ~B() {}
+    B(const B &b) = delete;
+    B &operator=(const B &b) = delete;
+};
+int main(int argc, char **argv)
+{
+    A a;
+    A b;
+    // a = b; 错误
+    return 0;
+}
+```
+
+还可以使用Uncopyable基类的方式,在基类进行拷贝构造和赋值时，会先执行基类的相关函数
+
+```cpp
+class A
+{
+public:
+    A() {}
+    A(const A &a)
+    {
+        cout << "A(const A&a)" << endl;
+    }
+    A &operator=(const A &a)
+    {
+        cout << "A& operator=(const A&a)" << endl;
+        return *this;
+    }
+    virtual ~A() = default;
+};
+
+class B : public A
+{
+public:
+    B() {}
+    B(const B &b) : A(b)
+    {
+        cout << "B(const B&b)" << endl;
+    }
+    B &operator=(const B &b)
+    {
+        if (&b != this)
+        {
+            A::operator=(b);
+        }
+        cout << "B &operator=(const B &b)" << endl;
+        return *this;
+    }
+    ~B() = default;
+};
+
+int main(int argc, char **argv)
+{
+    B b1;
+    B b2 = b1;
+    // A(const A&a)
+    // B(const B &b)
+    return 0;
+}
+```
+
+那么就可以写一个Uncopyable基类
+
+```cpp
+class A
+{
+public:
+    A() {}
+    virtual ~A() = default;
+
+private:
+    A(const A &a);
+    A &operator=(const A &a);
+};
+
+class B : public A
+{
+public:
+    B() {}
+    ~B() = default;
+    // 里应当自动生成拷贝构造和赋值操作函数，但是由于不能访问基类部分，所以不能自动生成
+};
+
+int main(int argc, char **argv)
+{
+    B b1;
+    // B b2 = b1;
+    // 无法引用 函数 "B::B(const B &)" (已隐式声明) -- 它是已删除的函数
+    return 0;
+}
+```
 
 ### 7、为多态基类声明 virtual 析构函数
 
+* 带有多态性质的基类(polymorphic base classes)应该声明一个virtual析构函数，如果class带有任何virtual函数，它就应该拥有一个virtual析构函数
+* 如果类的设计目的不是作为基类使用，或不是为了具备多态性，就不该声明virtual析构函数
+
+先看以下有什么搞人的事情，深入理解此部分要对虚函数表以及C++多态机制有一定了解,下面的代码只执行了基类的析构函数只是释放了基类中buffer的动态内存，而派生类部分内存泄露，这是因为`A*a`,a被程序认为其对象只是一个A,而不是B,如果将基类析构函数改为virtual的，那么会向下找，找到~B执行，然后再向上执行如果虚函数有定义的话
+
+```cpp
+class A
+{
+public:
+    A() : buffer(new char[10])
+    {
+    }
+    ~A()
+    {
+        cout << "~A()" << endl;
+        delete buffer;
+    }
+
+private:
+    char *buffer;
+};
+
+class B : public A
+{
+public:
+    B() : buffer(new char[10])
+    {
+    }
+    ~B()
+    {
+        cout << "~B()" << endl;
+        delete buffer;
+    }
+
+private:
+    char *buffer;
+};
+
+int main(int argc, char **argv)
+{
+    A *a = new B;
+    delete a;
+    //~A()
+    return 0;
+}
+```
+
+所以要修改为这样，即可
+
+```cpp
+class A
+{
+public:
+    A() : buffer(new char[10])
+    {
+    }
+    virtual ~A()
+    {
+        cout << "~A()" << endl;
+        delete buffer;
+    }
+
+private:
+    char *buffer;
+};
+```
+
+如果想让基类为抽象类，可以改为纯虚函数,与前面不同的时拥有纯虚函数的类为抽象类不允许实例化，纯虚函数不用定义。而虚函数是需要有定义的。
+
+```cpp
+class A
+{
+public:
+    A() {}
+    virtual ~A() = 0;
+};
+
+A::~A() {}
+
+class B : public A
+{
+};
+
+int main(int argc, char **argv)
+{
+    // A a; 错误A为抽象类型
+    B b;
+    return 0;
+}
+```
+
 ### 8、别让异常逃离析构函数
+
+* 析构函数绝对不要吐出异常，如果一个被析构函数调用的函数可能抛出异常，析构函数应该捕捉任何异常，然后吞下它们或结束程序
+* 如果客户需要对某个操作函数运行期间抛出的异常做出反应，那么类应该提供一个普通函数（而非在析构函数中）执行该操作
+
+例如以下情况
+
+```cpp
+void freeA()
+{
+    throw runtime_error("freeA() error");
+}
+
+class A
+{
+public:
+    A() {}
+    ~A()
+    {
+        try
+        {
+            freeA();
+        }
+        catch (...)
+        {
+            // std::abort();//生成coredump结束
+            // 或者处理异常
+            //...
+        }
+    }
+};
+
+int main(int argc, char **argv)
+{
+    A *a = new A;
+    delete a;
+    return 0;
+}
+```
+
+如果外部需要对某些在析构函数内的产生的异常进行操作等，应该提供新的方法，缩减析构函数内容
+
+```cpp
+void freeA()
+{
+    throw runtime_error("freeA() error");
+}
+
+class A
+{
+public:
+    A() {}
+    ~A()
+    {
+        if (!freeAed)
+        {
+            try
+            {
+                freeA();
+            }
+            catch (...)
+            {
+                // std::abort();//生成coredump结束
+                // 或者处理异常
+                //...
+            }
+        }
+    }
+    void freeA()
+    {
+        ::freeA();
+        freeAed = true;
+    }
+
+private:
+    bool freeAed = {false};
+};
+
+int main(int argc, char **argv)
+{
+    A *a = new A;
+    try
+    {
+        a->freeA();
+    }
+    catch (const runtime_error &e)
+    {
+        cout << e.what() << endl;
+    }
+    delete a;
+    return 0;
+}
+```
 
 ### 9、绝不在构造和析构函数过程中调用 virtual 函数
 
+* 在构造和析构期间不要调用virtual函数，因为这类调用从不下降至derived class(比起当前执行构造函数和析构函数的那一层)
+
+1、构造函数中调用虚函数：
+
+当在基类的构造函数中调用虚函数时，由于派生类的构造函数尚未执行，派生类对象的派生部分还没有被初始化。这意味着在基类构造函数中调用的虚函数将无法正确地访问或使用派生类的成员。此外，派生类中覆盖的虚函数也不会被调用，因为派生类的构造函数尚未执行完毕。
+
+2、析构函数中调用虚函数：
+
+当在基类的析构函数中调用虚函数时，如果正在销毁的对象是一个派生类对象，那么派生类的部分已经被销毁，只剩下基类的部分。此时调用虚函数可能会导致访问已被销毁的派生类成员，从而引发未定义行为。
+
+以下程序是没问题的
+
+```cpp
+class A
+{
+public:
+    A()
+    {
+        func();
+    }
+    virtual ~A()
+    {
+        func();
+    }
+    virtual void func()
+    {
+        cout << "A::func" << endl;
+    };
+};
+
+class B : public A
+{
+public:
+    B()
+    {
+        func();
+    }
+    ~B()
+    {
+        func();
+    }
+    void func() override
+    {
+        cout << "B::func" << endl;
+    }
+};
+
+int main(int argc, char **argv)
+{
+    B b;
+// A::func 此时只有A::func 无B::func
+// B::func 此时在执行B构造函数故执行B::func
+// B::func 此时在执行B析构函数故执行B::func
+// A::func 此时在执行A析构函数只有A::func 无B::func
+    return 0;
+}
+```
+
 ### 10、令 operator=返回一个 reference to \*this
+
+* 令赋值操作符返回一个reference to *this
+
+像+=、-=、*=操作符函数可以没有返回值，但是如果想有赋值连锁形式就要返回引用
+
+```cpp
+class A
+{
+public:
+    A()
+    {
+    }
+    virtual ~A()
+    {
+    }
+    void operator=(const A &a)
+    {
+        cout << "=" << endl;
+    }
+};
+
+int main(int argc, char **argv)
+{
+    A a1;
+    A a2;
+    a1 = a2; //=
+    return 0;
+}
+```
+
+赋值连锁形式,如果想要支持这种形式就要返回引用
+
+```cpp
+int x1, x2, x3;
+x1 = x2 = x3 = 1;
+cout << " " << x1 << " " << x2 << " " << x3 << endl; // 1 1 1
+//自定义为
+A &operator=(const A &a)
+{
+    cout << "=" << endl;
+    return *this;
+}
+```
 
 ### 11、在 operator=中处理自我赋值
 
+* 确保当对象自我赋值时operator=有良好行为，其中技术包括比较"来源对象"和"目标对象"的地址，精心周到的语句顺序，以及copy-and-swap
+* 确定任何函数如果操作一个以上的对象，而其中多个对象是同一个对象时，其行为仍然确定。
+
+```cpp
+Object obj;
+obj=obj;//这不是有病吗
+```
+
+如何判断与解决此问题呢，或者定义使用std::swap（需要定义swap方法或重写operator=）
+
+```cpp
+class A
+{
+public:
+    virtual ~A()
+    {
+    }
+    A &operator=(const A &a)
+    {
+        if (this == &a)
+        {
+            cout << "self" << endl;
+            return *this;
+        }
+        cout << "other" << endl;
+        //----------------------------------------------------
+        A temp(a); // 临时副本，一面在复制期间a修改了导致数据不一致
+        // 赋值操作
+        //...
+        //----------------------------------------------------
+        return *this;
+    }
+};
+
+int main(int argc, char **argv)
+{
+    A a;
+    a = a; // self
+    A a1;
+    a = a1; // other
+    return 0;
+}
+```
+
 ### 12、复制对象时勿忘其每一个成分
+
+* Copying函数应该确保复制“对象内的所有成员变量”及“所有base class成分”
+* 不要尝试以某个copying函数实现另一个copying函数，应该将共同机能放在第三个函数中，并由两个coping函数共同调用
+
+可能一开始的业务是这样,但后来加上了isman属性，但是你却忘了加到拷贝构造和赋值函数中，那么这是异常灾难，可能你还找不出来自己错在哪里
+
+```cpp
+class A
+{
+public:
+    A() {}
+    A(const A &a) : num(a.num)
+    {
+    }
+    A &operator=(const A &a)
+    {
+        this->num = a.num;
+    }
+    int num;
+    //bool isman;
+};
+```
+
+还有更恐怖的风险，在存在继承时，你可能忘记了基类部分，所以千万不能忘记
+
+```cpp
+class A
+{
+public:
+    A() {}
+    virtual ~A(){};
+    A(const A &a) : num(a.num)
+    {
+    }
+    A &operator=(const A &a)
+    {
+        this->num = a.num;
+        return *this;
+    }
+    int num;
+};
+
+class B : public A
+{
+public:
+    B() : A()
+    {
+    }
+    ~B() {}
+    B(const B &b) : A(b), priority(b.priority) // 不要忘记
+    {
+    }
+    B &operator=(const B &b)
+    {
+        A::operator=(b); // 不要忘记
+        this->priority = b.priority;
+        return *this;
+    }
+    int priority;
+};
+```
 
 ## 资源管理
 
