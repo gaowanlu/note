@@ -265,6 +265,14 @@ Redis支持多种数据类型，每种类型都有不同的用途和操作。
 
 String 是一种基本的数据类型，它可以存储文本或二进制数据
 
+创建空字符串
+
+```bash
+SET KEY ""
+```
+
+常用命令
+
 ```bash
 $set
 SET key value：设置指定键的值。
@@ -306,9 +314,120 @@ SETNX key value：如果键不存在，则设置指定键的值。
 
 ### list
 
+Redis中的List（列表）是一种有序、可重复的数据结构。它可以存储一个有序的字符串列表，列表中的元素按照插入的顺序排列，可以在列表的两端进行插入和删除操作。
+
+创建空列表
+
+```bash
+LPUSH mylist "" 或者
+RPUSH mylist ""
+```
+
+常用命令
+
+```bash
+$LSET 
+LSET key index element 更新列表中指定索引位置的元素的值。
+$LPUSH
+LPUSH key element1 element2 ... 将一个或多个元素插入到列表的头部
+$RPUSH 
+RPUSH key element1 element2 ... 将一个或多个元素插入到列表的尾部。
+$LPOP
+LPOP key 移除并返回列表的头部元素。
+$RPOP
+RPOP key 移除并返回列表的尾部元素。
+$LINDEX
+LINDEX key index 获取列表中指定索引位置的元素。
+$LLEN
+LLEN key 获取列表的长度（即列表中元素的个数）。
+$LRANGE
+LRANGE key start stop 获取列表中指定范围内的元素。
+$LTRIM
+LTRIM key start stop 裁剪列表，只保留指定范围内的元素，其它元素将被删除。
+$LINSERT
+LINSERT key BEFORE|AFTER pivot element 在列表中指定元素的前面或后面插入一个新元素。
+```
+
+另外，Redis的List类型还支持阻塞式的操作，如BLPOP和BRPOP，可以在列表为空时阻塞等待新元素的到来。
+请注意，以上示例中的key是列表的键名，element是要插入或操作的元素值，index是元素的索引位置，start和stop是范围的起始和结束索引位置，count是要移除的元素数量，pivot是要插入的位置参考元素。
+
 ### set
 
+在Redis中，Set（集合）是一种无序、不重复的数据结构，用于存储多个唯一的元素。Set中的元素是无序的，且每个元素都是唯一的。
+
+要在Redis中创建一个新的空Set（集合），可以使用以下命令之一：SADD、SREM、SPOP、SINTERSTORE、SDIFFSTORE、SUNIONSTORE等。这些命令在执行时如果指定的Set不存在，会自动创建一个空Set。
+
+```bash
+SADD myset ""
+```
+
+常用命令
+
+```bash
+$SADD
+SADD key element1 element2 ... 向集合中添加一个或多个元素。
+$SREM
+SREM key element1 element2 ... 从集合中移除一个或多个元素。
+$SISMEMBER
+SISMEMBER key element 检查元素是否存在于集合中。
+$SMEMBERS
+SMEMBERS key 获取集合中的所有元素。
+$SCARD
+SCARD key 获取集合中元素的数量（集合的基数）。
+$SPOP
+SPOP key 随机移除并返回集合中的一个元素。
+$SRANDMEMBER
+SRANDMEMBER key [count] 随机获取集合中的一个或多个元素。
+$SDIFF
+SDIFF key1 key2 ... 返回多个集合的差集。
+$SINTER
+SINTER key1 key2 ... 返回多个集合的交集。
+$SUNION
+SUNION key1 key2 ... 返回多个集合的并集。
+$SDIFFSTORE
+SDIFFSTORE destination key1 key2 ... 将多个集合的差集存储到一个新的集合中。
+$SINTERSTORE
+SINTERSTORE destination key1 key2 ... 将多个集合的交集存储到一个新的集合中。
+$SUNIONSTORE
+SUNIONSTORE destination key1 key2 ... 将多个集合的并集存储到一个新的集合中。
+```
+
 ### hash
+
+在Redis中，Hash（哈希）是一种用于存储键值对的数据结构。Redis的Hash类型类似于关联数组或字典，它可以将一个字段（field）与一个值（value）相关联，从而形成一个键值对。
+
+
+要在Redis中创建一个新的空Hash，可以使用以下命令之一：HSET、HMSET。
+
+```bash
+HSET myhash "" 或
+HMSET myhash "" ""
+```
+
+常用命令
+
+```bash
+$HSET
+HSET key field value 设置Hash中指定字段的值。
+$HGET
+HGET key field 获取Hash中指定字段的值。
+$HMSET
+HMSET key field1 value1 field2 value2 ... 同时设置Hash中多个字段的值。
+$HMGET
+HMGET key field1 field2 ... 同时获取Hash中多个字段的值。
+$HDEL
+HDEL key field1 field2 ... 删除Hash中一个或多个字段。
+$HEXISTS
+HEXISTS key field 检查Hash中是否存在指定字段。
+$HKEYS
+HKEYS key 获取Hash中所有字段的列表。
+$HVALS
+HVALS key 获取Hash中所有值的列表。
+$HLEN
+HLEN key 获取Hash中字段的数量。
+$HINCRBY
+HINCRBY key field increment 将Hash中指定字段的值增加一个整数。
+```
 
 ### sorted set
 
