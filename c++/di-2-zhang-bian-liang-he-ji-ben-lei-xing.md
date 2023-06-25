@@ -1221,20 +1221,25 @@ int main(int argc, char **argv)
 
 ### auto 类型说明符
 
-编译器自动为我们判断类型，auto 变量定时必须被初始化
+编译器自动为我们判断类型，auto 变量定时必须被初始化,C++11 赋予 auto 新的含义，声明变量时根据初始化表达式自动推断该变量的类型、声明函数时函数返回值的占位符。
 
 ```cpp
-//example38.cpp
 #include <iostream>
 using namespace std;
+
+auto sum(int a1, int a2) -> int
+{
+    return a1 + a2;
+}
+
 int main(int argc, char **argv)
 {
-    auto a = 32 + 23.d;
-    cout << a << endl; // 55
+    auto a = 32 + 23.0; // double a
+    cout << a << endl;  // 55
     a = 23.33;
     cout << a << endl;         // 23.33
     cout << sizeof(a) << endl; // 8
-    //可见32+23.d是一个double字面量 编译时自动为我们判断类型
+    // 可见32+23.是一个double字面量 编译时自动为我们判断类型
 
     auto b = 3 + 3;
     b = 23.4;
@@ -1242,23 +1247,31 @@ int main(int argc, char **argv)
     cout << sizeof(b) << endl; // 4 可见b为一个int变量
 
     // auto c = 2, c = 3.f; error: inconsistent deduction for 'auto': 'int' and then '<type error>'
-    //在编译阶段时本质是判断右边为什么类型然后将auto进行替换
-    //可见auto只能被一个类型替换，当定义多个不同类型变量的时候将会报错
+    // 在编译阶段时本质是判断右边为什么类型然后将auto进行替换
+    // 可见auto只能被一个类型替换，当定义多个不同类型变量的时候将会报错
 
-    auto d = 33, *p = &b;
-    cout << *p << endl; // 23
-    //也就是auto只能被一个类型进行替换
+    auto d = 33, *p = &b; // 相当于 int d = 33, *p = &b;
+    cout << *p << endl;   // 23
+    // 也就是auto只能被一个类型进行替换
+
+    auto i = 5;                // 推断为 int
+    auto str = "hello auto";   // 推断为const char*
+    cout << sum(i, i) << endl; // 10
+
+    // 使用条件表达式初始化auto声明的变量时，编译器总是使用表达能力更强的类型
+    auto i1 = true ? 5 : 2.3; // double i1
 
     return 0;
 }
 ```
+
+但是在实际使用的时候尽量还是使用 IDE，然后将鼠标放到变量上看一看 auto 自动推导的类型是否符合预期
 
 ### 复合类型、常量和 auto
 
 用引用变量初始化 auto 变量会是怎样的情况
 
 ```cpp
-//example39.cpp
 #include <iostream>
 using namespace std;
 int main(int argc, char **argv)
@@ -1275,18 +1288,17 @@ int main(int argc, char **argv)
 }
 ```
 
-auto 忽略顶层 const 保留底层 const
+### auto 与 const 的爱恨情仇
 
 ```cpp
-//example40.cpp
 #include <iostream>
 using namespace std;
 int main(int argc, char **argv)
 {
     int i = 0;
     const int ci = i, &cr = ci; // cr为const int类型变量的引用
-    auto b = ci;                // int b 忽略ci的顶层const
-    auto c = cr;                // int c cr为ci的别名，忽略顶层const
+    auto b = ci;                // int b ,忽略ci的顶层const
+    auto c = cr;                // int c ,cr为ci的别名，忽略顶层const
     auto d = &i;                // int *d
     auto e = &ci;               // const int *e
 
@@ -1294,7 +1306,7 @@ int main(int argc, char **argv)
     const int g = 34;
     const auto k = g; // const int k
     // k = 99; error: assignment of read-only variable 'k'
-    auto v = g; // int v v无顶层const
+    auto v = g; // int v, v无顶层const
     v = 33;
 
     const int num = 999;
@@ -1305,7 +1317,9 @@ int main(int argc, char **argv)
 }
 ```
 
-auto 引用
+### auto 引用
+
+除此简单的用法之外，auto 还可以在使用右值引用时进行使用
 
 ```cpp
 //example41.cpp
@@ -1323,6 +1337,114 @@ int main(int argc, char **argv)
     auto *p = &a, &refer_a = a, c = b;                // auto is int
     cout << *p << " " << refer_a << " " << c << endl; // 23 23 54
 
+    return 0;
+}
+```
+
+### auto 与多态
+
+```cpp
+#include <iostream>
+using namespace std;
+
+class Base
+{
+public:
+    inline virtual void func()
+    {
+        cout << "Base::func" << endl;
+    }
+};
+
+class Derived : public Base
+{
+public:
+    inline virtual void func() override
+    {
+        cout << "Derived::func" << endl;
+    };
+};
+
+int main(int argc, char **argv)
+{
+    Base *obj = new Derived;
+    auto obj_ptr = *obj;  // Base obj_ptr,因为obj为Base类型的指针,拷贝构造基类部分
+    obj_ptr.func();       // Base::func
+    auto &obj_ref = *obj; // Base &obj_ref
+    obj_ref.func();       // Derived::func
+    delete obj;
+    return 0;
+}
+```
+
+### auto 在 C++中演进
+
+C++11 支持 auto 在静态成员变量用 auto 声明并初始化，前提是 auto 必须是 const 的
+
+```cpp
+#include <iostream>
+using namespace std;
+
+struct A
+{
+    static const auto i = 999;
+};
+
+int main(int argc, char **argv)
+{
+    cout << A::i << endl; // 999
+    return 0;
+}
+```
+
+C++17 支持 auto 非 const 的静态成员变量初始化(不建议使用，可能引起问题)，除此之外还支持了初始化列表中的使用
+
+```cpp
+#include <iostream>
+using namespace std;
+
+struct A
+{
+    static inline auto i = 999; // inline static成员变量多个源文件共享不会重复定义
+};
+
+int main(int argc, char **argv)
+{
+    A::i = 19;
+    cout << A::i << endl; // 19
+
+    // std::initializer_list<int> init1
+    auto init1 = {1, 2, 3, 4};
+    // std::initializer_list<int> init2
+    auto init2 = {1};
+    // int init3
+    auto init3{1};
+
+    return 0;
+}
+```
+
+C++20 更离谱，支持了 auto 形参，在 C++14 中，auto 可以为 lambda 表达式声明形参,在 C++20 中感觉看见了未来的曙光
+
+```cpp
+#include <iostream>
+using namespace std;
+
+auto sum(auto a1, auto a2)
+{
+    return a1 + a2;
+}
+
+int main(int argc, char **argv)
+{
+    cout << sum(1, 2.3) << endl; // 3.3 double sum<int, double>(int a1, double a2)
+    sum<int, double>(1, 1.2);
+    //++，C++还能这样用越来越离谱了
+    // 更离谱的
+    auto i = new auto(5);   // int *i
+    auto *j = new auto(10); // int *j
+    delete i;
+    delete j;
     return 0;
 }
 ```

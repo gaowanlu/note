@@ -892,9 +892,79 @@ int main(int argc, char **argv)
 }
 ```
 
+### C++17 简洁的嵌套命名空间
+
+在 C++17 中支持简洁的定义嵌套命名空间的方法
+
+```cpp
+#include <iostream>
+using namespace std;
+
+namespace A
+{
+    namespace B
+    {
+        namespace C
+        {
+            void func();
+        }
+    }
+}
+
+namespace A::B::C
+{
+    void func()
+    {
+        std::cout << "A::B::C" << std::endl;
+    }
+}
+
+int main(int argc, char **argv)
+{
+    A::B::C::func(); // A::B::C
+    return 0;
+}
+```
+
+### C++20 简洁的内联嵌套命名空间
+
+```cpp
+#include <iostream>
+using namespace std;
+
+namespace A::B::inline C
+{
+    void func();
+}
+
+namespace A::inline D::E
+{
+    void func();
+}
+
+void A::B::C::func()
+{
+    std::cout << "A::B::C::func" << std::endl;
+}
+
+void A::D::E::func()
+{
+    std::cout << "A::D::E::func" << std::endl;
+}
+
+int main(int argc, char **argv)
+{
+    A::B::func();    // A::B::C::func
+    A::B::C::func(); // A::B::C::func
+    A::E::func();    // A::D::E::func
+    A::D::E::func(); // A::D::E::func
+    return 0;
+}
+```
+
 ### 内联命名空间
 
-内联命名空间(inline namespace)是 C++11 引入的一种新的嵌套命名空间
+内联命名空间(inline namespace)是 C++11 引入的一种新的嵌套命名空间，在 namespace 前加上 inline 可以将命名空间内的东西范围提到父命名空间内
 
 ```cpp
 //example26.cpp
@@ -924,6 +994,43 @@ int main(int argc, char **argv)
 ```
 
 重点：关键字 inline 必须出现在命名空间第一次定义的地方，后续再次打开可以些 inline 也可以不写
+
+内联命名空间支持嵌套
+
+```cpp
+#include <iostream>
+using namespace std;
+
+namespace A
+{
+    namespace child2
+    {
+        void func();
+    }
+    inline namespace child1
+    {
+        void func();
+    }
+}
+
+void A::child2::func()
+{
+    std::cout << "child2" << std::endl;
+}
+
+void A::child1::func()
+{
+    std::cout << "child1" << std::endl;
+}
+
+int main(int argc, char **argv)
+{
+    A::func();         // child1
+    A::child1::func(); // child1
+    A::child2::func(); // child2
+    return 0;
+}
+```
 
 一种骚操作的写法
 
