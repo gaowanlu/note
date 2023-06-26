@@ -4,11 +4,11 @@ cover: >-
 coverY: 0
 ---
 
-# 😝 第6章 函数
+# 😝 第 6 章 函数
 
-## 第6章 函数
+## 第 6 章 函数
 
-在前面我们已经使用过定义main函数，以及也见过其他的自定义函数，`函数`是一个命名了的代码块，我们通过调用函数执行相应的代码，函数可以有0个或多个参数，而且通常产生一个结果，C++可以重载函数，也就是说，同一个名字可以对应几个不同的函数
+在前面我们已经使用过定义 main 函数，以及也见过其他的自定义函数，`函数`是一个命名了的代码块，我们通过调用函数执行相应的代码，函数可以有 0 个或多个参数，而且通常产生一个结果，C++可以重载函数，也就是说，同一个名字可以对应几个不同的函数
 
 ### 函数基础
 
@@ -57,7 +57,7 @@ int main(int argc, char **argv)
 
 ### 局部对象
 
-在C++中，名字是有作用域的，对象有生命周期，形参和函数内部定义的变量统称为`局部变量`，其作用域在函数内部，且一旦函数执行完毕，相应内存资源被释放即栈内存。分配的栈内存将会保留，直到我们调用free或者delete。
+在 C++中，名字是有作用域的，对象有生命周期，形参和函数内部定义的变量统称为`局部变量`，其作用域在函数内部，且一旦函数执行完毕，相应内存资源被释放即栈内存。分配的栈内存将会保留，直到我们调用 free 或者 delete。
 
 ```cpp
 //example3.cpp
@@ -188,8 +188,8 @@ void func(); //函数声明
 
 ### 分离式编译
 
-一个程序可以分为多个cpp文件，也就是将程序的各个部分分别存储在不同文件中。\
-大致原理是，对多个cpp分别编译，然后将多个编译后的部分进行链接操作形成了整体的程序，虽然在多个cpp中编写，但是我们只有一个全局命名空间，也就是说在多个cpp内定义相同名字的变量这是不被允许的。
+一个程序可以分为多个 cpp 文件，也就是将程序的各个部分分别存储在不同文件中。\
+大致原理是，对多个 cpp 分别编译，然后将多个编译后的部分进行链接操作形成了整体的程序，虽然在多个 cpp 中编写，但是我们只有一个全局命名空间，也就是说在多个 cpp 内定义相同名字的变量这是不被允许的。
 
 example8.cpp
 
@@ -332,9 +332,9 @@ int main(int argc, char **argv)
 }
 ```
 
-### const形参和实参
+### const 形参和实参
 
-### 关于顶层const的回顾
+### 关于顶层 const 的回顾
 
 ```cpp
 const int ci = 42;//ci不能被赋值改变，const是顶层const
@@ -343,7 +343,7 @@ int *const p=&i;//const是顶层的，不能给p赋值
 *p=0;//正确，可以改变p的内容，但不能改变p本身存储的内存地址
 ```
 
-### 形参的底层const与顶层const
+### 形参的底层 const 与顶层 const
 
 ```cpp
 //example12.cpp
@@ -365,7 +365,7 @@ int main(int argc, char **argv)
 }
 ```
 
-### 为什么说当实参初始化形参时会忽略掉顶层const?
+### 为什么说当实参初始化形参时会忽略掉顶层 const?
 
 ```cpp
 //example13.cpp
@@ -392,7 +392,7 @@ int main(int argc, char **argv)
 }
 ```
 
-### 指针或引用形参与const
+### 指针或引用形参与 const
 
 ```cpp
 //example14.cpp
@@ -431,7 +431,7 @@ int main(int argc, char **argv)
 }
 ```
 
-总之 关于const与引用、指针的配和往往会使得我们头大，所以我们还是要多回顾复习以前的变量章节的const的知识
+总之 关于 const 与引用、指针的配和往往会使得我们头大，所以我们还是要多回顾复习以前的变量章节的 const 的知识
 
 ### 数组的传递
 
@@ -482,7 +482,7 @@ int main(int argc, char **argv)
 }
 ```
 
-### 数组形参与const
+### 数组形参与 const
 
 ```cpp
 //example16.cpp
@@ -599,7 +599,7 @@ int main(int argc, char **argv)
 }
 ```
 
-### main函数的形参
+### main 函数的形参
 
 提供了在运行程序时赋值指定实参的功能
 
@@ -625,14 +625,14 @@ g++ example19.cpp -o example19.exe
 
 ### 可变形参
 
-C++11有新特性，在我们无法提前预知向函数传递几个实参，在C++11中，如果所有的实参类型相同，可以传递initializer\_list类型，如果实参的类型不相同可以编写特殊的函数，所谓的可变参数模板。
+C++11 有新特性，在我们无法提前预知向函数传递几个实参，在 C++11 中，如果所有的实参类型相同，可以传递 initializer_list 类型，如果实参的类型不相同可以编写特殊的函数，所谓的可变参数模板。
 
-还有一种特殊的形参类型即省略符，可以用来传递可变数量的实参，不过一般这种功能只用于C函数交互的接口程序。
+还有一种特殊的形参类型即省略符，可以用来传递可变数量的实参，不过一般这种功能只用于 C 函数交互的接口程序。
 
-### initializer\_list形参
+### initializer_list 形参
 
 ```cpp
-initializer_list<T> lst; 
+initializer_list<T> lst;
     默认初始化；T类型元素的空列表
 initializer_list<T> lst{a,b,c};
     lst的元素数量和初始值一样多：lst的元素是对应初始值的副本，列表中的元素是const
@@ -708,9 +708,9 @@ int main(int argc, char **argv)
 }
 ```
 
-### 返回类型和return语句
+### 返回类型和 return 语句
 
-return有两种形式，用于终止当前执行的函数并将控制权返回到调用函数的地方。
+return 有两种形式，用于终止当前执行的函数并将控制权返回到调用函数的地方。
 
 ```cpp
 return;
@@ -719,7 +719,7 @@ return expression;
 
 ### 无返回值的函数
 
-无返回值的函数返回值即为void，无需要我们显式的return;但是允许使用return;提前终止函数的执行。
+无返回值的函数返回值即为 void，无需要我们显式的 return;但是允许使用 return;提前终止函数的执行。
 
 ```cpp
 //example22.cpp
@@ -746,7 +746,7 @@ int main(int argc, char **argv)
 
 有一点要确定，一个函数的返回值类型是唯一确定的，不能声明函数时的返回值类型与实际返回值类型不同，否则编译阶段会报错。
 
-要注意的是，有返回值的函数，必须要保证函数执行结束时，有return语句返回相应类型的值
+要注意的是，有返回值的函数，必须要保证函数执行结束时，有 return 语句返回相应类型的值
 
 ```cpp
 //example23.cpp
@@ -902,9 +902,9 @@ int main(int argc, char **argv)
 }
 ```
 
-### 列表初始化vector并返回
+### 列表初始化 vector 并返回
 
-C++11中，支持花括号初始化vector
+C++11 中，支持花括号初始化 vector
 
 ```cpp
 //example29.cpp
@@ -936,9 +936,9 @@ int main(int argc, char **argv)
 }
 ```
 
-### main函数的返回值
+### main 函数的返回值
 
-main函数的返回值可以看做是状态指示器，返回0表示执行成功，返回其他值表示执行失败。在cstdlib头文件中定义了两个预处理变量。
+main 函数的返回值可以看做是状态指示器，返回 0 表示执行成功，返回其他值表示执行失败。在 cstdlib 头文件中定义了两个预处理变量。
 
 ```cpp
 //example30.cpp
@@ -958,7 +958,7 @@ int main(int argc, char **argv)
 
 如果一个函数调用了它自身，不管这种调用是直接的还是间接的，都称该函数为递归函数。
 
-如下面一个求首项为1，差为1的等差数列的和
+如下面一个求首项为 1，差为 1 的等差数列的和
 
 ```cpp
 //example31.cpp
@@ -1045,17 +1045,16 @@ int main(int argc, char **argv)
 }
 ```
 
-### 使用尾置返回类型
+### 后置返回类型
 
-C++11有新特性，尾置返回类型
+C++11 有新特性，尾置返回类型
 
 ```cpp
-//example34.cpp
 #include <iostream>
 using namespace std;
 
-//看来有点强啊看着就很舒服对吧,看起来不像C++
-auto func() -> int (*)[5]
+// 看来有点强啊看着就很舒服对吧,看起来不像C++
+auto func() -> int (*)[5] // 返回数组指针
 {
     int(*arr)[5] = (int(*)[5]) new int[5];
     for (int i = 0; i < 5; i++)
@@ -1065,20 +1064,28 @@ auto func() -> int (*)[5]
     return arr;
 }
 
-auto main(int argc, char **argv)->int
+// 这里就是指针数组哦，和上面别记错了
+auto main(int argc, char *argv[]) -> int
 {
+    for (int i = 0; i < argc; i++)
+    {
+        auto c_str = argv[i]; // char *c_str
+        cout << c_str << endl;
+    }
     int(*arr)[5] = func();
     for (int i = 0; i < 5; i++)
     {
         cout << *arr[i] << " ";
-    } // 0 2 4 6 8
+        auto ptr = arr[i]; // int *ptr
+        cout << *ptr << endl;
+    } // 0 0 2 2 4 4 6 6 8 8
     cout << endl;
-    delete arr;
+    delete[] arr;
     return 0;
 }
 ```
 
-### 使用decltype
+### 使用 decltype
 
 解决返回数组指针函数的声明
 
@@ -1133,11 +1140,11 @@ int main(int argc, char **argv)
 }
 ```
 
-在上面的例子中，有个函数加了static是怎么么回事呢，这样这个函数仅仅在这个cpp文件内有效，也就是说它的作用域仅仅在这个cpp内，而不是我们可执行程序的全局作用域
+在上面的例子中，有个函数加了 static 是怎么么回事呢，这样这个函数仅仅在这个 cpp 文件内有效，也就是说它的作用域仅仅在这个 cpp 内，而不是我们可执行程序的全局作用域
 
-### 重载和const形参
+### 重载和 const 形参
 
-### 指针const形参
+### 指针 const 形参
 
 ```cpp
 //example37.cpp
@@ -1182,7 +1189,7 @@ int main(int argc, char **argv)
 }
 ```
 
-### 引用const形参
+### 引用 const 形参
 
 有一点我们要清楚、指针与引用的最大区别其实是指针不用定义时就初始化，而引用必须被初始化，且引用初始化以后无法更改其绑定的变量，而指针可以更换其绑定的变量。
 
@@ -1221,13 +1228,13 @@ int main(int argc, char **argv)
 }
 ```
 
-### const\_cast在函数重载中的用途
+### const_cast 在函数重载中的用途
 
-什么是const\_cast是不是已经忘记了，他在《第四章 表达式》类型转换内容中，是显式转换
+什么是 const_cast 是不是已经忘记了，他在《第四章 表达式》类型转换内容中，是显式转换
 
-`const_cast`只能改变运算对象的底层const,const\_cast 中的类型必须是指针、引用或指向对象类型成员的指针。
+`const_cast`只能改变运算对象的底层 const,const_cast 中的类型必须是指针、引用或指向对象类型成员的指针。
 
-const\_cast回顾
+const_cast 回顾
 
 ```cpp
 //example39.cpp
@@ -1283,7 +1290,7 @@ int main(int argc, char **argv)
 }
 ```
 
-const\_cast在函数重载中的用途
+const_cast 在函数重载中的用途
 
 ```cpp
 //example40.cpp
@@ -1319,7 +1326,7 @@ int main(int argc, char **argv)
 
 常见冲突
 
-* 指针
+- 指针
 
 ```cpp
 //1
@@ -1337,7 +1344,7 @@ void calc(int const *num,int const*c){
 //1 2不冲突 ,1 3 不冲突， 2 3 冲突
 ```
 
-* 值
+- 值
 
 ```cpp
 //1
@@ -1351,7 +1358,7 @@ void calc(const int num,const int c){
 //1 2 冲突
 ```
 
-* 引用 与指针情况类似
+- 引用 与指针情况类似
 
 当调用重载函数时有三种可能的结果
 
@@ -1361,7 +1368,7 @@ void calc(const int num,const int c){
 
 ### 重载与作用域
 
-在C++中重载并不影响作用域，但是还有一种局部函数作用域的情况
+在 C++中重载并不影响作用域，但是还有一种局部函数作用域的情况
 
 ```cpp
 //example41.cpp
@@ -1473,9 +1480,9 @@ int main(int argc, char **argv)
 }
 ```
 
-### 内联函数和constexpr函数
+### 内联函数和 constexpr 函数
 
-什么是内联函数？内联函数可以避免函数调用的开销，将函数指定为内联函数，通常将它在每个调用点上“内联地”展开，一般而言最适合声明为inline的函数，体积小常被调用，所从事的计算并不复杂。inline函数的定义，常常被放在头文件中，由于编译器必须在它调用的时候加以展开，所以这个时候其定义必须是有效的
+什么是内联函数？内联函数可以避免函数调用的开销，将函数指定为内联函数，通常将它在每个调用点上“内联地”展开，一般而言最适合声明为 inline 的函数，体积小常被调用，所从事的计算并不复杂。inline 函数的定义，常常被放在头文件中，由于编译器必须在它调用的时候加以展开，所以这个时候其定义必须是有效的
 
 ```cpp
 //example44.cpp
@@ -1500,7 +1507,7 @@ int main(int argc, char **argv)
 
 增加了程序的大小，但提高了效率
 
-### constexpr函数
+### constexpr 函数
 
 也就是返回值为字面值的函数
 
@@ -1560,22 +1567,22 @@ int main(int argc, char **argv)
 }
 ```
 
-### 内联函数与constexpr函数放在头文件内
+### 内联函数与 constexpr 函数放在头文件内
 
-与其他函数不同的是，内联函数和constexpr函数可以在程序中多次定义，因为在每个cpp单独编译时，比如内联函数，他就要将代码填充至调用处了，所以constexpr函数与inline函数通常定义在头文件中
+与其他函数不同的是，内联函数和 constexpr 函数可以在程序中多次定义，因为在每个 cpp 单独编译时，比如内联函数，他就要将代码填充至调用处了，所以 constexpr 函数与 inline 函数通常定义在头文件中
 
 ### 调试帮助
 
-主要有两种方式，assert和NDEBUG
+主要有两种方式，assert 和 NDEBUG
 
-### assert预处理宏
+### assert 预处理宏
 
 ```cpp
 #include<cassert>
 assert(expr)
 ```
 
-首先对expr求值，如果表达式为假即0，assert输出信息并终止程序的执行，如果为真即非0，assert什么也不做
+首先对 expr 求值，如果表达式为假即 0，assert 输出信息并终止程序的执行，如果为真即非 0，assert 什么也不做
 
 ```cpp
 //example46.cpp
@@ -1585,16 +1592,16 @@ using namespace std;
 int main(int argc, char **argv)
 {
     assert(1 < 2);
-    assert(1 > 2);         
+    assert(1 > 2);
     // Assertion failed: 1 > 2, file example46.cpp, line 7
     cout << "end" << endl; //没有被执行
     return 0;
 }
 ```
 
-### NDEBUG预处理变量
+### NDEBUG 预处理变量
 
-assert的形为依赖于一个名为NDEBUG的预处理变量的状态，如果定义了NDEBUG则assert什么也不做，默认情况下没有定义NDEBUG
+assert 的形为依赖于一个名为 NDEBUG 的预处理变量的状态，如果定义了 NDEBUG 则 assert 什么也不做，默认情况下没有定义 NDEBUG
 
 ```cpp
 //example47.cpp
@@ -1613,10 +1620,10 @@ int main(int argc, char **argv)
 }
 ```
 
-使用编译器时决定是否define NDEBU
+使用编译器时决定是否 define NDEBU
 
 ```cpp
-g++ example46.cpp -o example46.exe -D NDEBUG && ./example46.exe  
+g++ example46.cpp -o example46.exe -D NDEBUG && ./example46.exe
 //example46程序输出则assert什么都没有干
 end
 ```
@@ -1703,11 +1710,11 @@ int main(int argc, char **argv)
 
 1、精确匹配
 
-* 实参类型和形参类型相同
-* 实参从数组类型或函数类型转换成对应指针类型
-* 向实参添加顶层const或者从实参中删除顶层const
+- 实参类型和形参类型相同
+- 实参从数组类型或函数类型转换成对应指针类型
+- 向实参添加顶层 const 或者从实参中删除顶层 const
 
-2、通过consr转换实现的匹配\
+2、通过 consr 转换实现的匹配\
 3、通过类型提升实现的匹配\
 4、通过算术类型转换\
 5、通过类类型转换实现的匹配
@@ -1743,9 +1750,9 @@ int main(int argc, char **argv)
 }
 ```
 
-### 函数匹配和const实参
+### 函数匹配和 const 实参
 
-* 引用在形参中的const
+- 引用在形参中的 const
 
 ```cpp
 //example51.cpp
@@ -1774,7 +1781,7 @@ int main(int argc, char **argv)
 }
 ```
 
-* 指针在形参中的const
+- 指针在形参中的 const
 
 ```cpp
 //example52.cpp
@@ -1809,12 +1816,12 @@ int main(int argc, char **argv)
 }
 ```
 
-* 基本类型形参中的const\
-  当然它们只能是，实参的拷贝，并且本身有底层与顶层const
+- 基本类型形参中的 const\
+  当然它们只能是，实参的拷贝，并且本身有底层与顶层 const
 
 ### 函数指针
 
-本身是为了解决一种callback即回调函数的机制,函数指针指向某种特定的函数类型，函数的类型由它的返回类型和形参类型共同决定，与函数名无关
+本身是为了解决一种 callback 即回调函数的机制,函数指针指向某种特定的函数类型，函数的类型由它的返回类型和形参类型共同决定，与函数名无关
 
 ```cpp
 //example53.cpp
@@ -1855,7 +1862,7 @@ int main(int argc, char** argv)
 
 ### 函数指针数组与函数指针数组指针
 
-请见example53.cpp实例，认清\*与\[]结合的规律。
+请见 example53.cpp 实例，认清\*与\[]结合的规律。
 
 ### 重载函数指针
 
@@ -1921,9 +1928,9 @@ int main(int argc, char **argv)
 }
 ```
 
-### typedef、auto、decltype在函数指针的应用
+### typedef、auto、decltype 在函数指针的应用
 
-* typedef 与 decltype
+- typedef 与 decltype
 
 ```cpp
 //example56.cpp
@@ -1956,7 +1963,7 @@ int main(int argc, char **argv)
 }
 ```
 
-* auto
+- auto
 
 ```cpp
 //example57.cpp

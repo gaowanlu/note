@@ -1397,6 +1397,52 @@ int main(int argc, char **argv)
 }
 ```
 
+C++14 支持对类型返回类型声明为 auto
+
+```cpp
+#include <iostream>
+using namespace std;
+
+// int sum1(int a1, int a2)
+// auto sum1(int a1, int a2)
+// {
+//     return a1 + a2;
+// }
+
+// 错误
+// auto sum2(long a1, long a2)
+// {
+//     if (a1 > 0)
+//     {
+//         return a1 + a2;
+//     }
+//     return 0; // error:推导出的返回类型 "int" 与之前推导出的类型 "long" 冲突
+// }
+
+// lambda
+auto sum3 = [](auto a1, auto a2)
+{
+    return a1 + a2;
+};
+
+auto retval = sum3(5, 5.0); // double retval=sum3(int ,double);
+
+// int &ref(int &i)
+auto ref = [](int &i) -> auto &
+{
+    return i;
+};
+
+int main(int argc, char **argv)
+{
+    cout << retval << endl; // 10
+    int a1 = 1;
+    auto &a1_ref = ref(a1);
+    cout << boolalpha << (&a1_ref == &a1) << endl; // true
+    return 0;
+}
+```
+
 C++17 支持 auto 非 const 的静态成员变量初始化(不建议使用，可能引起问题)，除此之外还支持了初始化列表中的使用
 
 ```cpp
@@ -1424,6 +1470,46 @@ int main(int argc, char **argv)
 }
 ```
 
+C++17 支持在非类型模板形参用 auto 做占位符,C++11 就要指定
+
+```cpp
+// g++-11 -std=c++17 main.cpp -o main
+#include <iostream>
+#include <string>
+using namespace std;
+
+template <int a>
+void print()
+{
+    cout << a << endl;
+}
+
+// C++17
+template <auto a>
+void print2()
+{
+    cout << "print2 " << a << endl;
+}
+
+// C++11
+template <typename T, T a>
+void print2_1()
+{
+    cout << "print2_1 " << a << endl;
+}
+
+int main(int argc, char **argv)
+{
+    int num = 999;
+    print<2>();    // 2
+    print2<1>();   // print2 1
+    print2<'1'>(); // print2 1
+    // print2<5.0>();
+    print2_1<int, 1>(); // print2_1 1
+    return 0;
+}
+```
+
 C++20 更离谱，支持了 auto 形参，在 C++14 中，auto 可以为 lambda 表达式声明形参,在 C++20 中感觉看见了未来的曙光
 
 ```cpp
@@ -1445,6 +1531,63 @@ int main(int argc, char **argv)
     auto *j = new auto(10); // int *j
     delete i;
     delete j;
+    return 0;
+}
+```
+
+### 什么时候使用 auto
+
+每个人可能对 auto 的理解，以及理解程度不一样，所以在实际多人合作项目中要慎重使用
+
+1、一眼就能看出声明变量的初始化类型时使用 auto
+
+```cpp
+#include <iostream>
+#include <map>
+#include <string>
+using namespace std;
+
+std::map<std::string, int> str2int;
+
+int main(int argc, char **argv)
+{
+    for (auto it = str2int.cbegin(); it != str2int.cend(); ++it)
+    {
+        // std::map<std::string, int>::const_iterator it
+    }
+    for (auto &it : str2int)
+    {
+        // std::pair<const std::string, int> &it
+    }
+    return 0;
+}
+```
+
+2、复杂类型，如 lambda 表达式、bind 使用 auto
+
+```cpp
+#include <iostream>
+#include <functional>
+using namespace std;
+
+int sum(int a1, int a2)
+{
+    cout << "a1 + a2 = " << a1 << "+" << a2 << "=" << a1 + a2 << endl;
+    return a1 + a2;
+}
+
+int main(int argc, char **argv)
+{
+    auto func = [](int a1, int a2)
+    {
+        return a1 + a2;
+    };
+    function<int(int, int)> func1 = func;
+    cout << func1(1, 2) << endl; // 3
+
+    auto b = std::bind(sum, 5, std::placeholders::_1);
+    cout << b(1) << endl; // a1 + a2 = 5+1=6
+    // 6
     return 0;
 }
 ```

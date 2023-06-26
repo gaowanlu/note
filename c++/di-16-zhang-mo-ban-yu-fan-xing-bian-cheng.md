@@ -97,7 +97,7 @@ int main(int argc, char **argv)
 
 上面编译器会实例出`int compare(const char (&p1)[6], const char (&p2)[4])`
 
-重点：非类型模板参数的模板实参必须是常量表达式
+重点：非类型模板参数的模板实参必须是常量表达式,只能使用编译时常量（包括整数常量、枚举常量等），而不能使用运行时的变量。
 
 ### inline 和 constexpr 的函数模板
 
