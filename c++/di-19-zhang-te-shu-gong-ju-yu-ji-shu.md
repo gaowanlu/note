@@ -321,11 +321,10 @@ int main(int argc, char** argv)
 
 ### RTTI 实战
 
-编写自定义类的 equal 方法
+编写自定义类的 equal 方法,在多态中判断运行时类型
 
 ```cpp
-//example7.cpp
-#include <iostreadym>
+#include <iostream>
 using namespace std;
 
 class A
@@ -333,14 +332,12 @@ class A
 public:
     bool operator==(A &other)
     {
-        return typeid(*this) == typeid(other) && this->equal(other);
+        return this->equal(other) && this->get_num() == other.get_num();
     }
 
 protected:
-    virtual bool equal(A &other)
-    {
-        return true;
-    }
+    virtual bool equal(A &other) = 0;
+    virtual int get_num() = 0;
 };
 
 class B : public A
@@ -352,42 +349,58 @@ public:
     }
 
 protected:
-    bool euqal(A &other)
+    virtual bool equal(A &other) override
     {
-        auto r = dynamic_cast<B &>(other);
-        return num == r.num;
+        return typeid(other) == typeid(*this);
+    }
+    virtual int get_num() override
+    {
+        return num;
     }
 };
 
 class C : public A
 {
-protected:
-    bool euqal(A &other)
+public:
+    int num;
+    C(int num) : num(num)
     {
-        auto r = dynamic_cast<B &>(other);
-        return true;
+    }
+
+protected:
+    virtual bool equal(A &other) override
+    {
+        return typeid(other) == typeid(*this);
+    }
+    virtual int get_num() override
+    {
+        return num;
     }
 };
 
 int main(int argc, char **argv)
 {
-    B b(12);
-    A &a1 = b;
-    A &a2 = b;
-    cout << (a1 == a2) << endl; // 1
-    C c;
-    A &a3 = c;
-    cout << (a1 == a3) << endl; // 0 派生类类型不同
+    A *t1 = new B(1);
+    A *t2 = new B(1);
+    cout << boolalpha << (*t1 == *t2) << endl; // true
+    A *t3 = new C(1);
+    cout << boolalpha << (*t1 == *t3) << endl; // false
+    cout << typeid(*t1).name() << endl;        // 1B
+    cout << typeid(*t2).name() << endl;        // 1B
+    cout << typeid(*t3).name() << endl;        // 1C
+
+    delete dynamic_cast<B *>(t1);
+    delete dynamic_cast<B *>(t2);
+    delete dynamic_cast<C *>(t3);
     return 0;
 }
 ```
 
 ### typeid 运算符
 
-typeid 运算符返回 type_info 对象
+typeid 运算符返回 std::type_info 对象,在 C++中，`typeid 运算符的结果是一个左值`。这意味着可以对其应用取地址操作符（&）获取其地址。当对 typeid 的结果使用取地址操作符时，返回的是 std::type_info 对象的指针。
 
 ```cpp
-//example8.cpp
 #include <iostream>
 using namespace std;
 
@@ -408,45 +421,40 @@ int main(int argc, char **argv)
 
 ### type_info 类
 
-type_info 的定义可能根据编译器的不同而不同
+std::type_info 的定义可能根据编译器的不同而不同,std::type_info 删除了复制构造函数，若想保存 std::type_info，只能获取其引用或指针
 
 ```cpp
-#include<typeinfo>
+#include <iostream>
+using namespace std;
+
+int main(int argc, char **argv)
+{
+    int a;
+    const std::type_info &info1 = typeid(a);
+    auto ptr = &typeid(a);                          // const std::type_info *ptr
+    cout << &info1 << " " << ptr << endl;           // 0x6ff57320 0x6ff57320
+    cout << boolalpha << ((&info1) == ptr) << endl; // true
+    return 0;
+}
 ```
 
 其没有默认构造函数，它的拷贝和移动构造函数、赋值运算符都被定义成了删除的，创建 type_info 的唯一途径就是使用 typeid 操作
 
-![type_info的操作](<../.gitbook/assets/屏幕截图 2022-08-03 171825.jpg>)
+![type_info的操作](../.gitbook/assets/屏幕截图2022-08-03171825.jpg)
+
+值得注意的是 type_info 总是忽略 cv 限定符(const 与 volatile)
 
 ```cpp
-//example9.cpp
-class A
-{
-public:
-    virtual void test(){
-
-    };
-};
-
-class B : public A
-{
-public:
-    void test() override
-    {
-    }
-};
+#include <iostream>
+using namespace std;
 
 int main(int argc, char **argv)
 {
-    B b;
-    cout << typeid(b).name() << endl; // 1B
-    A a;
-    cout << typeid(a).name() << endl; // 1A
-    A &a_ref_b = b;
-    cout << typeid(a_ref_b).name() << endl; // 1B
-    A *a_ptr_b = &b;
-    cout << typeid(a_ptr_b).name() << endl;  // P1A
-    cout << typeid(*a_ptr_b).name() << endl; // 1B
+    const int v1 = 9;
+    int v2 = 9;
+    cout << boolalpha << (typeid(v1) == typeid(v2)) << endl; // true
+    volatile int v3 = 9;
+    cout << boolalpha << (typeid(v1) == typeid(v3)) << endl; // true
     return 0;
 }
 ```

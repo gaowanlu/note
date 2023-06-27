@@ -4,15 +4,15 @@ cover: >-
 coverY: 0
 ---
 
-# 💪 第3章 字符串、向量和数组
+# 💪 第 3 章 字符串、向量和数组
 
-## 第3章 字符串、向量和数组
+## 第 3 章 字符串、向量和数组
 
-### 命名空间的using声明
+### 命名空间的 using 声明
 
-目前为止我们使用的库函数基本都属于命名空间std，如std::cin 、std::cout。其中`::`我们称其为作用域操作符，编译起编译起从操作符左侧名字的作用域寻找右侧那个名字。
+目前为止我们使用的库函数基本都属于命名空间 std，如 std::cin 、std::cout。其中`::`我们称其为作用域操作符，编译起编译起从操作符左侧名字的作用域寻找右侧那个名字。
 
-但是上面很繁琐、允许我们通过using声明
+但是上面很繁琐、允许我们通过 using 声明
 
 ```cpp
 //example1.cpp
@@ -27,11 +27,11 @@ int main(int argc,char**argv){
 }
 ```
 
-这样在这个cpp内使用std::cout与std::endl时就可以省略写std::了,但是仍然允许我们显式指定其明明空间
+这样在这个 cpp 内使用 std::cout 与 std::endl 时就可以省略写 std::了,但是仍然允许我们显式指定其明明空间
 
-### 头文件不应包含using声明
+### 头文件不应包含 using 声明
 
-头文件一般不使用using声明，因为头文件的内容会被拷贝到，include它的cpp去，如果头文件有using声明，则那些cpp内也会有这些using声明，可能会引起明明冲突
+头文件一般不使用 using 声明，因为头文件的内容会被拷贝到，include 它的 cpp 去，如果头文件有 using 声明，则那些 cpp 内也会有这些 using 声明，可能会引起明明冲突
 
 ```cpp
 //example2.h
@@ -43,9 +43,9 @@ using std::cout;
 #endif
 ```
 
-当第4行代码不被注释掉时，则会引入using std::cout; 当main函数内使用cout，编译器则不会知道知道我们要使用std::cout还是自定义的cout，进而产生命名出错
+当第 4 行代码不被注释掉时，则会引入 using std::cout; 当 main 函数内使用 cout，编译器则不会知道知道我们要使用 std::cout 还是自定义的 cout，进而产生命名出错
 
-总之不要在头文件内使用using声明
+总之不要在头文件内使用 using 声明
 
 ```cpp
 //example2.cpp
@@ -64,15 +64,15 @@ int main(int argc,char**argv){
 }
 ```
 
-### 标准库类型string
+### 标准库类型 string
 
 首先要导入 `#include<string>` 其命名空间为 `std::string`
 
-在C语言中是没有字符串类型的，但可以用字符数组进行存储，以 `\0` 表示字符串结束
+在 C 语言中是没有字符串类型的，但可以用字符数组进行存储，以 `\0` 表示字符串结束
 
-### 定义和初始化string对象
+### 定义和初始化 string 对象
 
-6种直接初始化方式、1种拷贝初始化方式
+6 种直接初始化方式、1 种拷贝初始化方式
 
 ```cpp
     1、string s5;          //空串
@@ -127,7 +127,7 @@ int main(int argc, char **argv)
 
 ### 字符串对宽字符的支持
 
-可以使用basic_string模板类
+可以使用 basic_string 模板类
 
 ```cpp
 #include <string>
@@ -148,7 +148,7 @@ int main(int argc, char **argv)
 
 ### 关于字符串长度的大坑
 
-如果我们需要存储含有\0的字符串数据，请勿使用std::string进行存储，因为一旦使用它是从\0后的字符进行了忽略，例如在http的报文内如果请求体或响应体内为二进制数据，那么我们按照字符来读取，极有可能造成大祸，甚至一整天不知道bug在哪里，所以我们应该在学习的时候就知道这回事
+如果我们需要存储含有\0 的字符串数据，请勿使用 std::string 进行存储，因为一旦使用它是从\0 后的字符进行了忽略，例如在 http 的报文内如果请求体或响应体内为二进制数据，那么我们按照字符来读取，极有可能造成大祸，甚至一整天不知道 bug 在哪里，所以我们应该在学习的时候就知道这回事
 
 ```cpp
 //example41.cpp
@@ -164,9 +164,9 @@ int main(int argc, char **argv)
 }
 ```
 
-#### string对象上的操作
+#### string 对象上的操作
 
-在C++中string是一种标准库里的对象,其支持丰富的操作
+在 C++中 string 是一种标准库里的对象,其支持丰富的操作
 
 ```cpp
 //example4.cpp
@@ -190,7 +190,7 @@ int main(int argc, char **argv)
     // cin>>s1;
 ```
 
-从输入流中读取一行到字符串getline(inputstream,str)
+从输入流中读取一行到字符串 getline(inputstream,str)
 
 ```cpp
     // getline(cin, s1); //这里我们使用标准输入流
@@ -209,7 +209,7 @@ int main(int argc, char **argv)
     cout << s1.size() << endl; // 11
 ```
 
-获取第n个字符的引用 n 0开始为第一个字符
+获取第 n 个字符的引用 n 0 开始为第一个字符
 
 ```cpp
     char &ch = s1[0];
@@ -233,7 +233,7 @@ int main(int argc, char **argv)
     string s4 = s3;
 ```
 
-s4与s3没有关系，只是内容相同，它们的数据存放在不同的内存上面
+s4 与 s3 没有关系，只是内容相同，它们的数据存放在不同的内存上面
 
 ```cpp
     cout << s4 << endl; // pelko worldhello world
@@ -259,7 +259,7 @@ s4与s3没有关系，只是内容相同，它们的数据存放在不同的内�
 }
 ```
 
-### getline函数的返回值
+### getline 函数的返回值
 
 ```cpp
 //example5.cpp
@@ -284,9 +284,9 @@ int main(int argc, char **argv)
 }
 ```
 
-### std::string::size\_type类型
+### std::string::size_type 类型
 
-其字符串size()方法返回值用什么类型存储比较好，C++为我们提供了std::string::sizetype类型
+其字符串 size()方法返回值用什么类型存储比较好，C++为我们提供了 std::string::sizetype 类型
 
 ```cpp
 //example6.cpp
@@ -298,7 +298,7 @@ int main(int argc, char **argv)
     std::string::size_type s1_length = s1.size();
     cout << s1_length << endl;                      // 5
     cout << sizeof(std::string::size_type) << endl; // 4
-    
+
     // str.size()返回一个无符号整数
     //当然我们可以使用我们前面学到的auto 与 decltype
     auto l1 = s1.size();
@@ -316,7 +316,7 @@ int main(int argc, char **argv)
 
 ### 字符串相加要注意的事
 
-字符串字面值不能与字符串字面值相加、相加对于string对象有效，即+号的左右至少有一个string对象
+字符串字面值不能与字符串字面值相加、相加对于 string 对象有效，即+号的左右至少有一个 string 对象
 
 ```cpp
 //example7.cpp
@@ -342,9 +342,9 @@ int main(int argc, char **argv)
 }
 ```
 
-这是为什么呢，C++为了与C语言兼容，所以C++语言中的字符串并不是作为std::stirng对象处理的
+这是为什么呢，C++为了与 C 语言兼容，所以 C++语言中的字符串并不是作为 std::stirng 对象处理的
 
-### 处理string对象中的字符
+### 处理 string 对象中的字符
 
 `#include<cctype>`
 
@@ -364,7 +364,7 @@ tolower(c);//如果c是大写字母，输出对应的小写字母，否则原样
 toupper(c);//如果是小写字母、输出对应的大写字母，否则原样输出
 ```
 
-如toupper使用
+如 toupper 使用
 
 ```cpp
 //exmaple8.cpp
@@ -433,15 +433,15 @@ int main(int argc, char **argv)
 }
 ```
 
-### 标准库类型vector
+### 标准库类型 vector
 
-std::vector表示对象的集合，其所有元素类型相同，每个集合中对每个对象有唯一的对应索引，用于随机访问，因为vector容纳其他对象，所以也被称为容器。其背后有一个重要的概念叫做类模板的东西在支持着它，类模板是C++特性之一，其非常强大。
+std::vector 表示对象的集合，其所有元素类型相同，每个集合中对每个对象有唯一的对应索引，用于随机访问，因为 vector 容纳其他对象，所以也被称为容器。其背后有一个重要的概念叫做类模板的东西在支持着它，类模板是 C++特性之一，其非常强大。
 
-std::vector\<T> T可以为任意数据类型
+std::vector\<T> T 可以为任意数据类型
 
-### 定义和初始化vector
+### 定义和初始化 vector
 
-七种初始化方式 以T为int为例
+七种初始化方式 以 T 为 int 为例
 
 ```
 vector<int> v1;                //空vector
@@ -497,9 +497,9 @@ void printIntVector(vector<int> &v)
 }
 ```
 
-### 向vector内添加元素
+### 向 vector 内添加元素
 
-vector允许我么在定义初始化后，对其内部的元素再进行操作，例如向其后面追加元素
+vector 允许我么在定义初始化后，对其内部的元素再进行操作，例如向其后面追加元素
 
 ```cpp
 //example12.cpp
@@ -530,11 +530,11 @@ int main(int argc, char **argv)
 }
 ```
 
-### vector其他操作
+### vector 其他操作
 
-vector提供的方法与string提供的方法类似，可以向上翻到string进行对比学习
+vector 提供的方法与 string 提供的方法类似，可以向上翻到 string 进行对比学习
 
-vector.empty()、vector.size()、vector.push\_back(T)、下标引用、拷贝、列表替换、==、!=、<、<=、>、>=
+vector.empty()、vector.size()、vector.push_back(T)、下标引用、拷贝、列表替换、==、!=、<、<=、>、>=
 
 ```cpp
 //example13.cpp
@@ -568,9 +568,9 @@ int main(int argc, char **argv)
 }
 ```
 
-### 遍历vector
+### 遍历 vector
 
-关于下标访问，有一点我们必须要知道下标的范围是从0开始到vector.size()-1,无论新开发者还是有经验的大佬，在写程序时预检下标访问越界问题都是很常见的
+关于下标访问，有一点我们必须要知道下标的范围是从 0 开始到 vector.size()-1,无论新开发者还是有经验的大佬，在写程序时预检下标访问越界问题都是很常见的
 
 ```cpp
 //example14.cpp
@@ -646,9 +646,9 @@ int main(int argc, char **argv)
 }
 ```
 
-### 多维vector
+### 多维 vector
 
-因为std::vector\<T>可以T可以为任意类型,那么T可以为vector也是情理之中的
+因为 std::vector\<T>可以 T 可以为任意类型,那么 T 可以为 vector 也是情理之中的
 
 ```cpp
 //example16.cpp
@@ -673,11 +673,11 @@ int main(int argc, char **argv)
 }
 ```
 
-vector还有许多有用的操作、我们后学进行学习、慢慢地展开循序渐进学习
+vector 还有许多有用的操作、我们后学进行学习、慢慢地展开循序渐进学习
 
 ### 迭代器介绍
 
-我们学过我们可以通过下标来访问string的字符、vector的元素的引用。有一种更通用的方式叫做迭代器，迭代器不是仅仅限于vector的，其他的容器等也都支持。string是字符串不是容器，但其也支持迭代器的使用。
+我们学过我们可以通过下标来访问 string 的字符、vector 的元素的引用。有一种更通用的方式叫做迭代器，迭代器不是仅仅限于 vector 的，其他的容器等也都支持。string 是字符串不是容器，但其也支持迭代器的使用。
 
 ### 使用迭代器
 
@@ -741,7 +741,7 @@ int main(int argc, char **argv)
 
 ### 迭代器类型
 
-不同容器有不同类型的迭代器类型，string类型的迭代器为C++为我们指定好的为string::iterator类型，string与vector类似支持begin()与end()方法
+不同容器有不同类型的迭代器类型，string 类型的迭代器为 C++为我们指定好的为 string::iterator 类型，string 与 vector 类似支持 begin()与 end()方法
 
 ```cpp
 //example18.cpp
@@ -772,9 +772,9 @@ int main(int argc, char **argv)
 }
 ```
 
-### const\_iterator
+### const_iterator
 
-可见iterator允许我们进行\*操作得到相应元素的引用、进而我们可以改变元素的值，有时我们需要const的功能，不允许使用迭代器改变元素，只能读，这时候就要派const\_iterator上场了
+可见 iterator 允许我们进行\*操作得到相应元素的引用、进而我们可以改变元素的值，有时我们需要 const 的功能，不允许使用迭代器改变元素，只能读，这时候就要派 const_iterator 上场了
 
 ```cpp
 //example19.cpp
@@ -805,9 +805,9 @@ int main(int argc, char **argv)
 }
 ```
 
-### const vector 与 cosnt\_iterator
+### const vector 与 cosnt_iterator
 
-const vector的迭代器类型 const\_iterator，显式获取const\_iterator cbegin()与cend()
+const vector 的迭代器类型 const_iterator，显式获取 const_iterator cbegin()与 cend()
 
 ```cpp
 //example20.cpp
@@ -843,7 +843,7 @@ int main(int argc, char **argv)
 
 ### 迭代器失效
 
-改变vector长度的操作会使得迭代器失效,也就是当vector的size发生改变时我们仍要使用迭代器就要重新使用begin或者end方法获取新的迭代器
+改变 vector 长度的操作会使得迭代器失效,也就是当 vector 的 size 发生改变时我们仍要使用迭代器就要重新使用 begin 或者 end 方法获取新的迭代器
 
 ```cpp
 //example21.cpp
@@ -871,7 +871,7 @@ int main(int argc, char **argv)
 
 ### 迭代器运算
 
-迭代器支持 +、-、+=、-=、<、>、<=、>=等操作 在算数运算中、iterator犹如一个存放当前下标数字类型
+迭代器支持 +、-、+=、-=、<、>、<=、>=等操作 在算数运算中、iterator 犹如一个存放当前下标数字类型
 
 ```cpp
 //example22.cpp
@@ -933,9 +933,9 @@ int main(int agrc, char **argv)
 
 ### 字符数组的特殊性
 
-字符数组可以用来存储C风格字符串
+字符数组可以用来存储 C 风格字符串
 
-在C++规范内，在定义数组时\[]内必须为常量表达式（但有的编译器允许使用变量），当常量表达式为空是定义数组必须使用列表赋值={elements...}进行初始化。
+在 C++规范内，在定义数组时\[]内必须为常量表达式（但有的编译器允许使用变量），当常量表达式为空是定义数组必须使用列表赋值={elements...}进行初始化。
 
 ```cpp
 //example24.cpp
@@ -982,7 +982,7 @@ int main(int agrc, char **argv)
 }
 ```
 
-一看到这么多的、肯定学习的同学马上放弃C++、想要理解数组声明的含义，好办法是从数组的名字开始按照由内向外顺序阅读。
+一看到这么多的、肯定学习的同学马上放弃 C++、想要理解数组声明的含义，好办法是从数组的名字开始按照由内向外顺序阅读。
 
 ### 访问数组元素
 
@@ -1017,7 +1017,7 @@ int main(int agrc, char **argv)
 
 ### 遍历数组
 
-数组在C++同样支持迭代器模式,当然我们仍可使用for循环配和下标访问
+数组在 C++同样支持迭代器模式,当然我们仍可使用 for 循环配和下标访问
 
 ```cpp
 //example27.cpp
@@ -1048,7 +1048,7 @@ int main(int agrc, char **argv)
 
 ### 指针和数组
 
-在C语言中，指针与数组有很大的联系
+在 C 语言中，指针与数组有很大的联系
 
 ```cpp
 //example28.cpp
@@ -1083,7 +1083,7 @@ int main(int argc, char **argv)
 }
 ```
 
-### 标准库函数begin和end
+### 标准库函数 begin 和 end
 
 ```cpp
 //example29.cpp
@@ -1153,9 +1153,9 @@ int main(int argc, char **argv)
 }
 ```
 
-### C语言风格字符串
+### C 语言风格字符串
 
-在C语言中是没有string类型的，而是使用char数组来进行存储字符串，以元素'\0'标志字符串结束。
+在 C 语言中是没有 string 类型的，而是使用 char 数组来进行存储字符串，以元素'\0'标志字符串结束。
 
 ```cpp
 #include<cstring>
@@ -1200,9 +1200,9 @@ int main(int argc, char **argv)
 }
 ```
 
-### string.c\_str()与使用数组初始化vector
+### string.c_str()与使用数组初始化 vector
 
-虽然在C++中我们仍然可使用char数组存储字符串不用string或者不适用vector使用数组、这并不是一个好习惯、因为之所以有C++就是为了增强C里面没有的东西，难道vector和string不香吗
+虽然在 C++中我们仍然可使用 char 数组存储字符串不用 string 或者不适用 vector 使用数组、这并不是一个好习惯、因为之所以有 C++就是为了增强 C 里面没有的东西，难道 vector 和 string 不香吗
 
 ```cpp
 //example33.cpp
@@ -1399,7 +1399,7 @@ int main(int argc, char **argv)
 }
 ```
 
-使用auto、decltype、begin、end
+使用 auto、decltype、begin、end
 
 ```cpp
 //example39.cpp

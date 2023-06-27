@@ -1594,37 +1594,50 @@ int main(int argc, char **argv)
 
 ### decltype 类型指示符
 
-C++11 特性、作用为选择并返回操作数的数据类型
+C++11 特性、作用为选择并返回操作数的数据类型，decltype 并没有 auto 那样变化多端、auto 与 const 引用 指针配和起来很容易把开发者搞晕
 
 ```cpp
-//example42.cpp
 #include <iostream>
 using namespace std;
+
+static int num = 999;
 
 int getInt()
 {
     return 1;
 }
 
+// int sum(int a1, int a2)
+auto sum(decltype(num) a1, decltype(a1) a2) -> decltype(num)
+{
+    cout << a1 << " " << a2 << endl;
+    return a1 + a2;
+}
+
 int main(int agrc, char **argv)
 {
-    //并没有运行函数 而是看函数返回的类型 是在编译阶段完成的
+    // 重点：并没有运行函数 而是看函数返回的类型 是在编译阶段完成的
     decltype(getInt()) i = 23; // int i
     cout << i << endl;         // 23
 
     // decltype不改变原来类型的任何状态包括顶层const而auto则会忽略
     const int b = 32;
-    decltype(b) c = b;
-    // c = 232; error: assignment of read-only variable 'c'
+    decltype(b) c = b; // const int c = 32
+    const int *ptr = &b;
+    decltype(ptr) ptr2; // const int *ptr2
+    auto &ref = b;
+    decltype(ref) ref2 = ref; // const int &ref2
+    const int *const ptr3 = &b;
+    decltype(ptr3) ptr4 = ptr3; // const int *const ptr4
+    // 是什么就是什么
 
     const int &cj = 11;
     // decltype(cj) k; error ,const int & 必须被初始化
 
+    cout << sum(1, 2) << endl; // 1 2 3
     return 0;
 }
 ```
-
-decltype 并没有 auto 那样变化多端、auto 与 const 引用 指针配和起来很容易把开发者搞晕
 
 ### decltype 和引用
 
@@ -1663,6 +1676,71 @@ int main(int argc, char **argv)
 
     auto a = i;
 
+    return 0;
+}
+```
+
+### decltype 简写模板返回值类型
+
+只能说，It's so fucking cool.
+
+```cpp
+#include <iostream>
+using namespace std;
+
+template <class R, class T1, class T2>
+R func1(T1 t1, T2 t2)
+{
+    return t1 + t2;
+}
+
+template <class T1, class T2>
+auto func2(T1 t1, T2 t2) -> decltype(t1 + t2)
+{
+    return t1 + t2;
+}
+
+// 但是C++14已经支持自动推导auto返回值类型了
+template <class T1, class T2>
+auto func3(T1 t1, T2 t2)
+{
+    return t1 + t2;
+}
+
+int main(int argc, char **argv)
+{
+    cout << func1<int, int, int>(1, 2) << endl; // 3
+    cout << func2<int, int>(1, 2) << endl;      // 3
+    cout << func3<int, int>(1, 2) << endl;      // 3
+    return 0;
+}
+```
+
+但是用 auto 自动推导还是用 decltype 配置要根据实际场景选择
+
+```cpp
+#include <iostream>
+#include <type_traits>
+using namespace std;
+// env1
+template <typename T>
+auto get_ref1(T &t)
+{
+    return t;
+}
+// env2
+template <typename T>
+auto get_ref2(T &t) -> decltype(t)
+{
+    return t;
+}
+
+int main(int argc, char **argv)
+{
+    int n = 9;
+    cout << std::is_reference<decltype(get_ref1(n))>::value << endl; // 0 c++17
+
+    cout << std::is_reference<decltype(get_ref2(n))>::value << endl; // 1 c++17
     return 0;
 }
 ```

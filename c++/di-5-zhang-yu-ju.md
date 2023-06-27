@@ -4,9 +4,9 @@ cover: >-
 coverY: 0
 ---
 
-# 🥬 第5章 语句
+# 🥬 第 5 章 语句
 
-## 第5章 语句
+## 第 5 章 语句
 
 C++ 中的大多数语句都已分号结尾，如果编码人员忘记，则会在编译时报错
 
@@ -38,7 +38,7 @@ int main(int argc, char **argv)
 
 ### 关于分号
 
-分号我们漏写会报错，多写了则会将多的当做空语句处理,总之不要多写也不要少些，以免出现逻辑上的BUG，往往是难以寻找的
+分号我们漏写会报错，多写了则会将多的当做空语句处理,总之不要多写也不要少些，以免出现逻辑上的 BUG，往往是难以寻找的
 
 ```cpp
 //example2.cpp
@@ -59,7 +59,7 @@ int main(int argc, char **argv)
 
 ### 复合语句块
 
-复合语句是指用花括号括起来的语句和声明的序列，复合语句也被称作为块，在函数、for、if、while、switch等语句都会使用到{}
+复合语句是指用花括号括起来的语句和声明的序列，复合语句也被称作为块，在函数、for、if、while、switch 等语句都会使用到{}
 
 块不以分号作为结束
 
@@ -73,7 +73,7 @@ int main(int argc, char **argv) // main本身也是个复合语句块
         int i = 0;
     }
     // cout << i << endl;//error: 'i' was not declared in this scope
-    
+
     int i = 1;
     while (++i < 5)
     {
@@ -115,11 +115,11 @@ int main(int argc, char **argv)
 
 ### 条件语句
 
-### if语句
+### if 语句
 
-if语句的结构主要有if、else、else if组成
+if 语句的结构主要有 if、else、else if 组成
 
-### if与else
+### if 与 else
 
 ```cpp
 //example5.cpp
@@ -152,7 +152,7 @@ int main(int argc, char **argv)
 }
 ```
 
-### 嵌套if语句
+### 嵌套 if 语句
 
 ```cpp
 //example6.cpp
@@ -185,11 +185,11 @@ int main(int argc, char **argv)
 }
 ```
 
-要注意的内容，当if、else、else if 后面的代码如果没有加{},那么它们默认相当于为后面的一条语句加了花括号，在我们写程序时要格外的注意，以免造成BUG
+要注意的内容，当 if、else、else if 后面的代码如果没有加{},那么它们默认相当于为后面的一条语句加了花括号，在我们写程序时要格外的注意，以免造成 BUG
 
-### 悬垂else
+### 悬垂 else
 
-在if语句嵌套时，它们与else是怎样的匹配关系,else前面如果没有右花括号则它与其上面距离最近的if语句匹配，否则花括号强迫else与其进行匹配
+在 if 语句嵌套时，它们与 else 是怎样的匹配关系,else 前面如果没有右花括号则它与其上面距离最近的 if 语句匹配，否则花括号强迫 else 与其进行匹配
 
 ```cpp
 //example7.cpp
@@ -235,9 +235,9 @@ int main(int argc, char **argv)
 }
 ```
 
-### switch语句
+### switch 语句
 
-什么是switch语句，它是if、else if的升级版 、第一个case相当于if，其余if else相当于后面的case，default相当于末尾的else
+什么是 switch 语句，它是 if、else if 的升级版 、第一个 case 相当于 if，其余 if else 相当于后面的 case，default 相当于末尾的 else
 
 ```cpp
 //example8.cpp
@@ -278,9 +278,9 @@ int main(int argc, char **argv)
 }
 ```
 
-### switch内部的控制流
+### switch 内部的控制流
 
-从第一个匹配成功的case开始执行向下执行直到遇见break或者执行default部分代码块后结束
+从第一个匹配成功的 case 开始执行向下执行直到遇见 break 或者执行 default 部分代码块后结束
 
 ```cpp
 //example9.cpp
@@ -323,11 +323,11 @@ int main(int argc, char **argv)
 }
 ```
 
-要值得注意的是，case标签必须为整形常量表达式，任何两个case标签的值不能相同，否则会引发错误。 不在每个case代码内些break，本就违反了我们用switch的初心，而且没写好就会因漏写chanshnegBUG。
+要值得注意的是，case 标签必须为整形常量表达式，任何两个 case 标签的值不能相同，否则会引发错误。 不在每个 case 代码内些 break，本就违反了我们用 switch 的初心，而且没写好就会因漏写 chanshnegBUG。
 
-### switch内部的变量定义
+### switch 内部的变量定义
 
-可以在case要执行的代码中定义变量，但其中并没有想象的那么简单
+可以在 case 要执行的代码中定义变量，但其中并没有想象的那么简单
 
 ```cpp
 //example10.cpp
@@ -405,9 +405,9 @@ int main(int argc, char **argv)
 
 ### 迭代语句
 
-迭代语句在C++内主要有四大类，while语句、传统的for循环、范围的for循环、do while语句
+迭代语句在 C++内主要有四大类，while 语句、传统的 for 循环、范围的 for 循环、do while 语句
 
-### while语句
+### while 语句
 
 语法格式
 
@@ -445,7 +445,7 @@ int main(int argc, char **argv)
 }
 ```
 
-### 传统for循环
+### 传统 for 循环
 
 语法格式
 
@@ -490,9 +490,9 @@ int main(int argc, char **argv)
 }
 ```
 
-### 范围for循环
+### 范围 for 循环
 
-C++11引入了一种新的循环方式，可以用来迭代具有迭代器的对象
+C++11 引入了一种新的循环方式，可以用来迭代具有迭代器的对象
 
 语法格式
 
@@ -538,9 +538,9 @@ int main(int argc, char **argv)
 }
 ```
 
-### do while循环
+### do while 循环
 
-do while语句与while语句非常相似，唯一的区别是，do while语句先执行循环体后检查条件，不管条件值如何，我们都至少执行一次循环。
+do while 语句与 while 语句非常相似，唯一的区别是，do while 语句先执行循环体后检查条件，不管条件值如何，我们都至少执行一次循环。
 
 语法格式
 
@@ -584,11 +584,11 @@ int main(int argc, char **argv)
 
 ### 跳转语句
 
-主要有三种操作 break语句、continue语句、goto语句
+主要有三种操作 break 语句、continue 语句、goto 语句
 
-### break语句
+### break 语句
 
-负责终止离它最近的while、do while、for、switch语句，并从这些语句之后的第一条语句开始继续执行
+负责终止离它最近的 while、do while、for、switch 语句，并从这些语句之后的第一条语句开始继续执行
 
 ```cpp
 //example16.cpp
@@ -637,9 +637,9 @@ int main(int argc, char **argv)
 }
 ```
 
-### continue语句
+### continue 语句
 
-continue语句终止最近的循环中的当前迭代并立即开始下一次迭代，continue只能出现在for、while、do while循环内，或嵌套在此类循环里的语句或块的内部。
+continue 语句终止最近的循环中的当前迭代并立即开始下一次迭代，continue 只能出现在 for、while、do while 循环内，或嵌套在此类循环里的语句或块的内部。
 
 ```cpp
 //example17.cpp
@@ -697,9 +697,9 @@ int main(int argc, char **argv)
 }
 ```
 
-### goto语句
+### goto 语句
 
-goto语句的作用是从goto语句无条件跳转到同意函数的内的另一条语句
+goto 语句的作用是从 goto 语句无条件跳转到同意函数的内的另一条语句
 
 ```cpp
 //example18.cpp
@@ -729,15 +729,15 @@ L1:
 }
 ```
 
-### try语句块与异常处理
+### try 语句块与异常处理
 
 C++有运行时异常处理机制
 
-* throw表达式，异常检测部分使用throw表达式来表示它遇到了无法解决的问题，throw引发了异常
-* try语句块，异常处理部分使用try，try语句块以关键字try开始，并以一个多个catch子句结束
-* 异常类，用于在throw表达式和相关的catch子句之间传递异常信息
+- throw 表达式，异常检测部分使用 throw 表达式来表示它遇到了无法解决的问题，throw 引发了异常
+- try 语句块，异常处理部分使用 try，try 语句块以关键字 try 开始，并以一个多个 catch 子句结束
+- 异常类，用于在 throw 表达式和相关的 catch 子句之间传递异常信息
 
-### throw表达式
+### throw 表达式
 
 抛出异常
 
@@ -761,9 +761,9 @@ int main(int argc, char **argv)
 }
 ```
 
-### try语句块与catch捕获异常
+### try 语句块与 catch 捕获异常
 
-try语句块至少需要一个catch语句块
+try 语句块至少需要一个 catch 语句块
 
 ```cpp
 //example20.cpp
