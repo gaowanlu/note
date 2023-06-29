@@ -1594,7 +1594,7 @@ int main(int argc, char **argv)
 
 ### decltype 类型指示符
 
-C++11 特性、作用为选择并返回操作数的数据类型，decltype 并没有 auto 那样变化多端、auto 与 const 引用 指针配和起来很容易把开发者搞晕
+C++11 特性、作用为选择并返回操作数的数据类型，decltype 并没有 auto 那样变化多端、auto 与 const 引用 指针配和起来很容易把开发者搞晕，decltype(e) 所推导的类型会同步 e 的 cv 限定符
 
 ```cpp
 #include <iostream>
@@ -1638,6 +1638,45 @@ int main(int agrc, char **argv)
     return 0;
 }
 ```
+
+### decltype 推导规则
+
+decltype(e) e 类型为 T
+
+1、如果 e 是一个未加括号的标识符表达式(结构化绑定除外)或者未加括号的类成员访问，则 decltype(e)判断出的类型是 e 的类型 T,如果并不存在这样的类型，或 e 是一组重载函数，则无法进行推导  
+2、如果 e 是一个函数调用或仿函数调用，decltype(e)推断出的类型是其返回值类型  
+3、如果 e 是一个类型为 T 的左值，则 decltype(e)是 T&  
+4、如果 e 是一个类型为 T 的将忘值，则 decltype(e)是 T&&  
+5、除去以上情况，decltype(e)是 T
+
+```cpp
+#include <iostream>
+using namespace std;
+
+const int &&foo();
+
+struct A
+{
+    double n;
+};
+
+const A *a = new A;
+
+int main(int argc, char **argv)
+{
+    decltype(foo()) t1 = 1;  // const int &&t1
+    decltype(foo) *t2;       // const int &&(*t2)()
+    decltype(foo) t3;        // const int &&t3()
+    decltype(a) t4;          // const A *t4
+    decltype(a->n) t5;       // double t5
+    decltype((a->n)) t6 = 0; // const double &t6
+    //(a->n) 是带括号 左值 又带const 故推导为const double &t6
+    delete a;
+    return 0;
+}
+```
+
+会发现，这些东西很鸡肋，偏偏会增加开发者们的负担，而不是简化了开发，代码可读性也会下降
 
 ### decltype 和引用
 
@@ -1738,11 +1777,74 @@ auto get_ref2(T &t) -> decltype(t)
 int main(int argc, char **argv)
 {
     int n = 9;
-    cout << std::is_reference<decltype(get_ref1(n))>::value << endl; // 0 c++17
-
-    cout << std::is_reference<decltype(get_ref2(n))>::value << endl; // 1 c++17
+    static_assert(std::is_reference<decltype(get_ref2(n))>::value, "get_ref2 must return a reference type");
+    static_assert(std::is_reference<decltype(get_ref1(n))>::value, "get_ref1 must return a reference type");
+    // 编译报错
+    //      main.cpp:21:61: error: static assertion failed: get_ref1 must return a reference type
+    //     21 |     static_assert(std::is_reference<decltype(get_ref1(n))>::value, "get_ref1 must return a reference type");
     return 0;
 }
+```
+
+### decltype(auto)
+
+在 C++11 中引入了 auto 关键字，用于在编译时自动推导变量的类型。而在 C++14 中引入了 decltype(auto)，它与 auto 有一些区别,decltype(auto)在 auto 基础上保留引用性与 cv 限定符。
+
+```cpp
+#include <iostream>
+using namespace std;
+
+template <typename T>
+decltype(auto) get_ref(T &t)
+{
+    return t;
+}
+
+int main(int argc, char **argv)
+{
+    auto n = 43;             // int n
+    auto x1 = n;             // int x1
+    auto x2 = (n);           // int x2
+    decltype(auto) x3 = n;   // int x3
+    decltype(auto) x4 = (n); // int &x4
+    const int i = 999;
+    auto x5 = i;                       // int x5
+    decltype(auto) x6 = i;             // const int x6 = 999
+    decltype(auto) ref_n = get_ref(n); // int &get_ref<int>(int &t)
+    ref_n = 999;
+    cout << n << endl; // 999
+    return 0;
+}
+```
+
+### decltype(auto)作非类型模板形参占位符
+
+不同可以跳过哦，当你学完 C++再来看，这个知识点不是给小白看的，而且还是 C++17 中的,下面的用法也太 tm 魔幻了，吐了，让我说就是直接不用，自找麻烦，可能造通用函数库的大神能用到，但是用这些特性写库，确定能有好的兼容性？
+
+```cpp
+#include <iostream>
+using namespace std;
+
+template <decltype(auto) N>
+void fun()
+{
+    cout << N << endl;
+}
+
+static const int x = 11;
+static int y = 78;
+
+int main(int argc, char **argv)
+{
+    fun<x>(); // N为const int
+    // fun<y>(); 编译错误 N不能为可变的int 因为y不是一个常量
+    fun<(x)>(); // 11 N为const int&
+    fun<(y)>(); // 78 N为int&
+    static int n = 999;
+    fun<(n)>(); // 999
+    return 0;
+}
+// 为什么func<(y)>没问题，(y)被推断为int&,静态对象而言内存地址是固定的，所以能顺利编译，最终N被推导为int&
 ```
 
 经过复合类型、const、auto、decltype 肯定有曾经充满自信的小伙子要弃坑了，心里想 C++怎么这么多花里胡哨的东西，如果用过其他的语言比如 javascript、python 等动态语言或者 java 会发现它们是调 api 玩的花里胡哨，而 c++是基础语法本身乱如麻，总之这些东西非常有难度，而且有些写法我们平时用不到以至于我们忘记他，但是可能将来工作面试就要知道，然后我们去看什么八股文去了，所以平时我们还是要把基础打好，一步一个脚印，把这些难点用好就超过了很多的开发者。
