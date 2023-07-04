@@ -1047,11 +1047,36 @@ int main(int argc, char **argv)
 
 ### 后置返回类型
 
-C++11 有新特性，尾置返回类型
+C++11 有新特性，尾置返回类型。我们发现函数返回函数指针没办法直接写
 
 ```cpp
 #include <iostream>
 using namespace std;
+
+int impl()
+{
+    return 666;
+}
+
+// 错误写法
+// int (*)(int) get_impl()
+// {
+//     return impl;
+// }
+
+// 使用typdef
+typedef int (*impl_type)();
+
+impl_type get_impl()
+{
+    return impl;
+}
+
+// 使用后置返回
+auto get_impl_back() -> int (*)()
+{
+    return impl;
+}
 
 // 看来有点强啊看着就很舒服对吧,看起来不像C++
 auto func() -> int (*)[5] // 返回数组指针
@@ -1081,6 +1106,8 @@ auto main(int argc, char *argv[]) -> int
     } // 0 0 2 2 4 4 6 6 8 8
     cout << endl;
     delete[] arr;
+    cout << get_impl()() << endl;      // 666
+    cout << get_impl_back()() << endl; // 666
     return 0;
 }
 ```

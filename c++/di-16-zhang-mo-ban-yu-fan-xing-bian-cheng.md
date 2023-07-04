@@ -1314,11 +1314,28 @@ int main(int argc, char **argv)
 有没有更好的办法解决问题呢，yes！使用尾置返回(在第 6 章 函数时就有接触到)
 
 ```cpp
-//example31.cpp
+#include <iostream>
+#include <vector>
+using namespace std;
+
 template <typename T>
 auto func(T beg, T end) -> decltype(*beg)
 {
     return *beg;
+}
+
+// 错误写法，因为编译器decltype时还看不见函数参数呢
+// template <typename T1, typename T2>
+// decltype(t1 + t2) mysum(T1 t1, T2 t2)
+// {
+//     return t1 + t2;
+// }
+
+// 正确
+template <typename T1, typename T2>
+auto mysum(T1 t1, T2 t2) -> decltype(t1 + t2)
+{
+    return t1 + t2;
 }
 
 int main(int argc, char **argv)
