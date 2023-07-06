@@ -687,6 +687,78 @@ int main(int argc, char **argv)
 }
 ```
 
+### 左值和右值
+
+C++中左值一般是指一个指向特定内存的具有名称的值，它有一个相对稳定的内存地址，有一段较长的生命周期，而右值则是不指向稳定内存地址的匿名值，生命周期短，通常是暂时的。可以简单的认为，可以取到左值的地址，但右值取不到地址
+
+```cpp
+int x=1;//x左值 1右值
+int y=3;//y左值 3右值
+int z=x+y;//z左值 x+y右值
+```
+
+有趣的例子,++x 是左值其返回自身，而 x++将 x 拷贝了一份然后才对 x 递增，最后返回临时复制的内容
+
+```cpp
+#include <iostream>
+using namespace std;
+
+int x;
+
+int main(int argc, char **argv)
+{
+    x = 0;
+    int *p1 = &x;
+    // int *p2 = &x++;//错误x++返回的是右值 无法取得地址
+    int *p3 = &++x;
+    cout << p1 << " " << p3 << endl;
+    if (p1 == p3)
+    {
+        cout << boolalpha << true << endl; // true
+    }
+    return 0;
+}
+```
+
+函数的返回值是左值还是右值，不做特殊处理的话是右值
+
+```cpp
+#include <iostream>
+using namespace std;
+
+int x;
+
+int get_set(int val) // val为左值
+{
+    x = val;
+    return x; // x为左值，但是返回的时候会将x复制一份然后返回，实际返回内容为右值
+}
+
+int main(int argc, char **argv)
+{
+    get_set(888); // 888是右值
+    return 0;
+}
+```
+
+通常字面量为右值，除字符串字面量以外,编译器会将字符串字面量存储到程序的数据段中，程序加载的时候也会为其开辟内存空间，所以可以使用取地址操作符获得字符串字面量的内存地址
+
+```cpp
+#include <iostream>
+using namespace std;
+
+int main(int argc, char **argv)
+{
+    auto str = &"hello world";
+    // const char (*str)[12] str
+    // str 指向长度12的char的const数组
+    cout << str << endl; // 0x406045
+    auto str1 = &"hello world";
+    cout << str1 << endl; // 0x406045
+    return 0;
+}
+```
+
 ### 右值引用
 
 什么是右值引用，右值引用为支持移动操作而生，右值引用就是必须绑定到右值的引用，使用&&而不是&来获得右值引用
