@@ -872,12 +872,6 @@ g++ example25.cpp example26.cpp -o example25.exe
 我们知道引用被初始化后是可以改变的，也就是换一个变量进行绑定 const 引用使得其初始化后不能改变目前我们学到的引用为左值引用，左值引用能分为非常量左值引用和常量左值引用，非常常量引用只能引用到左值，而常量左值引用既可以引用到左值也能引用到有右值上。
 
 ```cpp
-
-```
-
-### 初始化 const 的引用
-
-```cpp
 //example28.cpp
 #include <iostream>
 using namespace std;
