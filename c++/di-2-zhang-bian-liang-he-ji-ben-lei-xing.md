@@ -869,33 +869,10 @@ g++ example25.cpp example26.cpp -o example25.exe
 
 ### const 的引用
 
-我们知道引用被初始化后是可以改变的，也就是换一个变量进行绑定 const 引用使得其初始化后不能改变
+我们知道引用被初始化后是可以改变的，也就是换一个变量进行绑定 const 引用使得其初始化后不能改变目前我们学到的引用为左值引用，左值引用能分为非常量左值引用和常量左值引用，非常常量引用只能引用到左值，而常量左值引用既可以引用到左值也能引用到有右值上。
 
 ```cpp
-// example27.cpp
-#include <iostream>
-using namespace std;
-int main(int argc, char **argv)
-{
-    int a = 12;
-    int &refer_a = a;
-    refer_a = 33;
-    cout << a << endl; // 33
-    int b = 44;
-    refer_a = b;
-    refer_a = 55;
-    cout << b << endl; // 44
-    // 可见引用绑定的变量是可以被更改的
-    // 使用const的引用
-    const int &const_refer_a = a;
-    cout << const_refer_a << endl; // 55
-    // 尝试改变引用绑定的变量的值
-    //  const_refer_a = b;
-    //  error: assignment of read-only reference 'const_refer_a'
-    a = 999;
-    cout << const_refer_a << endl; // 999
-    return 0;
-}
+
 ```
 
 ### 初始化 const 的引用
@@ -922,6 +899,66 @@ int main(int argc, char **argv)
 ```
 
 背后发生了什么，当我们为 const 的引用初始化为一个常量是时，编译器生成相对应的数据类型变量，用生成的这个变量来存储这个常量，然后将引用绑定为生成的那个变量。
+
+进阶原理，这个的话可能要学完 C++你才能看得懂，这属于 C++的进阶了,常量左值引用与非常量左值引用
+
+```cpp
+// 关闭返回值优化，因为GCC的RVO(函数返回值优化)会减少复制构造函数的调用
+// g++ main.cpp -o main -O0 -fno-elide-constructors
+#include <iostream>
+using namespace std;
+
+class X
+{
+public:
+    X()
+    {
+        cout << "X()" << endl;
+    }
+    X(const X &x)
+    {
+        cout << "X(const X &x)" << endl;
+    }
+    X &operator=(const X &x)
+    {
+        cout << "X &operator=(const X &x)" << endl;
+        return *this;
+    }
+    ~X()
+    {
+        cout << "~X()" << endl;
+    }
+
+public:
+    int n;
+};
+
+X fun()
+{
+    X x;
+    x.n = 100;
+    return x;
+}
+
+int main(int argc, char **argv)
+{
+    {
+        // X &x_ref = fun(); // 编译错误，非常量引用的初始值必须为左值
+        const X &x_ref = fun(); // X() X(const X&x) ~X()
+        // 常量左值引用初始值可以为右值,执行两次构造是因为在fun中构造了变量x，x为左值其将用拷贝构造函数拷贝一份作为右值进行返回
+        const X &x1_ref = x_ref;
+        cout << x_ref.n << endl;                          // 100
+        cout << boolalpha << (&x_ref == &x1_ref) << endl; // true
+        // ~X()
+    }
+    const X &x_ref = fun(); // X() X(const X &x) ~X()
+    X x1 = x_ref;           // X(const X &x)
+    const X &x2_ref = x1;   // 常量左值引用引用左值
+    //~X() ~X()
+    // 析构则是x1变量与fun返回的右值的析构
+    return 0;
+}
+```
 
 ### 指针和 const
 

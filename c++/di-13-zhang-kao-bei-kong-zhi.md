@@ -771,11 +771,18 @@ int main(int argc, char **argv)
 - 无法将右值引用绑定到右值引用
 
 ```cpp
-//example20.cpp
+#include <iostream>
+using namespace std;
+
+int fun()
+{
+    return 1;
+}
+
 int main(int argc, char **argv)
 {
     int num = 666;
-    int &ref = num; //引用
+    int &ref = num; // 引用
     // int &&refref = num; //错误：不能将右值引用绑定到左值上
     // int &ref1 = num * 42; //错误：i*42为右值
     const int &ref2 = num * 42; // const引用可绑定到右值上
@@ -785,6 +792,8 @@ int main(int argc, char **argv)
     cout << refref1 << endl; // 999 而且与使用普通变量没什么区别
 
     // int &&refref2 = refref1; //错误：无法将右值引用绑定到左值
+    int &&rval_ref = fun();
+    // int &&rval_ref1 = rval_ref; // 无法将右值引用绑定到左值,即无法将右值引用绑到右值引用
     return 0;
 }
 ```
