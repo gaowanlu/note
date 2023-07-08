@@ -1532,7 +1532,7 @@ int main(int argc, char **argv)
     func(11); // 999
 
     int num = 888;
-    func(num); // 999
+    func(num); // 999，话说num不是左值吗，t右值引用怎么绑到num了
     // void func<int &>(int &t)
     cout << num << endl;  // 999
     func(std::move(num)); // void func<int>(int &&t)
@@ -1540,6 +1540,95 @@ int main(int argc, char **argv)
     func(12.0f); // void func<float>(float &&t)
     func(23.32); // void func<double>(double &&t)
 
+    return 0;
+}
+```
+
+### 万能引用
+
+常量左值引用既可以引用左值又可以引用右值，几乎是一个万能引用，但是由于其常量性，导致使用受到限制。但是从 C++11 开始，确实有被称为“万能”的引用，看似是一个右值引用，但区别很大。
+
+万能引用既可以绑定左值也可以绑定右值，甚至 const 和 volatile 的值也可以绑定。可以看下面的例子，真实盖了帽了。
+
+```cpp
+#include <iostream>
+#include <string.h>
+using namespace std;
+
+class X
+{
+public:
+    X() : ptr(new char[1024])
+    {
+        cout << "X()" << endl;
+    }
+    X(const X &x) : ptr(new char[1024])
+    {
+        cout << "X(const X &x)" << endl;
+        memcpy(ptr, x.ptr, 1024);
+    }
+    X &operator=(const X &x)
+    {
+        cout << "operator=(const X &x)" << endl;
+        if (this != &x)
+        {
+            if (!ptr)
+                ptr = new char[1024];
+        }
+        memcpy(ptr, x.ptr, 1024);
+        return *this;
+    }
+    X(X &&x) noexcept
+    {
+        cout << "X(X &&x)" << endl;
+        ptr = x.ptr;
+        x.ptr = nullptr;
+    }
+    X &operator=(X &&x) noexcept
+    {
+        cout << "operator=(X &&x)" << endl;
+        ptr = x.ptr;
+        x.ptr = nullptr;
+        return *this;
+    }
+    ~X()
+    {
+        cout << "~X()" << endl;
+        if (ptr)
+            delete[] ptr;
+    }
+
+public:
+    char *ptr{nullptr};
+};
+
+X func()
+{
+    X x;
+    return x;
+}
+
+template <typename T>
+void bar(T &&t) // t为万能引用
+{
+}
+
+int main(int argc, char **argv)
+{
+    X &&x1 = func(); // x1为右值引用,X() X(X&&) ~X()
+    // X &&x2
+    auto &&x2 = func(); // x2为万能引用,X() X(X&&) ~X()
+    int i = 100;
+    int &i_ref = i;
+    const int j = 100;
+    bar(i);     // void bar<int &>(int &t)
+    bar(i_ref); // void bar<int &>(int &t)
+    bar(j);     // void bar<const int &>(const int &t)
+    bar(100);   // void bar<int>(int &&t)
+    //~X() ~X()
+    auto &&k = 11; // int &&k
+    auto &&k1 = i; // int &k1
+    auto &&k3 = j; // const int &k3
     return 0;
 }
 ```
@@ -1747,7 +1836,7 @@ int main(int argc, char **argv)
 
 ### 保持类型信息的函数参数
 
-使用右值引用做参数即可实现
+使用右值引用做参数即可实现，本质上是利用了万能引用（引用折叠）
 
 ```cpp
 //example45.cpp
@@ -1788,6 +1877,123 @@ int main(int argc, char **argv)
     // const int& 时折叠为const int&
 
     return 0;
+}
+```
+
+### 完美转发
+
+虽然上面见识了保持类型信息的函数参数，但是学习还不够系统，现代 C++他们说有一种完美转发
+
+```cpp
+#include <iostream>
+using namespace std;
+
+template <class T>
+void show_type(T t)
+{
+    cout << typeid(t).name() << endl;
+}
+
+template <class T>
+void value_forwarding(T t)
+{
+    show_type(t);
+}
+
+int main(int argc, char **argv)
+{
+    string s = "hello world";
+    value_forwarding(s);
+    return 0;
+}
+```
+
+上面虽然能达到目的，但是性能看右，引用进行了一次构造、两次拷贝构造。那就有人说用左值引用不就可以了吗
+
+```cpp
+#include <iostream>
+using namespace std;
+
+template <class T>
+void show_type(T t)
+{
+    cout << typeid(t).name() << endl;
+}
+
+template <class T>
+void value_forwarding(T &t)
+{
+    show_type(t);
+}
+
+int func()
+{
+    return 2;
+}
+
+int main(int argc, char **argv)
+{
+    string s = "hello world";
+    value_forwarding(s);
+    // value_forwarding(1);//编译错误
+    // value_forwarding(func());//编译错误
+    return 0;
+}
+```
+
+但是就会又有问题，如果是传递给 value_forwarding 的实参是右值，则会编译错误。那么有有人说用常量左值引用啊，虽然是更有优越性，但是有限制啊是 const 的，有没有完美的方案呢。可以使用右值引用解决。
+
+```cpp
+#include <iostream>
+using namespace std;
+
+template <class T>
+void show_type(T t)
+{
+    cout << typeid(t).name() << endl;
+}
+
+template <class T>
+void value_forwarding(T &&t)
+{
+    show_type(static_cast<T &&>(t));
+}
+
+int main(int argc, char **argv)
+{
+    string s = "hello world";
+    value_forwarding(s); // void value_forwarding<std::string &>(std::string &t),T为string,则static_cast折叠后为string&类型
+    value_forwarding(1); // void value_forwarding<int>(int &&t),T为int,则static_cast折叠后为int类型
+    int i = 100;
+    const int j = 100;
+    int &i_ref = i;
+    auto &j_ref = j;                    // const int &j_ref
+    value_forwarding(i);                // void value_forwarding<int &>(int &t),T为int,则static_cast折叠后为int&类型
+    value_forwarding(j);                // void value_forwarding<const int &>(const int &t),T为const int,则static_cast折叠后为int&类型
+    value_forwarding(i_ref);            // void value_forwarding<int &>(int &t),T为int&,则static_cast折叠后为int&类型
+    value_forwarding(j_ref);            // void value_forwarding<const int &>(const int &t)，T为int&,则static_cast折叠后为const int&类型
+    value_forwarding(std::move(i));     // void value_forwarding<int>(int &&t)，T为int&&,则static_cast折叠后为int&&类型
+    value_forwarding(std::move(j_ref)); // void value_forwarding<const int>(const int &&t)，T为const int&&,则static_cast折叠后为const int&&类型
+    return 0;
+}
+```
+
+不得不佩服，所以称得上“完美转发”这个称号,因为不管穿什么类型，都会保留引用类型、const 转发给目标，还有更优雅的写法，使用`std::forward`,`std::forward`内部也是用`std::static_cast<T&&>`
+
+```cpp
+#include <iostream>
+using namespace std;
+
+template <class T>
+void show_type(T t)
+{
+    cout << typeid(t).name() << endl;
+}
+
+template <class T>
+void value_forwarding(T &&t)
+{
+    show_type(std::forward<T>(t));
 }
 ```
 
@@ -1839,6 +2045,10 @@ int main(int argc, char **argv)
 ```
 
 到此，可能脑袋要爆了！不知道你怎么样，反正我快崩溃了，在中文翻译版的书籍，我认为描述的是非常模糊的。甚至我认为翻译得不流畅，没有生动得描述出知识。是在太难了，先坚持吧！后面再进行回顾与复习，与阅读其他书籍或资料进行深入学习
+
+### forward 与 move 区别
+
+`std::move`和`std::forward`的区别，move 一定会将实参转换为一个右值引用，move 使用不用指定模板实参，模板实参是由函数调用推导出来的，forward 会根据左值和右值的实际实际情况进行转发，使用时需要制定模板实参。
 
 ### 重载与模板
 

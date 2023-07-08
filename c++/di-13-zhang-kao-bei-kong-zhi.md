@@ -984,12 +984,12 @@ int main(int argc, char **argv)
     return 0;
 }
 // X()
-// X(X &&x)//根据移动语义，会优先选择使用移动构造函数来构造返回的右值
+// X(X &&x)//根据移动语义，会优先选择使用移动构造函数来构造返回的右值,本质上是隐式调用移动构造函数
 // ~X()
 // ~X()
 ```
 
-### 重新看代左值与右值
+### 重新看待左值与右值
 
 上面其实我们已经对左值与右值进行了讨论，但是右值引用绑定的对象是左值还是右值，它属于泛右值范畴为将亡值。
 
@@ -1109,6 +1109,131 @@ int main(int argc, char **argv)
     // ~X()
     return 0;
 }
+```
+
+### 局部变量和右值引用的隐式移动操作
+
+在上面有些例子中会发现，当我们定义了移动构造函数时，构造函数临时返回值时会被优先选择，而不是用拷贝构造函数
+
+```cpp
+#include <iostream>
+using namespace std;
+
+class X
+{
+public:
+    X() = default;
+    X(const X &) = default;
+    X(X &&)
+    {
+        cout << "X(X &&)" << endl;
+    }
+};
+
+void func_(X x)
+{
+}
+
+X func(X x)
+{
+    return x;
+}
+
+int main(int argc, char **argv)
+{
+    func_(X{}); // 用的拷贝构造，没用移动构造
+    cout << "tag" << endl;
+    func(X{}); // 用了X(X &&)
+    // 说明func返回时构造临时返回右值时使用的移动构造函数构造的
+    // 这里使用了隐式移动
+    return 0;
+}
+```
+
+还有会发现下面的代码，居然没有调用移动构造函数，这是因为 X{}本就是个右值被 func 的 x 又是右值引用,然后将 x 返回，那么返回时构造临时右值时不应该使用移动构造函数吗，当然不会啦，返回的 x 本来不就是右值啊
+
+```cpp
+// g++ -fno-elide-constructors  main.cpp -o main
+#include <iostream>
+using namespace std;
+
+class X
+{
+public:
+    X() = default;
+    X(const X &) = default;
+    X(X &&)
+    {
+        cout << "X(X &&)" << endl;
+    }
+};
+
+X func(X &&x)
+{
+    return x;
+}
+
+int main(int argc, char **argv)
+{
+    func(X{});
+    return 0;
+}
+```
+
+C++20 版本会对返回值返回与 throw 进行隐式的使用移动构造函数，但是其对操作的对象是有要求的，否则还是会用拷贝构造，以下情况会用移动代替复制
+
+- return 与 co_return 语句中的返回对象是函数或者 lambda 表达式中的对象或形参
+- throw 语句中抛出的对象是函数或 try 代码块中的对象
+
+```cpp
+// g++ -fno-elide-constructors  main.cpp -o main
+#include <iostream>
+using namespace std;
+
+class X
+{
+public:
+    X() = default;
+    X(const X &) = default;
+    X(X &&)
+    {
+        cout << "X(X &&)" << endl;
+    }
+};
+
+void func()
+{
+    X x;
+    throw x;
+}
+
+int main(int argc, char **argv)
+{
+    try
+    {
+        func();
+    }
+    catch (const X &x)
+    {
+        cout << "catched x" << endl;
+    }
+    try
+    {
+        X x1;
+        throw x1;
+    }
+    catch (const X &x)
+    {
+        cout << "catched x" << endl;
+    }
+    return 0;
+}
+/*
+X(X &&)
+catched x
+X(X &&)
+catched x
+*/
 ```
 
 ### 右值引用做参数
