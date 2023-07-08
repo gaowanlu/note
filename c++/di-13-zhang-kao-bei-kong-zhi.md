@@ -662,7 +662,7 @@ int main(int argc, char **argv)
 
 ### 对象移动
 
-什么是对象移动，也就是将对象移动到某处，即复制，但复制后就将原来的进行对象销毁了
+什么是对象移动，也就是将对象移动到某处，即复制，但复制后就将原来的进行对象销毁了(本质上也不是销毁，要到后面的移动语义看一看),不要急先往后面看
 
 标准库函数 `std::move`，标准库容器、string、shared_ptr 类即支持移动也支持拷贝，IO 类和 unique_ptr 类可以移动但不能拷贝
 
@@ -798,9 +798,204 @@ int main(int argc, char **argv)
 }
 ```
 
-### move 与右值引用
+### 右值引用的目的
 
-虽然不能将右值引用绑定在左值上，但可以通过 std::move 来实现
+延长临时对象生命周期、同时往往可以做到减少对象复制提升程序性能
+
+```cpp
+// g++ main.cpp -o main -fno-elide-constructors
+#include <iostream>
+using namespace std;
+
+class X
+{
+public:
+    X()
+    {
+        cout << "X()" << endl;
+    }
+    X(const X &x)
+    {
+        cout << "X(const X &x)" << endl;
+    }
+    ~X()
+    {
+        cout << "~X()" << endl;
+    }
+};
+
+X fun()//在函数fun内发生了两次构造，一次是x1构造时，一次是构造返回的右值时
+{
+    X x1;
+    return x1;
+}
+
+int main(int argc, char **argv)
+{
+    X &&x_temp = fun();
+    cout << "hi" << endl;
+    return 0;
+}
+
+// X()
+// X(const X &x)
+// ~X()
+// hi
+// ~X()
+```
+
+### 移动语义
+
+有时后例如，我们自定义的类型，内部使用了动态内存，如果函数内部的一个此类的对象按值返回理应进行复制，但是在进行动态内存申请，然后拷贝操作，这也效率有点低，这时候移动语义就出来了
+
+```cpp
+// g++ main.cpp -o main -fno-elide-constructors
+#include <iostream>
+#include <string.h>
+using namespace std;
+
+class X
+{
+public:
+    X() : ptr(new char[1024])
+    {
+        cout << "X()" << endl;
+    }
+    X(const X &x) : ptr(new char[1024])
+    {
+        cout << "X(const X &x)" << endl;
+        memcpy(ptr, x.ptr, 1024);
+    }
+    X &operator=(const X &x)
+    {
+        cout << "operator=(const X &x)" << endl;
+        if (this != &x)
+        {
+            if (!ptr)
+                ptr = new char[1024];
+        }
+        memcpy(ptr, x.ptr, 1024);
+        return *this;
+    }
+    ~X()
+    {
+        cout << "~X()" << endl;
+        if (ptr)
+            delete[] ptr;
+    }
+
+public:
+    char *ptr{nullptr};
+};
+
+X func()
+{
+    X x;
+    strcpy(x.ptr, "hello world");
+    return x;
+}
+
+int main(int argc, char **argv)
+{
+    X &&x = func();
+    return 0;
+}
+// X()
+// X(const X &x)
+//~X()
+//~X()
+```
+
+1、X()：这是在创建对象 x 时输出的。在 func()函数内部，X x;语句会调用默认构造函数 X::X()来创建对象 x。
+
+2、X(const X &x)：这是在执行 return x;语句时输出的。在返回 x 对象时，会调用拷贝构造函数 X::X(const X &x)来创建返回值对象。这是因为返回值是一个新的对象，需要通过拷贝构造函数来初始化它。
+
+3、~X()：这是在函数 func()结束时输出的。当函数结束时，局部变量 x 会被销毁，所以会调用析构函数 X::~X()来释放对象 x 的资源。
+
+4、~X()：这是在 main()函数结束时输出的。因为 x 是通过绑定到 func()的返回值产生的右值引用，当 main()函数结束时，会调用析构函数 X::~X()来释放对象 x 的资源。
+
+可见尽管我们用了右值引用接受 func 返回值，但还是发生了内存拷贝，而且如果我们用左值引用（常量与非常量）、左值接受就会再增加一次拷贝，有没有可能把 func 内的 x 直接返回不发生拷贝呢，起始函数内返回是进行拷贝这一步并没有什么意义,这就要用移动构造函数与赋值构造函数。
+
+移动构造函数通常在构建新的右值对象时调用。它接收一个右值引用参数，并且用于从该右值引用中接管资源，而无需进行深拷贝。
+
+```cpp
+// g++ main.cpp -o main -fno-elide-constructors
+#include <iostream>
+#include <string.h>
+using namespace std;
+
+class X
+{
+public:
+    X() : ptr(new char[1024])
+    {
+        cout << "X()" << endl;
+    }
+    X(const X &x) : ptr(new char[1024])
+    {
+        cout << "X(const X &x)" << endl;
+        memcpy(ptr, x.ptr, 1024);
+    }
+    X &operator=(const X &x)
+    {
+        cout << "operator=(const X &x)" << endl;
+        if (this != &x)
+        {
+            if (!ptr)
+                ptr = new char[1024];
+        }
+        memcpy(ptr, x.ptr, 1024);
+        return *this;
+    }
+    X(X &&x) noexcept
+    {
+        cout << "X(X &&x)" << endl;
+        ptr = x.ptr;
+        x.ptr = nullptr;
+    }
+    X &operator=(X &&x) noexcept
+    {
+        cout << "operator=(X &&x)" << endl;
+        ptr = x.ptr;
+        x.ptr = nullptr;
+        return *this;
+    }
+    ~X()
+    {
+        cout << "~X()" << endl;
+        if (ptr)
+            delete[] ptr;
+    }
+
+public:
+    char *ptr{nullptr};
+};
+
+X func()
+{
+    X x;//X()
+    strcpy(x.ptr, "hello world");
+    return x;//构造返回的右值时优先使用了移动构造函数
+}
+
+int main(int argc, char **argv)
+{
+    X &&x = func();
+    return 0;
+}
+// X()
+// X(X &&x)//根据移动语义，会优先选择使用移动构造函数来构造返回的右值
+// ~X()
+// ~X()
+```
+
+### 重新看代左值与右值
+
+上面其实我们已经对左值与右值进行了讨论，但是右值引用绑定的对象是左值还是右值，它属于泛右值范畴为将亡值。
+
+### 左值转右值 std::move
+
+虽然不能将右值引用绑定在左值上，但可以通过 `std::move` 来实现，也就是将左值变为右值也就是将亡值，除了使用 `std::move` 还可以使用 `static_cast<T&&>(X&)`
 
 ```cpp
 //example21.cpp
@@ -826,6 +1021,92 @@ int main(int argc, char** argv)
     cout <<"5 "<< a << endl;       // nothing
     cout <<"6 "<< b << endl;       // world
 
+    return 0;
+}
+```
+
+话说将左值转为右值有什么用，下面我们来探究以下，首先就是我们可以将左值转为右值然后让一个对象接收，那么会优先调用此类对象的移动构造函数和移动赋值函数，这样一来就可以将一个对象的资源移动走
+
+```cpp
+#include <iostream>
+#include <string.h>
+using namespace std;
+
+class X
+{
+public:
+    X() : ptr(new char[1024])
+    {
+        cout << "X()" << endl;
+    }
+    X(const X &x) : ptr(new char[1024])
+    {
+        cout << "X(const X &x)" << endl;
+        memcpy(ptr, x.ptr, 1024);
+    }
+    X &operator=(const X &x)
+    {
+        cout << "operator=(const X &x)" << endl;
+        if (this != &x)
+        {
+            if (!ptr)
+                ptr = new char[1024];
+        }
+        memcpy(ptr, x.ptr, 1024);
+        return *this;
+    }
+    X(X &&x) noexcept
+    {
+        cout << "X(X &&x)" << endl;
+        ptr = x.ptr;
+        x.ptr = nullptr;
+    }
+    X &operator=(X &&x) noexcept
+    {
+        cout << "operator=(X &&x)" << endl;
+        ptr = x.ptr;
+        x.ptr = nullptr;
+        return *this;
+    }
+    ~X()
+    {
+        cout << "~X()" << endl;
+        if (ptr)
+            delete[] ptr;
+    }
+
+public:
+    char *ptr{nullptr};
+};
+
+int main(int argc, char **argv)
+{
+    X x1; // X()
+    strcpy(x1.ptr, "hello world");
+    X x2 = x1;                                        // X(const X &x)
+    X x3 = std::move(x1);                             // std::move(x1)返回右值引用 所以在构造x3时会使用X(X &&x)
+    cout << boolalpha << (x1.ptr == nullptr) << endl; // true
+    cout << x3.ptr << endl;                           // hello world
+    //~X() ~X() ~X()
+    return 0;
+}
+```
+
+在函数返回值的应用,也可以使用 `static_cast<T&&>`
+
+```cpp
+X func()
+{
+    X x;                 // X()
+    return std::move(x); // X(X&&x)
+} //~X()
+
+int main(int argc, char **argv)
+{
+    X x1 = func();                // X(X&&x) ~X()
+    X x2 = static_cast<X &&>(x1); // X(X&&x)
+    // ~X()
+    // ~X()
     return 0;
 }
 ```
