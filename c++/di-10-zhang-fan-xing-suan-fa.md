@@ -257,7 +257,14 @@ printVec(vec); // ll dscss aaaaaa
 
 ### lambda 表达式
 
-形式 `[capture list](parameter list)->return type{function body}`
+形式 `[capture list](parameter list) specifiers exception->return type{function body}`
+
+- capture list,捕获列表可以捕获当前函数作用域的零个或多个变量，变量之间用逗号分隔。
+- parameter list，可选参数列表
+- specifiers,可选限定符，C++11 中可以用 mytable,允许 lambda 表达式函数体内改变按值捕获的变量，或者调用非 const 的成员函数。
+- exception，可选异常说明符，可以用 noexcept 指明 lambda 是否会抛出异常
+- return type，返回值类型
+- function body，函数体
 
 ```cpp
 //example11.cpp
@@ -280,7 +287,9 @@ printVec(vec); // sdcs acndf nvfkdl
 
 ### 使用捕获列表
 
-在 javascript 中因为有 this 的指向，在箭头函数内部可以使用定义它时外部的作用域的变量，C++也能实现功能，就是使用捕获列表
+在 javascript 中因为有 this 的指向，在箭头函数内部可以使用定义它时外部的作用域的变量，C++也能实现功能，就是使用捕获列表。
+
+捕获列表的变量必须是一个自动存储类型，Lambda 表达式中的捕获列表只能捕获局部变量，而不能捕获全局变量或静态变量。
 
 ```cpp
 //example13.cpp
@@ -294,6 +303,42 @@ auto f = [count, sum]()
 f(); // 0 1
 count++;
 f(); // 0 1 可见捕获列表只是只拷贝
+```
+
+在 lambda 中使用全局变量与静态变量
+
+```cpp
+#include <iostream>
+using namespace std;
+
+int x = 0;
+static int j = 0;
+
+int main(int argc, char **argv)
+{
+    int y = 0;
+    static int z = 0;
+    auto fun = [x, y, z, j] {};
+    // x z j都无法捕获
+    return 0;
+}
+//============修改后===========
+#include <iostream>
+using namespace std;
+
+int x = 0;
+static int j = 0;
+
+int main(int argc, char **argv)
+{
+    int y = 0;
+    static int z = 0;
+    auto fun = [y]() -> int
+    {
+        return x * y * z * j;
+    };
+    return 0;
+}
 ```
 
 ### find_if
@@ -334,28 +379,113 @@ cout << endl; // 2 3 4 5 6 7
 ![lambda捕获列表](<../.gitbook/assets/屏幕截图 2022-06-06 095133.jpg>)
 
 ```cpp
-//example16.cpp
-int count = 0;
-//值捕获 也就是值拷贝到捕获列表的变量
-auto f1 = [count]()
+#include <iostream>
+using namespace std;
+
+int main(int argc, char **argv)
 {
-    cout << count << endl;
-    // count = 999; readonly
-};
-//引用捕获
-auto f2 = [&count]() -> void
+    int count = 0;
+    // 值捕获 也就是值拷贝到捕获列表的变量
+    auto f1 = [count]()
+    {
+        cout << count << endl;
+        // count = 999; readonly
+    };
+    // 引用捕获
+    auto f2 = [&count]() -> void
+    {
+        cout << count << endl;
+        count++;
+    };
+    count = 99;
+    f1(); // 0
+    // 可见值捕获的count在lambda定义后，哪怕外部修改了变量值，也不会影响到lambda捕获到的
+    // 定义即捕获，捕获即确定
+    count = 100;
+    f2();                  // 100
+    cout << count << endl; // 101
+    // 编译器自动推断 都使用引用型
+    auto f3 = [&]() -> void
+    {
+        count = 666;
+    };
+    f3();
+    cout << count << endl; // 666
+    return 0;
+}
+```
+
+但是最新捕获列表还支持
+
+- [this],捕获 this 指针，可以使用 this 类型的成员变量和函数
+- [=]，捕获 lambda 表达式定义作用域的全部变量的值，包括 this
+- [&]，捕获 lambda 表达式作用域的全部变量的引用，包括 this
+
+```cpp
+#include <iostream>
+using namespace std;
+
+class X
 {
-    cout << count << endl;
-    count++;
+public:
+    X() : x(0) {}
+    void print()
+    {
+        cout << "class X.x=" << x << endl;
+    }
+    void test_this()
+    {
+        auto fun = [this]
+        {
+            this->print();
+            x = 5;
+            print();
+        };
+        fun();
+    }
+
+    void test_val()
+    {
+        auto fun = [=]
+        {
+            this->print();
+            x = 6;
+            print();
+        };
+        fun();
+    }
+
+    void test_ref()
+    {
+        auto fun = [&]
+        {
+            this->print();
+            x = 7;
+            print();
+        };
+        fun();
+    }
+
+private:
+    int x;
 };
-f1();                  // 0
-f2();                  // 0
-cout << count << endl; // 1
-//编译器自动推断 都使用引用型
-auto f3 = [&]() -> void
+
+int main(int argc, char **argv)
 {
-    count = 666;
-};
+    X x;
+    x.test_this();
+    x.test_val();
+    x.test_ref();
+    return 0;
+}
+/*
+class X.x=0
+class X.x=5
+class X.x=5
+class X.x=6
+class X.x=6
+class X.x=7
+*/
 ```
 
 ### mutable 可变 lambda
