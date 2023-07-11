@@ -505,6 +505,148 @@ f1();
 cout << i << " " << j << " " << k << endl; // 0 0 0
 ```
 
+### lambda 的实现原理
+
+C++的 lambda 表达式和仿函数非常像
+
+```cpp
+#include <iostream>
+using namespace std;
+
+class X
+{
+public:
+    X(int x, int y) : x(x), y(y)
+    {
+    }
+    int operator()()
+    {
+        return x * y;
+    }
+
+private:
+    int x, y;
+};
+
+int main(int argc, char **argv)
+{
+    int x = 1, y = 2;
+    X func(x, y);
+    cout << func() << endl; // 2
+    auto m_lambda = [=]() -> int
+    {
+        return x * y;
+    };
+    cout << m_lambda() << endl; // 2
+    return 0;
+}
+```
+
+m_lambda 是一个 lambda 表达式，func 为一个函数对象，二者都可以在初始化的时候获取 main 函数中变量 x，y 的值，并在调用之后返回相同结果。二者明显不同之处有。
+
+- lambda 不需要显式定义类
+- 函数对象可以在初始化时有更丰富的操作，如使用计算表达式，而 lambda 不行，在 func 函数对象初始化时，使用全局、静态局部变量都没问题
+
+重点：lambda 表达式在编译时会自动生成一个闭包类，在运行时由这个闭包类产生一个对象，称为闭包。C++中的闭包可以理解为一个匿名且可以包含定义时作用域上下文的函数对象。lambda 表达式是 C++11 的语法糖，lambda 表达式的功能完全可以手动实现。
+
+### 无状态 lambda 表达式
+
+在 C++中，无状态(lambda)表达式是一种特殊类型的 lambda 表达式，它不捕获任何外部变量。它仅依赖于其参数列表中的参数，并且在执行时不依赖于任何额外的上下文。因此，它被称为"无状态"，因为它不存储或访问任何状态信息。
+
+`无状态 lambda 表达式可以隐式转换为函数指针`，如
+
+```cpp
+#include <iostream>
+using namespace std;
+
+void func(void (*ptr)())
+{
+    ptr();
+}
+
+int main(int argc, char **argv)
+{
+    func([]
+         { cout << "hello world" << endl; });
+    // hello world
+    return 0;
+}
+```
+
+### lambda 广义捕获
+
+C++14 及以上版本支持，支持在捕获列表中自定义新的变量
+
+```bash
+g++ main.cpp -o main -std=c++17
+```
+
+```cpp
+#include <iostream>
+#include <string>
+using namespace std;
+
+class X
+{
+public:
+    int x{1};
+    int y{2};
+
+public:
+    void func1()
+    {
+        //*this并不是广义捕获
+        auto lambda = [*this]() mutable
+        {
+            cout << x << endl;
+            cout << y << endl;
+            x++;
+            y++; // 副本
+        };
+        lambda();
+        cout << x << " " << y << endl;
+    }
+    void func2()
+    {
+        //&包含捕获this
+        auto lambda = [&]() mutable
+        {
+            cout << this->x << endl;
+            cout << this->y << endl;
+            this->x = 666;
+            this->y = 666; // 引用
+        };
+        lambda();
+        cout << x << " " << y << endl;
+    }
+};
+
+int main(int argc, char **argv)
+{
+    int x = 42;
+    // 广义捕获
+    // 通过复制或移动语义捕获外部变量
+    auto lambda1 = [x = x + 1]()
+    {
+        cout << x << endl;
+    };
+    lambda1();         // 43
+    cout << x << endl; // 42
+    string str = "hello world";
+    auto lambda2 = [str = std::move(str)]
+    {
+        cout << str << endl;
+    };
+    lambda2();                  // hello world
+    cout << str.size() << endl; // 0
+    // 在成员函数的lambda中可以使用*this捕获当前对象的引用
+    X xobj;
+    xobj.func1(); // 1 2 1 2
+    xobj.func2(); // 1 2 666 666
+    return 0;
+}
+```
+
 ### transform
 
 将所在位置修改为 lambda 表达式返回的内容
@@ -512,14 +654,35 @@ cout << i << " " << j << " " << k << endl; // 0 0 0
 前两个参数为遍历的范围，第三个参数为将 transform 后的值从哪里开始存储
 
 ```cpp
-//example18.cpp
-transform(vec.begin(), vec.end(), vec.begin(), [](int item) -> int{
-    if(item>=4){
-        return 666;
+#include <iostream>
+#include <algorithm>
+#include <vector>
+using namespace std;
+
+void printVec(const vector<int> &vec)
+{
+    for (auto &item : vec)
+    {
+        cout << item << " ";
     }
-    return item;
-});
-printVec(vec); // 1 2 3 666 666
+    cout << endl;
+}
+
+int main(int argc, char **argv)
+{
+    vector<int> vec{1, 2, 3, 4, 5};
+    transform(vec.begin(), vec.end(), vec.begin(),
+              [](int item) -> int
+              {
+                  if (item >= 4)
+                  {
+                      return 666;
+                  }
+                  return item;
+              });
+    printVec(vec); // 1 2 3 666 666
+    return 0;
+}
 ```
 
 ### count_if
