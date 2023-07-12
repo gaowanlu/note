@@ -647,6 +647,107 @@ int main(int argc, char **argv)
 }
 ```
 
+### 泛型 lambda 表达式
+
+C++14 支持让 lambda 表达式具备模板函数的能力，称为泛型 lambda 表达式
+
+auto 型
+
+```cpp
+#include <iostream>
+#include <string>
+using namespace std;
+
+int main(int argc, char **argv)
+{
+    auto m_lambda = [](auto obj)
+    {
+        return obj;
+    };
+    int n = m_lambda(1);
+    string str = "hello world";
+    string str_cpy = m_lambda(str);
+    cout << n << " " << str_cpy << endl;
+    return 0;
+}
+// 1 hello world
+```
+
+模板语法型 lambda 表达式 C++20
+
+```cpp
+#include <iostream>
+#include <vector>
+using namespace std;
+
+int main(int argc, char **argv)
+{
+    auto f = []<typename T>(T t1, T t2)
+    {
+        T t3 = t1 + t2;
+        return t3;
+    };
+    cout << f(1, 2) << endl; // 3
+    cout << f(5, 6) << endl; // 11
+    return 0;
+}
+```
+
+### 可构造可赋值的无状态 lambda
+
+C++20 引入了可构造可赋值的无状态 lambda（Constructible and Assignable Stateless Lambdas），这意味着我们可以声明和定义一个无状态的 lambda，并将其赋值给变量或将其作为函数参数传递，以便在代码中进行重复使用。
+
+在 C++20 之前，lambda 表达式默认是不可构造和不可赋值的，因为它们的类型是匿名的，并且没有默认构造函数或赋值运算符。但是在 C++20 中，如果 lambda 表达式没有捕获任何变量（即无状态），则它可以被构造和赋值。
+
+需要注意的是，如果 lambda 捕获了任何变量，它将不再是无状态的，因此不满足可构造和可赋值的条件。
+
+```cpp
+#include <iostream>
+using namespace std;
+
+template <typename T>
+auto func(T lambda) -> void
+{
+    lambda();
+}
+
+int main(int argc, char **argv)
+{
+    auto lambda = []()
+    {
+        cout << "hello world" << endl;
+    };
+    lambda(); // hello world
+    decltype(lambda) lambda_ref = lambda;
+    auto lambda_ref1 = lambda;
+    lambda_ref();  // hello world
+    lambda_ref1(); // hello world
+    auto lambda1 = [lambda]()
+    {
+        lambda();
+    };
+    lambda1(); // hello world
+    decltype(lambda1) lambda1_ref = lambda1;
+    lambda1_ref(); // hello world
+    int a = 666;
+    auto lambda2 = [&a]()
+    {
+        cout << a << endl;
+    };
+    func(lambda2); // 666
+    return 0;
+}
+//有状态怎么也可以构造和赋值，不知道阿
+/*Chatgpt
+有状态的lambda表达式之所以可以构造和赋值，
+是因为使用了auto关键字和自动类型推导。
+auto关键字可以根据右侧表达式的类型进行类型推导，
+并创建相应的lambda表达式副本。
+这使得我们可以在代码中使用auto声明和赋值有状态的lambda表达式，
+而不需要显式指定其类型。
+*/
+```
+
 ### transform
 
 将所在位置修改为 lambda 表达式返回的内容
