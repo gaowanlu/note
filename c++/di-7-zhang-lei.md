@@ -739,30 +739,58 @@ int main(int argc, char **argv)
 }
 ```
 
-### 类数据成员的初始值
+### 类数据成员的初始化
 
-C++11 可以直接在类内设置初始值
+在 C++11 以前，对于非静态数据成员初始化需要用到初始化列表，但是当数据成员多或者构造函数多的时候，就会成为头痛的问题，并产生了很多冗余的代码。  
+C++11 标准，可以在声明非静态数据成员的同时直接使用`=`或`{}`初始化，在 C++11 之前只有类型为整型或者枚举类型的常量静态数据成员才会有这种待遇,但是不是让你记住 C++11 以前，而是让你记住 C++11,切记，因为记住哪一个版本特性没有用，会用才是重点。
+
+重要的规则：在初始化的优先级上，初始化列表对数据成员的初始化总是优先于声明时默认初始化。
 
 ```cpp
-//example20.cpp
 #include <iostream>
 #include <vector>
 #include <string>
 using namespace std;
+
+// C++ 11
 class Person
 {
 public:
+    Person(const int &age) : age(age)
+    {
+    }
+    Person(const string &name) : name(name)
+    {
+    }
+    Person(initializer_list<string> &&parents) : parents(parents)
+    {
+    }
+    ostream &operator<<(ostream &out)
+    {
+        out << age << " " << name << " " << parents.size() << endl;
+        return out;
+    }
     int age = 19;
     string name = "gaowanlu";
     vector<string> parents = {"father", "mother"};
+    int num{999};
 };
 
 int main(int argc, char **argv)
 {
-    Person person;
-    cout << person.name << endl; // gaownalu
+    Person person1(1);
+    person1.operator<<(cout);
+    Person person2("hello");
+    person2.operator<<(cout);
+    Person person3({"hello", "world"});
+    person3.operator<<(cout);
     return 0;
 }
+/*
+1 gaowanlu 2
+19 hello 2
+19 gaowanlu 2
+*/
 ```
 
 ### 返回\*this 的成员函数

@@ -1931,35 +1931,76 @@ int main() {
 
 ### 位域
 
-什么是位域？如果你是一位嵌入式工程师可能会更熟悉，类或结构体可以将非静态数据成员定义为位域，每个位域含有一定的二进制位，通常用于串口通信等，位域在内存的布局与机器相关
+C++中的位域（Bit fields）允许将数据成员的位数指定为小于标准数据类型（如 int、char 等）的位数。使用位域可以有效地利用内存，并实现对特定位的操作。
+
+位域的存在意义：
+
+1、节省内存：当需要存储大量的布尔标志或小范围的整数时，使用位域可以节省内存空间，因为位域允许将多个成员打包到一个字节中。  
+2、与硬件通信：位域经常用于与硬件设备进行通信，其中位域的每个位对应于硬件寄存器的特定位。
+
+位域的类型只能是整数类型（包括有符号和无符号整数类型）
 
 ```cpp
-//example41.cpp
 #include <iostream>
 using namespace std;
 
-//位域的类型必须为整形或者枚举类型
-typedef unsigned int Bit;
-class Block
+// bool
+struct X1
 {
-public:
-    Bit mode : 2; //占两个二进制位
-    Bit modified : 1;
-    Bit prot_owner : 3;
-    Bit prot_group : 3;
-    Bit prot_world : 3;
+    bool isRed : 1;
+    bool isGreen : 1;
+    bool isBlue : 1;
+};
+
+// 整形
+struct X2
+{
+    unsigned int n1 : 1;
+    signed long long n2 : 2;
+};
+
+// 枚举
+enum class Color
+{
+    Red = 1,   // 001,1
+    Green = 2, // 010,10
+    Blue = 4   // 100,100
+};
+
+struct X3
+{
+    unsigned int color : 3;
 };
 
 int main(int argc, char **argv)
 {
-    Block block;
-    &block.modified;
-    // error: attempt to take address of bit-field
+    // bool
+    X1 x1;
+    x1.isBlue = true;
+    x1.isGreen = true;
+    x1.isRed = false;
+    cout << x1.isBlue << endl;  // 1
+    cout << x1.isGreen << endl; // 1
+    cout << x1.isRed << endl;   // 0
+    // 整形
+    X2 x2;
+    x2.n1 = 1;
+    x2.n2 = -2;
+    cout << x2.n1 << " " << x2.n2 << endl; // 1 -2
+    // enum
+    X3 x3;
+    x3.color = static_cast<unsigned int>(Color::Red) | static_cast<unsigned int>(Color::Blue) | static_cast<unsigned int>(Color::Green);
+    // Red: 1
+    std::cout << "Red: " << ((x3.color & static_cast<unsigned int>(Color::Red)) != 0) << std::endl;
+    // Green: 1
+    std::cout << "Green: " << ((x3.color & static_cast<unsigned int>(Color::Green)) != 0) << std::endl;
+    // Blue: 1
+    std::cout << "Blue: " << ((x3.color & static_cast<unsigned int>(Color::Blue)) != 0) << std::endl;
     return 0;
 }
 ```
 
-取址运算符&,不能作用于位域，任何指针都不能指向位域
+取址运算符&,不能作用于位域，任何指针都不能指向位域，因为内存地址起码是以字节为单位的偶
 
 ### 使用位域
 
@@ -2133,6 +2174,39 @@ int main() {
  cout << sizeof(PackC) << endl;//1
  cout << sizeof(PackD) << endl;//4
  return 0;
+}
+```
+
+### 位域默认初始化
+
+C++11 支持非静态数据成员默认初始化方法之后，C++20 支持对数据成员的位域进行默认初始化了。
+
+```cpp
+// g++ main.cpp -o main -std=c++2a
+#include <iostream>
+using namespace std;
+
+struct X
+{
+    int y : 8 = 10;
+    int z : 4 {7};
+};
+
+// 甚至可以用常量表达式表示比特数
+// 但是千万不要用这么傻逼的东西
+int a = 10;
+struct X1
+{
+    int y : (true ? 8 : a) = 42;
+};
+
+int main(int argc, char **argv)
+{
+    X x;
+    cout << x.y << " " << x.z << endl; // 10 7
+    X1 x1;
+    cout << x1.y << endl; // 42
+    return 0;
 }
 ```
 
