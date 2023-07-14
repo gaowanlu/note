@@ -67,6 +67,13 @@
   - [🤡 策略模式(Strategy 模式)](designpattern/xing-wei-mo-shi/strategy.md)
   - [🐼 状态模式(State 模式)](designpattern/xing-wei-mo-shi/state.md)
   - [🐸 观察者模式(Observer 模式)](designpattern/xing-wei-mo-shi/observer.md)
+  - [🥰 备忘录模式(Memento 模式)](designpattern/xing-wei-mo-shi/memento.md)
+  - [💽 中介者模式(Mediator 模式)](designpattern/xing-wei-mo-shi/mediator.md)
+  - [🤦‍♀️ 命令模式(Command 模式)](designpattern/xing-wei-mo-shi/command.md)
+  - [👻 访问者模式(Visitor 模式)](designpattern/xing-wei-mo-shi/visitor.md)
+  - [😝 责任链模式(Chain of Responsibility 模式)](designpattern/xing-wei-mo-shi/chain_of_responsibility.md)
+  - [🐨 迭代器模式(Iterator 模式)](designpattern/xing-wei-mo-shi/iterator.md)
+  - [🦄 解释器模式(Interpreter 模式)](designpattern/xing-wei-mo-shi/interpreter.md)
 
 ## 🅰️ 构建工具
 
