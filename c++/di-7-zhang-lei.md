@@ -1826,3 +1826,89 @@ int main(int argc,char**argv){
     return 0;
 }
 ```
+
+### C++20 指定初始化
+
+下面的初始化方式其实在 C 语言中就已经支持了
+
+```cpp
+#include <iostream>
+using namespace std;
+
+struct X1
+{
+    int x;
+    int y;
+};
+
+struct X2
+{
+    int x;
+    int y;
+    X1 x1;
+};
+
+int main(int argc, char **argv)
+{
+    X1 x1 = {1, 2};
+    cout << x1.x << " " << x1.y << endl; // 1 2
+    X2 x2 = {1, 2, {1, 2}};
+    // 1 2 1 2
+    cout << x2.x << " " << x2.y << " " << x2.x1.x << " " << x2.x1.y << endl;
+    return 0;
+}
+```
+
+C++20 中引入了指定初始化，允许指定初始化数据成员的名称(但是实测 C 语言也是支持的哦)，C++中类是聚合类才行
+
+```cpp
+#include <iostream>
+using namespace std;
+
+struct X1
+{
+    int x;
+    int y;
+};
+
+struct X2
+{
+    int x;
+    int y;
+    X1 x1;
+};
+
+int main(int argc, char **argv)
+{
+    X1 x1{.x = 1, .y = 2};
+    cout << x1.x << " " << x1.y << endl; // 1 2
+    X2 x2 = {.x = 1, .y = 2, .x1 = {.x = 1, .y = 2}};
+    cout << x2.x << " " << x2.y << " " << x2.x1.x << " " << x2.x1.y << endl;
+    X1 x1_2{.y = 1};
+    cout << x1_2.x << " " << x1_2.y << endl; // 0 1
+    return 0;
+}
+```
+
+在联合体中数据成员只能初始化一次
+
+```cpp
+#include <iostream>
+using namespace std;
+
+union X
+{
+    int n;
+    const char *str;
+};
+
+int main(int argc, char **argv)
+{
+    // X x{.n = 1, .str = "ccs"};//错误
+    X x{.n = 1};
+    X x1{.str = "hello world"};
+    cout << x.n << " " << x1.str << endl;
+    // 1 hello world
+    return 0;
+}
+```

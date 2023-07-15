@@ -282,7 +282,7 @@ int main(int argc, char **argv)
 
 ### 关于初始化
 
-C++11 列表初始化方式及其初始化类型自动转换
+C++11 列表初始化方式及其初始化类型自动转换。C++11 引入了列表初始化，使用大括号`{}`对变量进行初始化，分为直接初始化和拷贝初始化
 
 ```cpp
 //example8.cpp
@@ -306,6 +306,56 @@ int main(int argc, char **argv)
     cout << a << " " << b << endl; // 3 3
     int c(ld), d = ld;             //会自动执行类型转换
     cout << c << " " << d << endl; // 3 3
+    return 0;
+}
+```
+
+关于直接初始化与拷贝初始化，在 C++11 中，直接初始化和拷贝初始化是两种不同的初始化对象的方式。
+
+- 直接初始化是通过使用圆括号或花括号来初始化对象，例如：
+- 拷贝初始化是通过使用等号来初始化对象
+
+直接初始化和拷贝初始化的区别在于对象的构造方式。直接初始化直接调用对象的构造函数进行初始化，而拷贝初始化则是先创建一个临时对象，然后再通过拷贝构造函数将临时对象的值复制给目标对象。
+
+在 C++11 中，直接初始化和拷贝初始化的性能差异已经很小，因此可以根据个人喜好选择使用哪种方式来初始化对象。
+
+```cpp
+#include <iostream>
+#include <string>
+using namespace std;
+
+class X
+{
+public:
+    X(string a, int b)
+    {
+        cout << "X(string a, int b)" << endl;
+    }
+    X(int a)
+    {
+        cout << "X(int a)" << endl;
+    }
+    X(const X &x)
+    {
+        cout << "X(const X &x)" << endl;
+    }
+};
+
+void foo(X x) {}
+X bar()
+{
+    return {"world", 5};
+}
+
+int main(int argc, char **argv)
+{
+    X x1{9};                // X(int a) 直接初始化
+    X x2 = {9};             // X(int a) 拷贝初始化
+    foo({9});               // X(int a) 拷贝初始化
+    foo({"hello", 9});      // X(string a,int b) 拷贝初始化
+    bar();                  // X(string a,int b)
+    X *pX = new X{"hi", 4}; // X(string a,int b)
+    delete pX;
     return 0;
 }
 ```
