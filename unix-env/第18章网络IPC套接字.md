@@ -1579,34 +1579,399 @@ int main()
 
 ### recvfrom 函数
 
+recvfrom() 函数是在 Unix 系统上用于接收数据的函数，特别适用于网络编程中的套接字通信。它用于从一个已连接或未连接的套接字接收数据，并将数据存储在指定的缓冲区中。
+
+```cpp
+#include <sys/types.h>
+#include <sys/socket.h>
+ssize_t recvfrom(int sockfd, void *buf, size_t len, int flags,
+                    struct sockaddr *src_addr, socklen_t *addrlen);
+```
+
+参数说明：
+
+- sockfd ：套接字描述符，用于标识要接收数据的套接字。
+- buf ：指向接收数据的缓冲区。
+- len ：缓冲区的大小，即可接收的最大字节数。
+- flags ：接收操作的标志，通常设置为 0。
+- src_addr ：指向发送方的地址信息的结构体指针，在接收到数据后，会填充发送方的地址信息。
+- addrlen ：指向 src_addr 结构体的长度的指针。
+
+recvfrom() 函数的返回值表示实际接收到的字节数，如果出现错误，则返回 -1。
+
+```cpp
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
+#include <unistd.h>
+#include <string.h>
+#include <stdio.h>
+ #define PORT 8080
+#define MAX_BUFFER_SIZE 1024
+ int main() {
+    int sockfd;
+    struct sockaddr_in serverAddr, clientAddr;
+    socklen_t addrLen = sizeof(clientAddr);
+    char buffer[MAX_BUFFER_SIZE];
+     // 创建套接字
+    sockfd = socket(AF_INET, SOCK_DGRAM, 0);
+    if (sockfd < 0) {
+        perror("socket creation failed");
+        return -1;
+    }
+     // 绑定套接字到指定端口
+    memset(&serverAddr, 0, sizeof(serverAddr));
+    serverAddr.sin_family = AF_INET;
+    serverAddr.sin_addr.s_addr = htonl(INADDR_ANY);
+    serverAddr.sin_port = htons(PORT);
+     if (bind(sockfd, (struct sockaddr*)&serverAddr, sizeof(serverAddr)) < 0) {
+        perror("bind failed");
+        return -1;
+    }
+     // 接收数据
+    ssize_t numBytes = recvfrom(sockfd, buffer, MAX_BUFFER_SIZE, 0, (struct sockaddr*)&clientAddr, &addrLen);
+    if (numBytes < 0) {
+        perror("recvfrom failed");
+        return -1;
+    }
+     // 打印接收到的数据
+    printf("Received data: %s\n", buffer);
+     // 关闭套接字
+    close(sockfd);
+     return 0;
+}
+```
+
+在这个示例中，我们创建了一个 UDP 服务器，通过 recvfrom() 函数从客户端接收数据，并将接收到的数据打印出来。
+
 ### recvmsg 函数
+
+recvmsg() 函数是在 Linux 系统上用于接收消息的函数，特别适用于网络编程中的套接字通信。它可以接收包含多个数据块的消息，并将消息的各个部分存储在指定的缓冲区中。
+
+```cpp
+#include <sys/types.h>
+#include <sys/socket.h>
+ssize_t recvmsg(int sockfd, struct msghdr *msg, int flags);
+```
+
+参数说明：
+
+- sockfd ：套接字描述符，用于标识要接收消息的套接字。
+- msg ：指向 msghdr 结构体的指针，用于存储接收到的消息的信息。
+- flags ：接收操作的标志，通常设置为 0。 MSG_CTRUNC(控制数据被截断)、MSG_EOR(接收记录结束符)、MSG_ERRQUEUE(接收错误信息作为辅助数据)、MSG_OOB(接收带外数据)、MSG_TRUNC(一般数据被截断)
+
+```cpp
+struct msghdr {
+    void         *msg_name;       // 指向发送方的地址信息的结构体指针
+    socklen_t    msg_namelen;     // 发送方地址信息的长度
+    struct iovec *msg_iov;        // 指向数据块的结构体指针数组
+    int          msg_iovlen;      // 数据块的数量
+    void         *msg_control;    // 指向辅助数据的指针
+    socklen_t    msg_controllen;  // 辅助数据的长度
+    int          msg_flags;       // 接收消息的标志
+};
+```
+
+recvmsg() 函数的返回值表示实际接收到的字节数，如果出现错误，则返回 -1。
+
+```cpp
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <unistd.h>
+#include <string.h>
+#include <stdio.h>
+ #define PORT 8080
+#define MAX_BUFFER_SIZE 1024
+ int main() {
+    int sockfd;
+    struct sockaddr_in serverAddr, clientAddr;
+    socklen_t addrLen = sizeof(clientAddr);
+    char buffer[MAX_BUFFER_SIZE];
+    struct msghdr msg;
+    struct iovec iov[1];
+     // 创建套接字
+    sockfd = socket(AF_INET, SOCK_DGRAM, 0);
+    if (sockfd < 0) {
+        perror("socket creation failed");
+        return -1;
+    }
+     // 绑定套接字到指定端口
+    memset(&serverAddr, 0, sizeof(serverAddr));
+    serverAddr.sin_family = AF_INET;
+    serverAddr.sin_addr.s_addr = htonl(INADDR_ANY);
+    serverAddr.sin_port = htons(PORT);
+     if (bind(sockfd, (struct sockaddr*)&serverAddr, sizeof(serverAddr)) < 0) {
+        perror("bind failed");
+        return -1;
+    }
+     // 接收消息
+    memset(&msg, 0, sizeof(msg));
+    memset(&iov, 0, sizeof(iov));
+    iov[0].iov_base = buffer;
+    iov[0].iov_len = sizeof(buffer);
+    msg.msg_iov = iov;
+    msg.msg_iovlen = 1;
+     ssize_t numBytes = recvmsg(sockfd, &msg, 0);
+    if (numBytes < 0) {
+        perror("recvmsg failed");
+        return -1;
+    }
+     // 打印接收到的消息
+    printf("Received message: %s\n", (char*)iov[0].iov_base);
+     // 关闭套接字
+    close(sockfd);
+     return 0;
+}
+```
+
+在这个示例中，我们创建了一个 UDP 服务器，通过 recvmsg() 函数从客户端接收消息，并将消息打印出来。
 
 ## 套接字选项
 
+在这个示例中，我们创建了一个 UDP 服务器，通过 recvmsg() 函数从客户端接收消息，并将消息打印出来。
+
+常用的套接字选项，除此之外有很多
+
+1. SO_REUSEADDR ：允许重用处于 TIME_WAIT 状态的本地地址。这对于服务器程序在关闭后立即重新启动时很有用。
+2. SO_KEEPALIVE ：启用 TCP 的心跳机制，用于检测连接是否仍然有效。
+3. SO_SNDBUF 和 SO_RCVBUF ：分别用于设置发送缓冲区和接收缓冲区的大小。
+4. SO_LINGER ：控制套接字关闭时的行为。如果设置了 SO_LINGER 选项并且时间为非零值，则 close() 函数将阻塞，直到所有未发送的数据都被发送或超时发生。
+5. TCP_NODELAY ：禁用 Nagle 算法，允许小数据包立即发送。
+6. IP_TTL ：设置 IP 数据包的生存时间（TTL）。
+
 ### setsockopt
 
+套接字选项可以通过 setsockopt() 函数设置
+
 ```cpp
-setsockopt
-getsockopt
+#include <sys/types.h>
+#include <sys/socket.h>
+int setsockopt(int sockfd, int level, int optname, const void *optval, socklen_t optlen);
+```
+
+- sockfd ：套接字描述符。
+- level ：选项的级别，常见的级别包括 SOL_SOCKET 和 IPPROTO_TCP 。
+- optname ：选项的名称。
+- optval ：指向包含选项值的缓冲区的指针。
+- optlen ：缓冲区的长度。
+
+```cpp
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <unistd.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+ #define PORT 8080
+ int main() {
+    int sockfd;
+    struct sockaddr_in serverAddr;
+     // 创建套接字
+    sockfd = socket(AF_INET, SOCK_STREAM, 0);
+    if (sockfd < 0) {
+        perror("socket creation failed");
+        return -1;
+    }
+     // 设置 SO_REUSEADDR 选项
+    int reuse = 1;
+    if (setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR, &reuse, sizeof(reuse)) < 0) {
+        perror("setsockopt failed");
+        return -1;
+    }
+     // 获取 SO_REUSEADDR 选项的值
+    int reuseVal;
+    socklen_t reuseLen = sizeof(reuseVal);
+    if (getsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR, &reuseVal, &reuseLen) < 0) {
+        perror("getsockopt failed");
+        return -1;
+    }
+    printf("SO_REUSEADDR value: %d\n", reuseVal);
+     // 关闭套接字
+    close(sockfd);
+     return 0;
+}
 ```
 
 ### getsockopt
 
-## 带外数据
+getsockopt() 函数是一个用于获取套接字选项值的函数。它可以用来查询套接字的属性和状态。
 
 ```cpp
-fcntl
-sockatmark
+#include <sys/types.h>
+#include <sys/socket.h>
+int getsockopt(int sockfd, int level, int optname, void *optval, socklen_t *optlen);
+```
+
+- sockfd ：套接字描述符。
+- level ：选项的级别，常见的级别包括 SOL_SOCKET 和 IPPROTO_TCP 。
+- optname ：选项的名称。
+- optval ：指向存储选项值的缓冲区的指针。
+- optlen ：指向存储缓冲区长度的变量的指针。
+
+```cpp
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <unistd.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+ #define PORT 8080
+ int main() {
+    int sockfd;
+    struct sockaddr_in serverAddr;
+     // 创建套接字
+    sockfd = socket(AF_INET, SOCK_STREAM, 0);
+    if (sockfd < 0) {
+        perror("socket creation failed");
+        return -1;
+    }
+     // 获取 SO_REUSEADDR 选项的值
+    int reuseVal;
+    socklen_t reuseLen = sizeof(reuseVal);
+    if (getsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR, &reuseVal, &reuseLen) < 0) {
+        perror("getsockopt failed");
+        return -1;
+    }
+    printf("SO_REUSEADDR value: %d\n", reuseVal);
+     // 关闭套接字
+    close(sockfd);
+     return 0;
+}
+```
+
+## 带外数据
+
+在 Linux C++ socket 编程中，带外数据（Out-of-Band data）是指在正常数据流之外传输的特殊数据。带外数据通常用于发送紧急信息或指示特殊事件的发生。TCP 将带外数据称为紧急数据。
+
+在套接字编程中，可以使用 send() 函数的 MSG_OOB 标志来发送带外数据，使用 recv() 函数的 MSG_OOB 标志来接收带外数据。
+
+```cpp
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <unistd.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+ #define PORT 8080
+ int main() {
+    int sockfd, newsockfd;
+    struct sockaddr_in serverAddr, clientAddr;
+    socklen_t addr_size;
+    char buffer[1024];
+     // 创建套接字
+    sockfd = socket(AF_INET, SOCK_STREAM, 0);
+    if (sockfd < 0) {
+        perror("socket creation failed");
+        return -1;
+    }
+     // 设置套接字选项，允许发送和接收带外数据
+    int oobInline = 1;
+    if (setsockopt(sockfd, SOL_SOCKET, SO_OOBINLINE, &oobInline, sizeof(oobInline)) < 0) {
+        perror("setsockopt failed");
+        return -1;
+    }
+     // 绑定套接字到端口
+    serverAddr.sin_family = AF_INET;
+    serverAddr.sin_port = htons(PORT);
+    serverAddr.sin_addr.s_addr = INADDR_ANY;
+    memset(serverAddr.sin_zero, '\0', sizeof(serverAddr.sin_zero));
+    if (bind(sockfd, (struct sockaddr*)&serverAddr, sizeof(serverAddr)) < 0) {
+        perror("bind failed");
+        return -1;
+    }
+     // 监听连接
+    if (listen(sockfd, 10) < 0) {
+        perror("listen failed");
+        return -1;
+    }
+     // 接受连接
+    addr_size = sizeof(clientAddr);
+    newsockfd = accept(sockfd, (struct sockaddr*)&clientAddr, &addr_size);
+    if (newsockfd < 0) {
+        perror("accept failed");
+        return -1;
+    }
+     // 接收带外数据
+    memset(buffer, '\0', sizeof(buffer));
+    if (recv(newsockfd, buffer, sizeof(buffer), MSG_OOB) < 0) {
+        perror("recv OOB failed");
+        return -1;
+    }
+    printf("Received OOB data: %s\n", buffer);
+     // 关闭套接字
+    close(newsockfd);
+    close(sockfd);
+     return 0;
+}
 ```
 
 ### fcntl
 
+带外数据（Out-of-Band data）是在正常数据流之外传输的特殊数据。在 Linux C++ socket 编程中，可以使用 fcntl 函数和 sockatmark 函数来处理带外数据。
+
+fcntl 函数可以用于获取或设置文件描述符的属性。对于套接字，可以使用 fcntl 函数来设置和检查带外数据的接收标志。
+
+设置接收带外数据的标志：
+
+```cpp
+int enableOOB = 1;
+if (setsockopt(sockfd, SOL_SOCKET, SO_OOBINLINE, &enableOOB, sizeof(enableOOB)) < 0) {
+    perror("setsockopt failed");
+    return -1;
+}
+```
+
+上述代码将 SO_OOBINLINE 选项设置为 1，表示将带外数据与普通数据混合在一起接收。
+
+检查是否接收到带外数据：
+
+```cpp
+int flags = fcntl(sockfd, F_GETFL, 0);
+if (flags < 0) {
+    perror("fcntl failed");
+    return -1;
+}
+if (flags & OOB) {
+    printf("Received Out-of-Band data\n");
+}
+```
+
+上述代码使用 fcntl 函数获取套接字的标志，并检查是否设置了 OOB 标志，如果设置了，则表示接收到了带外数据。
+
 ### sockatmark
+
+sockatmark 函数用于检查套接字的当前位置是否位于带外数据的边界（即下一次接收将接收到带外数据）。
+
+```cpp
+int atMark = sockatmark(sockfd);
+if (atMark < 0) {
+    perror("sockatmark failed");
+    return -1;
+}
+if (atMark) {
+    printf("At Out-of-Band data mark\n");
+}
+```
+
+上述代码使用 sockatmark 函数检查套接字的当前位置是否位于带外数据的边界，如果是，则表示当前位置是带外数据的边界。
 
 ## 非阻塞和异步 IO
 
-相关控制函数
+recv（read）函数没有数据时会阻塞等待、套接字输出队列没有足够空间来发送消息时，send 函数会阻塞。
+
+非阻塞模式下，这些函数不会阻塞而会失败，将 errno 置为 EWOULDBLOCK 或者 EAGAIN,可以通过 select、poll、epoll 判断是否能接收或传输数据。
+
+套接字异步 I/O 管理命令,详细的可以问 chatgpt
 
 ```cpp
-fcntl ioctl
+fcntl(fd,F_SETOWN,pid)
+ioctl(fd,FIOSETOWN,pid)
+ioctl(fd,SIOCSPGRP,pid)
+fcntl(fd,F_SETFL,flags|O_ASYNC)
+ioctl(fd,FIOASYNC,&n)
 ```
