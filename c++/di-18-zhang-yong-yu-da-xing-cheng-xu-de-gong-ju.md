@@ -626,6 +626,77 @@ int main(int argc, char **argv)
 }
 ```
 
+### 捕获委托构造函数的异常
+
+如果一个异常在代理构造函数的初始化列表或主体中被抛出，那么委托构造函数的主体将不再被执行，控制权会交到异常捕获的 catch 代码块中
+
+```cpp
+#include <iostream>
+using namespace std;
+
+class X
+{
+public:
+    X()
+    try : X(0)
+    {
+        cout << "X()" << endl;
+    }
+    catch (int e)
+    {
+        cout << "catched " << e << endl;
+        throw 3;
+    }
+    X(int a)
+    try : X(a, 0.)
+    {
+        cout << "X(int a)" << endl;
+    }
+    catch (int e)
+    {
+        cout << "catched " << e << endl;
+        throw 2;
+    }
+    X(double b) : X(0, b) {}
+    X(int a, double b) : a_(a), b_(b)
+    {
+        cout << "X(int a, double b)" << endl;
+        throw 1;
+    }
+
+private:
+    int a_;
+    double b_;
+};
+
+int main(int argc, char **argv)
+{
+    try
+    {
+        X x;
+    }
+    catch (int e)
+    {
+        cout << "catched " << e << endl;
+    }
+    return 0;
+}
+/*
+X(int a, double b)
+catched 1
+catched 2
+catched 3
+ */
+```
+
+如果在`X(int a,double b)`中没有 throw，那么则会输出
+
+```cpp
+X(int a, double b)
+X(int a)
+X()
+```
+
 ### 命名空间
 
 当多个不同的库在一起使用时，及那个名字放置在全局命名空间中将引起命名空间污染，还有可能造成重复定义等。在 C 中往往使用命名加前缀从定义的名称上来解决，C++中引入了命名空间的概念\

@@ -2889,6 +2889,47 @@ int main(int argc, char **argv)
 }
 ```
 
+### 委托模板构造函数
+
+用模板构造函数做代理构造函数
+
+```cpp
+#include <iostream>
+#include <vector>
+#include <list>
+#include <deque>
+using namespace std;
+
+class X
+{
+public:
+    template <class T>
+    X(T first, T last) : l_(first, last) {}
+    list<int> l_;
+    X(vector<short> &);
+    X(deque<int> &);
+};
+
+X::X(vector<short> &v) : X(v.begin(), v.end())
+{
+}
+
+X::X(deque<int> &v) : X(v.begin(), v.end())
+{
+}
+
+int main(int argc, char **argv)
+{
+    vector<short> a{1, 2, 3, 4, 5};
+    deque<int> b{1, 2, 3, 4, 5};
+    X x1(a);
+    X x2(b);
+    vector<int> vec;
+    list<int>(vec.begin(), vec.end());
+    return 0;
+}
+```
+
 ### 小结
 
 到此模板编程的基础知识会先告一段落了，与此同时第三部分 类设计者的工具也将结束。我想经过控制拷贝、操作重载与类型转换、面向对象程序设计、模板与泛型编程几个章节，我们已经对面向对象有了更进一部的认识，总之学习要坚持，而不是一腔热血转眼就放弃了。
