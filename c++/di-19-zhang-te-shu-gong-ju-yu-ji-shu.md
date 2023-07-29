@@ -463,7 +463,7 @@ int main(int argc, char **argv)
 
 C++中有两种枚举：限定作用域和不限定作用域的
 
-1、限定作用域的
+1、限定作用域的（强枚举类型）
 
 ```cpp
 //example10.cpp
@@ -755,6 +755,45 @@ int main(int argc, char **argv)
     //限定作用域型则严格遵守类型，不会进行向数值类型的自动转换，形参必须为相应的枚举类型
     //而不是数值类型，因为非限定型可以向数值类型自动转换
     return 0;
+}
+```
+
+### 强枚举类型
+
+看过上面可能已经对强枚举类型有些概念了
+
+1. 枚举标识符属于强枚举类型的作用域（enum class 与 enum 的成员的作用域不同）
+2. 枚举标识符不会隐式转换为整形
+3. 能指定强枚举类型的底层类型，底层类型默认为 int
+
+### using 打开强枚举类型 C++20
+
+C++20 特性，说实话这个特性就是没事找事
+
+```cpp
+enum class Color{
+    Red,
+    Green,
+    Blue
+};
+void func1(Color c){
+    switch(c){
+        using enum Color;
+        case Red:return "Red";
+        case Green:return "Green";
+        case Blue:return "Blue";
+        default:
+            return "none";
+    };
+};
+//还可以部分打开
+void func2(Color c){
+    switch(c){
+        using enum Color::Red;
+        case Red: return "Red";
+        case Color::Green: return "Green";
+        ......
+    }
 }
 ```
 
