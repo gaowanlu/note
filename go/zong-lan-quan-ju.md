@@ -36,7 +36,7 @@ go build main.go
 
 对于 hello world 对于 C++开发应该一点压力都没有
 
-## 值类型
+## 基本类型
 
 - 布尔类型 bool
 - 整数类型 int、int8、int16、int32、int64
@@ -69,6 +69,23 @@ func main(){
 ```
 
 这些对于科班的老鸟还不是小意思吗
+
+## 值类型与引用类型
+
+值类型（Value Types）是指变量直接存储值本身，它们在赋值或传递给函数时会被复制。以下是一些 Go 语言中的值类型：
+
+- 基本类型（Primitive Types）：如整数类型（int、int8、int16、int32、int64）、浮点数类型（float32、float64）、布尔类型（bool）、字符类型（rune）、字符串类型（string）等。
+- 数组类型（Array Types）：数组是一种固定长度的值类型，它包含相同类型的一系列元素。
+- 结构体类型（Struct Types）：结构体是由一系列具有不同类型的字段组成的自定义类型。
+
+引用类型（Reference Types）是指变量存储的是值的内存地址，而不是值本身。它们在赋值或传递给函数时，复制的是指向底层数据的指针。以下是一些 Go 语言中的引用类型：
+
+- 切片类型（Slice Types）：切片是一个动态数组，它依赖于底层数组，可以动态增长和缩小。
+- 映射类型（Map Types）：映射是一种无序的键值对集合。
+- 通道类型（Channel Types）：通道用于在 goroutine 之间进行通信，实现同步和数据传输。
+- 函数类型（Function Types）：函数也是引用类型，可以作为参数传递和返回值。
+
+需要注意的是，虽然切片和映射看起来像是引用类型，但它们实际上是引用类型的包装器，底层仍然是值类型。
 
 ## 变量
 
@@ -173,3 +190,464 @@ func main(){
 	}
 }
 ```
+
+## IF ELSE
+
+Go 中没有三目运算符，if 支持定义语句作用域变量和 for 一样
+
+```go
+package main
+
+import "fmt"
+
+func main() {
+	if 0 == 7%2 {
+		fmt.Println("7 is even")
+	} else {
+		fmt.Println("8 is odd")
+	}
+	if num := 9; num < 0 {
+		fmt.Println(num, "is negative")
+	} else if num < 10 {
+		fmt.Println(num, "has 1 digit")
+	} else {
+		fmt.Println(num, "has multiple digits")
+	}
+}
+
+/*
+8 is odd
+9 has 1 digit
+*/
+```
+
+## switch
+
+go 的 switch 不支持使用 break，但是支持用 fallthrough 执行所在 case 后执行下一个 case。go 的 switch 支持定义变量
+
+go 的 switch 语句可以用于对以下类型匹配
+
+- 整数类型（int、int8、int16、int32、int64）
+- 无符号整数类型（uint、uint8、uint16、uint32、uint64、uintptr）
+- 浮点数类型（float32、float64）
+- 复数类型（complex64、complex128）
+- 字符串类型（string）
+- 接口类型（interface）
+- 字符类型（rune）
+- 布尔类型（bool）
+
+```go
+package main
+
+import (
+	"fmt"
+	"time"
+)
+
+func main() {
+	i := 2
+	fmt.Print("write ", i, " as ")
+	switch i {
+	case 1:
+		fmt.Println("one")
+	case 2:
+		fmt.Println("two")
+	case 3:
+		fmt.Println("three")
+	}
+	//write 2 as two
+	switch time.Now().Weekday() {
+	case time.Saturday, time.Sunday:
+		fmt.Println("It's the weekend")
+	default:
+		fmt.Println("It's a weekday")
+	}
+	//It's the weekend
+	t := time.Now()
+	fmt.Println(t) //2023-08-05 17:31:51.7226392 +0800 CST m=+0.011514601
+	switch {
+	case t.Hour() < 12:
+		fmt.Println("It's before noon")
+	default:
+		fmt.Println("It's after noon")
+	}
+	//It's after noon
+	//看是那种接口类型的实现
+	whatAmI := func(i interface{}) {
+		switch t := i.(type) {
+		case bool:
+			fmt.Println("I'm a bool")
+		case int:
+			fmt.Println("I'm an int")
+		default:
+			fmt.Printf("Don't know type %T\n", t)
+		}
+	}
+	whatAmI(true) //I'm a bool
+	num := 100
+	whatAmI(num)     //I'm an int
+	whatAmI("hello") //Don't know type string
+}
+```
+
+## 数组
+
+在 go 中数组是一个具有编号且长度固定的元素序列,起始但从数组这来看，go 是有点香的对吧，比起 C 的要方便不少
+
+```go
+package main
+
+import "fmt"
+
+func main() {
+	var arrInt [5]int
+	fmt.Println("arrInt:", arrInt)
+	//emp: [0 0 0 0 0]
+	arrInt[4] = 444
+	fmt.Println("arrInt:", arrInt)
+	//arrInt: [0 0 0 0 444]
+	fmt.Println("ele:", arrInt[4])
+	//ele:  444
+	//获取数组长度
+	fmt.Println("len:", len(arrInt))
+	//5
+	//初始化
+	b := [5]int{1, 2, 3, 4, 5}
+	fmt.Println(b)
+	//[1 2 3 4 5]
+	//多维数组
+	var twoD [2][3]int
+	for i := 0; i < len(twoD); i++ {
+		for j := 0; j < len(twoD[i]); j++ {
+			twoD[i][j] = i + j
+		}
+	}
+	fmt.Println("2d:", twoD)
+	//2d: [[0 1 2] [1 2 3]]
+	threeD := [2][2][2]int{{{1, 2}, {1, 2}}, {{1, 2}, {1, 2}}}
+	fmt.Println("3d", threeD)
+	//3d [[[1 2] [1 2]] [[1 2] [1 2]]]
+}
+```
+
+## 切片
+
+Go 语言中的切片（slice）是一种动态数组，它提供了对数组的部分或全部元素的访问和操作。切片是引用类型，它底层依赖于数组，但具有更灵活的长度和容量。
+有点像 C++的 std::vector 喽
+
+其实 Go 中没有真的数组，下面我们来看下，出下列外还可以进行 copy 与多维切片之类的，在此先不展开阐述，仅为本章知识总揽全局。我们 C++程序员先了解了解就好。
+
+```go
+package main
+
+import "fmt"
+
+func main() {
+	//1.声明一个切片类型
+	var s []int
+	s = []int{1, 2, 3}   //初始化切片
+	s1 := []int{1, 2, 3} //简写
+	//2.可以使用内置函数len与cap获取切片的长度和容量
+	fmt.Println(len(s))  //3
+	fmt.Println(cap(s))  //3
+	fmt.Println(len(s1)) //3
+	//3.可以使用索引访问与修改元素
+	s[1] = 666
+	fmt.Println(s[1]) //666
+	fmt.Println(s)    //[1 666 3]
+	//4.支持切片表达式获取子切片
+	s2 := []int{1, 2, 3, 4, 5}
+	subS2 := s2[0:2]    //下标0到下标1
+	fmt.Println(subS2)  //[1 2]
+	fmt.Println(s2[:])  //[1 2 3 4 5]
+	fmt.Println(s2[:3]) //[1 2 3]
+	fmt.Println(s2[1:]) //[2 3 4 5]
+	//这种切片骚操作有点像Python了其实
+	//5.可以用append函数向切片末尾追加元素
+	s3 := []int{1, 2, 3}
+	s3 = append(s3, 4)
+	fmt.Println(s3) //[1 2 3 4]
+	//6.切片可以用make函数创建指定长度和容量的切片
+	s4 := make([]int, 3, 5) //长度3容量5
+	fmt.Println(len(s4))    //3
+	fmt.Println(cap(s4))    //5
+	fmt.Println(s4)         //[0 0 0]
+	s4 = append(s4, 9)
+	fmt.Println(s4) //[0 0 0 9]
+	s4 = append(s4, 999)
+	s4 = append(s4, 888)
+	fmt.Println(s4) //[0 0 0 9 999 888]
+}
+```
+
+## map
+
+map 对于 C++程序员用的 std::map 熟悉不过了。如 std::map 基于红黑树按照键的顺序排列，属于有序的关联容器。std::unordered_map 属于无序的关联容器，基于哈希表。
+
+在 Go 语言中，map 是一种键值对的集合，也被称为字典或关联数组。它提供了一种快速查找和访问数据的方式。
+
+```go
+package main
+
+import "fmt"
+
+func main() {
+	//1.声明与初始化
+	m := make(map[string]int)
+	m["k1"] = 12
+	m["k2"] = 23
+	fmt.Println(m) //map[k1:12 k2:23]
+	v1 := m["k1"]
+	fmt.Println(v1)     //12
+	fmt.Println(len(m)) //2
+	n := map[string]int{"a": 1, "b": 2}
+	fmt.Println(n) //map[a:1 b:2]
+	//2.删除键值对
+	delete(m, "k2")
+	fmt.Println(m) //map[k1:12]
+	//3.判断有没有某个键
+	_, prs := m["k2"]
+	fmt.Println(prs) //false
+	/*
+		当从一个 map 中取值时，还有可以选择是否接收的第二个返回值，
+		该值表明了 map 中是否存在这个键。 这可以用来消除 键不存在
+		 和 键的值为零值 产生的歧义， 例如 0 和 ""。这里我们不需
+		 要值，所以用 空白标识符(blank identifier) _ 将其忽略。
+	*/
+	//4.遍历map所有元素
+	for name, age := range m {
+		fmt.Println(name, age)
+	} // k1 12
+}
+```
+
+## range 遍历
+
+range 用于迭代各种各样的数据结构。 让我们来看看如何在我们已经学过的数据结构上使用 range。
+
+```go
+package main
+
+import "fmt"
+
+func main() {
+	//1.例如遍历切片
+	nums := []int{1, 2, 3, 4}
+	sum := 0
+	for _, num := range nums {
+		sum += num
+	}
+	fmt.Println(sum) //10
+	for i, num := range nums {
+		if num == 3 {
+			fmt.Println(i, " ", num)
+			//2 3
+		}
+	}
+	//2.例如遍历map
+	kvs := map[string]string{"a": "apple", "b": "banana"}
+	for k, v := range kvs {
+		fmt.Println(k, "=", v)
+	} //a = apple b = banana
+	//3.遍历字符串
+	for i, c := range "go" {
+		fmt.Printf("%d %c\n", i, c)
+	} //0 g 1 o
+}
+```
+
+## 函数
+
+go 中有一点说的就是，函数是不支持重载的,说实话骚操作没有 C++多
+
+当多个连续的参数为同样类型时， 可以仅声明最后一个参数的类型，忽略之前相同类型参数的类型声明。
+
+```go
+package main
+
+import "fmt"
+
+func plus(a int, b int) int {
+	return a + b
+}
+
+func plusplus(a, b, c int) int {
+	return a + b + c
+}
+
+func plusf(a float32, b float32) float32 {
+	return a + b
+}
+
+func main() {
+	fmt.Println(plus(1, 2))        //3
+	fmt.Println(plusplus(1, 2, 3)) //6
+	fmt.Println(plusf(1.2, 1.4))   //2.6
+}
+```
+
+## 多返回值
+
+挺骚操作的，C++起码用数组和 std::tuple
+
+```cpp
+package main
+
+import (
+	"fmt"
+)
+
+func vals() (int, int) {
+	return 3, 7
+}
+
+func main() {
+	a, b := vals()
+	fmt.Println(a, b) // 输出：3 7
+	_, c := vals()
+	d, _ := vals()
+	fmt.Println(c) //7
+	fmt.Println(d) //3
+}
+```
+
+## 变参函数
+
+变参函数早已不是什么骚操作，C 中和 C++11 变参模板都可以
+
+C 风格
+
+```c
+#include <iostream>
+#include <cstdarg>
+
+// 接受可变数量参数的函数
+double average(int count, ...) {
+    va_list args;
+    va_start(args, count);
+
+    double sum = 0;
+    for (int i = 0; i < count; i++) {
+        sum += va_arg(args, int);
+    }
+
+    va_end(args);
+
+    return sum / count;
+}
+
+int main() {
+    double result = average(4, 2, 4, 6, 8);
+    std::cout << "Average: " << result << std::endl;
+
+    return 0;
+}
+```
+
+C++11 变参模板
+
+```go
+#include <iostream>
+
+// 递归终止函数
+double average() {
+    return 0;
+}
+
+// 变参模板函数
+template<typename T, typename... Args>
+double average(T arg, Args... args) {
+    return arg + average(args...) / (sizeof...(args) + 1);
+}
+
+int main() {
+    double result = average(2, 4, 6, 8);
+    std::cout << "Average: " << result << std::endl;
+
+    return 0;
+}
+```
+
+go 语言,语法而言确实挺香
+
+```go
+package main
+
+import "fmt"
+
+func sum(nums ...int) {
+	fmt.Println(nums, " ")
+	total := 0
+	for _, num := range nums {
+		total += num
+	}
+	fmt.Println(total)
+}
+
+func main() {
+	sum(1, 2)
+	//[1 2]
+	//3
+	sum(1, 2, 3)
+	//[1 2 3]
+	//6
+	nums := []int{1, 2, 3, 4}
+	sum(nums...) //解构
+	//[1 2 3 4]
+	//10
+}
+```
+
+## 闭包
+
+闭包这东西，对于写 js 的其实很熟悉，go 中也有
+
+C++除此之外还有像写可调用对象之类的形式
+
+```cpp
+#include <iostream>
+using namespace std;
+
+auto createClosure(int x)
+{
+    return [x]()
+    {
+        return x * x;
+    };
+}
+
+int main(int argc, char **argv)
+{
+    auto closure = createClosure(43);
+    std::cout << closure() << std::endl;
+    // 1849
+    return 0;
+}
+```
+
+GO 中像 JavaScript 一样是支持延长变量声明周期的,毕竟 go 有垃圾回收,C++就要使用动态内存实现这种骚操作了，而且很难实现动态内存管理
+
+```go
+package main
+
+import "fmt"
+
+func intSeq() func() int {
+	i := 0
+	return func() int {
+		i++
+		return i
+	}
+}
+
+func main() {
+	mfunc := intSeq()
+	fmt.Println(mfunc()) //1
+	fmt.Println(mfunc()) //2
+	fmt.Println(mfunc()) //3
+	fmt.Println(mfunc()) //4
+	fmt.Println(mfunc()) //5
+}
+```
+
+## 更多正在学习中
