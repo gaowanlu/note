@@ -650,4 +650,155 @@ func main() {
 }
 ```
 
-## 更多正在学习中
+## 递归
+
+函数递归
+
+```go
+package main
+
+import "fmt"
+
+func fact(n int) int {
+	fmt.Println(n)
+	if n == 0 {
+		return 1
+	}
+	return n * fact(n-1)
+}
+
+func main() {
+	fmt.Println(fact(10))
+}
+
+//10 9 8 7 6 5 4 3 2 1 0 3628800
+```
+
+闭包递归,必须先显式声明
+
+```go
+package main
+
+import "fmt"
+
+func main() {
+	var fib func(n int) int
+	fib = func(n int) int {
+		fmt.Println(n)
+		if n < 2 {
+			return n
+		}
+		return fib(n-1) + fib(n-2)
+	}
+	fmt.Println(fib(7)) //13
+}
+```
+
+## 指针
+
+指针对于一名 C++程序员再熟悉不过了
+
+```go
+package main
+
+import "fmt"
+
+func zeroval(ival int64) {
+	ival = 0
+}
+
+func zeroptr(iptr *int64) {
+	*iptr = 0
+}
+
+func main() {
+	var a int64 = 2
+	var b int64 = 3
+	zeroval(a)
+	zeroptr(&b)
+	fmt.Println(a) //2
+	fmt.Println(b) //0
+}
+```
+
+## 字符串与字符
+
+Go 语言中的字符串是一个只读的 byte 类型的切片。 Go 语言和标准库特别对待字符串 - 作为以 UTF-8 为编码的文本容器。 在其他语言当中， 字符串由”字符”组成。 在 Go 语言当中，字符的概念被称为 rune - 它是一个表示 Unicode 编码的整数。
+
+```go
+package main
+
+import (
+	"fmt"
+	"unicode/utf8"
+)
+
+func isGao(r rune) bool {
+	return r == '高'
+}
+
+func main() {
+	var s string = "高万禄abcd"
+	fmt.Println(len(s)) //13
+	for i := 0; i < len(s); i++ {
+		fmt.Printf("%x ", s[i])
+	}
+	fmt.Println()
+	//e9 ab 98 e4 b8 87 e7 a6 84 61 62 63 64
+	//                           a  b  c  d
+	//可见"高万禄"占据了9个字节
+	fmt.Println(utf8.RuneCountInString(s)) //7
+	for idx, runeVal := range s {
+		fmt.Println(idx, runeVal)
+	}
+	//0 39640 3 19975 6 31108 9 97 10 98 11 99 12 100
+	fmt.Println(utf8.DecodeRuneInString(s)) //39640 3 ,编码39640 3bytes
+	for i, bytes := 0, 0; i < len(s); i += bytes {
+		runeValue, width := utf8.DecodeRuneInString(s[i:])
+		fmt.Printf("%#U at %d\n", runeValue, i)
+		bytes = width
+		fmt.Println(isGao(runeValue))
+	}
+	//U+9AD8 '高' at 0 true|U+4E07 '万' at 3 false|U+7984 '禄' at 6 false
+	//U+0061 'a' at 9 false|U+0062 'b' at 10 false|U+0063 'c' at 11 false
+	//U+0064 'd' at 12 false
+}
+```
+
+可见从兼容 utf8 这种设计而言，go 比 C++强太多了，而且不需要考虑语言版本问题
+
+## 结构体
+
+这对于来鸟不是小意思？
+
+```go
+package main
+
+import "fmt"
+
+type Person struct {
+	name string
+	age  int
+}
+
+func newPerson(name string) *Person {
+	p := Person{name: name}
+	p.age = 21
+	return &p
+}
+
+func main() {
+	fmt.Println(Person{"gwl", 21})            //{gwl 21}
+	fmt.Println(Person{name: "gwl", age: 30}) //{gwl 30}
+	fmt.Println(Person{name: "fred"})         //{fred 0}
+	fmt.Println(&Person{name: "", age: 0})    //&{ 0}
+	var s Person = Person{name: "gaowanlu", age: 21}
+	fmt.Println(s.name, s.age) //gaowanlu 21
+	sptr := &s
+	fmt.Println(sptr.name, sptr.age) //gaowanlu 21
+	personPtr := newPerson("gaowanlu")
+	fmt.Println(*personPtr) //{gaowanlu 21}
+}
+```
+
+## 方法
