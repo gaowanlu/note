@@ -802,3 +802,164 @@ func main() {
 ```
 
 ## 方法
+
+GO 支持为结构体类型定义方法
+
+调用方法时，Go 会自动处理值和指针之间的转换。 想要避免在调用方法时产生一个拷贝，或者想让方法可以修改接受结构体的值， 你都可以使用指针来调用方法。
+
+- ptrChange 方法接收一个指向 Person 结构体的指针作为接收者。这意味着在调用该方法时，可以直接修改原始结构体的值。在方法内部，通过指针来访问结构体的字段，并对其进行更改。因此，通过调用 personPtr.ptrChange() ， person 的值将被修改为 name: "a" 和 age: 1 。
+
+- valChange 方法接收一个 Person 结构体的值作为接收者。当调用该方法时，会创建一个接收者的副本，并在副本上进行操作，而不会影响原始结构体的值。因此，通过调用 person.valChange() ， person 的值不会改变。
+
+```go
+package main
+
+import "fmt"
+
+type Person struct {
+	name string
+	age  int
+}
+
+func (p *Person) print() {
+	fmt.Println("name: ", p.name, " age: ", p.age)
+}
+
+func (p *Person) ptrChange() {
+	p.name = "a"
+	p.age = 1
+}
+
+func (v Person) valChange() {
+	v.name = "b"
+	v.age = 2
+}
+
+func main() {
+	person := Person{name: "w", age: 3}
+	person.print()      //name:  w  age:  3
+	fmt.Println(person) //{w 3}
+	person.valChange()
+	person.print()      //name:  w  age:  3
+	fmt.Println(person) //{w 3}
+	personPtr := &person
+	personPtr.ptrChange()
+	personPtr.print()       //name:  a  age:  1
+	fmt.Println(*personPtr) //{a 1}
+}
+```
+
+## 接口
+
+方法签名的集合叫做：_接口(Interfaces)_。
+
+```go
+package main
+
+import (
+	"fmt"
+	"math"
+)
+
+type geometry interface {
+	area() float64
+	perim() float64
+}
+
+type rect struct {
+	width, height float64
+}
+type circle struct {
+	radius float64
+}
+
+func (r rect) area() float64 {
+	return r.width * r.height
+}
+func (r rect) perim() float64 {
+	return 2*r.width + 2*r.height
+}
+
+func (c circle) area() float64 {
+	return math.Pi * c.radius * c.radius
+}
+func (c circle) perim() float64 {
+	return 2 * math.Pi * c.radius
+}
+
+func measure(g geometry) {
+	fmt.Println(g)
+	fmt.Println(g.area())
+	fmt.Println(g.perim())
+}
+
+func main() {
+	r := rect{width: 3, height: 4}
+	c := circle{radius: 5}
+	measure(r)
+	// {3 4}
+	// 12
+	// 14
+	measure(c)
+	// {5}
+	// 78.53981633974483
+	// 31.41592653589793
+}
+```
+
+## Embedding
+
+Go 支持对于结构体(struct)和接口(interfaces)的 嵌入(embedding) 以表达一种更加无缝的 组合(composition) 类型
+
+Go 语言中没有像其他一些面向对象编程语言那样的继承机制。相反，Go 语言使用组合来实现代码的重用和扩展。
+
+在 Go 语言中，可以通过在结构体中嵌入其他结构体来实现组合。这样，嵌入的结构体可以访问其字段和方法，就好像它们是在当前结构体中定义的一样。这种方式可以实现代码的重用，而无需显式地继承。
+
+另外，Go 语言还提供了接口（interface）的概念，通过接口可以实现多态性。结构体可以实现一个或多个接口，并按照接口定义的方法来调用结构体的行为。这样，可以在不同的结构体上使用相同的接口，实现代码的灵活性和可扩展性。
+
+总而言之，尽管 Go 语言没有继承的概念，但通过组合和接口的使用，可以实现代码的重用和扩展。
+
+```go
+package main
+
+import "fmt"
+
+type base struct {
+	num int
+}
+
+func (b base) describe() string {
+	return fmt.Sprintf("base with num=%v", b.num)
+}
+
+type container struct {
+	base
+	str string
+}
+
+func main() {
+	co := container{
+		base: base{
+			num: 1,
+		},
+		str: "some name",
+	}
+	fmt.Printf("co={num: %v, str: %v}\n", co.num, co.str)
+	fmt.Println("also num:", co.base.num)
+	fmt.Println("describe:", co.describe())
+	type describer interface {
+		describe() string
+	}
+	var d describer = co
+	fmt.Println("describer:", d.describe())
+}
+
+/*
+co={num: 1, str: some name}
+also num: 1
+describe: base with num=1
+describer: base with num=1
+*/
+```
+
+## 泛型
