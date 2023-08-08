@@ -963,3 +963,226 @@ describer: base with num=1
 ```
 
 ## 泛型
+
+C++的泛型是基于模板的，Go 中也有泛型的特性
+
+```go
+package main
+
+import "fmt"
+
+func MapKeys[K comparable, V any](m map[K]V) []K {
+	r := make([]K, 0, len(m))
+	for k, _ := range m {
+		r = append(r, k)
+	}
+	return r
+}
+
+func main() {
+	var m = map[int]string{1: "2", 2: "4", 4: "8"}
+	//自动推断
+	fmt.Println("keys :", MapKeys(m)) //keys : [1 2 4]
+	//显式指定
+	fmt.Println(MapKeys[int, string](m)) //[1 2 4]
+}
+```
+
+用泛型写链表 C++
+
+```go
+#include <iostream>
+#include <vector>
+using namespace std;
+
+template <typename T>
+class Element
+{
+public:
+    Element<T> *next{nullptr};
+    T val;
+};
+
+template <typename T>
+class List
+{
+public:
+    Element<T> *head{nullptr};
+    Element<T> *tail{nullptr};
+};
+
+// 尾插法
+template <typename T>
+void Push(List<T> *lst, T v)
+{
+    if (lst->tail == nullptr)
+    {
+        lst->head = new Element<T>;
+        lst->head->val = v;
+        lst->tail = lst->head;
+    }
+    else
+    {
+        lst->tail->next = new Element<T>;
+        lst->tail->next->val = v;
+        lst->tail = lst->tail->next;
+    }
+}
+
+template <typename T>
+vector<T> GetAll(List<T> *lst)
+{
+    vector<T> vec;
+    for (auto ptr = lst->head; ptr != nullptr; ptr = ptr->next)
+    {
+        vec.push_back(ptr->val);
+    }
+    return vec;
+}
+
+int main(int argc, char **argv)
+{
+    List<int> lst;
+    Push(&lst, 1);
+    Push(&lst, 2);
+    Push(&lst, 3);
+    for (auto n : GetAll(&lst))
+    {
+        cout << n << " ";
+    }
+    cout << std::endl;
+    // 1 2 3
+    return 0;
+}
+```
+
+使用 GO 编写，对比上面的 C++样例很容易学习
+
+```go
+package main
+
+import "fmt"
+
+type List[T any] struct {
+	head, tail *element[T]
+}
+
+type element[T any] struct {
+	next *element[T]
+	val  T
+}
+
+// 尾插法
+func (lst *List[T]) Push(v T) {
+	if lst.tail == nil {
+		lst.head = &element[T]{val: v}
+		lst.tail = lst.head
+	} else {
+		lst.tail.next = &element[T]{val: v}
+		lst.tail = lst.tail.next
+	}
+}
+
+func (lst *List[T]) GetAll() []T {
+	var elems []T
+	for e := lst.head; e != nil; e = e.next {
+		elems = append(elems, e.val)
+	}
+	return elems
+}
+
+func main() {
+	lst := List[int]{}
+	lst.Push(1)
+	lst.Push(2)
+	lst.Push(3)
+	fmt.Println(lst.GetAll()) //[1 2 3]
+}
+```
+
+## 错误处理
+
+符合 Go 语言习惯的做法是使用一个独立、明确的返回值来传递错误信息。 这与 Java、Ruby 使用的异常（exception） 以及在 C 语言中有时用到的重载 (overloaded) 的单返回/错误值有着明显的不同。 Go 语言的处理方式能清楚的知道哪个函数返回了错误，并使用跟其他（无异常处理的）语言类似的方式来处理错误。
+
+```go
+package main
+
+import (
+	"errors"
+	"fmt"
+)
+
+func f1(arg int) (int, error) {
+	if arg == 42 {
+		return -1, errors.New("can't work with 42")
+	}
+	return arg + 3, nil
+}
+
+// 自定义Error类型
+type argError struct {
+	arg  int
+	prob string
+}
+
+func (e *argError) Error() string {
+	return fmt.Sprintf("%d - %s", e.arg, e.prob)
+}
+
+func f2(arg int) (int, error) {
+	if arg == 42 {
+		return -1, &argError{arg, "can't work with it"}
+	}
+	return arg + 3, nil
+}
+
+func main() {
+	for _, i := range []int{7, 32} {
+		if r, e := f1(i); e != nil {
+			fmt.Println("f1 failed:", e)
+		} else {
+			fmt.Println("f1 worked:", r)
+		}
+	}
+	//f1 worked: 10
+	//f1 worked: 35
+	for _, i := range []int{7, 42} {
+		if r, e := f2(i); e != nil {
+			fmt.Println("f2 failed:", e)
+		} else {
+			fmt.Println("f2 worked", r)
+		}
+	}
+	//f2 worked 10
+	//f2 failed: 42 - can't work with it
+	_, e := f2(42)
+	if ae, ok := e.(*argError); ok {
+		fmt.Println(ae.arg)
+		fmt.Println(ae.prob)
+	}
+	//42
+	//can't work with it
+}
+```
+
+关于以下部分是用于检查错误类型的代码段。首先，我们调用函数 f2(42) 并将返回的结果赋值给变量 e 。然后，我们使用类型断言将 e 转换为 *argError 类型的变量 ae 。如果类型断言成功，即 e 的类型是 *argError ，则条件 ok 为 true ，我们可以访问 ae 的字段。在这种情况下，我们打印出 ae.arg 和 ae.prob 的值，分别对应错误的参数和问题描述。
+
+因为 error 类型是个接口,argError 实际上实现了 error
+
+```go
+type error interface {
+    Error() string
+}
+```
+
+e 是接口 error 类型,go 中可用 interface.(\*T)转换为具体类型，还会进行断言 ok 为真则转换成功，非接口类型转换直接 T(v)如`i:=64 f:=float64(i)`
+
+```go
+_, e := f2(42)
+if ae, ok := e.(*argError); ok {
+	fmt.Println(ae.arg)
+	fmt.Println(ae.prob)
+}
+```
+
+其实 Go 中这种异常处理方式，其实也挺优雅的，但是说不上是真正的异常机制
