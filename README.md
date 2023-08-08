@@ -6,4 +6,4 @@ coverY: 0
 
 # 禄哥的学习笔记
 
-I have a dream.
+I have a dream. 最新好无趣、不想上班！！！
