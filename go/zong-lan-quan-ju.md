@@ -990,7 +990,7 @@ func main() {
 
 用泛型写链表 C++
 
-```go
+```cpp
 #include <iostream>
 #include <vector>
 using namespace std;
@@ -1165,7 +1165,7 @@ func main() {
 }
 ```
 
-关于以下部分是用于检查错误类型的代码段。首先，我们调用函数 f2(42) 并将返回的结果赋值给变量 e 。然后，我们使用类型断言将 e 转换为 *argError 类型的变量 ae 。如果类型断言成功，即 e 的类型是 *argError ，则条件 ok 为 true ，我们可以访问 ae 的字段。在这种情况下，我们打印出 ae.arg 和 ae.prob 的值，分别对应错误的参数和问题描述。
+关于以下部分是用于检查错误类型的代码段。首先，我们调用函数 f2(42) 并将返回的结果赋值给变量 e 。然后，我们使用类型断言将 e 转换为 `*argError` 类型的变量 ae 。如果类型断言成功，即 e 的类型是 `*argError` ，则条件 ok 为 true ，我们可以访问 ae 的字段。在这种情况下，我们打印出 ae.arg 和 ae.prob 的值，分别对应错误的参数和问题描述。
 
 因为 error 类型是个接口,argError 实际上实现了 error
 
