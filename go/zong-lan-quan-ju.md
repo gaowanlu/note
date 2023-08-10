@@ -1186,3 +1186,105 @@ if ae, ok := e.(*argError); ok {
 ```
 
 其实 Go 中这种异常处理方式，其实也挺优雅的，但是说不上是真正的异常机制
+
+## 协程
+
+协程(goroutine)是轻量级得执行线程
+
+1. import 语句导入了两个包： fmt 和 time 。 fmt 包用于格式化输出， time 包用于时间相关操作。
+
+2. f 函数是一个普通函数，它接受一个字符串参数 from 。在函数体内部，使用 for 循环打印出三次 from 的值。
+
+3. main 函数是程序的入口函数。在函数体内部，首先调用 f("direct") ，这是直接调用函数的方式。然后使用 go 关键字调用 f("goroutin") ，这是使用协程（goroutine）并发运行函数的方式。接下来，使用协程运行一个匿名函数，该函数接受一个字符串参数 msg ，并打印出该参数的值。最后，使用 time.Sleep(time.Second) 让程序休眠一秒钟，以确保协程有足够的时间执行。最后，打印出"done"表示程序执行完毕。
+
+```go
+package main
+
+import (
+	"fmt"
+	"time"
+)
+
+func f(from string) {
+	for i := 0; i < 3; i++ {
+		fmt.Println(from, ":", i)
+	}
+}
+
+func main() {
+	f("direct")      //直接运行
+	go f("goroutin") //使用协程运行
+	//协程运行匿名函数
+	go func(msg string) {
+		fmt.Println(msg)
+	}("going")
+	time.Sleep(time.Second)
+	fmt.Println("done")
+}
+/*
+direct : 0
+direct : 1
+direct : 2
+going
+goroutin : 0
+goroutin : 1
+goroutin : 2
+done
+*/
+```
+
+## 通道
+
+通道(channels) 是连接多个协程的管道。 你可以从一个协程将值发送到通道，然后在另一个协程中接收。  
+使用 make(chan val-type) 创建一个新的通道。 通道类型就是他们需要传递值的类型。  
+使用 channel <- 语法 发送 一个新的值到通道中。使用 <-channel 语法从通道中 接收 一个值。
+
+默认发送和接收操作是阻塞的，直到发送方和接收方都就绪。 这个特性允许我们，不使用任何其它的同步操作， 就可以在程序结尾处等待消息 "ping"。
+
+```go
+package main
+
+import (
+	"fmt"
+	"time"
+)
+
+type Message struct {
+	name string
+	age  int
+}
+
+func main() {
+	message := make(chan Message)
+	go func() {
+		timestamp := time.Now().Unix()
+		for {
+			now := time.Now().Unix()
+			if now-timestamp > 5 {
+				message <- Message{name: "end", age: 21}
+				break
+			}
+			message <- Message{name: "gaowanlu", age: 21}
+		}
+	}()
+	go func() {
+		timestamp := time.Now().Unix()
+		for {
+			now := time.Now().Unix()
+			if now-timestamp > 7 {
+				break
+			}
+			msg := <-message
+			fmt.Println(msg)
+			if msg.name == "end" {
+				break
+			}
+		}
+	}()
+	time.Sleep(time.Second * 10)
+}
+
+//{gaowanlu 21}......{end 21}
+```
+
+## 通道缓冲
