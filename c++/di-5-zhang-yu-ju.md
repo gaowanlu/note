@@ -235,6 +235,66 @@ int main(int argc, char **argv)
 }
 ```
 
+### C++17 支持初始化语句的 if
+
+在 if 中使用
+
+```cpp
+#include <iostream>
+using namespace std;
+
+// C++17支持初始化语句的if
+
+bool func(int n)
+{
+    return n > 10;
+}
+
+int main(int argc, char **argv)
+{
+    int n = 11;
+    if (bool b = func(n); b)
+    {
+        cout << "b=" << n << ">10" << endl;
+    }
+    else
+    {
+        cout << "b=" << n << "<=10" << endl;
+    }
+    return 0;
+}
+// b=11>10
+```
+
+也可以在 if else 中使用
+
+```cpp
+#include <iostream>
+using namespace std;
+
+// C++17支持初始化语句的if
+
+bool func(int n)
+{
+    return n > 10;
+}
+
+int main(int argc, char **argv)
+{
+    int n = 10;
+    if (bool b = func(n); b)
+    {
+        cout << "b=" << n << ">10" << endl;
+    }
+    else if (bool b1 = func(n); !b1)
+    {
+        cout << b << " " << b1 << endl;
+    }
+    return 0;
+}
+// 0 0
+```
+
 ### switch 语句
 
 什么是 switch 语句，它是 if、else if 的升级版 、第一个 case 相当于 if，其余 if else 相当于后面的 case，default 相当于末尾的 else
@@ -403,6 +463,40 @@ int main(int argc, char **argv)
 //输出 cdc 9
 ```
 
+### C++17 支持初始化语句的 switch
+
+和 C++17 支持初始化语句的 if 类似
+
+```cpp
+#include <iostream>
+using namespace std;
+
+// C++17支持初始化语句的switch
+
+bool func(int n)
+{
+    return n > 10;
+}
+
+int main(int argc, char **argv)
+{
+    int n = 10;
+    switch (bool b = func(n); b)
+    {
+    case false:
+        cout << "func(" << n << ")="
+             << "false" << endl;
+        break;
+    default:
+        cout << "func(" << n << ")="
+             << "true" << endl;
+        break;
+    }
+    return 0;
+}
+// func(10)=false
+```
+
 ### 迭代语句
 
 迭代语句在 C++内主要有四大类，while 语句、传统的 for 循环、范围的 for 循环、do while 语句
@@ -538,7 +632,7 @@ int main(int argc, char **argv)
 }
 ```
 
-## 实现基于范围 for 循环的类
+### 实现基于范围 for 循环的类
 
 此部分为高级进阶内容
 

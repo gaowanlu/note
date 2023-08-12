@@ -1616,6 +1616,102 @@ int main(int argc, char **argv)
 }
 ```
 
+### assert 运行时断言
+
+运行时断言只有在程序运行时才能检查被触发，在 Release 版本通常会忽略断言(头文件 cassert 通过宏 NDEBUG 对 Debug 与 Release 做了区分)。assert 会直接显示错误信息并终止程序。
+
+```cpp
+#include <iostream>
+#include <cassert>
+using namespace std;
+
+void func(void *ptr)
+{
+    assert(ptr);
+    cout << ptr << endl;
+}
+
+int main(int argc, char **argv)
+{
+    int p;
+    func(&p);
+    return 0;
+}
+```
+
+### static_assert 静态断言
+
+静态断言什么时候有需求呢，例如想要在模板实例化的时候对模板参数进行约束。
+static_assert 声明是 C++11 标准引入的，用于程序编译阶段评估常量表达式对返回 false 的表达式断言。
+
+1. 处理在编译期间执行，不会有空间或时间上的运行时成本
+2. 具有简单的语法
+3. 断言失败可以显示丰富的错误诊断信息
+4. 可以在命名空间、类、代码块内使用
+5. 失败的断言会在编译阶段报错
+
+```cpp
+#include <iostream>
+#include <type_traits>
+using namespace std;
+
+class A
+{
+};
+
+class B : public A
+{
+};
+
+class C
+{
+};
+
+template <class T>
+class E
+{
+    static_assert(std::is_base_of<A, T>::value, "T is not base of A");
+};
+
+int main(int argc, char **argv)
+{
+    static_assert(argc > 2, "");
+    /** 错误：argc>2非常量表达式
+     main.cpp:25:24: error: non-constant condition for static assertion
+   25 |     static_assert(argc > 2, "");
+      |                   ~~~~~^~~
+main.cpp:25:24: error: 'argc' is not a constant expression
+     */
+    static_assert(sizeof(int) >= 4, "");
+    E<B> a;
+    E<C> a1;
+    /*
+    main.cpp:20:42: error: static assertion failed: T is not base of A
+       20 |     static_assert(std::is_base_of<A, T>::value, "T is not base of A");
+    */
+    return 0;
+}
+```
+
+### C++17 单参数 static_assert
+
+可以忽略 static_assert 的第二个错误信息参数
+
+```cpp
+#include <iostream>
+using namespace std;
+
+int main(int argc, char **argv)
+{
+    static_assert(1 > 4);
+    /*
+    main.cpp:6:21: error: static assertion failed
+    6 |     static_assert(1 > 4);
+    */
+    return 0;
+}
+```
+
 ### 什么时候使用 auto
 
 每个人可能对 auto 的理解，以及理解程度不一样，所以在实际多人合作项目中要慎重使用
