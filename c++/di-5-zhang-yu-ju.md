@@ -538,6 +538,80 @@ int main(int argc, char **argv)
 }
 ```
 
+## 实现基于范围 for 循环的类
+
+此部分为高级进阶内容
+
+```cpp
+#include <iostream>
+using namespace std;
+
+// int类型指针迭代器
+class IntIter
+{
+public:
+    IntIter(int *p) : p_(p) {}
+    bool operator!=(const IntIter &other)
+    {
+        return (p_ != other.p_);
+    }
+    const IntIter &operator++()
+    {
+        p_++;
+        return *this;
+    }
+    int operator*() const
+    {
+        return *p_;
+    }
+
+private:
+    int *p_;
+};
+
+// 模板容器
+template <unsigned int fix_size>
+class FixIntVector
+{
+public:
+    FixIntVector(std::initializer_list<int> init_list)
+    {
+        if (init_list.size() != fix_size)
+        {
+            return;
+        }
+        int *cur = data_;
+        for (auto e : init_list)
+        {
+            *cur = e;
+            cur++;
+        }
+    }
+    IntIter begin()
+    {
+        return IntIter(data_);
+    }
+    IntIter end()
+    {
+        return IntIter(data_ + fix_size);
+    }
+
+private:
+    int data_[fix_size]{0};
+};
+
+int main(int argc, char **argv)
+{
+    FixIntVector<10> fix_int_vector{1, 2, 3, 4, 5, 6, 7, 8, 9, 0};
+    for (int e : fix_int_vector)
+    {
+        cout << e << " ";
+    }
+    // 1 2 3 4 5 6 7 8 9 0
+    return 0;
+}
+```
+
 ### do while 循环
 
 do while 语句与 while 语句非常相似，唯一的区别是，do while 语句先执行循环体后检查条件，不管条件值如何，我们都至少执行一次循环。
