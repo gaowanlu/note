@@ -2539,7 +2539,7 @@ int main(int argc, char **argv)
 }
 ```
 
-## 结构化绑定
+### 结构化绑定
 
 C++17 中引入了结构化绑定（Structured Bindings）的语法，允许我们将一个结构体或者 tuple 类型的对象解构为多个变量。结构化绑定语法的一般形式如下：
 
