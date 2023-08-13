@@ -2538,3 +2538,76 @@ int main(int argc, char **argv)
     return 0;
 }
 ```
+
+## 结构化绑定
+
+C++17 中引入了结构化绑定（Structured Bindings）的语法，允许我们将一个结构体或者 tuple 类型的对象解构为多个变量。结构化绑定语法的一般形式如下：
+
+```cpp
+auto [var1, var2, ...] = expression;
+auto [var1, var2, ...] { expression };
+auto [var1, var2, ...] ( expression );
+```
+
+样例
+
+```cpp
+#include <iostream>
+#include <map>
+#include <string>
+#include <tuple>
+using namespace std;
+
+struct Point
+{
+    int x;
+    string y;
+};
+
+int main(int argc, char **argv)
+{
+    // 绑定原生数组
+    int arr[3]{1, 2, 3};
+    {
+        auto &[x, y, z] = arr;
+        x = 3;
+        y = 1;
+        z = 2;
+        cout << arr[0] << " " << arr[1] << " " << arr[2] << endl;
+        // 3 1 2
+    }
+    // 结构体
+    Point point;
+    point.x = 100;
+    point.y = "cpp17";
+    auto [x, y] = point;           // int x,int y
+    cout << x << " " << y << endl; // 100 cpp17
+    auto &[x_ref, y_ref] = point;
+    y_ref = "point";
+    cout << point.y << endl; // point
+    // tupe
+    tuple<int, double> mTupe{1, 6.66};
+    auto [width, height] = mTupe;
+    cout << width << " " << height << endl; // 1 6.66
+    auto &[width_ref, height_ref] = mTupe;  // 支持const auto&等
+    width_ref = 666;
+    cout << get<0>(mTupe) << endl; // 6666
+    // map
+    map<string, int> mMap = {{"key1", 1}, {"key2", 2}};
+    for (auto &[key, value] : mMap)
+    {                                        // const std::string&key,int&value
+        cout << key << " " << value << endl; // key1 1 key2 2
+    }
+    return 0;
+}
+```
+
+结构化绑定限制
+
+```cpp
+auto [first,second]=std::pair<int,int>(1,2);//正常
+constexpr auto [first,second]=std::pair<int,int>(1,2);//无法编译
+static auto [first,second]=std::pair<int,int>(1,2);//无法编译
+```
+
+甚至还可以自己实现类元组类型，但是感觉没什么卵用，不了解也罢

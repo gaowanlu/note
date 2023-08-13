@@ -1288,3 +1288,296 @@ func main() {
 ```
 
 ## 通道缓冲
+
+在默认情况下，通道是无缓冲的，意味着只有对应的接收(`<-chan`)通道准备好接收时，才允许进行发送（`chan<-`）。有缓冲通道允许在没有对应接收者的情况下，缓存一定数量的值。
+
+```go
+package main
+
+import "fmt"
+
+func main() {
+	messages := make(chan string, 2) //2个缓冲
+	messages <- "message1"
+	messages <- "message2"
+	fmt.Println(<-messages) //message1
+	fmt.Println(<-messages) //message2
+}
+```
+
+## 通道同步
+
+C++程序员肯定直到线程同步，协程同步理解起来当然也很简单
+
+```go
+package main
+
+import (
+	"fmt"
+	"time"
+)
+
+// 接收通道bool型，形参命名为done
+func worker(done chan bool) {
+	fmt.Println("working...")
+	time.Sleep(time.Second)
+	fmt.Println("done")
+	done <- true
+}
+
+func main() {
+	done := make(chan bool, 1)
+	go worker(done)
+	<-done //阻塞
+}
+
+//working...
+//等三秒
+//done
+```
+
+## 通道方向
+
+当使用通道作为函数的参数时，可以指定通道是否为只读或只写，该特性可以提升程序的类型安全。
+
+```go
+package main
+
+import "fmt"
+
+//只写
+func ping(pings chan<- string, msg string) {
+	pings <- msg
+}
+
+//pings只读,pongs只写
+func pong(pings <-chan string, pongs chan<- string) {
+	msg := <-pings
+	pongs <- msg
+}
+
+func main() {
+	pings := make(chan string, 1)
+	pongs := make(chan string, 1)
+	ping(pings, "passed message")
+	pong(pings, pongs)
+	fmt.Println(<-pongs) //passed message
+}
+```
+
+## 通道选择器
+
+Go 的选择器(select)可以同时等待多个通道操作。有点像 C++的 select IO 多路复用。
+
+```go
+package main
+
+import (
+	"fmt"
+	"time"
+)
+
+func main() {
+	c1 := make(chan string)
+	c2 := make(chan string)
+	go func() {
+		time.Sleep(1 * time.Second)
+		c1 <- "one"
+	}()
+	go func() {
+		time.Sleep(2 * time.Second)
+		c2 <- "two"
+	}()
+	for i := 0; i < 2; i++ {
+		fmt.Println("select ", i)
+		select {
+		case msg1 := <-c1:
+			fmt.Println("received", msg1)
+		case msg2 := <-c2:
+			fmt.Println("received", msg2)
+		}
+	}
+}
+/*
+select  0
+received one
+select  1
+received two
+*/
+```
+
+## 超时处理
+
+超时 对于一个需要连接外部资源， 或者有耗时较长的操作的程序而言是很重要的。 得益于通道和 select，在 Go 中实现超时操作是简洁而优雅的。更像 C++ IO 多路复用超时处理了。
+
+select 是阻塞的。
+
+```go
+package main
+
+import (
+	"fmt"
+	"time"
+)
+
+func main() {
+	fmt.Println("select 1")
+	c1 := make(chan string, 1)
+	go func() {
+		time.Sleep(2 * time.Second)
+		c1 <- "result 1"
+	}()
+	select {
+	case res := <-c1:
+		fmt.Println(res)
+	case <-time.After(1 * time.Second):
+		fmt.Println("timeout 1")
+	}
+	fmt.Println("select 2")
+	c2 := make(chan string, 1)
+	go func() {
+		time.Sleep(2 * time.Second)
+		c2 <- "result 2"
+	}()
+	select {
+	case res := <-c2:
+		fmt.Println(res)
+	case <-time.After(3 * time.Second):
+		fmt.Println("timeout 2")
+	}
+}
+/*
+select 1
+timeout 1
+select 2
+result 2
+*/
+```
+
+## 非阻塞通道操作
+
+有非阻塞 IO 肯定有非阻塞通道喽。常规的通过通道发送和接收数据是阻塞的。 然而，我们可以使用带一个 default 子句的 select 来实现 非阻塞 的发送、接收，甚至是非阻塞的多路 select。
+
+```go
+package main
+
+import "fmt"
+
+func main() {
+	messages := make(chan string)
+	signals := make(chan bool)
+	select {
+	case msg := <-messages:
+		fmt.Println("received message", msg)
+	default:
+		fmt.Println("no message received")
+	}
+	//会直接输出 no message received
+	msg := "hi"
+	select {
+	case messages <- msg:
+		fmt.Println("sent message", msg)
+	default:
+		fmt.Println("no message sent")
+	}
+	//会直接输出 no message sent
+	//因为没有人接收
+	select {
+	case msg := <-messages:
+		fmt.Println("received message", msg)
+	case sig := <-signals:
+		fmt.Println("received signal", sig)
+	default:
+		fmt.Println("no activity")
+	}
+	//直接输出no activity
+}
+```
+
+## 通道的关闭
+
+关闭 一个通道意味着不能再向这个通道发送值了。 该特性可以向通道的接收方传达工作已经完成的信息。
+
+```go
+package main
+
+import "fmt"
+
+func main() {
+	jobs := make(chan int, 3)
+	done := make(chan bool)
+	go func() {
+		//死循环
+		for {
+			j, more := <-jobs
+			if more {
+				fmt.Println("received job", j)
+			} else {
+				fmt.Println("received all jobs")
+				done <- true
+				break
+			}
+		}
+	}()
+	for j := 1; j <= 3; j++ {
+		jobs <- j
+		fmt.Println("sent job", j)
+	}
+	close(jobs)
+	fmt.Println("sent all jobs")
+	fmt.Println(<-done)
+}
+
+// received job 1
+// sent job 1
+// sent job 2
+// sent job 3
+// sent all jobs
+// received job 2
+// received job 3
+// received all jobs
+// true
+```
+
+## 通道的遍历
+
+通道是支持 for 和 range 迭代遍历的
+
+遍历的话用这种方式也不是不行
+
+```go
+for {
+	j, more := <-jobs
+	if more {
+		//
+	} else {
+		//
+		break
+	}
+}
+```
+
+但是 for-range 更像语法糖，里应当只遍历 close 过的通道，一个非空的通道也是可以关闭的，通道中剩下的值仍然可以被接收到。遍历没有 close 的通道会报错。
+
+```go
+package main
+
+import "fmt"
+
+func main() {
+	queue := make(chan string, 2)
+	queue <- "one"
+	queue <- "two"
+	close(queue)
+	for elem := range queue {
+		fmt.Println(elem)
+	}
+}
+// one
+// two
+```
+
+## More
+
+Timer、Ticker、工作池、WaitGroup、速率限制、原子计数器、互斥锁、状态协程、排序、使用函数自定义排序、Panic、Defer、Recover、字符串函数、字符串格式化、文本模板、正则表达式、JSON、XML、时间、时间戳、时间的格式化和解析、随机数、数字解析、URL 解析、SHA256 散列、Base64 编码、读文件、写文件
+、行过滤器、文件路径、目录、临时文件和目录、单元测试和基准测试、命令行参数、命令行标志、命令行子命令、环境变量、HTTP 客户端、HTTP 服务端、Context、生成进程、执行进程、信号、退出
