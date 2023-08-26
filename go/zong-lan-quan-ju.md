@@ -1577,7 +1577,245 @@ func main() {
 // two
 ```
 
-## More
+## Timer
 
-Timer、Ticker、工作池、WaitGroup、速率限制、原子计数器、互斥锁、状态协程、排序、使用函数自定义排序、Panic、Defer、Recover、字符串函数、字符串格式化、文本模板、正则表达式、JSON、XML、时间、时间戳、时间的格式化和解析、随机数、数字解析、URL 解析、SHA256 散列、Base64 编码、读文件、写文件
-、行过滤器、文件路径、目录、临时文件和目录、单元测试和基准测试、命令行参数、命令行标志、命令行子命令、环境变量、HTTP 客户端、HTTP 服务端、Context、生成进程、执行进程、信号、退出
+Go 有内置的定时器
+
+timer1 是从构造开始计时的。当 timer1.C 的通道接收到数据时，表示定时器已经触发，而不是在接收到数据时开始计时。timer.C 中的 C 是 Channel（通道）的缩写。
+
+```go
+package main
+import (
+	"fmt"
+	"time"
+)
+func main() {
+	timer1 := time.NewTimer(2 * time.Second)
+	<-timer1.C
+	fmt.Println("Timer 1 fired")
+}
+```
+
+在 main 函数中，我们创建了一个名为 timer2 的定时器，它将在 1 秒后触发。使用了一个匿名函数来作为一个 goroutine（并发执行的函数）。在这个 goroutine 中，我们使用 <-timer2.C 语句从 timer2 的通道中接收数据。当定时器触发时，这个语句会解除阻塞，从而执行后续的代码。
+
+调用了 timer2.Stop() 方法来停止定时器。如果定时器成功停止，返回值 stop2 会为 true，我们将打印出 "Timer 2 stopped"。协程中的`<-timer2.C`并不会返回。
+
+```go
+package main
+import (
+	"fmt"
+	"time"
+)
+func main() {
+	timer2 := time.NewTimer(time.Second)
+	go func() {
+		<-timer2.C
+		fmt.Println("Timer 2 fired")
+	}()
+	stop2 := timer2.Stop() //停止定时器
+	//停止timer2成功
+	if stop2 {
+		fmt.Println("Timer 2 stopped")
+	}
+	time.Sleep(3 * time.Second)
+}
+//Timer 2 stopped
+```
+
+## Ticker
+
+打点器是以固定的时间间隔重复执行而准备的。死循环，加定时器，select
+
+```go
+package main
+
+import (
+	"fmt"
+	"time"
+)
+
+func main() {
+	ticker := time.NewTicker(500 * time.Millisecond)
+	done := make(chan bool)
+	go func() {
+		for {
+			select {
+			case <-done:
+				return
+			case t := <-ticker.C:
+				fmt.Println("Tick at", t)
+			}
+		}
+	}()
+	time.Sleep(8000 * time.Millisecond)
+	ticker.Stop()
+	done <- true
+	fmt.Println("Ticker stopped")
+}
+
+/*
+Tick at 2023-08-19 15:22:39.2576045 +0800 CST m=+0.513205701
+Tick at 2023-08-19 15:22:39.7555552 +0800 CST m=+1.011156401
+Tick at 2023-08-19 15:22:40.2530881 +0800 CST m=+1.508689301
+Tick at 2023-08-19 15:22:40.753203 +0800 CST m=+2.008804201
+Tick at 2023-08-19 15:22:41.2539281 +0800 CST m=+2.509529301
+Tick at 2023-08-19 15:22:41.7518864 +0800 CST m=+3.007487601
+Tick at 2023-08-19 15:22:42.2498314 +0800 CST m=+3.505432601
+Tick at 2023-08-19 15:22:42.7499687 +0800 CST m=+4.005569901
+Tick at 2023-08-19 15:22:43.2495641 +0800 CST m=+4.505165301
+Tick at 2023-08-19 15:22:43.749537 +0800 CST m=+5.005138201
+Tick at 2023-08-19 15:22:44.2538916 +0800 CST m=+5.509492801
+Tick at 2023-08-19 15:22:44.7520632 +0800 CST m=+6.007664401
+Tick at 2023-08-19 15:22:45.2503554 +0800 CST m=+6.505956601
+Tick at 2023-08-19 15:22:45.7527025 +0800 CST m=+7.008303701
+Tick at 2023-08-19 15:22:46.2523764 +0800 CST m=+7.507977601
+Tick at 2023-08-19 15:22:46.7510895 +0800 CST m=+8.006690701
+Ticker stopped
+*/
+```
+
+## 工作池
+
+C++通常用线程池来进行 Task 处理，但在 go 中使用协程池会非常便捷
+
+```go
+package main
+
+import (
+	"fmt"
+	"time"
+)
+
+func worker(id int, jobs <-chan int, results chan<- int) {
+	for j := range jobs {
+		fmt.Println("worker", id, "started job")
+		time.Sleep(time.Second) //模拟费时人物
+		fmt.Println("worker", id, "finished job", j)
+		results <- j * 2
+	}
+}
+
+func main() {
+	const numJobs = 10
+	jobs := make(chan int, numJobs)
+	results := make(chan int, numJobs)
+	//建3个worker协程
+	for w := 1; w <= 3; w++ {
+		go worker(w, jobs, results)
+	}
+	for j := 1; j <= 5; j++ {
+		jobs <- j
+	}
+	close(jobs)
+	for i := 1; i <= 5; i++ {
+		fmt.Println(<-results)
+	}
+}
+/*
+worker 3 started job
+worker 1 started job
+worker 2 started job
+worker 2 finished job 3
+worker 2 started job
+worker 1 finished job 2
+worker 1 started job
+6
+4
+worker 3 finished job 1
+2
+worker 1 finished job 5
+worker 2 finished job 4
+10
+8
+*/
+```
+
+## WaitGroup
+
+想要等待多个协程完成，我们可以使用 wait group。像 C++多线程编程里的屏障。
+
+```go
+
+```
+
+## 速率限制
+
+## 原子计数器
+
+## 互斥锁
+
+## 协程状态
+
+## 排序
+
+## 自定义排序
+
+## Panic
+
+## Defer
+
+## Recover
+
+## 字符串函数
+
+## 字符串格式化
+
+## 文本模板
+
+## 正则表达式
+
+## JSON
+
+## XML
+
+## 时间
+
+## 事件戳
+
+## 时间的格式化和解析
+
+## 随机数
+
+## 数字解析
+
+## URL 解析
+
+## SHA256 散列
+
+## Base64 编码
+
+## 读文件
+
+## 写文件
+
+## 行过滤器
+
+## 文件路径
+
+## 目录
+
+## 临时文件和目录
+
+## 单元测试和基准测试
+
+## 命令行参数
+
+## 命令行标识
+
+## 命令行命令
+
+## 环境变量
+
+## HTTP 客户端
+
+## HTTP 服务端
+
+## Context
+
+## 生成进程
+
+## 执行进程
+
+## 信号
+
+## 退出
