@@ -1735,10 +1735,111 @@ worker 2 finished job 4
 想要等待多个协程完成，我们可以使用 wait group。像 C++多线程编程里的屏障。
 
 ```go
+package main
 
+import (
+	"fmt"
+	"sync"
+	"time"
+)
+
+func worker(id int) {
+	fmt.Println("Worker %d starting", id)
+	time.Sleep(time.Second)
+	fmt.Println("Worker %d done", id)
+}
+
+func main() {
+	var wg sync.WaitGroup
+	for i := 1; i <= 5; i++ {
+		//在等待组中添加一个等待任务，表示有一个任务需要等待。
+		wg.Add(1)
+		//这一行的目的是为了避免在闭包中捕获到循环变量 i 的引用。由于闭包是在稍后异步执行的，如果不保存 i 的当前值，所有的闭包都会捕获相同的 i 值，导致打印的 id 不正确。
+		i := i
+		go func() {
+			//使用 defer 延迟执行，当协程执行完成时，会调用 wg.Done() 来通知等待组，表示一个任务已经完成。
+			defer wg.Done()
+			worker(i)
+		}()
+	}
+	//等待等待组中的所有任务完成。这个函数会一直阻塞，直到等待组中的计数器降为零，也就是所有工作任务都完成了。
+	wg.Wait()
+}
+
+/*
+Worker %d starting 5
+Worker %d starting 2
+Worker %d starting 3
+Worker %d starting 4
+Worker %d starting 1
+Worker %d done 1
+Worker %d done 4
+Worker %d done 3
+Worker %d done 2
+Worker %d done 5
+*/
 ```
 
 ## 速率限制
+
+速率限制是控制服务资源利用和质量的重要机制，基于协程、通道和打点器
+
+```go
+package main
+
+import (
+	"fmt"
+	"time"
+)
+
+func main() {
+	requests := make(chan int, 5)
+	for i := 1; i <= 5; i++ {
+		requests <- i
+	}
+	close(requests)
+	limiter := time.Tick(200 * time.Millisecond)
+
+	//没200ms才会loop一次
+	for req := range requests {
+		<-limiter
+		fmt.Println("request", req, time.Now())
+	}
+
+	burstyLimiter := make(chan time.Time, 3)
+	for i := 0; i < 3; i++ {
+		burstyLimiter <- time.Now()
+	}
+	//协程定时发出信号
+	go func() {
+		for t := range time.Tick(200 * time.Millisecond) {
+			burstyLimiter <- t
+		}
+	}()
+	burstyRequests := make(chan int, 5)
+	for i := 1; i <= 5; i++ {
+		burstyRequests <- i
+	}
+	close(burstyRequests)
+	for req := range burstyRequests {
+		<-burstyLimiter
+		fmt.Println("request", req, time.Now())
+	}
+}
+
+/*
+request 1 2023-09-02 02:13:21.4947625 +0800 CST m=+0.206486401
+request 2 2023-09-02 02:13:21.7054319 +0800 CST m=+0.417155801
+request 3 2023-09-02 02:13:21.8956622 +0800 CST m=+0.607386101
+request 4 2023-09-02 02:13:22.094804 +0800 CST m=+0.806527901
+request 5 2023-09-02 02:13:22.2934502 +0800 CST m=+1.005174101
+request 1 2023-09-02 02:13:22.2934502 +0800 CST m=+1.005174101
+request 2 2023-09-02 02:13:22.2939621 +0800 CST m=+1.005686001
+request 3 2023-09-02 02:13:22.2939621 +0800 CST m=+1.005686001
+request 4 2023-09-02 02:13:22.5088651 +0800 CST m=+1.220589001
+request 5 2023-09-02 02:13:22.6968576 +0800 CST m=+1.408581501
+*/
+```
 
 ## 原子计数器
 
