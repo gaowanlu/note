@@ -1843,31 +1843,768 @@ request 5 2023-09-02 02:13:22.6968576 +0800 CST m=+1.408581501
 
 ## 原子计数器
 
+C++新版本中其实也有了原子整型，GO 中也不例外
+
+```go
+package main
+
+import (
+	"fmt"
+	"sync"
+	"sync/atomic"
+)
+
+func main() {
+	var ops uint64
+	ops = 0
+	var wg sync.WaitGroup
+	for i := 0; i < 50; i++ {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			for c := 0; c < 1000; c++ {
+				atomic.AddUint64(&ops, 1)
+			}
+		}()
+	}
+	wg.Wait()
+	fmt.Println("ops:", ops)
+}
+
+//ops:50000
+```
+
 ## 互斥锁
 
-## 协程状态
+写 C++的肯定知道 posix 的 mutex 与 C++并发标准库的 mutex,Go 中当然也会有。
+
+```go
+package main
+
+import (
+	"fmt"
+	"sync"
+)
+
+type Container struct {
+	mu       sync.Mutex
+	counters map[string]int
+}
+
+func (c *Container) inc(name string) {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	c.counters[name]++
+}
+
+func main() {
+	c := Container{
+		counters: map[string]int{"a": 0, "b": 0},
+	}
+	var wg sync.WaitGroup
+	doIncrement := func(name string, n int) {
+		for i := 0; i < n; i++ {
+			c.inc(name)
+		}
+		wg.Done()
+	}
+	wg.Add(3)
+	go doIncrement("a", 10000)
+	go doIncrement("a", 10000)
+	go doIncrement("b", 10000)
+	wg.Wait()
+	fmt.Println(c.counters)
+}
+
+//map[a:20000 b:10000]
+```
+
+## 状态协程
+
+除了使用互斥量，其实还可以利用通道和协程来实现对某些数据的互斥访问,在游戏开发中常常用这种思想，来实现并发,就像使用消息队列一样，多个线程发出操作请求，但处理请求的服务是单线程的。
+
+```go
+package main
+
+import (
+	"fmt"
+	"math/rand"
+	"sync/atomic"
+	"time"
+)
+
+type readOp struct {
+	key  int
+	resp chan int
+}
+
+type writeOp struct {
+	key  int
+	val  int
+	resp chan bool
+}
+
+func main() {
+	var readOps uint64
+	var writeOps uint64
+	reads := make(chan readOp)
+	writes := make(chan writeOp)
+	//消费者
+	go func() {
+		var state = make(map[int]int)
+		for {
+			select {
+			case read := <-reads:
+				atomic.AddUint64(&readOps, 1)
+				read.resp <- state[read.key]
+			case write := <-writes:
+				atomic.AddUint64(&writeOps, 1)
+				state[write.key] = write.val
+				write.resp <- true
+			}
+		}
+	}()
+	//并发读
+	for r := 0; r < 100; r++ {
+		go func() {
+			for {
+				read := readOp{
+					key:  rand.Intn(5),
+					resp: make(chan int)}
+				reads <- read
+				<-read.resp
+				time.Sleep(time.Millisecond)
+			}
+		}()
+	}
+	//并发写
+	for w := 0; w < 10; w++ {
+		go func() {
+			for {
+				write := writeOp{
+					key:  rand.Intn(5),
+					val:  rand.Intn(100),
+					resp: make(chan bool)}
+				writes <- write
+				<-write.resp
+				time.Sleep(time.Millisecond)
+			}
+		}()
+	}
+	time.Sleep(time.Second)
+	readOpsFinal := atomic.LoadUint64(&readOps)
+	fmt.Println("readOps:", readOpsFinal)
+	writeOpsFinal := atomic.LoadUint64(&writeOps)
+	fmt.Println("writeOps:", writeOpsFinal)
+}
+```
 
 ## 排序
 
+Go 的 sort 包实现了内建及用户自定义数据类型的排序功能。
+
+```go
+package main
+
+import (
+	"fmt"
+	"sort"
+)
+
+func main() {
+	strs := []string{"c", "a", "b"}
+	sort.Strings(strs)
+	fmt.Println("Strings:", strs)
+	ints := []int{7, 2, 4}
+	sort.Ints(ints)
+	fmt.Println("Ints:", ints)
+	s := sort.IntsAreSorted(ints)
+	fmt.Println("Sorted:", s)
+}
+
+/*
+Strings: [a b c]
+Ints: [2 4 7]
+Sorted: true
+*/
+```
+
 ## 自定义排序
+
+数据类型需要实现 Len、Swap、Less 方法
+
+```go
+package main
+
+import (
+	"fmt"
+	"sort"
+)
+
+// byLength如果像支持sort则需要
+// 实现sort.Interface接口
+// Len Less Swap方法
+type byLength []string
+
+func (s byLength) Len() int {
+	return len(s)
+}
+
+func (s byLength) Swap(i, j int) {
+	s[i], s[j] = s[j], s[i]
+}
+
+func (s byLength) Less(i, j int) bool {
+	return len(s[i]) < len(s[j])
+}
+
+func main() {
+	fruits := []string{"peach", "banana", "kiwi"}
+	sort.Sort(byLength(fruits))
+	fmt.Println(fruits)
+}
+
+//[kiwi peach banana]
+```
 
 ## Panic
 
+，panic 是一种运行时异常，用于表示程序发生了一个不可恢复的错误或紧急情况。
+
+```go
+package main
+
+import "fmt"
+
+func test1() {
+	panic("This is a panic")
+}
+
+func test2() {
+	test1()
+	fmt.Println("test 2")
+}
+
+func main() {
+	test2()
+	fmt.Println("hello world")
+}
+
+/*
+panic: This is a panic
+
+goroutine 1 [running]:
+main.test1(...)
+        c:/Users/gaowanlu/Desktop/MyProject/note/testcode/go/main.go:6
+main.test2()
+        c:/Users/gaowanlu/Desktop/MyProject/note/testcode/go/main.go:10 +0x27
+main.main()
+        c:/Users/gaowanlu/Desktop/MyProject/note/testcode/go/main.go:15 +0x19
+exit status 2
+*/
+```
+
+panic 会立即停止当前函数的执行，并开始执行调用栈上的延迟（deferred）函数
+
+```go
+package main
+
+import "fmt"
+
+func main() {
+	defer func() {
+		if r := recover(); r != nil {
+			fmt.Println("Recovered from panic:", r)
+		}
+	}()
+	panic("This is a panic")
+}
+
+//Recovered from panic: This is a panic
+```
+
 ## Defer
+
+Defer 用于确保程序在执行完成后，会调用某个函数，一般是执行清理工作。 Defer 的用途跟其他语言的 ensure 或 finally 类似。
+
+```go
+package main
+
+import (
+	"fmt"
+	"os"
+)
+
+func main() {
+	f := createFile("./tmp/defer.txt")
+	defer closeFile(f)
+	writeFile(f)
+}
+
+func createFile(p string) *os.File {
+	fmt.Println("creating")
+	f, err := os.Create(p)
+	if err != nil {
+		panic(err)
+	}
+	return f
+}
+
+func writeFile(f *os.File) {
+	fmt.Println("writing")
+	fmt.Fprintln(f, "data")
+}
+
+func closeFile(f *os.File) {
+	fmt.Println("closing")
+	err := f.Close()
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "error:%v\n", err)
+		os.Exit(1)
+	}
+}
+
+/*
+creating
+writing
+closing
+*/
+```
 
 ## Recover
 
+Go 通过使用 recover 内置函数，可以从 panic 中 恢复 recover 。 recover 可以阻止 panic 中止程序，并让它继续执行。panic->defer->end
+
+```go
+package main
+
+import "fmt"
+
+func mayPanic() {
+	panic("a problem")
+}
+
+func main() {
+	defer func() {
+		if r := recover(); r != nil {
+			fmt.Println("Recovered,Error:\n", r)
+		}
+	}()
+	mayPanic()
+	fmt.Println("After mayPanic()")
+	//这行代码不会执行，因为 mayPanic 函数会调用 panic。 main 程序的执行在 panic 点停止，并在继续处理完 defer 后结束。
+}
+
+/*
+Recovered,Error:
+ a problem
+*/
+```
+
+下面的代码，就会输出 After mayPanic,因为所有 panic 已经在 test 函数内处理过了。
+
+```go
+package main
+
+import "fmt"
+
+func mayPanic() {
+	panic("a problem")
+}
+
+func test() {
+	defer func() {
+		if r := recover(); r != nil {
+			fmt.Println("Recovered,Error:\n", r)
+		}
+	}()
+	mayPanic()
+}
+
+func main() {
+	test()
+	fmt.Println("After mayPanic()")
+}
+
+/*
+Recovered,Error:
+ a problem
+After mayPanic()
+*/
+```
+
 ## 字符串函数
+
+标准库的 strings 包提供了很多有用的字符串相关的函数。
+
+```go
+package main
+
+import (
+	"fmt"
+	s "strings"
+)
+
+var p = fmt.Println
+
+func main() {
+	//包含Contains:  true
+	p("Contains: ", s.Contains("test", "es"))
+	//子串数 Count:  2
+	p("Count: ", s.Count("test", "t"))
+	//前缀 HasPrefix: true
+	p("HasPrefix: ", s.HasPrefix("test", "tes"))
+	//后缀 HasSuffix:  true
+	p("HasSuffix: ", s.HasSuffix("test", "st"))
+	//Index:  1
+	p("Index: ", s.Index("test", "es"))
+	//Join:  a-b
+	p("Join: ", s.Join([]string{"a", "b"}, "-"))
+	//Repeat:  abcabcabcabcabc
+	p("Repeat: ", s.Repeat("abc", 5))
+	//Replace:  abcdkkfff
+	p("Replace: ", s.Replace("abcdeeeefff", "ee", "k", -1))
+	//Replace:  abcdeekkk
+	p("Replace: ", s.Replace("abcdeefff", "f", "k", 3))
+	//Replace:  abcdeekkf
+	p("Replace: ", s.Replace("abcdeefff", "f", "k", 2))
+	//Split:  [a b c d e]
+	p("Split: ", s.Split("a-b-c-d-e", "-"))
+	//ToLower:  test
+	p("ToLower: ", s.ToLower("TEST"))
+	//ToUpper:  TEST
+	p("ToUpper: ", s.ToUpper("test"))
+	//Len:  5
+	p("Len: ", len("hello"))
+	//Char: a
+	fmt.Printf("Char: %c\n", "abcde"[0])
+	//Char: b
+	fmt.Printf("Char: %c\n", "abcde"[1])
+}
+```
 
 ## 字符串格式化
 
+Go 在传统的 printf 中对字符串格式化提供了优异的支持。
+
+```go
+package main
+
+import (
+	"fmt"
+	"os"
+)
+
+type point struct {
+	x, y int
+}
+
+func main() {
+	p := point{1, 2}
+	p.x = 4
+	//对象打印
+	//struct1: {4 2}
+	fmt.Printf("struct1: %v\n", p)
+	//struct2: {x:4 y:2}
+	fmt.Printf("struct2: %+v\n", p)
+	//带有类型 struct3: main.point{x:4, y:2}
+	fmt.Printf("struct3: %#v\n", p)
+	//type: main.point
+	fmt.Printf("type: %T\n", p)
+	//格式化布尔值 bool: true
+	fmt.Printf("bool: %t\n", true)
+	//整数 int: 123
+	fmt.Printf("int: %d\n", 123)
+	//二进制 bin: 1110
+	fmt.Printf("bin: %b\n", 14)
+	//字符 char: !
+	fmt.Printf("char: %c\n", 33)
+	//十六进制 hex: 1c8
+	fmt.Printf("hex: %x\n", 456)
+	//浮点 float1: 78.900000
+	fmt.Printf("float1: %f\n", 78.9)
+	//科学计数法
+	//float2: 1.234000e+08
+	fmt.Printf("float2: %e\n", 123400000.0)
+	//float3: 1.234000E+08
+	fmt.Printf("float3: %E\n", 123400000.0)
+	//字符串转义 str1: "string"
+	fmt.Printf("str1: %s\n", "\"string\"")
+	//字符串不转义 str2: "\"string\""
+	fmt.Printf("str2: %q\n", "\"string\"")
+	//%x 输出使用 base-16 编码的字符串， 每个字节使用 2 个字符表示
+	fmt.Printf("str3: %x\n", "hex this")
+	//打印指针 pointer: 0xc00001a0c0
+	fmt.Printf("pointer: %p\n", &p)
+	//6位数字空间 右对齐
+	//width1: |    12|   345|
+	fmt.Printf("width1: |%6d|%6d|\n", 12, 345)
+	//6位整数部分, . 占用一个 小数部分占2个
+	//width2: |  1.20|  3.45|
+	fmt.Printf("width2: |%6.2f|%6.2f|\n", 1.2, 3.45)
+	//和width2一样，只不过为左对齐
+	//width3: |1.20  |3.45  |
+	fmt.Printf("width3: |%-6.2f|%-6.2f|\n", 1.2, 3.45)
+
+	//6个字符空间，右对齐
+	//width4: |   foo|     b|
+	fmt.Printf("width4: |%6s|%6s|\n", "foo", "b")
+	//左对齐
+	//width5: |foo   |b     |
+	fmt.Printf("width5: |%-6s|%-6s|\n", "foo", "b")
+
+	//格式化到字符串
+	s := fmt.Sprintf("sprintf: a %s", "string")
+	fmt.Println(s) //sprintf: a string
+
+	//格式化到文件描述符,os.Stderr其实就是文件指针
+	//io: an sprintf: a string
+	fmt.Fprintf(os.Stderr, "io: an %s\n", s)
+
+}
+```
+
 ## 文本模板
+
+Go 使用 text/template 包为创建动态内容或向用户显示自定义输出提供了内置支持。 一个名为 html/template 的兄弟软件包提供了相同的 API，但具有额外的安全功能，被用于生成 HTML。
+
+C++有个第三方库挺好用，https://github.com/pantor/inja
+
+```go
+package main
+
+import (
+	"html/template"
+	"os"
+)
+
+func main() {
+	//创建名为t1的模板
+	t1 := template.New("t1")
+	//解析模板字符串
+	t1, err := t1.Parse("Value is {{.}}\n")
+	if err != nil {
+		panic(err)
+	}
+	/*
+		template.Must函数是一个实用函数，它用于将模板解析过程和错误检查结合在一起。如果t1.Parse成功，template.Must返回t1，否则会引发panic并显示错误消息。这样可以确保模板的解析过程不会失败，否则程序会崩溃。
+	*/
+	t1 = template.Must(t1.Parse("Value: {{.}}\n"))
+	/*
+		Value: some text
+		Value: 5
+		Value: [Go Rust C&#43;&#43; C#]
+	*/
+	t1.Execute(os.Stdout, "some text")
+	t1.Execute(os.Stdout, 5)
+	t1.Execute(os.Stdout, []string{
+		"Go",
+		"Rust",
+		"C++",
+		"C#",
+	})
+
+	//封装模板构造
+	Create := func(name, t string) *template.Template {
+		return template.Must(template.New(name).Parse(t))
+	}
+
+	//如果数据是一个结构体，我们可以使用 {{.FieldName}} 动作来访问其字段。 这些字段应该是导出的，以便在模板执行时可访问。
+	t2 := Create("t2", "Name: {{.Name}}\n")
+	//Name: Jane Doe
+	t2.Execute(os.Stdout, struct {
+		Name string
+	}{"Jane Doe"})
+	//Name: Mickey Mouse
+	t2.Execute(os.Stdout, map[string]string{
+		"Name": "Mickey Mouse",
+	})
+	//这同样适用于 map；在 map 中没有限制键名的大小写。
+
+	//if/else 提供了条件执行模板。如果一个值是类型的默认值，例如 0、空字符串、空指针等， 则该值被认为是 false。
+	//这个示例演示了另一个模板特性：使用 - 在动作中去除空格。
+	t3 := Create("t3",
+		"{{if . -}} yes {{else -}} no {{end}}\n")
+	//yes
+	t3.Execute(os.Stdout, "not empty")
+	//no
+	t3.Execute(os.Stdout, "")
+
+	//切片 在模板中使用Range
+	t4 := Create("t4", "Range:{{range .}}{{.}} {{end}}\n")
+	t4.Execute(os.Stdout, []string{
+		"GO",
+		"Rust",
+		"C++",
+		"C#",
+	})
+	//Range:GO Rust C&#43;&#43; C#
+}
+```
 
 ## 正则表达式
 
+Go 提供了内建的正则表达式支持。C++当然也有支持的。
+
+```go
+package main
+
+import (
+	"bytes"
+	"fmt"
+	"regexp"
+)
+
+func main() {
+	//正则匹配
+	match, _ := regexp.MatchString("p([a-z]+)ch", "peach")
+	fmt.Println(match) //true
+
+	//构造正则表达式
+	r, _ := regexp.Compile("p([a-z]+)ch")
+	fmt.Println(r.MatchString("peach")) //true
+
+	//搜索 返回第一个
+	//peach
+	fmt.Println(r.FindString("peach punch"))
+	//[2 7] 下标[2,7)
+	fmt.Println(r.FindStringIndex("a peach punch"))
+
+	//[peach ea]
+	fmt.Println(r.FindStringSubmatch("peach punch"))
+	//[0 5 1 3]
+	fmt.Println(r.FindStringSubmatchIndex("peach punch"))
+
+	//搜索多个
+	//[peach punch]
+	fmt.Println(r.FindAllString("peach punch pinch", 2))
+	//搜索所有
+	//[peach punch pinch]
+	fmt.Println(r.FindAllString("peach punch pinch", -1))
+	//all: [[0 5 1 3] [6 11 7 9] [12 17 13 15]]
+	fmt.Println("all:", r.FindAllStringSubmatchIndex(
+		"peach punch pinch", -1))
+
+	//true
+	fmt.Println(r.Match([]byte("peach")))
+
+	//MustCompile失败则会panic
+	r = regexp.MustCompile("p([a-z]+)ch")
+	fmt.Println("regexp:", r) //regexp: p([a-z]+)ch
+
+	//正则替换
+	//a <fruit>
+	fmt.Println(r.ReplaceAllString("a peach", "<fruit>"))
+
+	//正则回调替换
+	//a PEACH
+	in := []byte("a peach")
+	out := r.ReplaceAllFunc(in, bytes.ToUpper)
+	fmt.Println(string(out))
+}
+```
+
 ## JSON
 
+Go 提供内建的 JSON 编码解码（序列化反序列化）支持， 包括内建及自定义类型与 JSON 数据之间的转化。Awesome!!!
+
+```go
+package main
+
+import (
+	"encoding/json"
+	"fmt"
+	"os"
+)
+
+type response1 struct {
+	Page   int
+	Fruits []string
+}
+
+type resposne2 struct {
+	Page   int      `json:"page"`
+	Fruits []string `json:"fruits"`
+}
+
+func main() {
+	//序列化json.Marshal
+
+	//bool
+	bolB, _ := json.Marshal(true)
+	fmt.Println(string(bolB)) //true
+
+	//int
+	intB, _ := json.Marshal(1)
+	fmt.Println(string(intB)) //1
+
+	//float
+	fltB, _ := json.Marshal(2.34)
+	fmt.Println(string(fltB)) //2.34
+
+	//string
+	strB, _ := json.Marshal("gopher")
+	fmt.Println(string(strB)) //"gopher"
+
+	//array
+	slcD := []string{"apple", "peach", "pear"}
+	slcB, _ := json.Marshal(slcD)
+	fmt.Println(string(slcB)) //["apple","peach","pear"]
+
+	//map
+	mapD := map[string]int{"apple": 5, "lettuce": 7}
+	mapB, _ := json.Marshal(mapD)
+	fmt.Println(string(mapB)) //{"apple":5,"lettuce":7}
+
+	//object
+	res1D := &response1{
+		Page:   1,
+		Fruits: []string{"apple", "peach", "pear"}}
+	res1B, _ := json.Marshal(res1D)
+	//{"Page":1,"Fruits":["apple","peach","pear"]}
+	fmt.Println(string(res1B))
+
+	res2D := &resposne2{
+		Page:   1,
+		Fruits: []string{"apple", "peach", "pear"}}
+	res2B, _ := json.Marshal(res2D)
+	//{"page":1,"fruits":["apple","peach","pear"]}
+	fmt.Println(string(res2B))
+
+	byt := []byte(`{"num":6.13,"strs":["a","b"]}`)
+	var dat map[string]interface{}
+	if err := json.Unmarshal(byt, &dat); err != nil {
+		panic(err)
+	}
+	//map[num:6.13 strs:[a b]]
+	fmt.Println(dat)
+
+	num := dat["num"].(float64)
+	fmt.Println(num) //6.13
+
+	strs := dat["strs"].([]interface{})
+	str1 := strs[0].(string)
+	fmt.Println(str1) //a
+
+	str := `{"page": 1, "fruits": ["apple", "peach"]}`
+	res := resposne2{}
+	json.Unmarshal([]byte(str), &res)
+	fmt.Println(res)           //{1 [apple peach]}
+	fmt.Println(res.Fruits[0]) //apple
+
+	enc := json.NewEncoder(os.Stdout)
+	d := map[string]int{"apple": 5, "lettuce": 7}
+	enc.Encode(d) //{"apple":5,"lettuce":7}
+}
+```
+
 ## XML
+
+Go 通过 encoding.xml 包为 XML 和 类-XML 格式提供了内建支持。
+
+```go
+
+```
 
 ## 时间
 
