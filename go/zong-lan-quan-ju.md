@@ -2600,15 +2600,164 @@ func main() {
 
 ## XML
 
-Go 通过 encoding.xml 包为 XML 和 类-XML 格式提供了内建支持。
+Go 通过 encoding.xml 包为 XML 和 类-XML 格式提供了内建支持。总之很鸡肋。
 
 ```go
+package main
 
+import (
+	"encoding/xml"
+	"fmt"
+)
+
+type Plant struct {
+	XMLName xml.Name `xml:"plant"`
+	Id      int      `xml:"id,attr"`
+	Name    string   `xml:"name"`
+	Origin  []string `xml:"Origin"`
+}
+
+func (p Plant) String() string {
+	return fmt.Sprintf("Plant id=%v,name=%v,origin=%v", p.Id, p.Name, p.Origin)
+}
+
+func main() {
+	coffee := &Plant{Id: 27, Name: "Coffee"}
+	coffee.Origin = []string{"AAA", "BBB"}
+	out, _ := xml.MarshalIndent(coffee, " ", " ")
+	fmt.Println(string(out))
+	/*
+		<plant id="27">
+		  <name>Coffee</name>
+		  <Origin>AAA</Origin>
+		  <Origin>BBB</Origin>
+		</plant>
+	*/
+	fmt.Println(xml.Header + string(out))
+	/*
+		<?xml version="1.0" encoding="UTF-8"?>
+		 <plant id="27">
+		  <name>Coffee</name>
+		  <Origin>AAA</Origin>
+		  <Origin>BBB</Origin>
+		 </plant>
+	*/
+	var p Plant
+	if err := xml.Unmarshal(out, &p); err != nil {
+		panic(err)
+	}
+	fmt.Println(p)
+	//Plant id=27,name=Coffee,origin=[AAA BBB]
+
+	tomato := &Plant{Id: 81, Name: "Tomato"}
+	tomato.Origin = []string{"Mexico", "California"}
+
+	type Nesting struct {
+		XMLName xml.Name `xml:"nesting"`
+		Plants  []*Plant `xml:"parent>child>plant"`
+	}
+	nesting := &Nesting{}
+	nesting.Plants = []*Plant{coffee, tomato}
+	out, _ = xml.MarshalIndent(nesting, " ", " ")
+	fmt.Println(string(out))
+	/*
+		<nesting>
+		  <parent>
+		   <child>
+		    <plant id="27">
+		     <name>Coffee</name>
+		     <Origin>AAA</Origin>
+		     <Origin>BBB</Origin>
+		    </plant>
+		    <plant id="81">
+		     <name>Tomato</name>
+		     <Origin>Mexico</Origin>
+		     <Origin>California</Origin>
+		    </plant>
+		   </child>
+		  </parent>
+		</nesting>
+	*/
+}
 ```
 
 ## 时间
 
+Go 为时间（time）和时间段（duration）提供了大量的支持；
+
+```go
+package main
+
+import (
+	"fmt"
+	"time"
+)
+
+func main() {
+	p := fmt.Println
+	now := time.Now()
+	p(now) //2023-09-06 23:17:04.2315883 +0800 CST m=+0.003479201
+	then := time.Date(2009, 11, 17, 20, 34, 58, 651387237, time.UTC)
+	p(then) //2009-11-17 20:34:58.651387237 +0000 UTC
+
+	p(then.Year())       //2009
+	p(then.Month())      //November
+	p(then.Day())        //17
+	p(then.Hour())       //20
+	p(then.Minute())     //34
+	p(then.Second())     //58
+	p(then.Nanosecond()) //651387237
+	p(then.Location())   //UTC
+	p(then.Weekday())    //Tuesday
+
+	p(then.Before(now)) //true
+	p(then.After(now))  //false
+	p(then.Equal(then)) //true
+
+	//时间间隔
+	diff := now.Sub(then)
+	p(diff)               //120978h46m45.054955063s
+	p(diff.Hours())       //120978.79400789388
+	p(diff.Minutes())     //7.258727640473633e+06
+	p(diff.Seconds())     //4.35523658428418e+08
+	p(diff.Nanoseconds()) //435523658428417963
+
+	p(then.Add(diff))  //2023-09-06 15:23:31.7993186 +0000 UTC
+	p(then.Add(-diff)) //1996-01-30 01:46:25.503455874 +0000 UTC
+
+}
+```
+
 ## 事件戳
+
+一般程序会有获取 Unix 时间 的秒数，毫秒数，或者微秒数的需求。  
+分别使用 time.Now 的 Unix 和 UnixNano， 来获取从 Unix 纪元起，到现在经过的秒数和纳秒数。  
+注意 UnixMillis 是不存在的，所以要得到毫秒数的话， 你需要手动的从纳秒转化一下。
+
+```go
+package main
+
+import (
+	"fmt"
+	"time"
+)
+
+func main() {
+	now := time.Now()
+	secs := now.Unix()
+	nanos := now.UnixNano()
+	fmt.Println(now)
+
+	millis := nanos / 1000000
+	fmt.Println(secs)   //1694014017
+	fmt.Println(millis) //1694014017306
+	fmt.Println(nanos)  //1694014017306408400
+
+	//你也可以将 Unix 纪元起的整数秒或者纳秒转化到相应的时间。
+	fmt.Println(time.Unix(secs, 0))  //2023-09-06 23:28:28 +0800 CST
+	fmt.Println(time.Unix(0, nanos)) //2023-09-06 23:28:28.5384755 +0800 CST
+}
+```
 
 ## 时间的格式化和解析
 
