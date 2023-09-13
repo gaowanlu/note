@@ -2761,11 +2761,168 @@ func main() {
 
 ## 时间的格式化和解析
 
+Go 支持通过基于描述模板的时间格式化与解析。
+
+```go
+package main
+
+import (
+	"fmt"
+	"time"
+)
+
+func main() {
+	p := fmt.Println
+
+	t := time.Now()
+	//2023-09-13T22:48:00+08:00
+	p(t.Format(time.RFC3339))
+
+	t1, e := time.Parse(
+		time.RFC3339,
+		"2012-11-01T22:08:41+00:00")
+	if e == nil {
+		p(t1) //2012-11-01 22:08:41 +0000 +0000
+	}
+	//10:50PM
+	p(t.Format("3:04PM"))
+	//Wed Sep 13 22:52:01 2023
+	p(t.Format("Mon Jan _2 15:04:05 2006"))
+	//2023-09-13T22:56:01.126711+08:00
+	p(t.Format("2006-01-02T15:04:05.999999-07:00"))
+	form := "3 04 PM"
+	t2, e := time.Parse(form, "8 41 PM")
+	if e == nil {
+		p(t2) //0000-01-01 20:41:00 +0000 UTC
+	}
+
+	//2023-09-13T22:57:56-00:00
+	fmt.Printf("%d-%02d-%02dT%02d:%02d:%02d-00:00\n",
+		t.Year(), t.Month(), t.Day(),
+		t.Hour(), t.Minute(), t.Second())
+
+	ansic := "Mon Jan _2 15:04:05 2006"
+	t, e = time.Parse(ansic, "8:41PM")
+	p(e) //parsing time "8:41PM" as "Mon Jan _2 15:04:05 2006": cannot parse "8:41PM" as "Mon"
+	p(t) //0001-01-01 00:00:00 +0000 UTC
+}
+```
+
 ## 随机数
+
+Go 的 math/rand 包提供了伪随机数生成器。
+
+```go
+package main
+
+import (
+	"fmt"
+	"math/rand"
+	"time"
+)
+
+func main() {
+	//rand.Intn 返回一个随机的整数 n，且 0 <= n < 100。
+	fmt.Println(rand.Intn(100)) //85
+	fmt.Println(rand.Intn(100)) //30
+
+	//rand.Float64 返回一个64位浮点数 f，且 0.0 <= f < 1.0。
+	fmt.Println(rand.Float64())           //0.5017169387431317
+	fmt.Println((rand.Float64() * 5) + 5) //[5.0,10.0]
+
+	//种种子
+	s1 := rand.NewSource(time.Now().UnixNano())
+	r1 := rand.New(s1)
+
+	fmt.Println(r1.Intn(100)) //[0,100]
+	fmt.Println(r1.Intn(100)) //[0,100]
+
+	s2 := rand.NewSource(42)
+	r2 := rand.New(s2)
+	fmt.Println(r2.Intn(100)) //5 每次都是5
+
+	s3 := rand.NewSource(42)
+	r3 := rand.New(s3)
+	fmt.Println(r3.Intn(100)) //5 每次都是5
+
+	fmt.Println(r3.Intn(100)) //87 每次都是87
+}
+```
 
 ## 数字解析
 
+从字符串中解析数字在很多程序中是一个基础常见的任务，内建的 strconv 包提供了数字解析能力。
+
+```go
+package main
+
+import (
+	"fmt"
+	"strconv"
+)
+
+func main() {
+	f, _ := strconv.ParseFloat("1.234", 64)
+	fmt.Println(f) //1.234
+
+	i, _ := strconv.ParseInt("123", 0, 64)
+	fmt.Println(i) //123
+
+	d, _ := strconv.ParseInt("0x1c8", 0, 64)
+	fmt.Println(d) //456
+
+	u, _ := strconv.ParseUint("789", 0, 64)
+	fmt.Println(u) //789
+
+	k, _ := strconv.Atoi("135")
+	fmt.Println(k) //135
+
+	_, e := strconv.Atoi("wat")
+	fmt.Println(e) //strconv.Atoi: parsing "wat": invalid syntax
+}
+```
+
 ## URL 解析
+
+URL 提供了统一资源定位方式。
+
+```go
+package main
+
+import (
+	"fmt"
+	"net"
+	"net/url"
+)
+
+func main() {
+	s := "postgres://user:pass@host.com:5432/path?k=v&k=o#f"
+	u, err := url.Parse(s)
+	if err != nil {
+		fmt.Println(err)
+	} else {
+		//postgres
+		fmt.Println(u.Scheme)
+		fmt.Println(u.User)            //pass
+		fmt.Println(u.User.Username()) //user
+		p, _ := u.User.Password()
+		fmt.Println(p) //pass
+
+		fmt.Println(u.Host) //host.com:5432
+		host, port, _ := net.SplitHostPort(u.Host)
+		fmt.Println(host) //host.com
+		fmt.Println(port) //5432
+
+		fmt.Println(u.Path)     // /path
+		fmt.Println(u.Fragment) // f
+		fmt.Println(u.RawQuery) // k=v&k=o
+
+		m, _ := url.ParseQuery(u.RawQuery)
+		fmt.Println(m)         //map[k:[v o]]
+		fmt.Println(m["k"][0]) //v
+	}
+}
+```
 
 ## SHA256 散列
 
