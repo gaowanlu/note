@@ -2926,11 +2926,218 @@ func main() {
 
 ## SHA256 散列
 
+SHA256 散列（hash） 经常用于生成二进制文件或者文本块的短标识。 例如，TLS/SSL 证书使用 SHA256 来计算一个证书的签名。
+
+SHA-256，全称为"Secure Hash Algorithm 256-bit"，是一种密码学散列函数，它接受输入数据并将其转换为固定长度的 256 位（32 字节）散列值。SHA-256 属于 SHA-2（Secure Hash Algorithm 2）家族，是 SHA-2 家族中的一员。
+
+SHA-256 散列函数有以下特点：
+
+- 固定长度输出： 无论输入数据的大小如何，SHA-256 始终生成一个 256 位的散列值，这意味着输出长度始终相同。
+
+- 不可逆性： SHA-256 是一个单向散列函数，即不能从散列值反推出原始输入数据。这是密码学安全性的基本要求之一。
+
+- 碰撞抵抗性： SHA-256 被设计为具有很高的碰撞抵抗性，这意味着找到两个不同的输入，它们产生相同的散列值的难度非常大。
+
+- 困难性： 计算 SHA-256 散列值的逆过程（从散列值到原始输入）应该在当前计算技术下是困难的，以确保散列值的安全性。
+
+SHA-256 常常用于密码学应用、数字签名、数据完整性验证和密码哈希存储。例如，在密码学中，它可以用于确保数据传输的完整性，或者用于存储用户密码的散列值，以增加安全性。
+
+需要注意的是，虽然 SHA-256 在许多用例中非常有用，但在某些情况下，可能需要更长的散列（如 SHA-512）或其他加密算法，以满足特定的安全要求。此外，密码学领域不断发展，对于安全性要求不断提高，因此也会出现更安全的散列算法。因此，在选择散列算法时，需要考虑具体的用例和安全需求。
+
+```go
+package main
+
+import (
+	"crypto/sha256"
+	"fmt"
+)
+
+func main() {
+	s := "sha256 this string"
+	h := sha256.New()
+	h.Write([]byte(s))
+	bs := h.Sum(nil)
+	fmt.Println(s)
+	fmt.Printf("%x", bs)
+}
+
+//sha256 this string
+//1af1dfa857bf1d8814fe1af8983c18080019922e557f15a8a0d3db739d77aacb
+```
+
 ## Base64 编码
+
+Go 提供了对 base64 编解码的内建支持。
+
+Base64 编码是一种用于将二进制数据转换为文本字符的编码方法。它将二进制数据（例如图片、音频、文件等）转换为由 64 个不同字符组成的 ASCII 字符串，这些字符包括大小写字母、数字和一些特殊符号。Base64 编码的主要目的是将二进制数据表示为文本，以便在文本协议（如电子邮件、XML、JSON）中传输或存储，因为文本协议通常不支持二进制数据的直接传输。
+
+Base64 编码的特点和用途包括：
+
+- 可打印字符集： Base64 使用的字符都是可打印字符，不包含控制字符，因此适合在文本环境中使用。
+- 固定长度： Base64 编码后的输出是由一系列字符组成的，这些字符的数量是固定的，这有助于在不同系统之间准确地传输二进制数据。
+- 无损压缩： Base64 编码不会损失原始数据的信息，因此可以对数据进行无损压缩。
+- 常见用途： Base64 编码常常用于将二进制数据嵌入到文本文档中，如将图片嵌入到 HTML 或将二进制数据附加到 JSON 或 XML 数据中。它也常用于编码用户名和密码等凭据，以便在 HTTP 请求中传输。
+
+Base64 编码的原理是将每 3 个字节的二进制数据编码为 4 个 Base64 字符。如果原始数据的字节数不是 3 的倍数，编码后会使用填充字符（通常是等号 =）来保持输出长度的完整性。解码过程是 Base64 编码的逆过程，将 Base64 字符串还原为原始的二进制数据。
+
+以下是一个示例，展示了如何使用 Base64 编码和解码数据，假设有一个二进制数据流：
+
+原始数据：Hello, World!
+
+Base64 编码后的数据：SGVsbG8sIFdvcmxkIQ==
+
+Base64 解码后的数据：Hello, World!
+
+Base64 编码通常由各种编程语言的标准库提供支持，因此在实际开发中，你可以方便地进行编码和解码操作。
+
+```go
+package main
+
+import (
+	b64 "encoding/base64"
+	"fmt"
+)
+
+func main() {
+	data := "Hello, World!"
+
+	//使用 标准 base64 格式进行编解码。
+	sEnc := b64.StdEncoding.EncodeToString([]byte(data))
+	fmt.Println(sEnc) //SGVsbG8sIFdvcmxkIQ==
+
+	sDec, _ := b64.StdEncoding.DecodeString(sEnc)
+	fmt.Println(string(sDec)) //Hello, World!
+
+	//使用 URL base64 格式进行编解码。
+	data1 := "abc123!?$*&()'-=@~ '"
+	uEnc := b64.URLEncoding.EncodeToString([]byte(data1))
+	fmt.Println(uEnc) //YWJjMTIzIT8kKiYoKSctPUB-
+	uDec, _ := b64.URLEncoding.DecodeString(uEnc)
+	fmt.Println(string(uDec)) //abc123!?$*&()'-=@~
+}
+```
 
 ## 读文件
 
+读文件，任何语言都差不多嘛。但是 io 毕竟是重头戏，肯定有很多的语法糖或者语言特性。下面的只是冰山一角。
+
+```go
+package main
+
+import (
+	"bufio"
+	"fmt"
+	"io"
+	"os"
+)
+
+func check(e error) {
+	if e != nil {
+		panic(e)
+	}
+}
+
+func main() {
+	//ReadFile
+	dat, err := os.ReadFile("./mypack.go")
+	check(err)
+	fmt.Print(string(dat)) //输出文件内全部内容
+
+	f, err := os.Open("./mypack.go")
+	check(err)
+
+	//Read
+	b1 := make([]byte, 5)
+	n1, err := f.Read(b1)
+	check(err)
+	fmt.Printf("%d bytes: %s\n", n1, string(b1[:n1]))
+	//5 bytes: packa
+
+	//Seek
+	o2, err := f.Seek(6, io.SeekStart)
+	//io.SeekCurrent io.SeekEnd
+	check(err)
+	b2 := make([]byte, 2)
+	n2, err := f.Read(b2)
+	check(err)
+	fmt.Printf("%d bytes @ %d: %v", n2, o2, string(b2[:n2]))
+
+	//io.ReadAtLeast 用于从输入源中读取至少指定数量的字节数据
+	o3, err := f.Seek(6, io.SeekStart)
+	check(err)
+	b3 := make([]byte, 2)
+
+	n3, err := io.ReadAtLeast(f, b3, 2)
+	check(err)
+	fmt.Printf("%d bytes @ %d: %s\n", n3, o3, string(b3))
+
+	_, err = f.Seek(0, io.SeekStart)
+	check(err)
+
+	//bufio.NewReader 创建一个带有缓冲的读取器，它可以用于提高文件或其他输入源的读取性能
+	r4 := bufio.NewReader(f) //缓冲区默认的大小是 4096 字节
+	b4, err := r4.Peek(5)    //取前5字节
+	check(err)
+	fmt.Printf("5 bytes: %s\n", string(b4))
+	f.Close()
+}
+
+//func NewReader(rd io.Reader) *Reader
+//rd：实现了 io.Reader 接口的输入源，可以是文件、网络连接、字符串、字节数组等。
+```
+
 ## 写文件
+
+写文件和读文件类似，二者操作基本呈现对称。
+
+```go
+package main
+
+import (
+	"bufio"
+	"fmt"
+	"os"
+)
+
+func check(e error) {
+	if e != nil {
+		panic(e)
+	}
+}
+
+func main() {
+	d1 := []byte("hello\ngo\n")
+	//覆盖写
+	err := os.WriteFile("./tmp.txt", d1, 0644)
+	check(err)
+
+	//创建新文件
+	f, err := os.Create("./tmp1.txt")
+	check(err)
+
+	defer f.Close() //推迟
+
+	d2 := []byte{115, 111, 109, 101, 10}
+	n2, err := f.Write(d2)
+	check(err)
+	fmt.Printf("wrote %d bytes\n", n2)
+	//wrote 5 bytes
+
+	n3, err := f.WriteString("writes\n")
+	check(err)
+	fmt.Printf("wrote %d bytes\n", n3)
+	//wrote 7 bytes
+
+	f.Sync() //同步,用于将文件的内存缓冲区的内容刷新到磁盘上的文件中
+
+	w := bufio.NewWriter(f)
+	n4, err := w.WriteString("buffered\n")
+	check(err)
+	fmt.Printf("wrote %d bytes\n", n4)
+	//wrote 9 bytes
+	w.Flush() //用于手动刷新缓冲区，将缓冲区中的数据写入底层的输出流（如文件、网络连接等
+}
+```
 
 ## 行过滤器
 
