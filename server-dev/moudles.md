@@ -236,4 +236,79 @@ str.append((const char*)&m,sizeof(m));
 
 ## 监控端口
 
-也就是相当于Web系统的后台管理系统，技术人员和运维人员可以使用nc、telnet也可以设计HTTP形式等，向用户提供命令行功能，如查看整个监控端口支持那些命令、显示当前内存中在线的用户信息、输出指定用户的信息等，以及日志开关控制等
+也就是相当于Web系统的后台管理系统，技术人员和运维人员可以使用nc、telnet也可以设计HTTP形式等，向用户提供命令行功能，如查看整个监控端口支持那些命令、显示当前内存中在线的用户信息、输出指定用户的信息等，以及日志开关控制等。
+
+## 时间
+
+夏令时、UTC时间、本地时间、本机时间和UNIX时间戳是与时间相关的不同概念，它们之间存在一些关系，但表示的是不同方面的时间信息：
+
+* 夏令时（Daylight Saving Time，DST）：
+
+夏令时是一种时间制度，通常在夏季将时钟调快一小时，以充分利用白天的光照，并减少用电。它是一种地区性的时间调整。
+夏令时影响了本地时间，通常在夏令时生效期间，本地时间相对于标准时间（通常是UTC）会提前一小时。
+
+* UTC时间（Coordinated Universal Time）：
+
+UTC是国际标准的时间表示方式，基于原子钟的精确时间，不受时区、夏令时等因素的影响。它用于协调全球时间。
+UTC时间是一个绝对的时间标准，与夏令时无关。
+
+* 本地时间（Local Time）：
+
+本地时间是指特定地区或城市的当地时间，通常受到时区和夏令时的影响。
+本地时间可以是UTC时间的特定偏移量，也可以包括夏令时的调整。
+
+* 本机时间（System Time）：
+
+本机时间是指计算机或设备上的系统时间，通常是一个系统级别的时间设置。
+本机时间可以是UTC时间或本地时间，具体取决于操作系统和配置。它通常会考虑时区和夏令时规则。
+
+* UNIX时间戳：
+
+UNIX时间戳是一种表示时间的方式，它是从1970年1月1日午夜（UTC时间）以来的秒数。它是一个相对时间值，不包括夏令时的影响。
+UNIX时间戳是一个整数，用于在计算机系统中跟踪时间和日期。
+
+* 关系总结：
+
+本地时间可以基于UTC时间的偏移量和夏令时规则来计算。
+本机时间可以是UTC时间或本地时间，具体取决于系统配置。
+UTC时间是一种绝对的时间标准，不受夏令时和时区影响。
+UNIX时间戳是一个相对时间值，通常基于UTC时间，不考虑夏令时。
+在编程中，通常可以使用标准库函数来进行不同时间表示之间的转换和操作，以满足具体应用的需求。
+
+```cpp
+#include <iostream>
+#include <chrono>
+#include <ctime>
+
+int main() {
+    // 获取当前系统时间点（本机时间）
+    std::chrono::system_clock::time_point now = std::chrono::system_clock::now();
+
+    // 将当前时间点转换为time_t类型（UNIX时间戳）
+    std::time_t unix_time = std::chrono::system_clock::to_time_t(now);
+    std::cout << "UNIX时间戳: " << unix_time << std::endl;
+
+    // 将当前时间点转换为UTC时间
+    std::tm* utc_tm = std::gmtime(&unix_time);
+    std::cout << "UTC时间: " << std::asctime(utc_tm);
+
+    // 将当前时间点转换为本地时间
+    std::tm* local_tm = std::localtime(&unix_time);
+    std::cout << "本地时间: " << std::asctime(local_tm);
+
+    // 检查是否处于夏令时
+    int is_dst = local_tm->tm_isdst;
+    if (is_dst > 0) {
+        std::cout << "当前处于夏令时" << std::endl;
+    } else if (is_dst == 0) {
+        std::cout << "当前不处于夏令时" << std::endl;
+    } else {
+        std::cout << "夏令时信息不可用" << std::endl;
+    }
+
+    return 0;
+}
+```
+
+
+
