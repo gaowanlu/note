@@ -3141,32 +3141,120 @@ func main() {
 
 ## 行过滤器
 
+行过滤器（line filter） 是一种常见的程序类型， 它读取 stdin 上的输入，对其进行处理，然后将处理结果打印到 stdout。 grep 和 sed 就是常见的行过滤器。
+
+```go
+package main
+
+import (
+	"bufio"
+	"fmt"
+	"os"
+	"strings"
+)
+
+func main() {
+	scanner := bufio.NewScanner(os.Stdin)
+	//scanner.Scan将在回车时返回
+	for scanner.Scan() {
+		ucl := strings.ToUpper(scanner.Text())
+		fmt.Println(ucl)
+	}
+	if err := scanner.Err(); err != nil {
+		fmt.Fprintln(os.Stderr, "error: ", err)
+		os.Exit(1)
+	}
+}
+```
+
+检查 Scan 的错误。 文件结束符（EOF）是可以接受的，它不会被 Scan 当作一个错误。
+
 ## 文件路径
+
+```go
+
+```
 
 ## 目录
 
+```go
+
+```
+
 ## 临时文件和目录
+
+```go
+
+```
 
 ## 单元测试和基准测试
 
+```go
+
+```
+
 ## 命令行参数
+
+```go
+
+```
 
 ## 命令行标识
 
+```go
+
+```
+
 ## 命令行命令
+
+```go
+
+```
 
 ## 环境变量
 
+```go
+
+```
+
 ## HTTP 客户端
+
+```go
+
+```
 
 ## HTTP 服务端
 
+```go
+
+```
+
 ## Context
+
+```go
+
+```
 
 ## 生成进程
 
+```go
+
+```
+
 ## 执行进程
+
+```go
+
+```
 
 ## 信号
 
+```go
+
+```
+
 ## 退出
+
+```go
+
+```
