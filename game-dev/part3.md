@@ -328,6 +328,8 @@ private:
 
 ```proto
 //msg.proto
+syntax = "proto3";
+package Proto;
 message TestMsg{
   string msg = 1;
   int32 index = 2;
@@ -342,6 +344,34 @@ enum MsgId{
 当框架功能越来越多时，如果不按这种一对一的命名原则，那么可能搞不
 清楚 MI_TestMsg 协议号到底对应哪个结构体，现在我们强制要求它们的名字一
 样，只要看到了协议号就知道协议体的名字，不需要记忆。
+
+封装 Packet 类，更好的让协议在程序代码中传递
+
+```cpp
+class Packet : public Buffer
+{
+public:
+    //...
+    template <class ProtoClass>
+    ProtoClass ParseToProto()
+    {
+        ProtoClass proto;
+        proto.ParsePartialFromArray(GetBuffer(), GetDateLength());
+        return proto;
+    }
+    template <class ProtoClass>
+    void SerializeToBuffer(ProtoClass &protoClase)
+    {
+        auto total = protoClase.ByteSizeLong();
+        while (GetEmptySize() < total)
+        {
+            ReAllocBuffer();
+        }
+        protoClase.SerializePartialToArray(GetBuffer(), total);
+        FillData(total);
+    }
+};
+```
 
 ### 消息队列机制
 
@@ -360,11 +390,21 @@ public:
   bool IsFollowMsgId(int msgId);
   void ProcessPacket();
   void AddPacket(Packet* pPacket);
+  static void DispatchPacket(Packet* pPacket);
+  static void SendPacket(Packet* pPacket);
 protected:
   std::mutex _msgMutex;
   std::list<Packet*> _msgList;
   std::map<int,HandleFunction> _callbackHandle;
 };
+void MessageList::DispatchPacket(Packet* pPacket)
+{
+    ThreadMgr::GetInstance()->DispatchPacket(pPacket);
+}
+void MessageList::SendPacket(Packet* pPacket)
+{
+    ThreadMgr::GetInstance()->SendPacket(pPacket);
+}
 ```
 
 可以让 ThreadObject 继承 MessageList
