@@ -110,6 +110,8 @@
   - [游戏架构](game-dev/part3.md)
   - [账号登录与验证](game-dev/part4.md)
   - [性能优化与对象池](game-dev/part5.md)
+  - [ECS 框架](game-dev/part6.md)
+  - [游戏策划](game-dev/game_cehua.md)
 
 ## 💻 操作系统
 
