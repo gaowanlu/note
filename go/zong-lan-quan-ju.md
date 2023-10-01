@@ -3171,90 +3171,749 @@ func main() {
 
 ## 文件路径
 
-```go
+filepath 包为 文件路径 ，提供了方便的跨操作系统的解析和构建函数； 比如：Linux 下的 dir/file 和 Windows 下的 dir\file 。
 
+其实 C++ filesystem 库现在也有这套东西了。
+
+```go
+package main
+
+import (
+	"fmt"
+	"path/filepath"
+	"strings"
+)
+
+func main() {
+	p := filepath.Join("dir1", "dir2", "filename")
+	fmt.Println("p:", p)
+	//p: dir1\dir2\filename
+	fmt.Println(filepath.Join("dir1//", "filename"))
+	//dir1\filename
+	fmt.Println(filepath.Join("dir1/../dir1", "filename"))
+	//dir1\filename
+
+	// Dir 和 Base 可以被用于分割路径中的目录和文件。 此外，Split 可以一次调用返回上面两个函数的结果。
+	fmt.Println("Dir(p):", filepath.Dir(p))
+	//Dir(p): dir1\dir2
+	fmt.Println("Base(p):", filepath.Base(p))
+	//Base(p): filename
+
+	//判断是否为绝对路径
+	fmt.Println(filepath.IsAbs("dir/file")) //false
+	fmt.Println(filepath.IsAbs("C:\\Users\\gaowanlu\\Desktop\\MyProject\\note\\testcode\\go"))
+	//true
+
+	//文件扩展名
+	filename := "config.json"
+	ext := filepath.Ext(filename)
+	fmt.Println(ext)                               //.json
+	fmt.Println(strings.TrimSuffix(filename, ext)) //config
+
+	//Rel 寻找 basepath 与 targpath 之间的相对路径。 如果相对路径不存在，则返回错误。
+	rel, err := filepath.Rel("./tmp", "../build/")
+	if err != nil {
+		panic(err)
+	}
+	fmt.Println(rel) //..\..\build
+}
 ```
 
 ## 目录
 
-```go
+对于操作文件系统中的 目录 ，Go 提供了几个非常有用的函数。
 
+```go
+package main
+
+import (
+	"fmt"
+	"os"
+	"path/filepath"
+)
+
+func check(e error) {
+	if e != nil {
+		panic(e)
+	}
+}
+
+func main() {
+	err := os.Mkdir("subdir", 0755) //在当前工作目录下，创建一个子目录。
+	check(err)
+	defer os.RemoveAll("subdir") //类似于 rm -rf
+
+	// 一个用于创建临时文件的帮助函数
+	createEmptyFile := func(name string) {
+		d := []byte("")
+		check(os.WriteFile(name, d, 0644))
+	}
+	createEmptyFile("subdir/file1")
+
+	//类似于命令 mkdir -p
+	err = os.MkdirAll("subdir/parent/child", 0755)
+	check(err)
+
+	//ReadDir 列出目录的内容，返回一个 os.DirEntry 类型的切片对象。
+	c, err := os.ReadDir("subdir/parent")
+	check(err)
+	for _, entry := range c {
+		fmt.Println(" ", entry.Name(), entry.IsDir()) //  child true
+	}
+
+	//Chdir 可以修改当前工作目录，类似于 cd。
+	err = os.Chdir("subdir/")
+	check(err)
+	c, err = os.ReadDir(".")
+	check(err)
+	for _, entry := range c {
+		fmt.Println(" ", entry.Name(), entry.IsDir()) //  child true
+	}
+
+	//遍历一个目录及其所有子目录。 Walk 接受一个路径和回调函数，用于处理访问到的每个目录和文件。
+	err = filepath.Walk("../", visit)
+	check(err)
+}
+
+func visit(p string, info os.FileInfo, err error) error {
+	if err != nil {
+		return err
+	}
+	fmt.Println(" ", p, info.IsDir())
+	return nil
+}
 ```
 
 ## 临时文件和目录
 
-```go
+在程序运行时，我们经常创建一些运行时用到，程序结束后就不再使用的数据。 临时目录和文件 对于上面的情况很有用，因为它不会随着时间的推移而污染文件系统。
 
+```go
+package main
+
+import (
+	"fmt"
+	"os"
+	"path/filepath"
+)
+
+func check(e error) {
+	if e != nil {
+		panic(e)
+	}
+}
+
+func main() {
+	//默认临时文件目录创建
+	f, err := os.CreateTemp("", "sample")
+	check(err)
+
+	fmt.Println("Temp file name:", f.Name())
+	//Temp file name: C:\Users\gaowanlu\AppData\Local\Temp\sample47593345
+
+	defer os.Remove(f.Name())
+
+	_, err = f.Write([]byte{1, 2, 3, 4})
+	check(err)
+
+	dname, err := os.MkdirTemp("", "sampledir")
+	fmt.Println("Temp dir name:", dname)
+	//Temp dir name: C:\Users\gaowanlu\AppData\Local\Temp\sampledir3959527615
+
+	defer os.RemoveAll(dname)
+
+	fname := filepath.Join(dname, "file1")
+	err = os.WriteFile(fname, []byte{1, 2}, 0666)
+	check(err)
+}
 ```
 
 ## 单元测试和基准测试
 
-```go
+单元测试是很重要的一部分。 testing 包为提供了编写单元测试所需的工具，写好单元测试后，我们可以通过 go test 命令运行测试。
 
+实际上，单元测试的代码可以位于任何包下。 测试代码通常与需要被测试的代码位于同一个包下。
+
+单元测试和基准测试，也算是专门的测试知识，尽量还是去单独学一下软件测试。不会也没关系，在服务端编程中有时写代码进行单元测试不常见，进行黑盒挺多的。
+
+```go
+package main
+
+import (
+	"fmt"
+	"testing"
+)
+
+func IntMin(a, b int) int {
+	if a < b {
+		return a
+	}
+	return b
+}
+
+func TestIntMinBasic(t *testing.T) {
+	ans := IntMin(2, -2)
+	if ans != -2 {
+		//t.Error*会报告测试失败的信息，然后继续运行测试
+		t.Errorf("IntMin(2, -2) = %d; want -2", ans)
+	}
+}
+
+// 单元测试可以重复，所以会经常使用表驱动风格编写单元测试，
+// 表中列出了输入数据，预期输出，使用循环，遍历并执行测试逻辑
+func TestIntMinTableDriven(t *testing.T) {
+	var tests = []struct {
+		a, b int
+		want int
+	}{
+		{0, 1, 0},
+		{1, 0, 0},
+		{2, -2, -2},
+		{0, -1, -1},
+		{-1, 0, -1},
+	}
+
+	for _, tt := range tests {
+		testname := fmt.Sprintf("%d,%d", tt.a, tt.b)
+		t.Run(testname, func(t *testing.T) {
+			ans := IntMin(tt.a, tt.b)
+			if ans != tt.want {
+				t.Errorf("got %d, want %d", ans, tt.want)
+			}
+		})
+	}
+}
+
+// 基准测试通常在_test.go文件中，以Benchmark开头命名
+// testing 运行器多次执行每个基准测试函数，并在每次运行时增加 b.N， 直到它收集到精确的测量值。
+// 通常，基准测试运行一个函数，我们在一个 b.N 次的循环内进行基准测试。
+func BenchmarkIntMin(b *testing.B) {
+	for i := 0; i < b.N; i++ {
+		IntMin(1, 2)
+	}
+}
+
+//$go test -v
+
+//运行当前项目中的所有基准测试。所有测试都在基准测试之前运行。 bench 标志使用正则表达式过滤基准函数名称
+//$go test -bench=.
 ```
 
 ## 命令行参数
 
-```go
+命令行参数 是指定程序运行参数的一个常见方式。例如，go run hello.go， 程序 go 使用了 run 和 hello.go 两个参数。
 
+```go
+package main
+
+import (
+	"fmt"
+	"os"
+)
+
+func main() {
+	argsWithProg := os.Args
+	argsWithoutProg := os.Args[1:]
+	fmt.Println(argsWithProg)
+	fmt.Println(argsWithoutProg)
+}
+
+/*
+./main.exe a b c
+[C:\Users\gaowanlu\Desktop\MyProject\note\testcode\go\main.exe a b c]
+[a b c]
+*/
 ```
 
 ## 命令行标识
 
-```go
+命令行标志 是命令行程序指定选项的常用方式。例如，在 wc -l 中， 这个 -l 就是一个命令行标志。Go 提供了一个 flag 包，支持基本的命令行标志解析。
 
+```go
+package main
+
+import (
+	"flag"
+	"fmt"
+)
+
+func main() {
+
+	wordPtr := flag.String("word", "foo", "a string")
+
+	numbPtr := flag.Int("numb", 42, "an int")
+	forkPtr := flag.Bool("fork", false, "a bool")
+
+	var svar string
+	flag.StringVar(&svar, "svar", "bar", "a string var")
+
+	flag.Parse()
+
+	fmt.Println("word:", *wordPtr)
+	fmt.Println("numb:", *numbPtr)
+	fmt.Println("fork:", *forkPtr)
+	fmt.Println("svar:", svar)
+	fmt.Println("tail:", flag.Args())
+}
+
+/*
+PS C:\Users\gaowanlu\Desktop\MyProject\note\testcode\go> ./main.exe --help
+Usage of C:\Users\gaowanlu\Desktop\MyProject\note\testcode\go\main.exe:
+  -fork
+        a bool
+  -numb int
+        an int (default 42)
+  -svar string
+        a string var (default "bar")
+  -word string
+        a string (default "foo")
+PS C:\Users\gaowanlu\Desktop\MyProject\note\testcode\go> ./main.exe -fork false -numb 666 -svar love -word two
+word: foo
+numb: 42
+fork: true
+svar: bar
+tail: [false -numb 666 -svar love -word two]
+*/
 ```
 
-## 命令行命令
+## 命令行子命令
+
+go 和 git 这种命令行工具，都有很多的 子命令 。 并且每个工具都有一套自己的 flag，比如： go build 和 go get 是 go 里面的两个不同的子命令。 flag 包让我们可以轻松的为工具定义简单的子命令。
 
 ```go
+package main
 
+import (
+	"flag"
+	"fmt"
+	"os"
+)
+
+func main() {
+
+	//子命令 foo 可选参数 enable name
+	fooCmd := flag.NewFlagSet("foo", flag.ExitOnError)
+	fooEnable := fooCmd.Bool("enable", false, "enable")
+	fooName := fooCmd.String("name", "", "name")
+
+	//子命令 bar 可选参数 level
+	barCmd := flag.NewFlagSet("bar", flag.ExitOnError)
+	barLevel := barCmd.Int("level", 0, "level")
+
+	if len(os.Args) < 2 {
+		fmt.Println("expected 'foo' or 'bar' subcommands")
+		os.Exit(1)
+	}
+
+	switch os.Args[1] {
+	case "foo":
+		fooCmd.Parse(os.Args[2:])
+		fmt.Println("subcommand 'foo'")
+		fmt.Println("  enable:", *fooEnable)
+		fmt.Println("  name:", *fooName)
+		fmt.Println("  tail:", fooCmd.Args())
+	case "bar":
+		barCmd.Parse(os.Args[2:])
+		fmt.Println("subcommand 'bar'")
+		fmt.Println("  level:", *barLevel)
+		fmt.Println("  tail:", barCmd.Args())
+	default:
+		fmt.Println("expected 'foo' or 'bar' subcommands")
+		os.Exit(1)
+	}
+}
+
+/*
+PS C:\Users\gaowanlu\Desktop\MyProject\note\testcode\go> ./main.exe foo
+subcommand 'foo'
+  enable: false
+  name:
+  tail: []
+PS C:\Users\gaowanlu\Desktop\MyProject\note\testcode\go> ./main.exe bar -level 12
+subcommand 'bar'
+  level: 12
+  tail: []
+*/
 ```
 
 ## 环境变量
 
-```go
+环境变量 是一种向 Unix 程序传递配置信息的常见方式。 让我们来看看如何设置、获取以及列出环境变量。
 
+```go
+package main
+
+import (
+	"fmt"
+	"os"
+	"strings"
+)
+
+// 默认只在本程序运行期间有效
+func main() {
+	os.Setenv("FOO", "1")
+	fmt.Println("FOO:", os.Getenv("FOO")) //FOO: 1
+	fmt.Println("BAR", os.Getenv("BAR"))  //BAR
+	for _, e := range os.Environ() {
+		pair := strings.SplitN(e, "=", 2)
+		fmt.Println(pair[0], "=", pair[1])
+	}
+}
 ```
 
 ## HTTP 客户端
 
-```go
+Go 标准库的 net/http 包为 HTTP 客户端和服务端提供了出色的支持。
 
+```go
+package main
+
+import (
+	"bufio"
+	"fmt"
+	"net/http"
+)
+
+func main() {
+	resp, err := http.Get("http://gobyexample.com")
+	if err != nil {
+		panic(err)
+	}
+	defer resp.Body.Close()
+	//Response status: 200 OK
+	fmt.Println("Response status:", resp.Status)
+	scanner := bufio.NewScanner(resp.Body)
+	for scanner.Scan() {
+		fmt.Println(scanner.Text())
+	}
+	if err := scanner.Err(); err != nil {
+		panic(err)
+	}
+}
+
+/*
+Response status: 200 OK
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>Go by Example</title>
+	...
+*/
 ```
 
 ## HTTP 服务端
 
-```go
+使用 net/http 包，我们可以轻松实现一个简单的 HTTP 服务器。
 
+```go
+package main
+
+import (
+	"fmt"
+	"net/http"
+)
+
+func hello(w http.ResponseWriter, req *http.Request) {
+	fmt.Fprintf(w, "hello\n")
+}
+
+func headers(w http.ResponseWriter, req *http.Request) {
+	for name, headers := range req.Header {
+		for _, h := range headers {
+			fmt.Fprintf(w, "%v: %v\n", name, h)
+		}
+	}
+}
+
+func main() {
+	http.HandleFunc("/hello", hello)
+	http.HandleFunc("/headers", headers)
+	http.ListenAndServe(":8090", nil)
+}
 ```
 
 ## Context
 
-```go
+Go 语言的 context 包是用于在 Go 应用程序中传递取消信号、截止时间和跟踪请求范围的重要工具。context 包提供了一种可用于协调多个 goroutine 的方法，以便它们能够协同工作并共享信息，例如取消信号、超时、截止时间以及上下文值等。
 
+context 包中最常用的类型是 context.Context，它是一个接口，用于包含与请求相关的信息。context.Context 类型可以通过
+context.Background()或 context.TODO()来创建，通常用作根上下文。
+
+1. 创建上下文
+
+- context.Background()：创建一个空的上下文，通常用作根上下文
+- context.TODO()：创建一个类似于 Background()的上下文，表示未来可能会添加更多的上下文信息。
+
+2. 传递上下文
+
+上下文可以在 goroutine 之间传递，以便它们能够共享上下文的信息，包括取消信号、截止时间和上下文值。
+
+3. 上下文的取消
+
+通过 context.WithCancel()、context.WithTimeout()和 context.WithDeadline()等方法，可以创建一个带有取消信号的新上下文。当调用上下文的 cancel()函数时，所有依赖于该上下文的 goroutine 都会收到取消信号。
+
+```go
+ctx, cancel := context.WithCancel(context.Background())
+defer cancel() // 始终确保在不再需要时调用cancel
+```
+
+4. 设置截止时间
+
+可以使用 context.WithTimeout()和 context.WithDeadline()来为上下文设置截止时间。当截止时间到达时，上下文将被自动取消。
+
+```go
+ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+defer cancel()
+```
+
+5. 上下文值
+
+可以使用 context.WithValue()来为上下文添加键值对形式的上下文值。这些值可以在 goroutine 之间传递，但应谨慎使用，以避免滥用上下文来传递状态。
+
+```go
+ctx := context.WithValue(context.Background(), key, value)
+```
+
+6. 检查取消信号
+
+在 goroutine 内，可以使用 ctx.Done()通道来检查取消信号，以确定是否应该退出。
+
+```go
+select {
+case <-ctx.Done():
+    // 上下文已取消，执行清理工作并退出
+}
+```
+
+7. 传递上下文
+
+当启动新的 goroutine 时，通常将上下文作为参数传递给该 goroutine，以确保它们可以访问相同的上下文信息。
+
+```go
+go func(ctx context.Context) {
+    // 在这里使用ctx
+}(ctx)
+```
+
+context 包的主要目的是协调多个 goroutine 之间的行为，特别是在取消操作和截止时间方面。使用 context 可以帮助管理资源、避免资源泄漏以及实现更可靠的并发控制。在编写 Go 应用程序时，特别是涉及网络请求、并发任务或长时间运行的任务时，context 包是非常有用的工具。
+
+```go
+package main
+
+import (
+	"fmt"
+	"net/http"
+	"time"
+)
+
+func hello(w http.ResponseWriter, req *http.Request) {
+	ctx := req.Context()
+	fmt.Println("server: hello handler started")
+	defer fmt.Println("server: hello handler ended")
+
+	select {
+	case <-time.After(10 * time.Second):
+		fmt.Fprintf(w, "hello\n") //请求10s后才会客户端内容
+	case <-ctx.Done():
+		//在10s内http请求取消了
+		err := ctx.Err()
+		fmt.Println("server:", err)
+		internalError := http.StatusInternalServerError
+		http.Error(w, err.Error(), internalError)
+	}
+}
+
+func main() {
+	http.HandleFunc("/", hello)
+	http.ListenAndServe(":8080", nil)
+}
+
+/*
+server: hello handler started
+server: context canceled
+server: hello handler ended
+*/
+```
+
+其他例子
+
+```go
+package main
+
+import (
+	"context"
+	"fmt"
+	"net/http"
+	"time"
+)
+
+func main() {
+	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+		defer cancel() // 确保在函数退出时取消上下文
+
+		// 使用通道来传递结果
+		resultChan := make(chan string)
+
+		go func() {
+			// 模拟长时间运行的任务
+			time.Sleep(5 * time.Second)
+			resultChan <- "Task completed successfully"
+		}()
+
+		select {
+		case <-ctx.Done():
+			// 上下文已取消，返回错误信息
+			http.Error(w, "Request canceled or timed out", http.StatusRequestTimeout)
+			return
+		case result := <-resultChan:
+			// 长时间运行的任务已完成
+			fmt.Fprintln(w, result)
+		}
+	})
+
+	http.ListenAndServe(":8080", nil)
+}
 ```
 
 ## 生成进程
 
-```go
+有时，我们的 Go 程序需要生成其他的、非 Go 的进程。
 
+```go
+package main
+
+import (
+	"fmt"
+	"io"
+	"os/exec"
+)
+
+func main() {
+	dateCmd := exec.Command("cmd", "/C", "dir") //运行date
+	dateOut, err := dateCmd.Output()
+	if err != nil {
+		panic(err)
+	}
+	fmt.Println(string(dateOut))
+
+	//使用生成进程的标准输入与输出
+	myCmd := exec.Command("cmd", "/C", "dir")
+	In, _ := myCmd.StdinPipe()
+	Out, _ := myCmd.StdoutPipe()
+	myCmd.Start()
+	In.Write([]byte(""))
+	Out.Close()
+	resBytes, _ := io.ReadAll(Out)
+	myCmd.Wait()
+	fmt.Println(string(resBytes))
+
+	/*
+		在生成命令时，我们需要提供一个明确描述命令和参数的数组，而不能只传递一个命令行字符串。
+		如果你想使用一个字符串生成一个完整的命令，那么你可以使用 bash 命令的 -c 选项：
+	*/
+	lsCmd := exec.Command("bash", "-c", "ls -a -l -h")
+	lsOut, err := lsCmd.Output()
+	if err != nil {
+		panic(err)
+	}
+	fmt.Println("> ls -a -l -h")
+	fmt.Println(string(lsOut))
+}
 ```
 
 ## 执行进程
 
-```go
+只想用其它（也许是非 Go）的进程，来完全替代当前的 Go 进程。 这时，我们可以使用经典的 exec 函数的 Go 的实现。
 
+Go 没有提供 Unix 经典的 fork 函数。一般来说，这没有问题，因为启动协程、生成进程和执行进程， 已经涵盖了 fork 的大多数使用场景。
+
+```go
+package main
+
+import (
+	"os"
+	"os/exec"
+	"syscall"
+)
+
+func main() {
+
+	binary, lookErr := exec.LookPath("ls") //应该是 /bin/ls
+	if lookErr != nil {
+		panic(lookErr)
+	}
+
+	args := []string{"ls", "-a", "-l", "-h"}
+
+	env := os.Environ()
+
+	//如果这个调用成功，那么我们的进程将在这里结束，并被 /bin/ls -a -l -h 进程代替。 如果存在错误，那么我们将会得到一个返回值。
+	execErr := syscall.Exec(binary, args, env)
+	if execErr != nil {
+		panic(execErr)
+	}
+}
 ```
 
 ## 信号
 
-```go
+有时候，我们希望 Go 可以智能的处理 Unix 信号。 例如，我们希望当服务器接收到一个 SIGTERM 信号时，能够优雅退出， 或者一个命令行工具在接收到一个 SIGINT 信号时停止处理输入信息。 我们这里讲的就是在 Go 中如何使用通道来处理信号。
 
+确实比 Linux C++处理信号优雅太多了，加上协程和通道的加持太棒了。
+
+```go
+package main
+
+import (
+	"fmt"
+	"os"
+	"os/signal"
+	"syscall"
+)
+
+func main() {
+
+	sigs := make(chan os.Signal, 1)
+
+	signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM)
+
+	done := make(chan bool, 1)
+
+	go func() {
+
+		sig := <-sigs
+		fmt.Println()
+		fmt.Println(sig)
+		done <- true
+	}()
+
+	fmt.Println("awaiting signal")
+	<-done
+	fmt.Println("exiting")
+}
 ```
 
 ## 退出
 
-```go
+使用 os.Exit 可以立即以给定的状态退出程序。C 中也有 exit。
 
+不像例如 C 语言，Go 不使用在 main 中返回一个整数来指明退出状态。 如果你想以非零状态退出，那么你就要使用 os.Exit。
+
+程序中的 ! 永远不会被打印出来。
+
+```go
+package main
+
+import (
+    "fmt"
+    "os"
+)
+
+func main() {
+    //当使用 os.Exit 时 defer 将不会 被执行， 所以这里的 fmt.Println 将永远不会被调用。
+	defer fmt.Println("!")
+    os.Exit(3)
+}
 ```
