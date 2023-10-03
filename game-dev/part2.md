@@ -6,6 +6,9 @@ coverY: 0
 
 # 🚗 网络编程
 
+相关的代码可以看, https://github.com/gaowanlu/GameBookServer/blob/master,仓库为Fork过来的,也可以看书籍原作者的仓库.
+其中 00_XX~02_XX 部分.
+
 ## 网络编程
 
 如果你不会基本的计算机网路、基本的网络编程，请先回去好好学 APUE、基本的套接字编程、最好学会 IO 多路复用的时候再来看这些内容。
