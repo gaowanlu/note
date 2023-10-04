@@ -112,6 +112,7 @@
   - [性能优化与对象池](game-dev/part5.md)
   - [ECS 框架](game-dev/part6.md)
   - [MYSQL 数据库](game-dev/part7.md)
+  - [深入学习组件式编程](game-dev/part8.md)
   - [游戏策划](game-dev/game_cehua.md)
 
 ## 💻 操作系统
