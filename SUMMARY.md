@@ -113,7 +113,12 @@
   - [ECS 框架](game-dev/part6.md)
   - [MYSQL 数据库](game-dev/part7.md)
   - [深入学习组件式编程](game-dev/part8.md)
+  - [服务器管理进程与 HTTP](game-dev/part9.md)
+  - [分布式登录与 Redis](game-dev/part10.md)
+  - [分布式跳转方案](game-dev/part11.md)
+  - [断线与动态加载系统](game-dev/part12.md)
   - [游戏策划](game-dev/game_cehua.md)
+  - [展望](game-dev/expect.md)
 
 ## 💻 操作系统
 
