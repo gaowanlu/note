@@ -361,6 +361,168 @@ void ThreadCollectorExclusive::HandlerMessage(Packet* pPacket){
 
 ### IAwakeSystem 接口与对象池
 
+在之前，采用的是全局对象池，即一种类型的对象池只有一个实例。在多线程中使用对象池，操作已使用、未使用的集合时进行了加锁操
+作。
+
+将全局对象池变更为线程对象池。一般来说，线程中创建的对象都在线程内使用，这些对象是不需要加锁的。
+
+### DynamicObjectPoolCollector 对象池集合
+
+以前是使用以下方式获取对象池实例
+
+```cpp
+DynamicObjectPool<Class>::GetInstance();
+```
+
+如果有多个不同的类对象池，就有多个 DynamicObjectPool 实例，为了便
+于管理，引入一个新类 DynamicObjectPoolCollector，其作用是维护
+DynamicObjectPool 集合。这个新类用 SystemManager 管理，相当于每个 ECS 体系都有一个对象池管理类。
+
+```cpp
+class DynamicObjectPoolCollector : public IDisposable{
+public:
+  DynamicObjectPoolCollector(SystemManager* pSys);
+  void Dispose();
+  template<class T>
+  IDynamicObjectPool* GetPool();
+  void Update();
+private:
+  std::map<uint64, IDynamicObjectPool*> _pools;
+  SystemManager* _pSystemManager{nullptr};
+};
+```
+
+GetPool 用于提取合适的对象池实例
+
+```cpp
+template<class T>
+IDynamicObjectPool* DynamicObjectPoolCollector::GetPool(){
+  const auto typeHashCode = typeid(T).hash_code();
+  auto iter = _pools.find(typeHashCode);
+  if(iter != _pools.end()){
+    return iter->second;
+  }
+  auto pPool = new DynamicObjectPool<T>();
+  pPool->SetSystemManager(_pSystemManager);
+  _pools.insert(std::make_pair(typeHashCode, pPool));
+  return pPool;
+}
+```
+
+DynamicObjectPoolCollector 类实例是在 SystemManager 类创建时产生的。
+
+```cpp
+SystemManager::SystemManager(){
+  _pEntitySystem = new EntitySystem(this);
+  _pMessageSystem = new MessageSystem(this);
+  //...
+  _pPoolCollector = new DynamicObjectPoolCollector(this);
+}
+```
+
+一个对象池实例不会对所有线程共用，它一定属于某个特定的线程，每个
+线程有自己的对象池实例。当我们对进程和线程进行合并时，合并到最后，整
+个变成单进程、单线程，此时全局只有一个 SystemManager，而对象池管理类
+也只有一个。
+
+以前，对象池分配对象是要加锁的
+
+```cpp
+DynamicObjectPool<T>::GetInstance()->MallocObject();
+```
+
+现在不论在哪个组件中创建对象，都可以像以下调用,内外部都不用加锁了，因为每个线程都有自己的 PoolCollector
+
+```cpp
+auto pCollector = pSysMgr->GetPoolCollector();
+auto pPool = (DynamicObjectPool<T>*)pCollector->GetPool<T>();
+T* pComponent = pPool->MallocObject();
+```
+
+### 全局单例对象
+
+除了 ThreadMgr 类之外，几乎去掉了所有全局单例对象。主要原因是单例太难管理，单例使用前要调用生成函数，退出程序时也需要调用销毁函数。在实际编码中，在生
+成单例类时，要么忘记调用 Instance 函数来生成它，要么忘记编写 DestroyInstance 函数来销毁它。
+
+可以使用对象池来管理单例类。
+
+```cpp
+void ThreadMgr::InitializeGlobalComponent(APP_TYPE ppType, int appId){
+  //全局component
+  GetEntitySystem()->AddComponent<ResPath>();
+  GetEntitySystem()->AddComponent<Log4>(ppType);
+  GetEntitySystem()->AddComponent<Yaml>();
+  GetEntitySystem()->AddComponent<NetworkLocator>();
+  //...
+}
+```
+
+为了解决单例，将 IAwakeSystem 接口改造下，改为两种
+
+```cpp
+template<typename... TArgs>
+class IAwakeSystem:virtual public ISystem{
+public:
+  IAwakeSystem() = default;
+  virtual ~IAwakeSystem() = default;
+  virtual void Awake(TArgs... args) = 0;
+  static bool IsSingle() {return true;}
+};
+
+template<typename... TArgs>
+class IAwakeFromPoolSystem :virtual public ISystem{
+public:
+  IAwakeFromPoolSystem() = default;
+  virtual ~IAwakeFromPoolSystem() = default;
+  virtual void Awake(TArgs... args) = 0;
+  static bool IsSingle(){return false;};
+};
+```
+
+例如单例对象
+
+```cpp
+class Yaml : public Component<Yaml>, public IAwakeSystem<>{}
+```
+
+非单例
+
+```cpp
+class ConnectObj : public Entity<ConnectObj>, public IAwakeFromPoolSystem<SOCKET>{}
+```
+
+单例情况则要在对象池的 MallocObject 方法处理
+
+```cpp
+template<typename T>
+template<typename ... Targs>
+T* DynamicObjectPool<T>::MallocObject(Targs... args){
+  if(_free.size() == 0){
+    if(T::IsSingle()){
+      T* pObj = new T();
+      pObj->SetPool(this);
+      _free.push(pObj);
+    }else{
+      for (int index = 0; index < 50 ; index++){
+        T* pObj = new T();
+        pObj->SetPool(this);
+        _free.push(pObj);
+      }
+    }
+  }
+}
+```
+
+如 NetworkListen
+
+```cpp
+class NetworkListen : public Network, public IAwakeSystem<std::string, int>{}
+```
+
+### 查看线程中的所有对象
+
+最好设计一个命令行工具，或者监控，利用好 Actor 设计就好了。
+
 ### 主动销毁对象
 
 ### 时间堆
