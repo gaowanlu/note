@@ -525,4 +525,388 @@ class NetworkListen : public Network, public IAwakeSystem<std::string, int>{}
 
 ### 主动销毁对象
 
+销毁组件或实例有两种需求，一种是在本线程中销毁，适合一般的对象。另一种是像 Packet 类这种跨线程实例。
+
+### 一般组件销毁
+
+当不再需要一个组件时，有两种可以销毁的方式：
+
+- 如果组件是通过实体 AddComponent 途径增加的，可以调用用`Entity::RemoveComponent`销毁。
+- 如果是没有实体的组件如(HttpRequest),可以直接调用该线程中的`EntitySystem::RemoveComponent`函数销毁。
+
+```cpp
+void HttpRequest::Update(){
+  switch(_state){
+    //...
+    case HttpRequestState::HRS_Over:{
+      ProcessOver();
+      _state = HttpRequestState::HRS_NoActive;
+      GetSystemManager()->GetEntitySystem()->RemoveComponent(this);
+    }break;
+    case HttpRequestState::HRS_Timeout:{
+      ProcessTimeout();
+      _state = HttpRequestState::HRS_NoActive;
+      GetSystemManager()->GetEntitySystem()->RemoveComponent(this);
+    }
+    //...
+  }
+}
+```
+
+下面为`EntitySystem::RemoveComponent`实现。
+
+```cpp
+void EntitySystem::RemoveComponent(IComponent* pObj){
+  const auto entitySn = pObj->GetSN();
+  const auto typeHashCode = pObj->GetTypeHashCode();
+  auto iterObj = _objSystems.find(typeHashCode);
+  if(iterObj == _objSystems.end()){
+    return;
+  }
+  ComponentCollections* pCollector = iterObj->second;
+  pCollector->Remove(entitySn);
+}
+void ComponentCollections::Remove(uint64 sn){
+  _removeObjs.emplace_back(sn);
+}
+```
+
+在每个线程中，EntitySystem 都拥有所有的对象实例，这些实例是按照类型不同放到 ComponentCollections 中的。
+当要销毁一个组件时，将组件从 ComponentCollections 中以除，重新放回对象池即可。
+
+ComponentCollections 将需要删除的对象进行了缓冲，放到了删除列表中，在下一帧才会真正删除。
+
+### 引用计数销毁对象
+
+Packet 对象的销毁比较复杂，因为它会穿越多个线程，Packet 对象的销毁可以采用引用计数的方式。
+
+![Packet从生成到销毁流程](../.gitbook/assets/2023-10-09224954.png)
+
+在 Packet 类中定义计数
+
+```cpp
+class Packet : public Entity<Packet>, public Buffer, public IAwakeFromPoolSystem<Proto::MsgId, SOCKET>{
+public:
+  void AddRef();
+  void RemoveRef();
+  void OpenRef();
+  bool CanBack2Pool();
+  //...
+private:
+  std::atomic<int> _ref{0};
+  bool _isRefOpen{false};
+}
+```
+
+对 Packet 类增加了 AddRef、RemoveRef 函数，用来进行计数。计数是在多线程中进行的，所以变量采用了 std：：
+atomic 类型来处理。std：：atomic 是一个原子操作，底层已经加锁，不需要额外加锁。函数 AddRef 对引用计数加 1，
+而函数 RemoveRef 对引用计数减 1，当我们使用对象时，它的引用计数加 1；当引用计数重新变为 0 时，表示所有使用已
+结束，可以销毁了。
+
+对于每个线程来说必然有一个 MessageSystem 系统处理协议，Packet 进入 MessageSystem 类处理队列，则计数加 1，处理完成之后计数减 1.
+
+```cpp
+void MessageSystem::AddPacketToList(Packet* pPacket){
+  std::lock_guard<std::mutex> guard(_packet_lock);
+  _cachePackets.GetWriterCache()->emplace_back(pPacket);
+  pPacket->AddRef();
+}
+void MessageSystem::Update(EntitySystem* pEntities){
+  //...
+  auto lists = pCollections->GetAll();
+  auto packetLists = _cachePackets.GetReaderCache();
+  for(auto iter = packetLists->begin(); iter != packetLists->end(); ++iter){
+    auto pPacket = (*iter);
+    Process(pPacket, lists);
+    pPacket->RemoveRef();
+  }
+  _cachePackets.GetReaderCache()->clear();
+}
+```
+
+主线程分发协议的代码，是 Packet 进入各线程中的必经函数
+
+```cpp
+void ThreadMgr::UpdateDispatchPacket(){
+  //...
+  auto pList = _packets.GetReaderCache();
+  for(auto iter = pList->begin(); iter != pList->end(); ++iter){
+    auto pPacket = (*iter);
+    //...
+    for(auto iter = _threads.begin(); iter != _threads.end(); ++iter){
+      iter->second->HandlerMessage(pPacket);
+    }
+    pPacket->OpenRef();
+  }
+  pList->clear();
+}
+void ThreadCollector::HandlerMessage(Packet* pPacket){
+  auto pLisr = _threads.GetReaderCache();
+  for(auto iter = pList->begin(); iter != pList->end(); ++iter){
+    iter->second->GetMessageSystem()->AddPacketToList(pPacket);
+  }
+}
+```
+
+处理 Packet 时将 Packet 通知到各个线程集合，而线程集合再将 Packet 加入各个线程中。该加入操作完成之后调用
+了 OpenRef 函数，这个函数开始了 Packet 的检查。在 Packet 生成到加入线程之前，引用计数都是 0，显然这时检查计数是不合适的。只有当 OpenRef 这个开关打开之后，也就是说 Packet 已经放置到线程中才是检查的时机。
+
+```cpp
+void Packet::OpenRef(){
+  _isRefOpen = true;
+}
+bool Packet::CanBack2Pool(){
+  if(!_isRefOpen)
+    return false;
+  if(_ref == 0)
+    return true;
+  return false;
+}
+```
+
+如果 CanBack2Pool 函数返回 true，这个 Packet 就认为被用完了，恢复到对象池中，等下次使用。
+
 ### 时间堆
+
+当调用一个 HttpRequest 向外请求一个 HTTP 时，由于某些原因请求没有回应，登录就会一直卡在这里，客户端发送了
+C2L_AccountCheck 协议，但是一直没有得到回应，它只有等待下去。login 进程中的 Account 类也很无奈，HttpRequest 没有给它反馈，Account 类自然也没有办法给客户端反馈数据。分析一下产生这个问题的原因，是因为没有对
+HttpRequest 定时检查，如果开始时就设置一个 10 秒期限，在 10 秒之后还没有反馈，就认为请求失败了，即使后面请求来了，也认为是失败的，这个问题就迎刃而解了。
+
+```cpp
+void RobotMgr::Update(){
+  //...
+  auto pGlobal = Global::GetInstance();
+  if(_nextShowInfoTime > pGlobal->TimeTick)
+    return;
+  _nextShowInfoTime = timeutil::AddSeconds(pGlobal->TimeTick, 2);
+  ShowInfo();
+}
+```
+
+定时打印采用的逻辑是记录下一次的打印时间，如果时间到来，就调用 ShowInfo 函数打印信息。同时，在当前时间的基础上增加两秒，设为下一次的打印时间。
+
+Update 函数是每帧调用的，每一帧的循环中都会判断一次是否到了触发时间。假如进程每秒调用 100 次，也就是说在两秒内有 200 次 if 判断。如果在整个框架中存在大量这种时间判断，其实也在消耗性能，而且这段代码看上去也不够优雅。所以，我们需要采用一种新的机制，以最少的判断来执行时间函数调用，也就是下面要讲到的时间堆。
+
+要制作的定时器就是基于二叉树的原理，名为时间堆。时间堆包括最大时间堆和最小时间堆。将整个二叉树进行排序，顶点是最小时间间隔，为最小时间堆；最下层的叶子节点为最大时间间隔，为最大时间堆。
+
+在一个线程中有这样一个时间堆，那么每一帧只需要有限的判断，判断当前时间与顶点时间的大小，即可得知是否要触发这个定时器的调用。如果最近的一个调用时间都没有到来，那么这个堆中的其他时间节点肯定不会触发。假设有 100 个定时器，按照之前的代码逻辑，需要编写 100 个触发判断函数，而现在被压缩在了顶点上，只需要一次判断。
+
+### 堆代码实现
+
+```cpp
+int main()
+{
+    std::vector<int> data{9, 1, 6, 3, 8, 9};
+    make_heap(data.begin(), data.end(), std::greater<int>());
+    PopData(data);
+    PopData(data);
+    PushData(data, 5);
+    PushData(data, 1);
+    return 0;
+}
+void PopData(std::vector<int>& data){
+  //弹出heap顶元素，将其放置于区间末尾
+  pop_heap(data.begin(), data.end(), std::greater<int>());
+  //末尾数据
+  data.back();
+  //弹出末尾数据
+  data.pop_back();
+}
+void PushData(std::vector<int>& data, const int value){
+  data.push_back(value);
+  push_heap(data.begin(), data.end(), std::greater<int>());
+}
+```
+
+- make_heap 函数的作用是重新排列给定范围内的元素，使它们形成
+  堆。
+- pop_heap 函数的作用是弹出堆顶元素，将堆顶元素移动到集合的最
+  后，并重新排列剩下的元素。值得注意的是，之前的顶元素被放在了最后，并
+  从堆数据中删除，相当于堆数据减 1。
+- push_heap 函数的作用是对最后一个元素进行插入，插入堆中的适当
+  位置。也就是说，在调用 push_heap 之前，插入的新元素一定是在数据的最尾
+  端。
+
+在 std 标准库中，对于堆有两种已实现的计算，默认是最大堆 `less<T>` 和最
+小堆 `greater<T>`，当然也可以自己定义排序算法，std 支持自定义算法的定义。
+
+### 时间堆组件
+
+使用最小堆的概念写一个定时器
+
+```cpp
+using TimerHandleFunction = std::function<void(void)>;
+struct Timer
+{
+    timeutil::Time NextTime;     // 下次调用时间
+    TimerHandleFunction Handler; // 调用函数
+    int DelaySecond;             // 首次执行时延迟秒
+    int DurationSecond;          // 间隔时间(秒）
+    int CallCountTotal;          // 总调用次数（0为无限）
+    int CallCountCur;            // 当前调用次数
+    uint64 SN;                   // 方便删除数据时找到Timer
+};
+```
+
+在时间堆中每个节点都是 Timer 结构，这种结构包括总调用次数、调用时间间隔、当前调用次数、调用函数和下次调用时间等。如果总调用次数为 0，这个节点就是一个无限次数的循环定时器。属性 DelaySecond 是首次执行时延时，这个属性和时间间隔有一定的区别。
+
+定时器组件 TimerComponent
+
+```cpp
+class TimerComponent : public Entity<TimerComponent>, public IAwakeSystem<>
+{
+public:
+    void Awake() override;
+    uint64 Add(int total, int durations, bool immediateDo, int immediateDoDelaySecond, TimerHandleFunction func);
+    void Remove(std::list<uint64> &timers);
+    bool CheckTime();
+    Timer PopTimeHeap();
+    void Update();
+    //...
+private:
+    std::vector<Timer> _heap;
+};
+```
+
+从组件 TimerComponent 的定义中可以看出，它是一个单例，对于一个线程来说，只需要有一个 TimerComponent 组件。在初始化时为该组件增加 UpdateComponent 组件，以方便每一帧检查是否有到了时间的函数需要执行。
+
+TimerComponent 组件的初始化与更新函数如下:
+
+```cpp
+void TimerComponent::Awake()
+{
+    auto pUpdateComponent = AddComponent<UpdateComponent>();
+    pUpdateComponent->UpdataFunction = BindFunP0(this, &TimerComponent::Update);
+}
+
+void TimerComponent::Update()
+{
+    while (CheckTime())
+    {
+        Timer data = PopTimeHeap();
+        data.Handler();
+        if (data.CallCountTotal != 0)
+            data.CallCountCur++;
+        if (data.CallCountTotal != 0 && data.CallCountCur >= data.CallCountTotal)
+        {
+            // delete pNode; 取出之后，不再加入堆中
+        }
+        else
+        {
+            // 重新加入堆中
+            data.NextTime = timeutil::AddSeconds(Global::GetInstance()->TimeTick, data.DurationSecond);
+            Add(data);
+        }
+    }
+}
+```
+
+在更新函数中，首先检查是否有需要执行的节点
+
+```cpp
+bool TimerComponent::CheckTime()
+{
+    if (_heap.empty())
+        return false;
+    const auto data = _heap.front();
+    return data.NextTime <= Global::GetInstance()->TimeTick;
+}
+```
+
+在每个线程中都有一个 TimerComponent 组件实例，每个 EntitySystem 中都有一个独立的 TimerComponent 组件负责
+该进程所有需要按时间调用的事件。在线程启动时，该组件就被创建出来了。每个组件都有可能需要定时器，为了方便组件调用定时器，修改了 IComponent 组件，增加了一个关于定时器的函数。
+
+```cpp
+class IComponent : virtual public SnObject
+{
+protected:
+    void AddTimer(const int total, const int durations, const bool immediateDo, const int immediateDoDelaySecond, TimerHandleFunction handler);
+    std::list<uint64> _timers;
+    //...
+};
+void IComponent::AddTimer(const int total, const int durations, const bool immediateDo, const int immediateDoDelaySecond, TimerHandleFunction handler)
+{
+    auto obj = GetSystemManager()->GetEntitySystem()->GetComponent<TimerComponent>();
+    const auto timer = obj->Add(total, durations, immediateDo, immediateDoDelaySecond, std::move(handler));
+    _timers.push_back(timer);
+}
+```
+
+当组件被销毁时，这些定时器也会被销毁。
+
+```cpp
+void IComponent::ComponentBackToPool()
+{
+    BackToPool();
+    if (!_timers.empty())
+    {
+        auto pTimer = _pSystemManager->GetEntitySystem()->GetComponent<TimerComponent>();
+        if (pTimer != nullptr)
+            pTimer->Remove(_timers);
+        _timers.clear();
+    }
+    //...
+}
+```
+
+例如 RobotMgr
+
+```cpp
+void RobotMgr::Awake(){
+  //...
+  AddTimer(0, 2, false, 0 ,BindFunP0(this,&RobotMgr::ShowInfo));
+}
+```
+
+`TimerComponent::Add`的实现
+
+```cpp
+void TimerComponent::Add(Timer &data)
+{
+    _heap.emplace_back(data);
+    if (_heap.size() == 1)
+    {
+        make_heap(_heap.begin(), _heap.end(), CompareTimer());
+    }
+    else
+    {
+        push_heap(_heap.begin(), _heap.end(), CompareTimer());
+    }
+}
+
+uint64 TimerComponent::Add(const int total, const int durations, const bool immediateDo, const int immediateDoDelaySecond, TimerHandleFunction handler)
+{
+    // durations 执行间隔秒
+    // immediateDo 是否马上执行
+    // immediateDoDelaySecond 首次执行与当前时间的间隔时间
+    Timer data;
+    data.SN = Global::GetInstance()->GenerateSN();
+    data.CallCountCur = 0;
+    data.CallCountTotal = total;
+    data.DurationSecond = durations;
+    data.Handler = std::move(handler);
+    data.NextTime = timeutil::AddSeconds(Global::GetInstance()->TimeTick, durations);
+    if (immediateDo)
+    {
+        data.NextTime = timeutil::AddSeconds(Global::GetInstance()->TimeTick, immediateDoDelaySecond);
+    }
+    Add(data);
+    return data.SN;
+}
+```
+
+为了堆的正常排序，需要自定义 Timer 的排序类
+
+```cpp
+struct CompareTimer{
+  constexper bool operator()(const Timer& _Left, const Timer& _Right) const{
+    return (_Left.NextTime > _Right.NextTime);
+  }
+};
+```
+
+组件中只需要调用一个 AddTimer 函数就可以生成一个定时器。除了时间堆之外，还有一种定时器的模式叫时间轮。时间轮比时间堆效率更高，因为插入和取出时，时间轮都没有时间成本，但时间轮的数据结构更为复杂。
+
+### 复杂的定时器真的好吗
+
+不一定，写业务代码时用定时器其实也不是很方便，容易出错。还不如简单的在 Update 做时间间隔判断。
