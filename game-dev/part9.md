@@ -414,6 +414,141 @@ void SendNetworkBuffer::AddPacket(Packet *pPacket)
 
 ![HTTP请求流程](../.gitbook/assets/2023-10-11234008.png)
 
+### socket 同值问题
+
+仅采用 Socket 值来标识一个网络这种方式其实并不靠谱，它的不确定性主要归于异步，当我们使用多线程一瞬间密集向一个端口发起连接请求时，socket 值可能会重用。当上千个连接同时发送向某个端口时，创建 socket 会有一个报错，在 linux 下是 35，对于这个错误，大部分情况下认为不是错误，而是端口处理不过来了，对于发来的请求没有回应，但这个通道并没有关闭，是一个等待状态。当对端处理完成时，会向连接端发送一个写指令，这时通道就打开了。
+
+在我们的框架中，当大量机器人密集向服务器发起 Socket 连接，又是多线程连接时，在 Windows 下非常容易出现 Socket 同值的情况，因为 Windows 下的 Socket 值是随机的。也就是说，两个 Robot 类可能共用了一个 Socket 值，听上去似乎不可能，可以做一个实验，用 2000 个线程同时连接一个端口，就会发现有概率创建相同值的 Socket。
+
+假设有一个 Socket 值为 1001，被两个 Robot 类分配到了。对于网络层来说，当第一个对象连接时，服务器处理不过来，返回了 35 错误，这个请求在服务端可能已经被抛弃了，但 Robot A 认为可以等待，并没有关闭这个 Socket，第二个 Robot B 刚好又分配到了 1001，它向服务器发起了一个连接请求，这时服务器同意了，这样 Robot A 和 Robot B 都拿到了这个号码牌，它们都认为自己已经连接成功。A 和 B 轮询了同一个 Socket 值，注意通道只有一个。这是一种逻辑上的错误，这种情况在 Linux 和 Windows 上都可能出现。
+
+即使没有出现上述情况，还有另一种情况。假设 Robot A 使用值为 1001 的 Socket 进行登录，在这个过程中，某些原因导致底层网络中断，这时底层网络会向逻辑层发送一个断开消息，在这个消息还在消息队列中等待下一帧处理的时候，逻辑层在同一帧对 1001 发送了一条数据，这条数据放在了发送队列中待发送。好巧不巧，这时有一个新来的玩家 Robot B 登录了，正好重用了 1001。这将产生什么样的后果呢？很有可能在下一帧，这个新上线的 Robot B 将莫明其妙地收到一条数据，这条数据原本是想发给 Robot A 的。发送 Packet 包中，标记的 Socket 为 1001，发送给 Robot B 并没有错。因为值为 1001 的 Socket 已经重新被分配给 Robot B 了，但实际上我们想要的效果并不是这样的。
+
 ### 为 Packet 定义新的网络标识
 
+综上所述，单纯依靠 socket 来标识一个玩家是行不通的，需要使用一种新的网络身份法则，
+使用 NetworkIdentify 结构，有两个关键值 socketkey 和 objectkey，一边绑定 socket 标识，另一边绑定逻辑层对象标识，一个 packet 到达网络层需要对这两个值进行判断。
+
+```cpp
+struct NetworkIdentify{
+public:
+  NetworkIdentify() = default;
+  NetworkIdentify(SocketKey socketKey, ObjectKey objKey);
+  SocketKey GetSocketKey() const { return _socketKey; }
+  ObjectKey GetObjectKey() const { return _objKey; }
+protected:
+  SocketKey _socketKey { INVALID_SOCKET, NetworkType::None };
+  ObjectKey _objKey { ObjectKeyType::None, {0, ""}}
+};
+struct SocketKey{
+  SOCKET Socket;
+  NetworkType NetType;
+  //...
+};
+struct ObjectKey{
+  ObjectKeyType keyType { ObjectKeyType::None};
+  ObjectKeyValue KeyValue { 0，""};
+  //...
+};
+```
+
+### 改造 NetworkConnector
+
+之前对于每个 NetworkConnector 都需要负责自己的 socket 连接数据的处理，这就很低效，可以将 NetworkConnector 改成一个 IO 多路复用的。像 NetworkListen 一样，即使有 1000 个对象，每次 Update 也只会执行一次::select 或者::epoll，这就要将其改成一容器，而不是一个 NetworkConnector 对应一个网络连接。在这个容器内，每个 ConnectObj 都是一个连接通道，进程内所有的对外连接都由 NetworkConnector 维护。
+
+可以为 ConnectThread 独立开个线程，使用 ThreadMgr 的 CreateComponent 创建 NetworkConnector 到指定线程去。
+
+对于 NetworkConnector 组件则接收 MI_NetworkConnect 协议，即接收主动连接请求处理协议。
+
+```cpp
+message NetworkConnect{
+  int32 network_type = 1;//区分进行TCP连接还是HTTP
+  NetworkObjectKey key = 2;
+  string ip = 3;
+  int32 port = 4;
+};
+```
+
+组件对协议处理
+
+```cpp
+void NetworkConnector::HandleNetworkConnect(Packet* pPacket){
+  auto proto = pPacket->ParseToProto<Proto::NetworkConnect>();
+  if(proto.network_type()!=(int)_networkType)
+    return;
+  ObjectKey key;
+  key.ParseFromProto(proto.key());
+  ConnectDetail* pDetail = new ConnectDetail(key, proto.ip(), proto.port());
+  _connecting.AddObj(pDetail);//等待下一帧处理
+}
+```
+
+组件的 Update
+
+```cpp
+void NetworkConnector::Update(){
+  //有新的请求要做
+  if(_connecting.CanSwap())
+    _connecting.Swap(nullptr);
+  //建立新连接
+  if(!_connecting.GetReaderCache()->empty()){
+    auto pReader = _connecting.GetReaderCache();
+    for(auto iter = pReader->begin(); iter != pReader->end(); ++iter){
+      //让一个请求转换成一个处于Connecting状态的ConnectObj。
+      if(Connect(iter->second)){
+        _connecting.RemoveObj(iter->first);
+      }
+    }
+  }
+  Epoll();
+  OnNetworkUpdate();
+}
+enum class ConnectStatType{
+  None,
+  Connecting,
+  Connected,
+};
+```
+
+不论是 NetworkListen 还是 NetworkConnector，如果产生了断线，这个 ConnectObj 就被删除了。一个 ConnectObj 被销毁之后，断线协议一定会发送到逻辑上层。如果它是一个玩家，就有相应的下线处理。如果这个连接的 ObjectType 表明它是一个服务端进程之间的连接，那么一个重连接协议将被发起，协议号依然是 MI_NetworkConnect。
+
+### 使用网络标识发送数据
+
+ConnectObj 继承`Entity<ConnectObj>`,NetworkIdentify,IAwakeFromPoolSystem 接口。是一个 NetworkIdentify，拥有网络标识，一头绑定了网络，另一头绑定了一个逻辑层的对象。在创建 ConnectObj 时需要输入 NetworkIdentify 相关数据。
+
+```cpp
+void Awake(SOCKET socket, NetworkTYpe networkType, ObjectKey key,ConnectStatType state) override;
+```
+
+还为 ConnectObj 准备了一个状态。这一点不难理解，连接是一个异步过程，只有确认已经连接成功了，才认为这个通道是可用的。当网络层传来可读或可写时，这个通道就成功创建了，这时会调用函数 ChangeStateToConnected 来改变 ConnectObj 的状态。
+
+```cpp
+void ConnectObj::ChangeStateToConnected()
+{
+    _state = ConnectStateType::Connected;
+    if (GetObjectKey().KeyType == ObjectKeyType::App)
+    {
+        auto pLocator = ThreadMgr::GetInstance()->GetEntitySystem()->GetComponent<NetworkLocator>();
+        pLocator->AddNetworkIdentify(GetObjectKey().KeyValue.KeyInt64, GetSocketKey(), GetObjectKey());
+    }
+    else
+    {
+        // 通知逻辑层连接成功了
+        MessageSystemHelp::DispatchPacket(Proto::MsgId::MI_NetworkConnected, this);
+    }
+}
+```
+
+![Robot登录流程](../.gitbook/assets/2023-10-13013340.png)
+
+其实 C++轮子搞 HTTP，费力不讨好，真不如搞个代理服务器，比如选 Go，Go 与 C++之间用
+protobuf 数据交互。Go 发送 HTTP 请求就很简单了。
+
+### 连接标识重点
+
+总之记住，用 socketfd 来比标识一个连接这种方式不靠谱。socketfd+对象数据标识才行。
+就像上面说的，一个 client1 发出许多数据包到服务器，然后将这些包发出现存在了某个线程待处理的队列中，但是此时 client1 断开连接，一个新的 client2 连接过来使用了 client1 当时使用的 fd,然后线程处理后，回包，如果只根据 socket 来找 connectobj，那么原来要发给 client1 的数据就会发给 client2。这就会出现大问题。
+
 ### HTTP 分块
+
+HTTP 的东西，自己去了解吧，不知道也不影响学习。
