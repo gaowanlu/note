@@ -331,16 +331,385 @@ void SyncComponent::HandleNetworkDisconnect(Packet* pPacket){
 
 ### game 进程断线与重连
 
+game 进程发生断线，那么与它有联系的所有进程都需要做出反应，与 game 进程有连接的进程是 dbmgr、appmgr、space。
+game 连接 dbmgr 是为了读取数据，连接 appmgr 为了创建公共地图，这两个进程不需要对 game 进程的断线做出特别的操作。
+
+game 是玩家与 space 的中间进程，当 game 进程发生宕机或其他时间引起的断线时，在 game 进程上的所有玩家网络全部中断，对于 space
+来说，需要做的是检查自己的每一个地图实例，与断线 game 进程有关联的玩家全部踢下线并保存。
+
+```cpp
+//space
+void World::HandleNetworkDisconnect(Packet* pPacket){
+  auto pTags = pPacket->GetTagKey();
+  const auto pTagPlayer = pTags->GetTagValue(TagType::Player);
+  if(pTagPlayer != nullptr){
+    //...玩家掉线
+  }else{
+    //dbmgr,appmgr or game断线
+    const auto pTagApp = pTags->GetTagValue(TagType::App);
+    if(pTagApp != nullptr){
+      auto pPlayerMgr = GetComponent<PlayerManagerComponent>();
+      pPlayerMgr->RemoveAllPlayers(pPacket);
+    }
+  }
+}
+```
+
+一旦发现收到的断线来自于 game 进程，与这个 game 有关的所有玩家将被从 PlayerManagerComponent 管理组件中踢出，在踢出的过程中
+执行了保存数据的操作。
+
+```cpp
+void PlayerManagerComponent::RemoveAllPlayers(NetIdentify* pNetIdentify){
+  auto iter = _players.begin();
+  while(iter!=_players.end()){
+    auto pPlayer = iter->second;
+    if(pPlayer->GetSocketKey()->Socket != pNetIdentify->GetSocketKey()->Socket){
+      ++iter;
+      continue;
+    }
+    iter = _players.erase(iter);
+    //save
+    Proto::SavePlayer protoSave;
+    protoSave.set_player_sn(pPlayer->GetPlayerSN());
+    pPlayer->SerializeToProto(protoSave.mutable_player());
+    MessageSystemHelp::SendPacket(Proto::MsgId::G2DB_SavePlayer, protoSave, APP_DB_MGR);
+    //remove obj
+    GetSystemManager()->GetEntitySystem()->RemoveComponent(pPlayer);
+  }
+}
+```
+
+game 进程网络断开，space 进程上所有地图的 World 实例都会收到断线消息，在 world 处理消息时，将断开协议中的
+socket 值与玩家上的 socket 值进行对比，找到这些 socket 值相同的玩家，让这些玩家下线，同时保存玩家的数据。
+
 ### space 进程断线与重连
+
+space 进程断线的情况比 game 更复杂，space 还连接了 dbmgr 与 appmgr，space 与 dbmgr 的连接断开了不会有大问题，很快就会
+重新连接。space 与 game 的连接是由 game 进程发起的，space 断线，game 进程中的 WorldProxy 必须做出反应。
+
+```cpp
+void WorldProxy::HandleNetworkDisconnect(Packet *pPacket)
+{
+    if (!NetworkHelp::IsTcp(pPacket->GetSocketKey()->NetType))
+    {
+        return;
+    }
+    TagValue *pTagValue = pPacket->GetTagKey()->GetTagValue(TagType::Account);
+    if (pTagValue != nullptr)
+    {
+        // 玩家掉线
+        // ...
+    }
+    else
+    {
+        // 可能是space、login、appmgr、dbmgr断线
+        auto pTags = pPacket->GetTagKey();
+        const auto pTagApp = pTags->GetTagValue(TagType::APP);
+        if (pTagApp == nullptr)
+        {
+            return;
+        }
+        const auto appKey = pTagApp->KeyInt64;
+        const auto appType = GetTypeFromAppKey(appKey);
+        const auto appId = GetIdFromAppKey(appKey);
+        if (appType != APP_SPACE || _spaceAppId != appId)
+        {
+            return;
+        }
+        // 玩家需要全部断线
+        auto pPlayerCollector = GetComponent<PlayerCollectorComponent>();
+        pPlayerCollector->RemoveAllPlayerAndCloseConnect();
+        // locator
+        auto pWorldLocator = ComponentHelp::GetGlobalEntitySystem()->GetComponent<WorldProxyLocator>();
+        pWorldLocator->Remove(_worldId, GetSN);
+        // worldproxy销毁
+        GetSystemManager()->GetEntitySystem()->RemoveComponent(this);
+    }
+}
+```
+
+在 game 进程中，worldproxy 代理类的目标 world 可能位于各个 space 进程上，所以 worldproxy 收到断线消息，需要先判断
+是狗是自己代理类的 space 进程断线了，如果是，当前代理地图中的玩家全部下线，同时销毁 worldproxy 自己。
+
+在 space 断线时，在 appmgr 中保存了一些地图实例与 space 的对应数据，这些数据也必须在断线时处理掉
+
+```cpp
+//appmgr中
+void CreateWorldComponent::HandleNetworkDisconnect(Packet* pPacket){
+  //...
+  auto appId = GetIdFromAppKey(pTagApp->KeyInt64);
+  //断线的space上是否有正在创建的地图
+  do{
+    auto iterCreating = std::find_if(_creating.begin(), _creating.end(), [&appId](auto pair){
+      return pair.second == appId;
+    });
+    if(iterCreating == _creating.end()){
+      break;
+    }
+    //正在创建时，Space进程断开了，另找其他space进程创建world
+    auto workdId = iterCreating->first;
+    _creating.erase(iterCreating);
+    ReCreateWorld(worldId);
+  }while(true);
+  //断线的Space上有自己创建的公共地图全部删除
+  do{
+    auto iterCreated = std::find_if(_created.begin(), _created.end(), [&appId](auto pair){
+      return Global::GetAppIdFromSN(pair.second) == appId;
+    });
+    if(iterCreated == _created.end())
+      break;
+    _created.erase(iterCreated);
+  }while(true);
+  //断线的space上创建的副本地图全部删除
+  do{
+    const auto iter = std::find_if(_dungeons.begin(), _dungeons.end(), [&appId](auto pair){
+      return pair.second == appId;
+    });
+    if(iter == _dungeons.end())
+      break;
+    _dungeons.erase(iter);
+  }while(true);
+}
+```
 
 ### appmgr 进程断线与重连
 
+如果 appmgr 断线了或者宕机了，会怎样，appmgr 需要解决两个问题，一个是全局共有数据另一个为 http 请求
+
+重启 appmgr 后，所有连接它的进程会将自己的玩家和在线情况发送过来，但 appmgr 不仅仅是重启那么简单，appmgr 不仅负责
+维护公共地图所在的 space 信息，还负责维护副本地图的 space 信息，这些信息在 appmgr 断线后变为空白。
+
+1. space 进程发现自己和 appmgr 连接上后，马上发送协议，一些中包括 space 当前所有的地图信息，但这有问题，当 appmgr 被重启了，
+   在 space 还没有向 appmgr 发送同步地图的信息之前，game 进程向 appmgr 请求某个公共地图的信息，这时 appmgr 应该选 space 去
+   创建 world，还是应该等待。
+2. appmgr 是否真的需要保存这些数据，如果不保存，game 进程应该如何知道某个公共地图的实例在哪一个 space 中，可以将数据推送到
+   redis 中，space 中的数据就不必保存到 appmgr 上，同时可以省略每个进程中的采集数据的流程。
+
+除了 appmgr 和 dbmgr 之外，都有可替代的方案，game1 挂了有 game2，space1 挂了有 space2，如果 appmgr 宕机了，就没可替代方案了。
+实际上，appmgr 同样可以采用集合的方式，这样即使其中一个 appmgr 关闭了，还有另一个 appmgr，都是类似的思路。appmgr 的地址也可以搞到 redis 中，
+appmgr 称为集群。
+
+在框架中，appmgr 收集了所有 login 进程的信息，客户端通过 HTTP 请求到 appmgr 获取到一个 login 进程用于登录，在实际情况中
+可以采取另外一种方式实现，可以用 Nginx 的 upstream 功能，首先在 login 进程上实现一个 HTTP 接口，返回自己的 IP 与端口，
+也就是客户端登录的 IP 与端口，将 login 打开的 HTTP 端口配置到 Nginx 上
+
+```cpp
+Upstream login_server{
+  server 192.168.0.172:9000 weight=5;
+  server 192.168.0.171:9000 weight=5;
+}
+```
+
+当访问 Nginx 时，Nginx 会以轮询的方式分发客户端的请求到每一个 login 进程上，这种架构叫反向代理负载均衡。
+
+![反向代理均衡](../.gitbook/assets/2023-10-18231542.png)
+
 ### 动态新增系统
+
+现在的 ECS 框架对于 System 系统的部分几乎固定在了底层，如果上层有需求新增系统，只能改底层，需要设计动态新增系统，下面为
+移动系统的样例。
+
+要实现移动功能，首先客户端需要发送一条移动协议，在处理移动协议时可以分两种情况。
+
+1. 给定一个目标点，让任务移动到目标点
+2. 给定一个移动方向
+
+常用的处理移动的方式:当玩家收到这个移动协议，将这个数据保存在玩家对象中，然后每一帧对其移动位置进行计算与调整。
+
+```cpp
+class player{
+private:
+  std::list<Vector3> pos;
+public:
+  void HandleMove(Packet* pPacket){
+    This->pos = ...;//收到移动协议，初始化
+  }
+  void Update(){
+    if(IsMove()){
+      this->curpos = ...//计算移动点
+    }
+  }
+};
+```
+
+如果所有数据都堆积在 player 类中，就有太多杂乱数据，可以用新组件来存储移动数据。
 
 ### MoveComponent 组件
 
+在 space 进程中，收到客户端传来的 C2S_Move 移动协议后，通过 game 进程的 WorldProxy，协议被中转到指定 World 实例上。
+在处理协议时，将移动数据全部存在了 MoveComponent 组件，处理移动时，要求客户端发送从起点位置到重点位置的所有坐标点。
+将路径传给服务端，让服务端以相同的速度计算出玩家的位移情况。在 World 类中，收到移动消息的处理如下
+
+```cpp
+void World::HandleMove(Player* pPlayer, Packet* pPacket){
+  auto proto = pPacket->ParseToProto<Proto::Move>();
+  proto.set_player_sn(pPlayer->GetPLayerSN());
+  const auto positions = proto.mutable_position();
+  auto pMoveComponent = pPlayer->GetComponent<MoveComponent>();
+  if(pMoveComponent == nullptr){
+    pMoveComponent = pPlayer->AddComponent<MoveComponent>();
+  }
+  std::queue<Vector3> pos;
+  for(auto index = 0; index < proto.position_size(); index++){
+    Vector3 v3(0,0,0);
+    v3.ParserFromProto(positions->Get(index));
+    pos.push(v3);
+  }
+  const auto pComponentLastMap = pPlayer->GetComponent<PlayerComponentLastMap>();
+  pMoveComponent->Update(pos, pComponentLastMap->GetCur()->Position);
+  BroadcastPacket(Proto::MsgId::S2C_Move, proto);
+}
+```
+
+协议中的位置数据存储了从原点到终点之间路径上的所有点，相邻的两个点之间没有阻碍，当收到一个移动协议后，做一个
+全地图广播，将收到的移动数据广播给本地图的所有玩家，并将数据保存到 MoveComponent 中。
+
+```cpp
+class MoveComponent:public Component<MoveComponent>,public IAwakeSystem<>{
+//...
+private:
+  std::queue<Vector3> _targets;
+  MoveVector3 _vector3;
+};
+```
+
+如果玩家要计算出每帧的位移，需要有一个 Update 帧函数来实时计算，如果有 1000 个玩家在地图上，也就是需要调用 Update 函数 1000 次，
+现在可以进行统一处理，只需要调用 Update 一次，处理这个计算的是新系统 MoveSystem。
+
 ### 新系统 MoveSystem
+
+MoveSytem 的定义，在 space 进程中
+
+```cpp
+class MoveSystem:public ISystem<MoveSystem>{
+public:
+  MoveSystem();
+  void Update(EntitySystem* pEntities) override;
+private:
+  timeutil::Time _lastTime;
+  ComponentCollections* _pCollections{nullptr};
+};
+//...
+void MoveSystem::Update(EntitySystem* pEntities){
+  //每0.5秒刷一次
+  cosnt auto curTime = Global::GetInstance()->TimeTick;
+  const auto timeElapsed = curTime - _lastTime;
+  if(timeElapsed<500){
+    return;
+  }
+  if(_pCollections==nullptr){
+    _pCollections=pEntities->GetComponentCollections<MoveComponent>();
+    if(_pCollections==nullptr){
+      return;
+    }
+  }
+  _lastTime = curTime;
+  const auto plists = _pCollections->GetAll();
+  for(auto iter = plists->begin(); iter!=plists->end(); ++iter){
+    auto pMoveComponent = dynamic_cast<MoveComponent*>(iter->second);
+    auto pPlayer = pMoveComponent->GetParent<Player>();
+    if(pMoveComponent->Update(timeElased, pPlayer->GetComponent<PlayerComponentLastMap>(), 2)){
+      pPlayer->RemoveComponent<MoveComponent>();
+    }
+  }
+}
+```
+
+MoveComponent 组件有两个 Update 函数，一个用于更新移动路径，一个用于计算路径
+
+```cpp
+class MoveComponent : public Component<MoveComponent>, public IAwakeFromPoolSystem<>
+{
+public:
+    void Update(std::queue<Vector3> targets, Vector3 curPosition);
+    bool Update(float timeElapsed, PlayerComponentLastMap *pLastMap, const float speed);
+    //...
+};
+```
+
+随着时间的流逝计算现在玩家所在的位置。玩家下线之后，再次上线进入地图会定位到上次下线时保存的位置，该位置的数据保存在
+PlayerComponentLastMap 组件上，所以这里传入了 PlayerComponentLastMap 组件的指针。
+
+移除 MoveComponent 组件。当玩家走到目标点之后，有一个移除 MoveComponent 组件的操作。如果一直不停
+地行走，这个 MoveComponent 组件的信息就会不断更新，一旦停下来，这个组件就会被移除。这样做的目的在于减少
+整个 MoveSystem 的循环量。相对于循环量而言，整个框架创建对象和删除对象没有压力，用空间换取了时间。
 
 ### 加载新系统
 
-### 测试移动
+需要为每个线程增加一个指定的系统
+
+```cpp
+inline void InitializeComponentSpace(ThreadMgr* pThreadMgr){
+  pThreadMgr->CreateComponent<WorldGather>();
+  pThreadMgr->CreateComponent<WorldOperatorComponent>();
+  //...
+  //新系统
+  pThreadMgr->CreateSystem<MoveSystem>();
+}
+```
+
+创建系统的函数实现
+
+```cpp
+template <class T, typename... TArgs>
+void ThreadMgr::CreateSystem(TArgs... args)
+{
+    std::lock_guard<std::mutex> guard(_packet_lock);
+    const std::string className = typeid(T).name();
+    if (!ObjectFactory<TArgs...>::GetInstance()->IsRegisted(className))
+    {
+        RegistObject<T, TArgs...>();
+    }
+    Proto::CreateSystem proto;
+    proto.set_system_name(className.c_str());
+    auto pCreatePacket = MessageSystemHelp::CreatePacket(Proto::MsgId::MI_CreateSystem, 0);
+    pCreatePacket->AddComponent<CreateOptionComponent>(true, false, LogicThread);
+    pCreatePacket->SerializeToBuffer(proto);
+    _cPackets.GetWriterCache()->emplace_back(pCreatePacket); // 将包发出去，每个线程上的System由其自己创建
+}
+```
+
+CreateComponentC 组件是每个线程中都存在的基础组件，用于创建组件，现在多了一个创建系统的功能。
+
+```cpp
+void CreateComponentC::Awake()
+{
+    auto pMsgSystem = GetSystemManager()->GetMessageSystem();
+    //...
+    pMsgSystem->RegisterFunction(this, Proto::MsgId::MI_CreateComponent, BindFunP1(this, &CreateComponentC::HandleCreateComponent);
+    pMsgSystem->RegisterFunction(this, Proto::MsgId::MI_CreateSystem, BindFunP1(this, &CreateComponentC::HandleCreateSystem);
+}
+void CreateComponentC::HandleCreateSystem(Packet *pPacket)
+{
+    Proto::CreateSystem proto = pPacket->ParseToProto<Proto::CreateSystem>();
+    const std::string systemName = proto.system_name();
+    const auto pThread = static_cast<Thread *>(GetSystemManager());
+    if (int(pThread->GetThreadType()) != proto.thread_type())
+        return;
+    GetSystemManager()->AddSystem(systemName);
+}
+void SystemManager::AddSystem(const std::string &name)
+{
+    const auto pObj = ComponentFactory<>::GetInstance()->Create(nullptr, name, 0);
+    if (pObj == nullptr)
+    {
+        LOG_ERROR("failed to create system.");
+        return;
+    }
+    System *pSystem = static_cast<System *>(pObj);
+    if (pSystem == nullptr)
+    {
+        LOG_ERROR("failed to create system.");
+        return;
+    }
+    _systems.emplace_back(pSystem);
+}
+```
+
+SystemManager 是一个大容器，它并不关心自己管理的系统有什么功能，只要符合 ISystem 接口的对象都可以正常运行在这个大容器中。
+
+### 记得写一个自己的框架
+
+https://github.com/gaowanlu/GameBookServer
+
+先模仿，后成王
