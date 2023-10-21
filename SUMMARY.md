@@ -122,7 +122,7 @@
 - [业务之旅](game-dev/FUNC_DEV_README.md)
 
   - [从角色走路说起](game-dev/part13.md)
-  - [Skynet 入门精要](game-dev/FUNC_DEV_README.md)
+  - [Skynet 入门精要](game-dev/part14.md)
   - [球球大作战](game-dev/FUNC_DEV_README.md)
   - [Skynet 进阶技法](game-dev/FUNC_DEV_README.md)
   - [C++并发世界](game-dev/FUNC_DEV_README.md)
