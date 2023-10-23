@@ -125,6 +125,265 @@ agentmgr 仅记录 agent 的状态、处理玩家登录，登出功能，所有�
 
 ### 实现 gateway
 
+请见如下部分
+
+### 连接类和玩家类
+
+gateway 需要使用两个列表，一个用于保存客户端连接信息，另一个用于记录已登录玩家信息，"让 gateway 把客户端和 agent 关联起来"，即是将 连接信息和玩家信息关联起来。
+
+```lua
+-- service/gateway/init.lua
+conns = {} --[fd] = conn
+players = {} --[playerid] = gateplayer
+-- 连接类
+function conn()
+  local m = {
+      fd = nil
+      playerid = nil
+  }
+  return m
+end
+-- 玩家类
+function gateplayer()
+  local m = {
+    playerid = nil,
+    agent = nil,
+    conn = nil
+  }
+end
+```
+
+在客户端进行连接后，程序会创建一个 conn 对象，gateway 会以 fd 为索引将其存进 conns 表中。conn 对象会保存连接的 fd
+标识，但 playerid 属性为空，此时 gateway 可以通过 conn 对象找到连接标识 fd，给客户端发送消息。
+
+![conns和players列表示意图](../.gitbook/assets/2023-10-24000212.png)
+
+当玩家成功登陆时，会创建一个 gateplayer 对象，服务端才会创建角色对象(agent),gateway 会以玩家 id 为索引将其存入
+player 表中。gateplayer 对象会保存 playerid(玩家 id)、agent（代理服务 id）、conn（对应的 conn 对象）。
+
+登录后，gateway 可以做到双向查找
+
+- 客户端发了消息，可以由底层 socketfd 找到 conn 对象，再由 playerid 属性找到 gateplayer 对象，进而可以知道代理服务 agent 在哪里
+- 若 agent 发来消息，只要附带玩家 id，gateway 可以由 playerid 获取到 gateplayer 对象进而可以找到 conn，可以使用 fd 进行发送
+
+### 接收客户端连接
+
+首先需要开启 socket 的监听，当有客户端连接时，start 方法的回调函数 connect 被调用
+
+```lua
+--service/gateway/init.lua
+local socket = require "skynet.socket"
+local runconfig = require "runconfig"
+function s.init()
+  local node = skynet.getenv("node")
+  local nodecfg = runconfig[node]
+  local port = nodecfg.gateway[s.id].port
+  local listenfd = socket.listen("0.0.0.0", port)
+  skynet.error("Listen socket :", "0.0.0.0", port)
+  socket.start(listenfd, connect)
+end
+--有新连接时的处理
+local connect = function(fd, addr)
+  print("connect from " .. addr .. " " .. fd)
+  local c = conn()
+  conns[fd] = c
+  c.fd = fd
+  skynet.fork(recv_loop, fd)
+end
+```
+
+recv_loop 负责接收客户端消息
+
+```lua
+-- service/gateway/init.lua
+--每一条连接接收数据处理
+--协议格式cmd,arg1,arg2,...#
+local recv_loop = function(fd)
+  socket.start(fd)
+  skynet.error("socket connected" ..fd)
+  local readbuff = ""
+  while true do
+    local recvstr = socket.read(fd)
+    if recvstr then
+      readbuff = readbuff..recvstr
+      readbuff = process_buff(fd, readbuff)
+    else
+      skynet.error("socket close" ..fd)
+      disconnect(fd)
+      socket.close(fd)
+      return
+    end
+  end
+end
+```
+
+通过拼接 Lua 字符串实现缓冲区是一种简单的做法，它可能带来 GC（垃圾回收）的负担。
+
+![处理客户端连接的示意图](../.gitbook/assets/2023-10-24002047.png)
+
+### 处理客户端协议
+
+服务端接收到数据后就会调用 process_buff,并把缓冲区传给它，process_buf 会实现消息的切分工作.
+
+```lua
+--service/gateway/init.lua
+local process_buff = function(fd, readbuff)
+  while true do
+    local msgstr, rest = string.match(readbuff, "(.-)\r\n(.*)")
+    if msgstr then
+      readbuff = rest
+      process_msg(fd, msgstr)
+    else
+      return readbuff
+    end
+end
+```
+
+这就是个从 buffer 中解析协议的流程，并不难理解
+
+### 编码和解码
+
+可以封装自己的工具函数，进行协议的解包封包操作，此处不再详细展开
+
+### 消息分发
+
+先看下代码，要做的就是 消息解码、如果尚未登陆、如果已经登录、将消息发往 agent
+
+![process_msg方法示意图](../.gitbook/assets/2023-10-24003137.png)
+
+```lua
+local process_msg = function(fd, msgstr)
+    local cmd, msg = str_unpack(msgstr)
+    skyn et.error("recv "..fd.." ["..cmd.."] {"..table.concat( msg, ",").."}")
+
+    local conn = conns[fd]
+    local playerid = conn.playerid
+    --尚未完成登录流程
+    if not playerid then
+        local node = skynet.getenv("node")
+        local nodecfg = runconfig[node]
+        -- 随机一个login节点
+        local loginid = math.random(1, #nodecfg.login)
+        local login = "login"..loginid
+        -- 发往目标login
+        skynet.send(login, "lua", "client", fd, cmd, msg)
+    --完成登录流程
+    else
+        local gplayer = players[playerid]
+        local agent = gplayer.agent
+        skynet.send(agent, "lua", "client", cmd, msg)
+    end
+end
+```
+
+### 发送消息接口
+
+gateway 将消息传给 login 或 agent，login 或 agent 也需要给客户端回应。比例，在客户端发送登录协议，login 校验失败后，
+要给客户端回应 账号或密码错误，则需要 login 发往 gateway 再由 gateway 发往 client。
+
+![login给客户端发送消息的过程](../.gitbook/assets/2023-10-24003456.png)
+
+```lua
+-- 从source发来 发给fd 消息为msg
+s.resp.send_by_fd = function(source, fd, msg)
+    if not conns[fd] then
+        return
+    end
+
+    local buff = str_pack(msg[1], msg)
+    skynet.error("send "..fd.." ["..msg[1].."] {"..table.concat( msg, ",").."}")
+    socket.write(fd, buff)
+end
+
+-- 根据playerid给client发送消息
+s.resp.send = function(source, playerid, msg)
+    local gplayer = players[playerid]
+    if gplayer == nil then
+        return
+    end
+    local c = gplayer.conn
+    if c == nil then
+        return
+    end
+
+    s.resp.send_by_fd(nil, c.fd, msg)
+end
+```
+
+### 确认登录接口
+
+在完成登录流程后，login 会通知 gateway，让它把客户端连接和新 agent 关联起来
+
+```lua
+s.resp.sure_agent = function(source, fd, playerid, agent)
+    local conn = conns[fd]
+    if not conn then --登录过程中已经下线
+        skynet.call("agentmgr", "lua", "reqkick", playerid, "未完成登录即下线")
+        return false
+    end
+
+    conn.playerid = playerid
+
+    local gplayer = gateplayer()
+    gplayer.playerid = playerid
+    gplayer.agent = agent
+    gplayer.conn = conn
+    players[playerid] = gplayer
+
+    return true
+end
+```
+
+sure_agent 的功能是将 fd 和 playerid 关联起来，它会先查找连接对象 conn，再创建 gateplayer 对象 gplayer，并设置属性。
+
+### 登出协议
+
+玩家有两种登出情况，一种为客户端掉线或者自主线下，另一种是被顶替下线。如果客户端掉线 gateway 会向 agentmgr 发送下线请求，由 agentmgr 仲裁。
+
+```lua
+--service/gateway/init.lua
+local disconnect = function(fd)
+    local c = conns[fd]
+    if not c then
+        return
+    end
+
+    local playerid = c.playerid
+    --还没完成登录
+    if not playerid then
+        return
+    --已在游戏中
+    else
+        -- players[playerid] = nil -- 将玩家的gateplayer对象删除，其实里应当在agentmgr回包后删除
+        local reason = "断线"
+        skynet.call("agentmgr", "lua", "reqkick", playerid, reason)
+    end
+end
+```
+
+如果 agentmgr 仲裁通过，或者 agentmgr 想直接把玩家踢下线，在保存数据后，会通知 gateway 做收尾工作,删掉玩家的 conn 和 gateplayer 对象
+
+```lua
+s.resp.kick = function(source, playerid)
+    local gplayer = players[playerid]
+    if not gplayer then
+        return
+    end
+
+    local c = gplayer.conn
+    players[playerid] = nil
+
+    if not c then
+        return
+    end
+    conns[c.fd] = nil
+    disconnect(c.fd)
+    socket.close(c.fd)
+end
+```
+
+gateway 大致就是这样，理论这样设计没啥问题，但是在生产环境中应用还需要很多深思，但是我们现在是用来，学习，很不错啦，你很棒的加油。
+
 ### 实现 login
 
 ### 实现 agentmgr
