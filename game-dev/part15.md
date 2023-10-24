@@ -386,6 +386,52 @@ gateway 大致就是这样，理论这样设计没啥问题，但是在生产环
 
 ### 实现 login
 
+登录服务，对于此服务可以看以前的登录流程。
+
+### 登录协议
+
+客户端肯定要发账号密码，服务端收到登录协议后会做出回应，gateway 挑一个 login 去验证，在 login 返回包给 gateway 时，gateway 应该提示客户端，如账号或密码错误，其他玩家正在尝试登录该账号请稍后再试。
+
+### 登录流程处理
+
+gateway 会将客户端协议以 client 消息的形式转发给 login 服务，login 服务会先校验客户端发来的用户名密码，再作为
+gateway 和 agentmgr 的中介，等待 agentmgr 创建代理服务。
+
+1. 校验用户名密码：这个过程可能是查询数据库或者向平台 SDK 进行验证
+2. 给 agentmgr 发送 reqlogin，请求登录，reqlogin 会回应两个值一个值代表是否成功，一个值为 agent 代表已创建的代理服务 id
+3. 给 gate 发送 sure_agent
+4. 如果全部过程成功执行，login 服务会给客户端回应成功消息。
+
+详细的还是看本章以前的 完整的登录流程 部分的图解吧。
+
+```lua
+--service/login/init.lua
+s.client.login = function(fs, msg, source)
+  local playerid = tonumber(msg[2])
+  local pw = tonumber(msg[3])
+  local gate = source
+  node = skynet.getenv("node")
+  --校验用户名密码
+  if pw ~= 123 then
+    return {"login", 1, "密码错误"}
+  end
+  --发给agentmgr
+  local isok, agent = skynet.call("agentmgr", "lua", "reqlogin", playerid, node, gate)
+  if not isok then
+    return {"login", 1, "请求mgr失败"}
+  end
+  --回应gate
+  local isok = skynet.call(gate, "lua", "sure_agent", fd, playerid, agent)
+  if not isok then
+    return {"login", 1, "gate注册失败"}
+  end
+  skynet.error("login succ"..playerid)
+  return {"login", 0, "登录成功"}
+end
+```
+
+代码当伪代码看就行了，主打一个业务学习作用
+
 ### 实现 agentmgr
 
 ### 实现 nodemgr
