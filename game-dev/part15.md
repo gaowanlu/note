@@ -434,6 +434,114 @@ end
 
 ### 实现 agentmgr
 
+agentmgr 是管理 agent 的服务，它是登录过程的仲裁服务，控制着登录过程。agentmgr 中含有一个列表 players，里面保存着所有玩家的在线状态。
+
+### 玩家类
+
+登录流程中，玩家会有 “登录中”、“游戏中”、“登出中”三种状态。
+
+```lua
+STATUS = {
+  LOGIN = 2,
+  GAME = 3,
+  LOGOUT = 4
+}
+--玩家列表
+local players={}
+--玩家类
+function mgrplayer()
+  local m = {
+    playerid = nil, -- 玩家id
+    node = nil, -- 该玩家对应gateway和agent所在的节点
+    agent = nil, -- 该玩家对agent服务的id
+    status = nil, -- 状态
+    gate = nil -- 该玩家对应gateway的id
+  }
+end
+```
+
+![mgrplayer对象的示意图](../.gitbook/assets/2023-10-27002821.png)
+
+### 请求登录接口
+
+login 服务会向 agentmgr 请求登录(reqlogin)
+
+1. 登录仲裁，判断玩家是否已经登录
+2. 顶替已在线玩家，如果该角色已在线，需要先把它踢下线
+3. 记录在线信息，将新建的 mgrplayer 对象记录为登陆中状态
+4. 让 nodemgr 创建 agent 服务
+5. 登录完成，设置 mgrplayer 为游戏中状态，并返回 true 与 agent 服务的 id
+
+![当前完成的登录流程标注图](../.gitbook/assets/2023-10-27003600.png)
+
+```lua
+s.resp.reqlogin = function(source, playerid, node, gate)
+    local mplayer = players[playerid]
+    --登录过程禁止顶替
+    if mplayer and mplayer.status == STATUS.LOGOUT then
+        skynet.error("reqlogin fail, at status LOGOUT " ..playerid )
+        return false
+    end
+    if mplayer and mplayer.status == STATUS.LOGIN then
+        skynet.error("reqlogin fail, at status LOGIN " ..playerid)
+        return false
+    end
+    --在线，顶替
+    if mplayer then
+        local pnode = mplayer.node
+        local pagent = mplayer.agent
+        local pgate = mplayer.gate
+        mplayer.status = STATUS.LOGOUT,
+        s.call(pnode, pagent, "kick")
+        s.send(pnode, pagent, "exit")
+        s.send(pnode, pgate, "send", playerid, {"kick","顶替下线"})
+        s.call(pnode, pgate, "kick", playerid)
+    end
+    --上线
+    local player = mgrplayer()
+    player.playerid = playerid
+    player.node = node
+    player.gate = gate
+    player.agent = nil
+    player.status = STATUS.LOGIN
+    players[playerid] = player
+    local agent = s.call(node, "nodemgr", "newservice", "agent", "agent", playerid)
+    player.agent = agent
+    player.status = STATUS.GAME
+    return true, agent
+end
+```
+
+### 请求登出接口
+
+除了登录，agentmgr 还负责登出的仲裁。agentmgr 会先发送 kick 让 agent 处理保存数据的事情，再发送 exit 让 agent 退出服务，由于保存数据需要一小段时间，因此 mgrplayer 会保存一小段时间的 LOGOUT 状态。
+
+```lua
+-- service/agentmgr/init.lua
+s.resp.reqkick = function(source, playerid, reason)
+    local mplayer = players[playerid]
+    if not mplayer then
+        return false
+    end
+
+    if mplayer.status ~= STATUS.GAME then
+        return false
+    end
+
+    local pnode = mplayer.node
+    local pagent = mplayer.agent
+    local pgate = mplayer.gate
+    mplayer.status = STATUS.LOGOUT
+
+    s.call(pnode, pagent, "kick") -- call同步
+    s.send(pnode, pagent, "exit") -- send异步
+    s.send(pnode, pgate, "kick", playerid) --异步调用
+    players[playerid] = nil
+
+    return true
+end
+```
+
 ### 实现 nodemgr
 
 ### 实现 agent 单机
