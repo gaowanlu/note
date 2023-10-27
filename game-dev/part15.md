@@ -544,11 +544,81 @@ end
 
 ### 实现 nodemgr
 
+nodemgr 是节点管理服务，每个节点都会开启一个，提供创建服务的远程调用接口。
+
+```lua
+--service/nodemgr/init.lua
+local skynet = require "skynet"
+local s = require "service"
+
+s.resp.newservice = function(source, name, ...)
+  local srv = skynet.newservice(name, ...)
+  return srv
+end
+
+s.start(...)
+```
+
 ### 实现 agent 单机
 
-### 测试登录流程
+agent 也就是玩家类，玩家类接收协议消息处理各项功能
+
+1. 消息分发
+
+玩家登陆后，gateway 会将客户端协议转发给 agent。
+
+```lua
+--service/agent/init.lua
+s.client = {}
+s.gate = nil
+s.resp.client = function(source, cmd, msg)
+  s.gate = source
+  if s.client[cmd] then
+    local ret_msg = s.client[cmd](msg, source)
+    if ret_msg then
+      skynet.send(source, "lua", "send", s.id, ret_msg)
+    end
+  else
+    skynet.error("s.resp.client fail", cmd)
+  end
+end
+```
+
+例如登陆后客户端发送 work 协议，s.client.work 方法将会被调用。
+
+2. 数据加载
+
+每个 agent 对应一个游戏角色，创建服务后，它要加载完所有角色数据才算完成职责。service 模块将在服务启动时调用它。
+
+```lua
+s.init = function()
+  --在此处加载角色数据
+  skynet.sleep(200)--模拟加载数据库数据
+  s.data = {
+    coin = 100,
+    hp = 200,
+  }
+end
+```
+
+3. 保存和退出
+
+有 kick 和 exit 调用(agentmgr 会调用它们，agentmgr 是 agent 的仲裁中心)。
+
+```lua
+s.resp.kick = function(source)
+  --在此保存角色数据
+  skynet.sleep(200)--模拟
+end
+
+s.resp.exit = function(source)
+  skynet.exit()--接触此agent服务
+end
+```
 
 ### 战斗流程
+
+### 战斗协议
 
 ### 场景服务
 
