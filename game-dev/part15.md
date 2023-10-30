@@ -754,16 +754,241 @@ end
 
 ### Food 类
 
+食物类 food 包含 id、x 坐标、y 坐标这三种属性，foods 回以食物 id 为索引，保存战场中各食物的信息
+
+```lua
+--service/scene/init.lua
+local foods = {} --[id] = food
+local food_maxid = 0
+local food_count = 0
+-- 食物
+function food()
+  local m = {
+    id = nil,
+    x = math.random(0, 100)
+    y = math.random(0, 100)
+  }
+  return m
+end
+-- 食物列表
+local function foodlist_msg()
+  local msg = {"foodlist"}
+  for i, v in pairs(foods) do
+    table.insert(msg, v.id)
+    table.insert(msg, v.x)
+    table.insert(msg, v.y)
+end
+```
+
 ### 进入战斗
+
+agent 收到 enter 协议，随机选择一个 scene 服务，给它发送 enter 消息。
+
+![进入战场的消息流程](../.gitbook/assets/2023-10-31000623.png)
+
+scene 服务处理 enter 需要以下几个基本功能：
+
+1. 判定是否能进入战斗场景，如果玩家已在战场内，不可再进入，返回失败信息
+2. 创建 ball 对象，创建玩家对应的 ball 对象，并给各个属性赋值
+3. 向战场内的其他玩家广播 enter 协议，说明新的玩家到来
+4. 将 ball 对象存入 balls 表
+5. 向玩家发送战场信息(balllist、foodlist)
+
+```lua
+--service/scene/init.lua
+--进入
+s.resp.enter = function(source, playerid, node, agent)
+  if balls[playerid] then
+    return false
+  end
+  local b = ball()
+  b.playerid = playerid
+  b.node = node
+  b.agent = agent
+  --广播
+  local entermsg = {"enter", playerid, b.x, b.y, b.size}
+  broadcast(entermsg)
+  --记录
+  balls[playerid] = b
+  --回应
+  local ret_msg = {"enter", 0, "进入成功"}
+  s.send(b.node, b.agent, "send", ret_msg)
+  --发战场信息
+  s.send(b.node, b.agent, "send", balllist_msg())
+  s.send(b.node, b.agent, "send", foodlist_msg())
+  return true
+end
+--广播
+function broadcast(msg)
+  for i, v in pairs(balls) do
+    s.send(v.node, v.agent, "send", msg)
+  end
+end
+```
+
+### 退出战斗
+
+当玩家掉线时，agent 会远程调用 scene 服务的 leave 服务，会删除与玩家对应的消息，并广播 leave 协议
+
+```lua
+--service/scene/init.lua
+--退出
+s.resp.leave = function(source, playerid)
+  if not balls[playerid] then
+    return false
+  end
+  balls[playerid] = nil
+  local leavemsg = {"leave", playerid}
+  broadcase(leavemsg)
+end
+```
 
 ### 操作移动
 
+当玩家要改变移动方向时，客户端会发送 shift 协议，经由 agent 转发，调用 scene 的 shift 方法。
+根据参数找到玩家对应的小球，并设置它的速度。
+
+```lua
+--service/scene/init.lua
+--改变速度
+s.resp.shift = function(source, playerid, x, y)
+  local b = balls[playerid]
+  if not b then
+    return false
+  end
+  b.speedx = x
+  b.speedy = y
+end
+```
+
 ### 主循环
+
+球球大作战是服务端运算的游戏，一般会使用主循环程序结构，让服务端处理战斗逻辑。balls 和 foods 代表
+服务端的状态，再循环中执行 食物生成 位置更新 碰撞检测 等功能，从而改变服务端的状态。scene 启动后，会开启定时器，
+每隔一段时间(0.2s)执行一次循环，在循环中会处理食物生成，位置更新等功能。
+
+![主循环结构示意图](../.gitbook/assets/2023-10-31002257.png)
+
+update 方法，通过让它每隔一段时间被调用一次，参数 frame 代表当前的帧数，每一次执行 update，frame 加 1.其中的
+分别执行 食物生成、位置更新、碰撞检测
+
+```lua
+--service/scene/init.lua
+function update(frame)
+  food_update()
+  move_update()
+  eat_update()
+  --碰撞检测略
+  --分裂略
+end
+```
+
+开启简单的定时器，可以开启一个死循环协程，协程中调用 update，最后用 skynet.sleep 等待一小会。
+
+```lua
+--service/scene/init.lua
+s.init = function()
+    skynet.fork(function()
+        --保持帧率执行
+        local stime = skynet.now()
+        local frame = 0
+        while true do
+            frame = frame + 1
+            local isok, err = pcall(update, frame)
+            if not isok then
+                skynet.error(err)
+            end
+            local etime = skynet.now()
+            local waittime = frame*20 - (etime - stime)
+            if waittime <= 0 then
+                waittime = 2
+            end
+            skynet.sleep(waittime)
+        end
+    end)
+end
+```
+
+pcall 是为安全调用 update 而引入的。waittime 代表每次循环后需等待的时间。由于程序有可能卡住，我们很难保证“每隔 0.2 秒调用一次 update”是精确的。
+
+![追帧示意图](../.gitbook/assets/2023-10-31002924.png)
 
 ### 移动逻辑
 
+服务端要处理的第一项业务功能是球的移动，由于主循环会每隔 0.2 秒调用一次 move_update,因此它只需遍历场景中的所有球，
+根据“路程=速度\*时间”计算处每个球的新位置，再广播 move 协议通知所有客户端即可。
+
+```lua
+--service/scene/init.lua
+function move_update()
+  for i, v in pairs(balls) do
+    v.x = v.x + v.speedx * 0.2--每帧0.2s
+    v.y = v.y + v.speedy * 0.2
+    if v.speedx ~= 0 or v.speedy ~= 0 then
+      local msg = {"move", v.playerid, v.x, v.y}
+      broadcast(msg)
+    end
+  end
+end
+```
+
 ### 生成食物
+
+服务端每隔一段时间会放置一个新食物
+
+- 判断食物总量：场景中有最大食物数量，多了就不再生成
+- 控制生成时间：计算一个 0 到 100 的随机数，只有大于等于 98 才往下执行，即往下执行的概率是 50 分之 1，由于主循环每 0.2s 调用一个 food_update,因此平均下来每 10 秒会生成一个食物
+- 生成食物：创建 food 类型对象 f，把它添加到 foods 列表中，并广播 addfood 协议。生成食物时，会更新食物总量 food_count 和食物最大标识 food_maxid
+
+```lua
+--service/scene/init.lua
+function food_update()
+    if food_count > 50 then
+        return
+    end
+
+    if math.random( 1,100) < 98 then
+        return
+    end
+
+    food_maxid = food_maxid + 1
+    food_count = food_count + 1
+    local f = food()
+    f.id = food_maxid
+    foods[f.id] = f
+
+    local msg = {"addfood", f.id, f.x, f.y}
+    broadcast(msg)
+end
+```
 
 ### 吞下食物
 
+它会遍历所有的球和食物，并根据两点间距离公式判断小球是否和食物发生了碰撞。如果发生碰撞，即视为吞下食物，服务端会广播 eat 协议，并让食物消失（设置 foods 对应值为 nil）
+
+![小球和食物碰撞检测涉及的变量](../.gitbook/assets/2023-10-31003928.png)
+
+```lua
+--service/scene/init.lua
+function eat_update()
+    for pid, b in pairs(balls) do
+        for fid, f in pairs(foods) do
+            if (b.x-f.x)^2 + (b.y-f.y)^2 < b.size^2 then
+                b.size = b.size + 1
+                food_count = food_count - 1
+                local msg = {"eat", b.playerid, fid, b.size}
+                broadcast(msg)
+                foods[fid] = nil
+            end
+        end
+    end
+end
+```
+
+### 开启多个场景服务
+
+可采用 main.lua 执行时，初始化多个固定的 scene 服务。或者参照 agent 服务动态添加类似地设计动态开启场景服务。
+
 ### 实现 agent 跨服务器
+
+TODO：
