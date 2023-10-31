@@ -991,4 +991,80 @@ end
 
 ### 实现 agent 跨服务器
 
-TODO：
+上面的内容，实现了球球大作战的绝大部分功能，还需要完善 agent 让其和 scene 服务联动。
+
+### agent 进入战斗
+
+对于 agent 需要编写让玩家进入比赛的功能
+
+```lua
+--service/agent/scene.lua
+local skynet = require "skynet"
+local s = require "service"
+local tunconfig = require "runconfig"
+local mynode = skynet.getenv("node")
+
+s.snode = nil --scene_node
+s.sname = nil --scene_id
+
+s.client.enter = function(msg)
+  if s.sname then
+    return {"enter",1,"已经在场景"}
+  end
+  local snode, sid = random_scene()
+  local sname = "scene"..sid
+  local isok = s.call(snode, sname, "enter", s.id, mynode, skynet.self)
+  if not isok then
+    return {"enter",1,"进入失败"}
+  end
+  s.snode = snode
+  s.sname = sname
+  return nil
+end
+```
+
+随机选择场景的，agent 尽可能选择进入个同节点的 scene。先把所有配置了场景服务的节点都放在表 nodes 中，同一节点会查入多次，使它能够更高概率选中。
+
+```lua
+--service/agent/scene.lua
+local function random_scene()
+  --选择node
+  local nodes = {}
+  for i, v in pairs(runconfig.scene) do
+    table.insert(nodes, i)
+    if runconfig.scene[mynode] then
+      table.insert(nodes, mynode)--重复插
+    end
+  end
+  local idx = math.random(1, #nodes)
+  local scenenode = nodes[idx]
+  --具体场景
+  local scenelist = runconfig.scene[scenenode]
+  local idx = math.random(1, $scenelist)
+  local sceneid = scenelist[idx]
+  return scenenode, sceneid
+end
+```
+
+### agent 退出战斗
+
+当客户端掉线时，agent 需要向场景服务请求退出
+
+```lua
+--service/agent/init.lua
+s.resp.kick=function(source)
+  s.leave_scene()
+  --在此保存角色数据
+  skynet.sleep(200)
+end
+
+s.leave_scene = function()
+  --不在场景
+  if not s.sname then
+    return
+  end
+  s.call(s.snode, s.sname, "leave", s.id)
+  s.snode = nil
+  s.sname = nil
+end
+```
