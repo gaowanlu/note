@@ -125,7 +125,7 @@
   - [Skynet 入门精要](game-dev/part14.md)
   - [球球大作战](game-dev/part15.md)
   - [Skynet 进阶技法](game-dev/part16.md)
-  - [C++并发世界](game-dev/FUNC_DEV_README.md)
+  - [C++并发世界](game-dev/part17.md)
   - [TCP 网络模块](game-dev/FUNC_DEV_README.md)
   - [嵌入 Lua 脚本语言](game-dev/FUNC_DEV_README.md)
   - [同步算法](game-dev/FUNC_DEV_README.md)
