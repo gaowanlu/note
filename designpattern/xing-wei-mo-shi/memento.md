@@ -3,11 +3,11 @@ description: 备忘录模式
 coverY: 0
 ---
 
-# 🅰️ 备忘录模式(Memento 模式)
+# 🥰 备忘录模式(Memento 模式)
 
 备忘录模式（Memento Pattern）是一种行为型设计模式，它允许在不破坏封装性的前提下捕获一个对象的内部状态，并在该对象之外保存这个状态，以便日后可以将对象恢复到原先保存的状态。
 
-![备忘录模式](../../.gitbook/assets/ClassDiagram_83948394839.png)
+![备忘录模式](../../.gitbook/assets/ClassDiagram\_83948394839.png)
 
 ```cpp
 #include <iostream>

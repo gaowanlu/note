@@ -4,7 +4,7 @@ cover: >-
 coverY: 0
 ---
 
-# 🚗 深入学习组件式编程
+# 深入学习组件式编程
 
 ## 深入学习组件式编程
 
@@ -12,8 +12,7 @@ coverY: 0
 
 ### 系统管理类 SystemManager
 
-原来的系统中，都是为每个线程创建一个 EntitySystem 实例来管理 Component 与 Entity 的。
-System 可以理解为游戏逻辑的动作部分，如 Update 更新操作就是一个动作，以前驱动 Update 的方式是给 EntitySystem 增加`std::list<IUpdateSystem*>`队列。
+原来的系统中，都是为每个线程创建一个 EntitySystem 实例来管理 Component 与 Entity 的。 System 可以理解为游戏逻辑的动作部分，如 Update 更新操作就是一个动作，以前驱动 Update 的方式是给 EntitySystem 增加`std::list<IUpdateSystem*>`队列。
 
 ```cpp
 //伪代码
@@ -58,9 +57,9 @@ SystemManager::SystemManager()
 }
 ```
 
-- EntitySystem，负责所有组件和实体的管理，所有组件实例在其中都能找到，如果是多线程，EntitySystem 只负责维护本线程中的组件。
-- MessageSystem，负责处理从网络层或从别的线程中发来的 Packet 消息。
-- UpdateSystem, 处理需要不断更新的数据的组件。
+* EntitySystem，负责所有组件和实体的管理，所有组件实例在其中都能找到，如果是多线程，EntitySystem 只负责维护本线程中的组件。
+* MessageSystem，负责处理从网络层或从别的线程中发来的 Packet 消息。
+* UpdateSystem, 处理需要不断更新的数据的组件。
 
 除了 EntitySystem 之外，所有系统都继承自 ISystem 基类。前面介绍过 EntitySystem 类，严格来说它不算是一个系统，它没有动作，是所有系统的基础，因为它管理着所有实体与组件。
 
@@ -89,10 +88,7 @@ private:
 };
 ```
 
-现在的 EntitySystem 中没有任何动作接口，是一个纯数据类，在类中新增了一种
-ComponentCollections 数据，用来保存实体或组件，其作用是将一系列相似的组件放在
-一起，所有更新组件 UpdateComponent 实例都放在一个 ComponentCollection 实例中，
-当需要取更新组件时，取到对应的 ComponentCollections 实例即可。
+现在的 EntitySystem 中没有任何动作接口，是一个纯数据类，在类中新增了一种 ComponentCollections 数据，用来保存实体或组件，其作用是将一系列相似的组件放在 一起，所有更新组件 UpdateComponent 实例都放在一个 ComponentCollection 实例中， 当需要取更新组件时，取到对应的 ComponentCollections 实例即可。
 
 ```cpp
 class ComponentCollections : public IDisposable
@@ -109,8 +105,7 @@ private:
 };
 ```
 
-ComponentCollections 利用了之前 CacheRefresh 的相似之处，避免死锁，
-增加数据或删除数据时都会提前缓存，而后在下一帧处理。
+ComponentCollections 利用了之前 CacheRefresh 的相似之处，避免死锁， 增加数据或删除数据时都会提前缓存，而后在下一帧处理。
 
 ```cpp
 template<class T, typename ... TArgs>
@@ -146,15 +141,13 @@ void EntitySystem::Update()
 }
 ```
 
-在某一帧对所有拥有 UpdateComponent 组件的实体进行遍历更新操作时，其中一个实体 A 触发了某种特殊情况，生成一个新实体 B,
-而生成的新实体 B 也有一个 UpdateComponent 组件，这时，整个管理 UpdateComponent 集合的 ComponentCollections 类就会发生改变，显然这不是应该改变的时机，因为它还在循环遍历执行更新操作。
+在某一帧对所有拥有 UpdateComponent 组件的实体进行遍历更新操作时，其中一个实体 A 触发了某种特殊情况，生成一个新实体 B, 而生成的新实体 B 也有一个 UpdateComponent 组件，这时，整个管理 UpdateComponent 集合的 ComponentCollections 类就会发生改变，显然这不是应该改变的时机，因为它还在循环遍历执行更新操作。
 
 不论是增加，还是删除组件都放到下一帧去执行，这样可以有效避免冲突。
 
 ### 组件 UpdateComponent
 
-一个是组件类 UpdateComponent，另一个是系统类 UpdateSystem,二者关系为，UpdateComponent 相当于一个标记，它在某个实体上打上了一个需要更新的标记，
-而 UpdateSystem 是通过 EntitySystem 找到这些有标记的实体进行更新操作，对实体进行更新操作时，其实没有去找实体，而是通过实体绑定的 UpdateComponent 简介操作 Entity 的更新操作。
+一个是组件类 UpdateComponent，另一个是系统类 UpdateSystem,二者关系为，UpdateComponent 相当于一个标记，它在某个实体上打上了一个需要更新的标记， 而 UpdateSystem 是通过 EntitySystem 找到这些有标记的实体进行更新操作，对实体进行更新操作时，其实没有去找实体，而是通过实体绑定的 UpdateComponent 简介操作 Entity 的更新操作。
 
 例如 NetworkListen 现在应该怎样做。
 
@@ -187,8 +180,7 @@ public:
 }
 ```
 
-UpdateComponent 组件，有一个`std::function`用于回调实体的更新函数，如上面的 NetworkListen 类初始化的代码，将 NetworkListen::Update 函数绑定到了
-UpdateComponent 组件的`std::function`变量上，这个函数会在更新系统 UpdateSystem 中被执行。
+UpdateComponent 组件，有一个`std::function`用于回调实体的更新函数，如上面的 NetworkListen 类初始化的代码，将 NetworkListen::Update 函数绑定到了 UpdateComponent 组件的`std::function`变量上，这个函数会在更新系统 UpdateSystem 中被执行。
 
 ### 系统 UpdateSystem
 
@@ -220,9 +212,7 @@ void UpdateSystem::Update(EntitySystem* pEntities){
 
 ![SystemManager更新流程](../.gitbook/assets/2023-10-05234014.png)
 
-这样系统整体是松耦合的，虽然 EntitySystem 实体和 UpdateComponent 相互拥有对方的指针，
-但是从本质上来说，它们是两个独立的类。EntitySystem 实体提供了一个绑定函数，而 UpdateComponent 组件负责执行该绑定函数，对于每个 UpdateComponent 实例，它不了解也不关心
-更新函数内部到底做了什么。
+这样系统整体是松耦合的，虽然 EntitySystem 实体和 UpdateComponent 相互拥有对方的指针， 但是从本质上来说，它们是两个独立的类。EntitySystem 实体提供了一个绑定函数，而 UpdateComponent 组件负责执行该绑定函数，对于每个 UpdateComponent 实例，它不了解也不关心 更新函数内部到底做了什么。
 
 ### 组件 MessageComponent
 
@@ -244,8 +234,8 @@ protected:
 
 先回顾之前的消息系统
 
-- 从网络底层读数据上来，将这些数据组织成一个 Packet 类，然后将这些类放到各个线程中，线程中的每个对象继承自基类 ThreadObject,每个对象都要实现处理消息的基础函数。
-- 在深入编码后，发现并不是所有组件都要处理消息，然后设计了 IMessageSystem 接口，继承了该接口的组件可以收到 Packet 消息。
+* 从网络底层读数据上来，将这些数据组织成一个 Packet 类，然后将这些类放到各个线程中，线程中的每个对象继承自基类 ThreadObject,每个对象都要实现处理消息的基础函数。
+* 在深入编码后，发现并不是所有组件都要处理消息，然后设计了 IMessageSystem 接口，继承了该接口的组件可以收到 Packet 消息。
 
 现在，要将消息系统改造为，只要有了 MessageComponent 组件就可以处理消息，例如，在某些条件下，实体 A 可以处理 1、2 号协议，当它的状态发生改变时，可以删除这个 MessageComponent 组件，增加一个新的 MessageComponent 组件，这时可以处理 3、4 号协议。整个消息系统会非常灵活。
 
@@ -353,16 +343,11 @@ void ThreadCollectorExclusive::HandlerMessage(Packet* pPacket){
 }
 ```
 
-在逻辑线程集合中收到一个协议，一定是广播出去的。例如，收到网络断开协议，因为不知道
-在整个线程中有哪些组件关心这些协议，所以一定是对逻辑进程集合整个广播。而对于一个存储协
-议来说，处理流程则不相同，为了让数据库操作分散，每一个数据库线程都是完全一样的，它们有
-同样的组件。这时 ThreadCollectorExclusive 类的执行方式是采用轮询的方式，以达到均衡的目
-的。
+在逻辑线程集合中收到一个协议，一定是广播出去的。例如，收到网络断开协议，因为不知道 在整个线程中有哪些组件关心这些协议，所以一定是对逻辑进程集合整个广播。而对于一个存储协 议来说，处理流程则不相同，为了让数据库操作分散，每一个数据库线程都是完全一样的，它们有 同样的组件。这时 ThreadCollectorExclusive 类的执行方式是采用轮询的方式，以达到均衡的目 的。
 
 ### IAwakeSystem 接口与对象池
 
-在之前，采用的是全局对象池，即一种类型的对象池只有一个实例。在多线程中使用对象池，操作已使用、未使用的集合时进行了加锁操
-作。
+在之前，采用的是全局对象池，即一种类型的对象池只有一个实例。在多线程中使用对象池，操作已使用、未使用的集合时进行了加锁操 作。
 
 将全局对象池变更为线程对象池。一般来说，线程中创建的对象都在线程内使用，这些对象是不需要加锁的。
 
@@ -374,9 +359,7 @@ void ThreadCollectorExclusive::HandlerMessage(Packet* pPacket){
 DynamicObjectPool<Class>::GetInstance();
 ```
 
-如果有多个不同的类对象池，就有多个 DynamicObjectPool 实例，为了便
-于管理，引入一个新类 DynamicObjectPoolCollector，其作用是维护
-DynamicObjectPool 集合。这个新类用 SystemManager 管理，相当于每个 ECS 体系都有一个对象池管理类。
+如果有多个不同的类对象池，就有多个 DynamicObjectPool 实例，为了便 于管理，引入一个新类 DynamicObjectPoolCollector，其作用是维护 DynamicObjectPool 集合。这个新类用 SystemManager 管理，相当于每个 ECS 体系都有一个对象池管理类。
 
 ```cpp
 class DynamicObjectPoolCollector : public IDisposable{
@@ -420,10 +403,7 @@ SystemManager::SystemManager(){
 }
 ```
 
-一个对象池实例不会对所有线程共用，它一定属于某个特定的线程，每个
-线程有自己的对象池实例。当我们对进程和线程进行合并时，合并到最后，整
-个变成单进程、单线程，此时全局只有一个 SystemManager，而对象池管理类
-也只有一个。
+一个对象池实例不会对所有线程共用，它一定属于某个特定的线程，每个 线程有自己的对象池实例。当我们对进程和线程进行合并时，合并到最后，整 个变成单进程、单线程，此时全局只有一个 SystemManager，而对象池管理类 也只有一个。
 
 以前，对象池分配对象是要加锁的
 
@@ -441,8 +421,7 @@ T* pComponent = pPool->MallocObject();
 
 ### 全局单例对象
 
-除了 ThreadMgr 类之外，几乎去掉了所有全局单例对象。主要原因是单例太难管理，单例使用前要调用生成函数，退出程序时也需要调用销毁函数。在实际编码中，在生
-成单例类时，要么忘记调用 Instance 函数来生成它，要么忘记编写 DestroyInstance 函数来销毁它。
+除了 ThreadMgr 类之外，几乎去掉了所有全局单例对象。主要原因是单例太难管理，单例使用前要调用生成函数，退出程序时也需要调用销毁函数。在实际编码中，在生 成单例类时，要么忘记调用 Instance 函数来生成它，要么忘记编写 DestroyInstance 函数来销毁它。
 
 可以使用对象池来管理单例类。
 
@@ -531,8 +510,8 @@ class NetworkListen : public Network, public IAwakeSystem<std::string, int>{}
 
 当不再需要一个组件时，有两种可以销毁的方式：
 
-- 如果组件是通过实体 AddComponent 途径增加的，可以调用用`Entity::RemoveComponent`销毁。
-- 如果是没有实体的组件如(HttpRequest),可以直接调用该线程中的`EntitySystem::RemoveComponent`函数销毁。
+* 如果组件是通过实体 AddComponent 途径增加的，可以调用用`Entity::RemoveComponent`销毁。
+* 如果是没有实体的组件如(HttpRequest),可以直接调用该线程中的`EntitySystem::RemoveComponent`函数销毁。
 
 ```cpp
 void HttpRequest::Update(){
@@ -571,8 +550,7 @@ void ComponentCollections::Remove(uint64 sn){
 }
 ```
 
-在每个线程中，EntitySystem 都拥有所有的对象实例，这些实例是按照类型不同放到 ComponentCollections 中的。
-当要销毁一个组件时，将组件从 ComponentCollections 中以除，重新放回对象池即可。
+在每个线程中，EntitySystem 都拥有所有的对象实例，这些实例是按照类型不同放到 ComponentCollections 中的。 当要销毁一个组件时，将组件从 ComponentCollections 中以除，重新放回对象池即可。
 
 ComponentCollections 将需要删除的对象进行了缓冲，放到了删除列表中，在下一帧才会真正删除。
 
@@ -598,10 +576,7 @@ private:
 }
 ```
 
-对 Packet 类增加了 AddRef、RemoveRef 函数，用来进行计数。计数是在多线程中进行的，所以变量采用了 std：：
-atomic 类型来处理。std：：atomic 是一个原子操作，底层已经加锁，不需要额外加锁。函数 AddRef 对引用计数加 1，
-而函数 RemoveRef 对引用计数减 1，当我们使用对象时，它的引用计数加 1；当引用计数重新变为 0 时，表示所有使用已
-结束，可以销毁了。
+对 Packet 类增加了 AddRef、RemoveRef 函数，用来进行计数。计数是在多线程中进行的，所以变量采用了 std：： atomic 类型来处理。std：：atomic 是一个原子操作，底层已经加锁，不需要额外加锁。函数 AddRef 对引用计数加 1， 而函数 RemoveRef 对引用计数减 1，当我们使用对象时，它的引用计数加 1；当引用计数重新变为 0 时，表示所有使用已 结束，可以销毁了。
 
 对于每个线程来说必然有一个 MessageSystem 系统处理协议，Packet 进入 MessageSystem 类处理队列，则计数加 1，处理完成之后计数减 1.
 
@@ -648,8 +623,7 @@ void ThreadCollector::HandlerMessage(Packet* pPacket){
 }
 ```
 
-处理 Packet 时将 Packet 通知到各个线程集合，而线程集合再将 Packet 加入各个线程中。该加入操作完成之后调用
-了 OpenRef 函数，这个函数开始了 Packet 的检查。在 Packet 生成到加入线程之前，引用计数都是 0，显然这时检查计数是不合适的。只有当 OpenRef 这个开关打开之后，也就是说 Packet 已经放置到线程中才是检查的时机。
+处理 Packet 时将 Packet 通知到各个线程集合，而线程集合再将 Packet 加入各个线程中。该加入操作完成之后调用 了 OpenRef 函数，这个函数开始了 Packet 的检查。在 Packet 生成到加入线程之前，引用计数都是 0，显然这时检查计数是不合适的。只有当 OpenRef 这个开关打开之后，也就是说 Packet 已经放置到线程中才是检查的时机。
 
 ```cpp
 void Packet::OpenRef(){
@@ -668,9 +642,7 @@ bool Packet::CanBack2Pool(){
 
 ### 时间堆
 
-当调用一个 HttpRequest 向外请求一个 HTTP 时，由于某些原因请求没有回应，登录就会一直卡在这里，客户端发送了
-C2L_AccountCheck 协议，但是一直没有得到回应，它只有等待下去。login 进程中的 Account 类也很无奈，HttpRequest 没有给它反馈，Account 类自然也没有办法给客户端反馈数据。分析一下产生这个问题的原因，是因为没有对
-HttpRequest 定时检查，如果开始时就设置一个 10 秒期限，在 10 秒之后还没有反馈，就认为请求失败了，即使后面请求来了，也认为是失败的，这个问题就迎刃而解了。
+当调用一个 HttpRequest 向外请求一个 HTTP 时，由于某些原因请求没有回应，登录就会一直卡在这里，客户端发送了 C2L\_AccountCheck 协议，但是一直没有得到回应，它只有等待下去。login 进程中的 Account 类也很无奈，HttpRequest 没有给它反馈，Account 类自然也没有办法给客户端反馈数据。分析一下产生这个问题的原因，是因为没有对 HttpRequest 定时检查，如果开始时就设置一个 10 秒期限，在 10 秒之后还没有反馈，就认为请求失败了，即使后面请求来了，也认为是失败的，这个问题就迎刃而解了。
 
 ```cpp
 void RobotMgr::Update(){
@@ -718,17 +690,11 @@ void PushData(std::vector<int>& data, const int value){
 }
 ```
 
-- make_heap 函数的作用是重新排列给定范围内的元素，使它们形成
-  堆。
-- pop_heap 函数的作用是弹出堆顶元素，将堆顶元素移动到集合的最
-  后，并重新排列剩下的元素。值得注意的是，之前的顶元素被放在了最后，并
-  从堆数据中删除，相当于堆数据减 1。
-- push_heap 函数的作用是对最后一个元素进行插入，插入堆中的适当
-  位置。也就是说，在调用 push_heap 之前，插入的新元素一定是在数据的最尾
-  端。
+* make\_heap 函数的作用是重新排列给定范围内的元素，使它们形成 堆。
+* pop\_heap 函数的作用是弹出堆顶元素，将堆顶元素移动到集合的最 后，并重新排列剩下的元素。值得注意的是，之前的顶元素被放在了最后，并 从堆数据中删除，相当于堆数据减 1。
+* push\_heap 函数的作用是对最后一个元素进行插入，插入堆中的适当 位置。也就是说，在调用 push\_heap 之前，插入的新元素一定是在数据的最尾 端。
 
-在 std 标准库中，对于堆有两种已实现的计算，默认是最大堆 `less<T>` 和最
-小堆 `greater<T>`，当然也可以自己定义排序算法，std 支持自定义算法的定义。
+在 std 标准库中，对于堆有两种已实现的计算，默认是最大堆 `less<T>` 和最 小堆 `greater<T>`，当然也可以自己定义排序算法，std 支持自定义算法的定义。
 
 ### 时间堆组件
 
@@ -813,8 +779,7 @@ bool TimerComponent::CheckTime()
 }
 ```
 
-在每个线程中都有一个 TimerComponent 组件实例，每个 EntitySystem 中都有一个独立的 TimerComponent 组件负责
-该进程所有需要按时间调用的事件。在线程启动时，该组件就被创建出来了。每个组件都有可能需要定时器，为了方便组件调用定时器，修改了 IComponent 组件，增加了一个关于定时器的函数。
+在每个线程中都有一个 TimerComponent 组件实例，每个 EntitySystem 中都有一个独立的 TimerComponent 组件负责 该进程所有需要按时间调用的事件。在线程启动时，该组件就被创建出来了。每个组件都有可能需要定时器，为了方便组件调用定时器，修改了 IComponent 组件，增加了一个关于定时器的函数。
 
 ```cpp
 class IComponent : virtual public SnObject

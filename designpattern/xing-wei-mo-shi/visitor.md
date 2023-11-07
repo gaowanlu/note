@@ -3,11 +3,11 @@ description: 访问者模式
 coverY: 0
 ---
 
-# 🤡 访问者模式(Visitor 模式)
+# 👻 访问者模式(Visitor 模式)
 
 访问者模式（Visitor Pattern）是一种行为型设计模式，它用于在不修改现有对象结构的情况下，定义对对象结构中元素的新操作。该模式将操作与对象结构分离，使得可以在不改变元素类的前提下，定义新的操作。
 
-![访问者模式](../../.gitbook/assets/ClassDiagram1_uriehf3849f.png)
+![访问者模式](../../.gitbook/assets/ClassDiagram1\_uriehf3849f.png)
 
 ```cpp
 #include <iostream>

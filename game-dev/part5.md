@@ -4,11 +4,11 @@ cover: >-
 coverY: 0
 ---
 
-# 🚗 性能优化与对象池
+# 性能优化与对象池
 
 ## 性能优化与对象池
 
-其中 05_XX 部分.
+其中 05\_XX 部分.
 
 学习嘛，要稳扎稳打，学习使用工具对程序性能检查，思考怎样让程序更加高效很重要。
 
@@ -45,16 +45,13 @@ void ThreadObjectList::AddPacketToList(Packet *pPacket)
 }
 ```
 
-上面的代码中有哪些不足之处，要知道 ThreadMgr 只有一个，其管理多个线程，每个线程的 ThreadObjectList 下管理大量的 ThreadObject。
-这样调用 DispatchPacket 明明只是需要将 Packet 交给每个线程就行了，其实并不需要关注每个线程怎么做。交给每个线程，每个线程自己在 Update 时再处理将 Packet 派发给 ThreadObject 就好了。
-能够有效 ThreadMgr::DispatchPacket 从调用到返回的间隔。
+上面的代码中有哪些不足之处，要知道 ThreadMgr 只有一个，其管理多个线程，每个线程的 ThreadObjectList 下管理大量的 ThreadObject。 这样调用 DispatchPacket 明明只是需要将 Packet 交给每个线程就行了，其实并不需要关注每个线程怎么做。交给每个线程，每个线程自己在 Update 时再处理将 Packet 派发给 ThreadObject 就好了。 能够有效 ThreadMgr::DispatchPacket 从调用到返回的间隔。
 
 在上一章节中，看到了使用 std::copy 开拷贝 std::list 中的 Packet 的操作，显然这是非常耗费事件的，所以对内存中的数据结构进行优化也非常的重要。
 
 ### 内存中的数据结构
 
-数据结构是计算机组织数据的方式，精心选择的数据结构可以带来更高的
-运行或者存储效率。下面会了解交换型数据结构与刷新型数据结构。
+数据结构是计算机组织数据的方式，精心选择的数据结构可以带来更高的 运行或者存储效率。下面会了解交换型数据结构与刷新型数据结构。
 
 ### 交换性数据结构
 
@@ -120,8 +117,7 @@ bool CacheSwap<T>::CanSwap()
 
 这些都是实战技巧。但是也应该注意线程安全问题，当有正在写正在读操作时，是不能进行指针交换操作的。
 
-在以前的 ThreadObjectList 中存储线程需要为自己管理的 ThreadObject 进行 Packet 广播，在 ThreadObjectList 中可以使用
-`CacheSwap<Packet>_cachePackets` ThreadMgr 将包发到`_cachePakcets`
+在以前的 ThreadObjectList 中存储线程需要为自己管理的 ThreadObject 进行 Packet 广播，在 ThreadObjectList 中可以使用 `CacheSwap<Packet>_cachePackets` ThreadMgr 将包发到`_cachePakcets`
 
 ```cpp
 //ThreadMgr为ThreadObjectList添加包
@@ -314,8 +310,7 @@ void ThreadObjectList::Update(){
 
 ### gprof
 
-在 Linux 上也有很多简单好用的性能分析工具，其中之一就是 gprof，它是 GNU 套件中的一个工具。如每个函数的调用次数、调用时
-长，可以方便找到系统的瓶颈。
+在 Linux 上也有很多简单好用的性能分析工具，其中之一就是 gprof，它是 GNU 套件中的一个工具。如每个函数的调用次数、调用时 长，可以方便找到系统的瓶颈。
 
 ```bash
 root@drecbb4udzdboiei-0626900:/mes/tubekit/bin# gprof -v
@@ -324,8 +319,7 @@ Based on BSD gprof, copyright 1983 Regents of the University of California.
 This program is free software.  This program has absolutely no warranty.
 ```
 
-使用 gprof 的时候需要注意一点，生成可执行文件时需要加参数“-pg”,执行可执行文件之后，在同目录下就会多出一个分析结果 gmon.out 文件。
-如果同一个目录下有多个可执行文件都会生成 gmon.out 文件。但是 gmon.out 文件只有一个文件，所以不要在同一目录测试不同的可执行文件。
+使用 gprof 的时候需要注意一点，生成可执行文件时需要加参数“-pg”,执行可执行文件之后，在同目录下就会多出一个分析结果 gmon.out 文件。 如果同一个目录下有多个可执行文件都会生成 gmon.out 文件。但是 gmon.out 文件只有一个文件，所以不要在同一目录测试不同的可执行文件。
 
 ```bash
 $gprof 可执行文件名称 gmon.out
@@ -386,8 +380,7 @@ valgrind 也可以生成堆栈
 valgrind --tool=callgrind ./test_pd
 ```
 
-完成之后会发现目录中多了一个名为 callgrind.out.`pid` 的文件，其中 `pid` 是进程 ID，每次执行时的进程 ID 是不
-一样的，所以每次生成的文件都不一样。生成 PNG 堆栈图的命令如下：
+完成之后会发现目录中多了一个名为 callgrind.out.`pid` 的文件，其中 `pid` 是进程 ID，每次执行时的进程 ID 是不 一样的，所以每次生成的文件都不一样。生成 PNG 堆栈图的命令如下：
 
 ```bash
 $gprof2dot -f callgrind -n10 -s callgrind.out.`pid` > valgrind.dot

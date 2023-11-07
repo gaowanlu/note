@@ -3,16 +3,16 @@ description: 中介者模式
 coverY: 0
 ---
 
-# 🐼 中介者模式(Mediator 模式)
+# 💽 中介者模式(Mediator 模式)
 
 中介者模式（Mediator Pattern）是一种行为型设计模式，旨在通过引入一个中介者对象，来解耦多个对象之间的交互关系。在中介者模式中，对象之间不直接相互通信，而是通过中介者进行通信。中介者模式促进了对象之间的松耦合，提高了系统的可维护性和可扩展性。
 
-- 中介者（Mediator）：定义一个接口用于与各个同事对象进行通信，并协调各个同事对象的行为。
-- 具体中介者（Concrete Mediator）：实现中介者接口，协调各个同事对象的行为。
-- 同事（Colleague）：定义一个接口用于与中介者进行通信。
-- 具体同事（Concrete Colleague）：实现同事接口，与其他同事对象进行通信。
+* 中介者（Mediator）：定义一个接口用于与各个同事对象进行通信，并协调各个同事对象的行为。
+* 具体中介者（Concrete Mediator）：实现中介者接口，协调各个同事对象的行为。
+* 同事（Colleague）：定义一个接口用于与中介者进行通信。
+* 具体同事（Concrete Colleague）：实现同事接口，与其他同事对象进行通信。
 
-![中介者模式](../../.gitbook/assets/ClassDiagram_343434367654.png)
+![中介者模式](../../.gitbook/assets/ClassDiagram\_343434367654.png)
 
 ```cpp
 #include <iostream>

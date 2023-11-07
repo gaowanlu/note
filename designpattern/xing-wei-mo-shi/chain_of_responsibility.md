@@ -3,13 +3,13 @@ description: 责任链模式
 coverY: 0
 ---
 
-# 🦄 责任链模式(Chain of Responsibility 模式)
+# 🐨 责任链模式(Chain of Responsibility 模式)
 
 责任链模式（Chain of Responsibility Pattern）是一种行为型设计模式，它允许多个对象按照顺序处理请求，直到其中一个对象能够处理为止。每个对象都可以决定是否处理请求，以及将请求传递给下一个对象。这种模式可以避免请求的发送者和接收者之间的耦合关系。
 
 以下是一个使用 C++实现责任链模式的示例代码：
 
-![责任链模式](../../.gitbook/assets/ClassDiagram1_ndsjicn23e2.png)
+![责任链模式](../../.gitbook/assets/ClassDiagram1\_ndsjicn23e2.png)
 
 ```cpp
 #include <iostream>

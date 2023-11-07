@@ -4,7 +4,7 @@ cover: >-
 coverY: 0
 ---
 
-# 🚗 TCP 网络模块
+# TCP 网络模块
 
 ## TCP 网络模块
 
@@ -36,8 +36,7 @@ coverY: 0
 
 ### 处理莫名其妙的退出问题
 
-Linux 系统的机制中包含一个坑，在 TCP 的设计中，发送端向套接字信息不匹配的接收端发送数据时，接收端会回应复位信号(RST)，例如向已经销毁套接字的接收端
-发送数据时，发送端会收到复位信号。
+Linux 系统的机制中包含一个坑，在 TCP 的设计中，发送端向套接字信息不匹配的接收端发送数据时，接收端会回应复位信号(RST)，例如向已经销毁套接字的接收端 发送数据时，发送端会收到复位信号。
 
 在 Linux 系统中，对“收到复位 RST 信号的套接字”调用 write 时，操作系统会向进程发送 SIGPIPE 信号，默认处理动作是终止进程。
 
@@ -63,7 +62,7 @@ signal(SIGPIPE, SIG_IGN);
 
 1. 设置 SNDBUFFORCE
 
-最简单直接的方法就是将套接字的缓冲区设置得大一些。在接收（accept）客户端套接字后，使用 Linux 提供的 setsockopt 方法，将套接字 clientFd 的写缓冲区（SO_SNDBUFFORCE）设置成一个很大的值
+最简单直接的方法就是将套接字的缓冲区设置得大一些。在接收（accept）客户端套接字后，使用 Linux 提供的 setsockopt 方法，将套接字 clientFd 的写缓冲区（SO\_SNDBUFFORCE）设置成一个很大的值
 
 ```cpp
 void onAccept(shared_pre<Conn> conn)
@@ -79,8 +78,7 @@ void onAccept(shared_pre<Conn> conn)
 }
 ```
 
-使用 setsockopt 设置写缓冲区时，要求进程拥有 CAP_NET_ADMIN（允许执行网络管理任务）权能。默认情况下，
-普通 Linux 用户没有，可以使用`cat/proc/[进程PID]/status`查看进程权能，还能用 setcap 指令改进进程的权能。
+使用 setsockopt 设置写缓冲区时，要求进程拥有 CAP\_NET\_ADMIN（允许执行网络管理任务）权能。默认情况下， 普通 Linux 用户没有，可以使用`cat/proc/[进程PID]/status`查看进程权能，还能用 setcap 指令改进进程的权能。
 
 2. 自写缓冲区
 

@@ -4,26 +4,19 @@ cover: >-
 coverY: 0
 ---
 
-# 🚗 ECS 框架
+# ECS 框架
 
 ## ECS 框架
 
-其中 06_XX 部分.
+其中 06\_XX 部分.
 
-简单来说，不论是多线程还是单线程，不断更新逻辑，对每个对象执行
-Update 操作，是目前比较常用的一种框架体系。但这个框架中有一些问题，例
-如需要每一个对象都继承自 ThreadObject 类，如果功能复杂，就可能出现虚继
-承的情况。代码越写越多，其复杂度越来越高，继承的层数也会变得更深，这
-给编码带来了不小的麻烦。在此基础上，要引入一个新的架构思路——ECS 框架。
+简单来说，不论是多线程还是单线程，不断更新逻辑，对每个对象执行 Update 操作，是目前比较常用的一种框架体系。但这个框架中有一些问题，例 如需要每一个对象都继承自 ThreadObject 类，如果功能复杂，就可能出现虚继 承的情况。代码越写越多，其复杂度越来越高，继承的层数也会变得更深，这 给编码带来了不小的麻烦。在此基础上，要引入一个新的架构思路——ECS 框架。
 
 ### 什么是 ECS 工程
 
-ECS 的全称为 Entity Component System，Entity 是实体，Component 是组
-件，System 则指系统。Entity 中可以包括无数个 Component，具备某组件便具有
-某功能，而 System 是控制这些组件的动作。
+ECS 的全称为 Entity Component System，Entity 是实体，Component 是组 件，System 则指系统。Entity 中可以包括无数个 Component，具备某组件便具有 某功能，而 System 是控制这些组件的动作。
 
-所有的 Object 都继承 ThreadObject，但是并不是实现的所有 Object 都需要定义自己的 Initialize、与 update。
-可能只是写了个空的函数。
+所有的 Object 都继承 ThreadObject，但是并不是实现的所有 Object 都需要定义自己的 Initialize、与 update。 可能只是写了个空的函数。
 
 为了解决空函数的问题，提出了一个 System 框架，在 System 中定义了几种类型的动作。例如 InitializeSystem 是初始化动作，UpdateSystem 是更新系统，每一个动作都是一个接口。这意味着一个对象可以实现按需定义，如果需要初始化就实现 InitializeSystem 接口，如果需要 Update 就实现 UpdateSystem 接口。
 
@@ -376,8 +369,7 @@ int main()
 
 ### 通过字符串动态创建类
 
-现在首先要解决一个问题,在原来是将创建的 ThreadObject 发给 ThreadMgr,然后由 ThreadMgr 决定放入到哪一个 Thread 中.
-现在创建对象是由每个线程中的 EntitySystem 来进行 Entity 或者 Component 创建的.
+现在首先要解决一个问题,在原来是将创建的 ThreadObject 发给 ThreadMgr,然后由 ThreadMgr 决定放入到哪一个 Thread 中. 现在创建对象是由每个线程中的 EntitySystem 来进行 Entity 或者 Component 创建的.
 
 以前的 ThreadObject 例如 Account 处理登录 Message 的 ThreadObject
 
@@ -581,13 +573,7 @@ struct DataInfo
 
 ### DynamicCall 模板
 
-这段代码将 `std::list<DataInfo>`所有的数据展开，最终会传入
-`ComponentFactoryEx` 模板函数中。这段代码看似短小，但却难以理解，它使用了 C++14 的一个语法——`std::index_sequence`。
-首先来看 DynamicCall 这个结构，在结构中有一个模板函数，该模板函数有一个递归操作，操作的目
-的是根据传入的 params 将数据一个一个转到 `std::tuple` 类型中。`std::tuple` 是一个可以包括所有类型的容器。在
-每一个递归调用中，从 params 取出第一个数据，再将这个数据增加到 `std::tuple<TArgs...>t1` 数据的后面，不断循
-环，直到 params 没有数据为止。当 params 大小等于 0 时，`std::tuple<TArgs...>t1` 就有了所需的所有参数。这时，调
-用模板 ComponentFactoryEx 生成实例类。
+这段代码将 `std::list<DataInfo>`所有的数据展开，最终会传入 `ComponentFactoryEx` 模板函数中。这段代码看似短小，但却难以理解，它使用了 C++14 的一个语法——`std::index_sequence`。 首先来看 DynamicCall 这个结构，在结构中有一个模板函数，该模板函数有一个递归操作，操作的目 的是根据传入的 params 将数据一个一个转到 `std::tuple` 类型中。`std::tuple` 是一个可以包括所有类型的容器。在 每一个递归调用中，从 params 取出第一个数据，再将这个数据增加到 `std::tuple<TArgs...>t1` 数据的后面，不断循 环，直到 params 没有数据为止。当 params 大小等于 0 时，`std::tuple<TArgs...>t1` 就有了所需的所有参数。这时，调 用模板 ComponentFactoryEx 生成实例类。
 
 ```cpp
 template<int ICount>
@@ -656,17 +642,13 @@ int main()
 
 1. 基础类 Component 与 Entity
 
-首先需要定义 Component，内部需要记录其父 Entity 指针、所在 EntitySystem、以及其对象池指针，将 Component 归还到
-对象池的方法等。
+首先需要定义 Component，内部需要记录其父 Entity 指针、所在 EntitySystem、以及其对象池指针，将 Component 归还到 对象池的方法等。
 
-而 Entity 继承 Component,也有归还到对象池的操作，此外 Entity 管理多个 Component,具有 AddComponent、GetComponent 方法。
-内部使用`std::map<uint64,IComponent*> _components`存储 Component 指针。
+而 Entity 继承 Component,也有归还到对象池的操作，此外 Entity 管理多个 Component,具有 AddComponent、GetComponent 方法。 内部使用`std::map<uint64,IComponent*> _components`存储 Component 指针。
 
 2. EntitySystem
 
-在之前，线程 Thread 类有两个重要的任务：一是用来管理线程中的对象；二是处理消息。线程管理类
-ThreadMgr 有 3 个任务：一是管理线程；二是处理消息；三是管理主线程中的全局对象。现在，我们需要将线程类和
-线程管理类中关于对象以及消息管理的部分提炼出来，这一部分的功能交由新的 EntitySystem 类来完成。
+在之前，线程 Thread 类有两个重要的任务：一是用来管理线程中的对象；二是处理消息。线程管理类 ThreadMgr 有 3 个任务：一是管理线程；二是处理消息；三是管理主线程中的全局对象。现在，我们需要将线程类和 线程管理类中关于对象以及消息管理的部分提炼出来，这一部分的功能交由新的 EntitySystem 类来完成。
 
 ```cpp
 class EntitySystem : virtual public SnObject, public IDisposable
@@ -681,8 +663,7 @@ protected:
 };
 ```
 
-作为基类 ThreadObject 承担了初始化、消息注册、更新的所有操作。现在这些操作被提取出来了，变成了一个
-又一个接口。
+作为基类 ThreadObject 承担了初始化、消息注册、更新的所有操作。现在这些操作被提取出来了，变成了一个 又一个接口。
 
 ![组件与接口](../.gitbook/assets/2023-10-03181849.png)
 
@@ -701,20 +682,15 @@ T* EntitySystem::AddComponent(TArgs... args);
 void EntitySystem::AddToSystem(IComponent* pComponent);
 ```
 
-对于 Entity 也有自己的`AddComponent`与 `AddToSystem`,其`AddComponent`同理从对象池 Malloc 对象，然后调用
-`AddToSystem`，其中`AddToSystem`只是进行 SetParent、`_component.insert`操作，还要进行`GetEntitySystem()->AddToSystem(pComponent)`
-总之 Component 是被 EntitySystem 总管的。
+对于 Entity 也有自己的`AddComponent`与 `AddToSystem`,其`AddComponent`同理从对象池 Malloc 对象，然后调用 `AddToSystem`，其中`AddToSystem`只是进行 SetParent、`_component.insert`操作，还要进行`GetEntitySystem()->AddToSystem(pComponent)` 总之 Component 是被 EntitySystem 总管的。
 
 4. 实体更新操作
 
-直接让封装的 Thread 继承 EntitySystem,`Thread::Start()`只需用`std::thread`配和 lambda 表达式开个新线程，内部循环加一些线程
-退出的设计，循环内进行`Update()`与 Sleep。
+直接让封装的 Thread 继承 EntitySystem,`Thread::Start()`只需用`std::thread`配和 lambda 表达式开个新线程，内部循环加一些线程 退出的设计，循环内进行`Update()`与 Sleep。
 
 `EntitySystem::Update`内会进行将协议包分给旗下 Component(使用`EntitySystem::UpdateMessage`实现)，同时会执行所有 Component 的 Update。
 
-在`EntitySystem::UpdateMessage`内，会对`_cachePackets`进行 Swap,GetReaderCache 操作。然后会进行对 Packets 遍历
-每次循环内会遍历其下\_messageSystems 内的所有接口，调用其 IsFollowMsgId 等进行判断，根据策略决定是否调用接口的
-`ProcessPacket`将协议包发给 Component。
+在`EntitySystem::UpdateMessage`内，会对`_cachePackets`进行 Swap,GetReaderCache 操作。然后会进行对 Packets 遍历 每次循环内会遍历其下\_messageSystems 内的所有接口，调用其 IsFollowMsgId 等进行判断，根据策略决定是否调用接口的 `ProcessPacket`将协议包发给 Component。
 
 ### 用 ESC 模式看 Login
 
@@ -910,15 +886,11 @@ void NetworkConnector::AwakeFromPool(std::string ip, int port)
 }
 ```
 
-每个在对象池中的对象都在 AwakeFromPool 函数中实现了自身特点的编码，这使得所有类具有一致性，底层不关心
-类的真正作用，只需要调用 AwakeFromPool 函数即可。
+每个在对象池中的对象都在 AwakeFromPool 函数中实现了自身特点的编码，这使得所有类具有一致性，底层不关心 类的真正作用，只需要调用 AwakeFromPool 函数即可。
 
 3. NetworkLocator 组件
 
-为了便于发送协议，新增名为 NetworkLocator 的组件，该组件是一个全局组件。这是一个网络层的定位组件，因
-为在某个进程中可能存在多个 Network 网络实例，这些网络对象可能是对外连接的 NetworkConnector，也可能是一个监
-听对象 NetworkListen。NetworkLocator 组件的作用是为了快速找到 NetworkListen 或 NetworkConnector 的实例，用于
-发送数据。
+为了便于发送协议，新增名为 NetworkLocator 的组件，该组件是一个全局组件。这是一个网络层的定位组件，因 为在某个进程中可能存在多个 Network 网络实例，这些网络对象可能是对外连接的 NetworkConnector，也可能是一个监 听对象 NetworkListen。NetworkLocator 组件的作用是为了快速找到 NetworkListen 或 NetworkConnector 的实例，用于 发送数据。
 
 ```cpp
 class NetworkLocator : public Component<NetworkLocator>, public IAwakeFromPoolSystem<>
@@ -945,8 +917,7 @@ ServerApp::ServerApp(APP_TYPE appType)
 }
 ```
 
-当 NetworkListen 类被唤醒时，调用了 NetworkLocator：：AddListenLocator 函数，将其注册到 Locator 组件中。
-根据类型将创建的 NetworkListen 指针放在 std：：map<NetworkType，INetwork\*>字典中以备使用。
+当 NetworkListen 类被唤醒时，调用了 NetworkLocator：：AddListenLocator 函数，将其注册到 Locator 组件中。 根据类型将创建的 NetworkListen 指针放在 std：：map\<NetworkType，INetwork\*>字典中以备使用。
 
 ```cpp
 void NetworkListen::AwakeFromPool(std::string ip, int port)
@@ -962,8 +933,7 @@ void NetworkLocator::AddListenLocator(INetwork *pNetwork, NetworkType networkTyp
 }
 ```
 
-需要发送数据时，IMessageSystem 中提供了一个静态函数 SendPacket，在 SendPacket 中使用到了 NetworkLocator
-组件。
+需要发送数据时，IMessageSystem 中提供了一个静态函数 SendPacket，在 SendPacket 中使用到了 NetworkLocator 组件。
 
 ```cpp
 void IMessageSystem::SendPacket(Packet *pPacket)
@@ -981,18 +951,13 @@ void IMessageSystem::SendPacket(Packet *pPacket)
 }
 ```
 
-这里其实不是很完善，在发送 Packet 数据时，根据 Packet 中的 Socket 值可以找到一个对应的 INetwork 实例，这个 INetwork 实例可能是
-NetworkConnector，也可能是 NetworkListen 中的一个 Socket 通道。先找一找有没有对应的 NetworkConnector 实
-例，如果没有找到，就转到 NetworkListen 中进行处理。
+这里其实不是很完善，在发送 Packet 数据时，根据 Packet 中的 Socket 值可以找到一个对应的 INetwork 实例，这个 INetwork 实例可能是 NetworkConnector，也可能是 NetworkListen 中的一个 Socket 通道。先找一找有没有对应的 NetworkConnector 实 例，如果没有找到，就转到 NetworkListen 中进行处理。
 
 ### YAML
 
 用 YAML 来配置服务器配置很好，对于游戏开发来说有两种配置：策划文档的配置、程序运行时的配置。
 
-策划文档与游戏逻辑息息相关。例如，有多少张地图，有多少个 NPC，每
-个 NPC 有什么样的属性，每个角色有多少技能，每个技能有什么效果。策划文
-档的配置方案在程序端的实现非常多样，可以用 CSV，可以用 TXT，可以挂 Lua
-脚本，也可以使用 Python，方法多种多样，没有好坏之分。
+策划文档与游戏逻辑息息相关。例如，有多少张地图，有多少个 NPC，每 个 NPC 有什么样的属性，每个角色有多少技能，每个技能有什么效果。策划文 档的配置方案在程序端的实现非常多样，可以用 CSV，可以用 TXT，可以挂 Lua 脚本，也可以使用 Python，方法多种多样，没有好坏之分。
 
 cpp 使用 yaml 可以用 [https://github.com/jbeder/yaml-cpp](https://github.com/jbeder/yaml-cpp)
 
@@ -1052,8 +1017,7 @@ void ThreadMgr::Update()
 
 ### log4cpuls
 
-服务端有两种日志：一种是常规日志，用于后台的打印输出，以便在需要时查看；另一种是对游戏逻辑内的物品进行跟踪的日志，这类日志需要存入数据，以方便进行物品跟踪，其数据也可为分析策划所用。
-前者为运行时日志，采用文件系统，后者采用数据库存储。
+服务端有两种日志：一种是常规日志，用于后台的打印输出，以便在需要时查看；另一种是对游戏逻辑内的物品进行跟踪的日志，这类日志需要存入数据，以方便进行物品跟踪，其数据也可为分析策划所用。 前者为运行时日志，采用文件系统，后者采用数据库存储。
 
 [https://github.com/log4cplus/log4cplus/releases](https://github.com/log4cplus/log4cplus/releases)
 

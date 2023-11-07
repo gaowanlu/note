@@ -3,7 +3,7 @@ description: 迭代器模式
 coverY: 0
 ---
 
-# 🐲 迭代器模式(Iterator 模式)
+# 🐨 迭代器模式(Iterator 模式)
 
 迭代器模式是一种行为型设计模式，它提供了一种顺序访问集合对象元素的方法，而无需暴露其底层实现。通过使用迭代器模式，我们可以在不了解集合内部结构的情况下遍历集合中的元素。
 
@@ -13,7 +13,7 @@ coverY: 0
 
 迭代器模式在实际应用中非常常见，例如在编程语言中的循环结构、容器类的遍历等场景都可以使用迭代器模式来实现。
 
-![迭代器模式](../../.gitbook/assets/ClassDiagram1_ndsn3r349r0uj.png)
+![迭代器模式](../../.gitbook/assets/ClassDiagram1\_ndsn3r349r0uj.png)
 
 ```cpp
 #include <iostream>

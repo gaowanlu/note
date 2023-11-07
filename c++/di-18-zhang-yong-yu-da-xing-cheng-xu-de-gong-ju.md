@@ -4,7 +4,7 @@ cover: >-
 coverY: 0
 ---
 
-# 🇨🇳 🇨🇳 第 18 章 用于大型程序的工具
+# 🧸 第 18 章 用于大型程序的工具
 
 ## 第 18 章 用于大型程序的工具
 
@@ -56,7 +56,7 @@ int main(int argc, char **argv)
 
 ### 栈展开与内存销毁
 
-在栈展开时，即当 throw 后离开某些块作用域时，能够自动释放的栈内存将会被释放，但是要保证申请的堆内存释放，推荐使用 shared_ptr 与 unique_ptr 管理内存
+在栈展开时，即当 throw 后离开某些块作用域时，能够自动释放的栈内存将会被释放，但是要保证申请的堆内存释放，推荐使用 shared\_ptr 与 unique\_ptr 管理内存
 
 ```cpp
 //example2.cpp
@@ -592,7 +592,7 @@ int main(int argc, char **argv)
 ![标准exception类层次](<../.gitbook/assets/屏幕截图 2022-07-30 230439.jpg>)
 
 exception 只定义了拷贝构造函数、拷贝赋值运算符、虚析构函数、what 的虚成员，what 返回 const char\* 字符数组，其为 noexcept(true)的\
-exception、bad_cast、bad_alloc 有默认构造函数、runtime_error、logic_error 无默认构造函数，可以接收 C 字符数组
+exception、bad\_cast、bad\_alloc 有默认构造函数、runtime\_error、logic\_error 无默认构造函数，可以接收 C 字符数组
 
 ### 编写自己的异常类
 
