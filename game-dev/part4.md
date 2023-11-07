@@ -4,11 +4,11 @@ cover: >-
 coverY: 0
 ---
 
-# 🚗 账号登录与验证
+# 账号登录与验证
 
 ## 账号登录与验证
 
-其中 04_XX 部分.
+其中 04\_XX 部分.
 
 登录是游戏开发中非常重要的一个功能，设计得不好会出大问题。不要认为登录只是简单的账号验证，其中包括的细节与异步非常多。如果同一个账号同时在两个 Socket 上发起登录协议该如何处理，如果有大于 1000 个玩家同时登录怎么办。
 
@@ -20,12 +20,9 @@ coverY: 0
 
 上面的一层是客户端、中间的一层是第三方平台、底部一层是游戏服务端
 
-1. 客户端通过平台给定的 SDK 取到该账号的 token 和账号 ID，生成的
-   token 是有时效性的。
-2. 客户端将 token 发送到服务端，服务端通过平台提供的 HTTP 将 token 和
-   账号 ID 传给平台进行验证。
-3. 服务端收到平台的反馈结果，如果失败就通知客户端，如果成功就加
-   载玩家数据。
+1. 客户端通过平台给定的 SDK 取到该账号的 token 和账号 ID，生成的 token 是有时效性的。
+2. 客户端将 token 发送到服务端，服务端通过平台提供的 HTTP 将 token 和 账号 ID 传给平台进行验证。
+3. 服务端收到平台的反馈结果，如果失败就通知客户端，如果成功就加 载玩家数据。
 
 每个平台接入的 API 各有不同，但大部分采用了 HTTP。
 
@@ -96,11 +93,9 @@ private:
 };
 ```
 
-Account 类是 login 进程特有的类，目的是处理客户端发来的账号验证请求，Account 类维护了 PlayerMgr 实例，
-其作用是维护所有 Account 类中正在登录的账号对象。
+Account 类是 login 进程特有的类，目的是处理客户端发来的账号验证请求，Account 类维护了 PlayerMgr 实例， 其作用是维护所有 Account 类中正在登录的账号对象。
 
-基类 ThreadObject 是运行在线程之上的对象，如果把线程比喻成一条流水线，那么 ThreadObject 类就像运行在其上的包裹。ThreadObject 类
-必须实现 3 个虚函数：Init、RegisterMsgFunction 和 Update，分别用于初始化、注册自己感兴趣的协议以及执行更新操作。
+基类 ThreadObject 是运行在线程之上的对象，如果把线程比喻成一条流水线，那么 ThreadObject 类就像运行在其上的包裹。ThreadObject 类 必须实现 3 个虚函数：Init、RegisterMsgFunction 和 Update，分别用于初始化、注册自己感兴趣的协议以及执行更新操作。
 
 将 Account 类放置在线程中
 
@@ -255,12 +250,9 @@ void HttpRequestAccount::ProcessMsg(Json::Value value){
 }
 ```
 
-然后在 Account 接收到 MI_AccountCheckToHttpRs 包后，进行相应处理。
+然后在 Account 接收到 MI\_AccountCheckToHttpRs 包后，进行相应处理。
 
-一个独立的 ThreadObject 的信息是闭塞的，它只处理从消息队列收到的协议，其结果再通过协议发送出去。发送协议的
-类并不知道接收协议的类如何处理，也不关心谁去处理。这是低耦合产生的根本原因。Account 类并不知道是谁在处理
-HTTP 请求，也不知道谁会将返回结果给它。HttpRequest 类处理完数据之后不知道这些数据谁会需要，只要发送出去就
-好了。
+一个独立的 ThreadObject 的信息是闭塞的，它只处理从消息队列收到的协议，其结果再通过协议发送出去。发送协议的 类并不知道接收协议的类如何处理，也不关心谁去处理。这是低耦合产生的根本原因。Account 类并不知道是谁在处理 HTTP 请求，也不知道谁会将返回结果给它。HttpRequest 类处理完数据之后不知道这些数据谁会需要，只要发送出去就 好了。
 
 ### 消息过滤机制
 
@@ -430,7 +422,7 @@ void Robot::RegisterMsgFunction(){
 }
 ```
 
-这样在 Actor Thread 中即时，有许多的 Robot，但对于每个 Robot 对象其只会关注是自己本身的 Proto::MsgId::C2L_AccountCheckRs 协议包，而不会处理其他 Socket 的此协议。
+这样在 Actor Thread 中即时，有许多的 Robot，但对于每个 Robot 对象其只会关注是自己本身的 Proto::MsgId::C2L\_AccountCheckRs 协议包，而不会处理其他 Socket 的此协议。
 
 这样一来，每个 ThreadObject 使用 MessageList,可以使用无过滤机制的 MessageCallBackFunction 或者有过滤机制的 MessageCallBackFunctionFilterObj，非常的灵活，面向对象设计。
 
@@ -646,4 +638,4 @@ public:
 
 更详细的 Robot 内容可以看
 
-https://github.com/gaowanlu/GameBookServer/tree/master/04_02_engine_robots/src/tools/robots
+https://github.com/gaowanlu/GameBookServer/tree/master/04\_02\_engine\_robots/src/tools/robots

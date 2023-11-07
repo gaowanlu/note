@@ -352,8 +352,8 @@ int main(int argc, char **argv)
 
 关于直接初始化与拷贝初始化，在 C++11 中，直接初始化和拷贝初始化是两种不同的初始化对象的方式。
 
-- 直接初始化是通过使用圆括号或花括号来初始化对象，例如：
-- 拷贝初始化是通过使用等号来初始化对象
+* 直接初始化是通过使用圆括号或花括号来初始化对象，例如：
+* 拷贝初始化是通过使用等号来初始化对象
 
 直接初始化和拷贝初始化的区别在于对象的构造方式。直接初始化直接调用对象的构造函数进行初始化，而拷贝初始化则是先创建一个临时对象，然后再通过拷贝构造函数将临时对象的值复制给目标对象。
 
@@ -504,10 +504,10 @@ int _a=12,your_num=8,_your_num2=12;
 
 ### C++变量命名规范
 
-- 标识符要能体现其实际含义
-- 变量名一般用小写，如 index，不要使用 Index 或 INDEX（常量除外）
-- 用户自定义的类名一般以大写字母开头，如 Sales_item
-- 如果标识符有多个单词组成，则单词间应有明显区分,如 student_loan 或 studentLoan，不要使用 studentloan
+* 标识符要能体现其实际含义
+* 变量名一般用小写，如 index，不要使用 Index 或 INDEX（常量除外）
+* 用户自定义的类名一般以大写字母开头，如 Sales\_item
+* 如果标识符有多个单词组成，则单词间应有明显区分,如 student\_loan 或 studentLoan，不要使用 studentloan
 
 C++保留关键词
 
@@ -607,10 +607,10 @@ xor_eq ^=
 
 ### 名字的作用域
 
-- 全局作用域
-- 函数作用域
-- 块作用域
-- 嵌套作用域
+* 全局作用域
+* 函数作用域
+* 块作用域
+* 嵌套作用域
 
 ```cpp
 // example12.cpp
@@ -788,6 +788,75 @@ NULL是C语言的内容，使用NULL尽可能引入头文件
 #include<cstdlib> 但大多数编译器允许不引入
 */
 ```
+
+### C++的NULL与nullptr
+
+在C中，NULL通常被定义为下面内容
+
+```cpp
+#define NULL ((void *)0)
+```
+
+C中的NULL实际为一个空指针，下面的代码编译是没有问题的，会把空指针赋给int和char指针的时候，发生了隐式类型转换，把void指针转换成了相应类型的指针。
+
+```cpp
+int *pi = NULL;
+char *pc = NULL;
+```
+
+上面的代码在C++中编译是会出错的，C++是强类型语言，void\*类型不能隐式转换成其他类型的指针类型。
+
+```cpp
+#ifdef _cplusplus
+#define NULL 0
+#else
+#define NULL ((void*)0)
+#endif
+```
+
+用NULL代替0表示空指针在函数重载时会出现问题
+
+```cpp
+#include <iostream>
+
+using namespace std;
+
+void func(void* i)
+{
+    cout << "func1" <<endl;
+}
+
+void func(int i)
+{
+    cout << "func2" <<endl;
+}
+
+int main()
+{
+    func(NULL);
+    func(nullptr);
+    return 0;
+}
+
+```
+
+上面代码C++编译会报错
+
+```bash
+[dream@localhost 10:16:34 tmp]$ g++ main.cpp -o main.exe --std=c++11
+main.cpp: 在函数‘int main()’中:
+main.cpp:17:14: 错误：调用重载的‘func(NULL)’有歧义
+     func(NULL);
+              ^
+main.cpp:17:14: 附注：备选是：
+main.cpp:5:6: 附注：void func(void*)
+ void func(void* i)
+      ^
+main.cpp:10:6: 附注：void func(int)
+ void func(int i)
+```
+
+现代C++尽量用nullptr来代表空指针，C++中的NULL只是一个数字0的宏定义
 
 ### 赋值和指针
 
@@ -1679,10 +1748,9 @@ int main(int argc, char **argv)
 }
 ```
 
-### static_assert 静态断言
+### static\_assert 静态断言
 
-静态断言什么时候有需求呢，例如想要在模板实例化的时候对模板参数进行约束。
-static_assert 声明是 C++11 标准引入的，用于程序编译阶段评估常量表达式对返回 false 的表达式断言。
+静态断言什么时候有需求呢，例如想要在模板实例化的时候对模板参数进行约束。 static\_assert 声明是 C++11 标准引入的，用于程序编译阶段评估常量表达式对返回 false 的表达式断言。
 
 1. 处理在编译期间执行，不会有空间或时间上的运行时成本
 2. 具有简单的语法
@@ -1733,9 +1801,9 @@ main.cpp:25:24: error: 'argc' is not a constant expression
 }
 ```
 
-### C++17 单参数 static_assert
+### C++17 单参数 static\_assert
 
-可以忽略 static_assert 的第二个错误信息参数
+可以忽略 static\_assert 的第二个错误信息参数
 
 ```cpp
 #include <iostream>
@@ -1860,10 +1928,10 @@ int main(int agrc, char **argv)
 
 decltype(e) e 类型为 T
 
-1、如果 e 是一个未加括号的标识符表达式(结构化绑定除外)或者未加括号的类成员访问，则 decltype(e)判断出的类型是 e 的类型 T,如果并不存在这样的类型，或 e 是一组重载函数，则无法进行推导  
-2、如果 e 是一个函数调用或仿函数调用，decltype(e)推断出的类型是其返回值类型  
-3、如果 e 是一个类型为 T 的左值，则 decltype(e)是 T&  
-4、如果 e 是一个类型为 T 的将忘值，则 decltype(e)是 T&&  
+1、如果 e 是一个未加括号的标识符表达式(结构化绑定除外)或者未加括号的类成员访问，则 decltype(e)判断出的类型是 e 的类型 T,如果并不存在这样的类型，或 e 是一组重载函数，则无法进行推导\
+2、如果 e 是一个函数调用或仿函数调用，decltype(e)推断出的类型是其返回值类型\
+3、如果 e 是一个类型为 T 的左值，则 decltype(e)是 T&\
+4、如果 e 是一个类型为 T 的将忘值，则 decltype(e)是 T&&\
 5、除去以上情况，decltype(e)是 T
 
 ```cpp

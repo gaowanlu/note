@@ -4,25 +4,20 @@ cover: >-
 coverY: 0
 ---
 
-# 🚗 分布式登录与 Redis 内存数据库
+# 分布式登录与 Redis
 
 ## 分布式登录与 Redis 内存数据库
 
 ### game 与 space 的定位
 
-客户端通过 HTTP 请求得到一个合适的 login 进程进行账号验证，成功后，login
-会分配一个合适的 game 进程给客户端进行连接，game 进程提供玩家角色加载。
-如果有多角色则进行选角，space 进程会为其分配最终的地图实例。
+客户端通过 HTTP 请求得到一个合适的 login 进程进行账号验证，成功后，login 会分配一个合适的 game 进程给客户端进行连接，game 进程提供玩家角色加载。 如果有多角色则进行选角，space 进程会为其分配最终的地图实例。
 
 ![进程分布](../.gitbook/assets/2023-10-13225949.png)
 
 1. 客户端通过 HTTP 连接得到一个可用于登录的 login 进程的 IP 和端口
 2. 连接到 login 进程进行账号验证，成功登陆后，创角色选角色，选择一个合适的发送给客户端，并同时生成 token
 3. 客户端通过 token 连接到 game 进程上，正式开始游戏，进入某个地图
-4. 收到进入地图的协议，game 进程首先向 appmgr 发起请求，判断是否有该地图的实例，如果没有，就马上在一
-   个合适的 space 中创建一个地图实例。同时，在 game 进程中生成 WorldProxy 实例用于代理地图数据，WorldProxy 一旦生
-   成，所有数据均会转发至 space 进程，game 进程则作为一个中转进程，类似网关进行数据转发。地图建立成功之后，向
-   客户端发送进入地图协议，加载地图与玩家模型，玩家正式进入地图。
+4. 收到进入地图的协议，game 进程首先向 appmgr 发起请求，判断是否有该地图的实例，如果没有，就马上在一 个合适的 space 中创建一个地图实例。同时，在 game 进程中生成 WorldProxy 实例用于代理地图数据，WorldProxy 一旦生 成，所有数据均会转发至 space 进程，game 进程则作为一个中转进程，类似网关进行数据转发。地图建立成功之后，向 客户端发送进入地图协议，加载地图与玩家模型，玩家正式进入地图。
 
 除了图中还有，dbmgr 进程，我们需要这样需要的进程之间进行两两连接。
 
@@ -30,8 +25,7 @@ coverY: 0
 
 进程 login 如何知道在众多 game 进程中哪一个是合适的呢？有很多种办法达到目的。
 
-1. 让 game 进程向第三方的 appmgr 进程定时发送自己的状态信息，如有多少人在线，当
-   login 进程需要时，向 appmgr 请求数据，从而获得一个负载最小的 game 进程，这一个方案是异步的。
+1. 让 game 进程向第三方的 appmgr 进程定时发送自己的状态信息，如有多少人在线，当 login 进程需要时，向 appmgr 请求数据，从而获得一个负载最小的 game 进程，这一个方案是异步的。
 2. game 与 login 两两通信，game 定时向所有 login 进程发送自己的状态信息。当 login 进程需要时，不需要异步过程，直接可以知道哪个 game 进程负载最小。但有一个问题，如果两人分别在 login1 和 login2 进程上，在一瞬间两个 login 进程分析出来的数据得到的最小负载 game 进程是同一个进程，这意味着从短时间内看，负载可能不是精确均衡的，但长期看其实也没什么问题。
 
 对于第 2 种方案，有个问题，如果有 10 个 login，也就是说每个 game 都必须连接 10 个 login，连接这 10 个 login 原因只是为了发送状态数据，显然不值得。可以合并两种方案：login 进程不要直接和 game 进程产生网络连接，game 进程向 appmgr 进程发送自己的状态，每隔两秒，appmgr 进程将手机到的数据推送给所有 login，这样减少了网络连接，在 login 进程上分配 game 进程时不需要使用异步。
@@ -42,7 +36,7 @@ coverY: 0
 
 ### 使用 token 登录 game 进程
 
-当 login 进程种的 Account 类选择好可以登录的 game 进程时，会发送一个 L2C_GameToken 协议到客户端
+当 login 进程种的 Account 类选择好可以登录的 game 进程时，会发送一个 L2C\_GameToken 协议到客户端
 
 ```cpp
 void Account::HandleSelectPlayer(Packet* pPacket){
@@ -120,14 +114,9 @@ auto pMail = pPlayer->GetComponent<MailComponent>();
 
 ### Redis 及其第三方库
 
-有一个问题还没有处理，是关于 token 的生成以及验证，生成 token 是在 login 进程中，
-而验证却在 game 进程中，如何让一个数据在两个进程之间共享。
+有一个问题还没有处理，是关于 token 的生成以及验证，生成 token 是在 login 进程中， 而验证却在 game 进程中，如何让一个数据在两个进程之间共享。
 
-Redis 是一个非关系型数据库，它是 Key-Value 数据库，由
-一系列的列表和字典构成，既可持久化保存，又可以只保存在内存中。Redis
-因为是内存数据库，性能比 MySQL 高一些，而 Redis 也提供锁机制，非常适合进
-程之间的数据交互。除了用在 token 上外，任何需要进程交互或暂存数据的功
-能都可以使用 Redis。
+Redis 是一个非关系型数据库，它是 Key-Value 数据库，由 一系列的列表和字典构成，既可持久化保存，又可以只保存在内存中。Redis 因为是内存数据库，性能比 MySQL 高一些，而 Redis 也提供锁机制，非常适合进 程之间的数据交互。除了用在 token 上外，任何需要进程交互或暂存数据的功 能都可以使用 Redis。
 
 ### Redis 的安装
 
@@ -139,8 +128,7 @@ Redis 是一个非关系型数据库，它是 Key-Value 数据库，由
 
 ### hiredis
 
-C++连接使用 redis 一般直接用 hiredis，redis 原生的库，自由度比较高，封装好
-自己的组件，使用起来也没那么糟糕
+C++连接使用 redis 一般直接用 hiredis，redis 原生的库，自由度比较高，封装好 自己的组件，使用起来也没那么糟糕
 
 ### 组件 RedisConnector
 
@@ -240,8 +228,7 @@ bool RedisConnector::Ping() const
 
 ### Redis 在 login 中的应用
 
-前面就有考虑一个场景问题，如果一个玩家用两个客户端登录同一个账号，如果有两个 login 进程这两次登录可能同时落到
-同一个 login 进程，又可能落在两个 login 进程上。
+前面就有考虑一个场景问题，如果一个玩家用两个客户端登录同一个账号，如果有两个 login 进程这两次登录可能同时落到 同一个 login 进程，又可能落在两个 login 进程上。
 
 利用 Redis 处理这个问题，进行跨进程检查账号是否在线。
 
@@ -260,14 +247,13 @@ RedisLogin 有三个任务：检验账号是否在线、生成可以登录 game 
 
 1. 检验账号是否在线
 
-当收到一个客户端验证账号的协议时，Account 类会转发一个协议向 Redis 询问登录的账号是否有相同的账号在线，组件 RedisLogin 收到了协议后，向 Redis 查询两
-条数据，一个是想知道账号是否在 login 进程上，一个是查看是否在 game 进程上。
+当收到一个客户端验证账号的协议时，Account 类会转发一个协议向 Redis 询问登录的账号是否有相同的账号在线，组件 RedisLogin 收到了协议后，向 Redis 查询两 条数据，一个是想知道账号是否在 login 进程上，一个是查看是否在 game 进程上。
 
 设置在线标识时，除了设置 key value 之外，还设置过期时间，在一定时间之内，不能重复登录。应该用 setnx 命令，也就是 (SET if Not eXists),如果不存在就设置，这是个原子操作。
 
 2. 生成可以登录 game 进程的 token
 
-当所有的验证选择角色完成之后，需要生成一个 token，这个 token 需要在 login 与 game 进程中同时访问，在 Account 中账号验证成功后，发起一个 MI_LoginTokenToRedis 协议。
+当所有的验证选择角色完成之后，需要生成一个 token，这个 token 需要在 login 与 game 进程中同时访问，在 Account 中账号验证成功后，发起一个 MI\_LoginTokenToRedis 协议。
 
 ```cpp
 void RedisLogin::HandleLoginTokenToRedis(Packet* pPacket){
@@ -314,17 +300,15 @@ void Account::HandleAccountQueryOnlineToRedisRs(Packet* pPacket){
 }
 ```
 
-PlayerComponentOnlineInLogin 组件被初始化时，向时间堆写入了每隔一段时间就要调用的函数，这个时间可以为 Redis 设置在线标识销毁的一半时间，
-到一半时间要做的就是，向 Redis 组件发送一条在线标识设置消息，Redis 组件收到消息后调用 setex,将存活时间重置。
+PlayerComponentOnlineInLogin 组件被初始化时，向时间堆写入了每隔一段时间就要调用的函数，这个时间可以为 Redis 设置在线标识销毁的一半时间， 到一半时间要做的就是，向 Redis 组件发送一条在线标识设置消息，Redis 组件收到消息后调用 setex,将存活时间重置。
 
 ![Redis生成token](../.gitbook/assets/2023-10-14232308.png)
 
-步骤 1 就是设置账号在 login 的在线标识，还要检查是否有 game 在线的标识.然后增加 PlayerComponentOnlineInLogin 定时重置 login 在线标识过期时间,然后向第三方验证,
-如果验证成功后,则生成 token 存到 redis.客户端拿着生成的 token,在有效期内去 game 登录上线.
+步骤 1 就是设置账号在 login 的在线标识，还要检查是否有 game 在线的标识.然后增加 PlayerComponentOnlineInLogin 定时重置 login 在线标识过期时间,然后向第三方验证, 如果验证成功后,则生成 token 存到 redis.客户端拿着生成的 token,在有效期内去 game 登录上线.
 
 ### Redis 在 game 中的应用
 
-客户端登录 game,首先发起 C2G_LoginByToken,为了处理请求 token 的协议,在 Game 增加 RedisGame 类,有两个任务要做,一个任务是查询已知的账号是否存在 token,校验 token,第二个任务是为当前在 game 进程中的玩家设置 game 在线标识.
+客户端登录 game,首先发起 C2G\_LoginByToken,为了处理请求 token 的协议,在 Game 增加 RedisGame 类,有两个任务要做,一个任务是查询已知的账号是否存在 token,校验 token,第二个任务是为当前在 game 进程中的玩家设置 game 在线标识.
 
 1. 查询一个已知账号的 token,token 只能使用一次,使用完成之后,将键对应数据进行删除.
 2. 在登录 game 时,先收到客户端提交的 tokeninfo,这时应该做的是需要先写入账号在 game 进程的在线标识后,再向 redis 查询账号对应的真 token.
@@ -335,9 +319,7 @@ PlayerComponentOnlineInLogin 组件被初始化时，向时间堆写入了每隔
 
 其实现在的 MessageComponent 组件,是存在一些问题的,MessageComponent 组件维护了一个字典,关联着 MsgId 和它处理函数的对应关系,如果有 1000 个 Entity 都关心网络断开事件,在 MessageSystem 中就有 1000 个 MessageComponent,在这 1000 个 MessageComponent 组件中存放着 1000 个实体对应网络断开事件的回调函数.
 
-MessageComponent 组件阻隔了实体与 MessageSystem 之间的连接,它们彼此不知道对方的存在,但是 MessageComponent 带来了性能上的问题,显然很多余,MessageSystem 系统可以将 MessageComponen 取消掉,
-协议号 MsgId 直接注册到 MessageSystem,对于一个确定的协议来说,不需要遍历所有的 MessageComponent 组件,就可以拿到所有需要回调的处理函数.可以变为根据 MsgId 直接获取到所有的被注册函数,根据 IMessageCallBack 判断是否过滤,
-需要过滤则需要用 NetworkIdentify 校验决定是否执行.
+MessageComponent 组件阻隔了实体与 MessageSystem 之间的连接,它们彼此不知道对方的存在,但是 MessageComponent 带来了性能上的问题,显然很多余,MessageSystem 系统可以将 MessageComponen 取消掉, 协议号 MsgId 直接注册到 MessageSystem,对于一个确定的协议来说,不需要遍历所有的 MessageComponent 组件,就可以拿到所有需要回调的处理函数.可以变为根据 MsgId 直接获取到所有的被注册函数,根据 IMessageCallBack 判断是否过滤, 需要过滤则需要用 NetworkIdentify 校验决定是否执行.
 
 ```cpp
 class MessageSystem:virtual public ISystem<MessageSystem>{
@@ -354,8 +336,7 @@ private:
 
 ![MessageSystem性能优化](../.gitbook/assets/2023-10-14235715.png)
 
-在注册协议函数时，将协议回调函数与 MsgId 绑定起来，这样免去了中间环节。
-如 Account 注册协议时,不再为自己增加一个 MessageComponent 组件,而是直接调用 MessageSystem 的 RegisterFunction 进行注册
+在注册协议函数时，将协议回调函数与 MsgId 绑定起来，这样免去了中间环节。 如 Account 注册协议时,不再为自己增加一个 MessageComponent 组件,而是直接调用 MessageSystem 的 RegisterFunction 进行注册
 
 ```cpp
 void MessageSystem::RegisterFunction(IEntity* obj, int msgId, MsgCallbackFunc cbfun)
@@ -387,5 +368,4 @@ void MessageSystem::RegisterFunctionFilter(IEntity *obj, int msgId, std::functio
 }
 ```
 
-有一说一,这本书真他妈傻逼,命名可以到这将,先讲最终的框架,然后向前回溯,倒着讲,让读者大悟,明白原来的优势.
-关于最新的 MessageSystem 看代码吧,其实最终我们直接看书籍的仓库代码最终版,然后阅读源码,模仿者写出我们自己的 Actor ECS 框架,然后返回优化自己的框架工程.
+有一说一,这本书真他妈傻逼,命名可以到这将,先讲最终的框架,然后向前回溯,倒着讲,让读者大悟,明白原来的优势. 关于最新的 MessageSystem 看代码吧,其实最终我们直接看书籍的仓库代码最终版,然后阅读源码,模仿者写出我们自己的 Actor ECS 框架,然后返回优化自己的框架工程.

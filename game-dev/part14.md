@@ -4,15 +4,13 @@ cover: >-
 coverY: 0
 ---
 
-# 🚗 Skynet 入门精要
+# Skynet 入门精要
 
 ## Skynet 入门精要
 
-Skynet 是一套历经商业游戏验证的游戏服务端引擎，Skynet 是一套底层引擎，不能开箱即用，有人说没有几年的服务器经验很难
-驾驭。
+Skynet 是一套历经商业游戏验证的游戏服务端引擎，Skynet 是一套底层引擎，不能开箱即用，有人说没有几年的服务器经验很难 驾驭。
 
-无论什么框架，最基本的可以说是网路连接、多人交互、操作数据库等，本部分别不是让自己学会 skynet，而是了解游戏的功能设计逻辑、
-skynet 的思想。skynet 对自己的描述定位为“A lightweight online game framework”。仓库地址为 https://github.com/cloudwu/skynet
+无论什么框架，最基本的可以说是网路连接、多人交互、操作数据库等，本部分别不是让自己学会 skynet，而是了解游戏的功能设计逻辑、 skynet 的思想。skynet 对自己的描述定位为“A lightweight online game framework”。仓库地址为 https://github.com/cloudwu/skynet
 
 ```bash
 yum install git
@@ -26,8 +24,7 @@ make linux
 
 ### 理解 Skynet
 
-每个 Skynet 进程称为一个节点，每个节点可以开启数千个服务，不同节点可以部署在不同的物理机上，提供分布式集群的能力，每个节点调度数千个
-lua 服务，让其可以并行工作，每个服务都是一个 Actor。
+每个 Skynet 进程称为一个节点，每个节点可以开启数千个服务，不同节点可以部署在不同的物理机上，提供分布式集群的能力，每个节点调度数千个 lua 服务，让其可以并行工作，每个服务都是一个 Actor。
 
 ```cpp
 clientA   <------> 节点2（兽人村落）
@@ -45,15 +42,15 @@ skynet 进程有自己的配置文件格式 可以参考 https://github.com/clou
 
 如常见设置，可以了解下
 
-| 配置项     | 说明                                                                                    |
-| ---------- | --------------------------------------------------------------------------------------- |
-| thread     | 表示启动多少个工作线程，我们之前 ECS 框架设计中也有                                     |
-| start      | 主服务，指定 skynet 系统启动后，开启哪一个自定义服务                                    |
-| cpath      | 用 C 编写的服务模块的位置                                                               |
-| bootstrap  | skynet 启动的第一个服务及其参数                                                         |
-| harbor     | 集群相关                                                                                |
-| Lua 配置项 | 包含 lualoader、luaservice、lua_path、lua_cpath,用于指定 lua 服务的目录，lua 文件的地址 |
-| 后台模式   | 守护进程设置相关                                                                        |
+| 配置项       | 说明                                                                    |
+| --------- | --------------------------------------------------------------------- |
+| thread    | 表示启动多少个工作线程，我们之前 ECS 框架设计中也有                                          |
+| start     | 主服务，指定 skynet 系统启动后，开启哪一个自定义服务                                        |
+| cpath     | 用 C 编写的服务模块的位置                                                        |
+| bootstrap | skynet 启动的第一个服务及其参数                                                   |
+| harbor    | 集群相关                                                                  |
+| Lua 配置项   | 包含 lualoader、luaservice、lua\_path、lua\_cpath,用于指定 lua 服务的目录，lua 文件的地址 |
+| 后台模式      | 守护进程设置相关                                                              |
 
 ### 启动流程
 
@@ -128,8 +125,7 @@ function CMD.ping(source, count)
 end
 ```
 
-主服务会在启动两个 ping 服务后，给 ping1 发送 start 消息，`skynet.send(ping1, "lua", "start", ping2)`,最后一个参数对应 CMD.start 参数的 target，
-ping1 收到后给 ping 发一条消息，附带参数为 1，ping2 收到后执行 CMD.ping,参数 1 对应 count,ping2 也会给 ping1 发送，并把数值 count+1 如此往复。
+主服务会在启动两个 ping 服务后，给 ping1 发送 start 消息，`skynet.send(ping1, "lua", "start", ping2)`,最后一个参数对应 CMD.start 参数的 target， ping1 收到后给 ping 发一条消息，附带参数为 1，ping2 收到后执行 CMD.ping,参数 1 对应 count,ping2 也会给 ping1 发送，并把数值 count+1 如此往复。
 
 这么一来可以认为 skynet 是站在 lua 脚本上的 Actor 框架
 
@@ -280,8 +276,7 @@ end
 
 ### 调试控制台服务
 
-skynet 自带了一个调试控制台服务 debug_console,启动它之后，可以查看节点的内部状态，如果自己设计框架，提供这样的服务是很有必要的，例如看一些
-在线玩家数量、内存池、对象池情况
+skynet 自带了一个调试控制台服务 debug\_console,启动它之后，可以查看节点的内部状态，如果自己设计框架，提供这样的服务是很有必要的，例如看一些 在线玩家数量、内存池、对象池情况
 
 ```lua
 //Pmain.lua
@@ -299,7 +294,7 @@ skynet.start(function()
 end)
 ```
 
-debug_console 是一个服务，用本地的 telnet 连接 debug_console 服务，可以看到 Welcome to skynet console 字样。
+debug\_console 是一个服务，用本地的 telnet 连接 debug\_console 服务，可以看到 Welcome to skynet console 字样。
 
 提供了一些指令，常用的如下
 
@@ -318,8 +313,7 @@ netstat指令 用于列出网络连接的概况
 
 ### 集群模块
 
-skynet 的 cluster 集群模式，需要为每个节点配置 cluster 监听端口，skynet 会自动开启
-gate、clusterd 等多个服务用于处理节点之间的通信功能。
+skynet 的 cluster 集群模式，需要为每个节点配置 cluster 监听端口，skynet 会自动开启 gate、clusterd 等多个服务用于处理节点之间的通信功能。
 
 ![节点之间通信](../.gitbook/assets/2023-10-22025759.png)
 
@@ -442,8 +436,7 @@ end
 
 由于 skynet.call 是阻塞方法
 
-存在一种可能，玩家快速地点击存款按钮时，消息时序可能会按照(1)(1)(2)(3)地顺序执行，如果玩家仅剩 20 金币，第一次操作时，尚剩余 20 金币，第二次操作时，
-依然剩余 20 金币，两次都能成功，玩家总共存入 40 金币，剩余-20 金币。
+存在一种可能，玩家快速地点击存款按钮时，消息时序可能会按照(1)(1)(2)(3)地顺序执行，如果玩家仅剩 20 金币，第一次操作时，尚剩余 20 金币，第二次操作时， 依然剩余 20 金币，两次都能成功，玩家总共存入 40 金币，剩余-20 金币。
 
 ```lua
 --修复后
