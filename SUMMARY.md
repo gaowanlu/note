@@ -121,7 +121,7 @@
   - [TCP 网络模块](game-dev/part18.md)
   - [嵌入 Lua 脚本语言](game-dev/part19.md)
   - [同步算法](game-dev/part20.md)
-  - [热更新](game-dev/FUNC_DEV_README.md)
+  - [热更新](game-dev/part21.md)
   - [防外挂](game-dev/FUNC_DEV_README.md)
   - [未尽之路](game-dev/FUNC_DEV_README.md)
 - [游戏杂谈](game-dev/TALK_EVERYTHING_README.md)
