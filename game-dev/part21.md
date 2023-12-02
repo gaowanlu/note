@@ -619,12 +619,193 @@ back res=1
 */
 ```
 
+### 脚本语言
+
+“动态库”虽然比“切换进程”要灵活一些，但它仍有诸多限制。两者都要求在项目前期做好规划，严格执行代码规范。对于动态库，开发者使用的时候需要特别小心，要避免因版本问题而导致的错误，还需要自行实现版本管理方法，因此总的来说依然不够灵活。开发者需要一种更加灵活的热更新方案，解释型脚本语言（Lua、Python……）的模块重载功能刚好能够满足这一需求，因此得到了广泛使用。
+
+![进程切换、动态库和脚本语言热更新的演化](../.gitbook/assets/2023-12-03010435.png)
+
 ### 脚本语言业务需求
+
+游戏的程序结构，游戏中的各项功能代码封装成了不同的模块
+
+```lua
+local shop = require("shop")
+
+local players = {} --玩家列表
+players[101] = {coin=1000, bag={}} --假设玩家101已登录
+
+--用字符输入模拟网络消息
+while true do
+    cmd = io.read()
+    if cmd == "b" then --buy
+        shop.onBuyMsg(players[101], 1001)
+    elseif cmd == "r" then --reload
+        reload()
+    end
+end
+```
+
+shop 模块
+
+```lua
+local M = {}
+local goods = {
+    [1001] = {name = "金创药", price = 10},
+    [1002] = {name = "葫芦", price = 2}
+}
+
+M.onBuyMsg = function(player, id)
+    local item = goods[id]
+    --扣金币，这里缺少对金币数量是否充足的判定
+    player.coin = player.coin - item.price
+    --增加道具计数
+    player.bag[id] = player.bag[id] or 0
+    player.bag[id] = player.bag[id] + 1
+
+    --...
+    local tip=string.format("player buy item %d, coin:%d item_num:%d",
+                                    id, player.coin, player.bag[id])
+    print(tip)
+end
+
+return M
+```
+
+每次按 b 玩家会用 10 金币购买一瓶金创药。需要实现商城模块的热更新，用户输入 r 调用 reload 方法，
+可以修复商城模块的 bug 或者调整商品的价格。
 
 ### 实现 Lua 热更新
 
+对于 reload 实现
+
+```lua
+function reload()
+    package.loaded["shop"] = nil
+    shop = require("shop")
+    print("reload succ")
+end
+```
+
+![热更新前后shop的引用](../.gitbook/assets/2023-12-03011511.png)
+
+> lua 的 require 方法会加载一个 lua 模块，并缓存到`package.loaded[modelname]`中,
+> 如果对同一个模块重复调用 require 方法，那么程序将会从缓存中取值，而不再加载 lua 文件，因此热更新前
+> 需要先清空缓存，再调用 require 方法。
+
 ### 尽量做正确的热更新
+
+相较于切换进程和动态库两种方案，Lua 无须脱胎换骨设计架构就能实现热更新功能，由于脚本语言的方案更加灵活，因此更适合手游的开发节奏。然而，即使是 Lua，也无法做到完美，其对程序的写法也有诸多要求。
+
+运用一点设计模式，表 cmdHandle 可用于保存各种指令的处理方法，以简化条件判断语句，要想添加指令，只需要配置 cmdHandle 表即可，不用写类似`if cmd=="b" then`的语句。
+
+```lua
+local cmdHandle = {
+    b = shop.onBuyMsg,
+    --s = shop.onSellMsg, --出售
+    --w = work.onWorkMsg,
+
+    r = reload,
+}
+
+while true do
+    cmd = io.read()
+    cmdHandle[cmd](players[101], 1001)
+end
+```
+
+这样的话在 reload 时就应该特殊处理了，因为需要重新更新 cmdHandle 内的方法。
+
+```lua
+function reload()
+{
+    package.loaded["shop"] = nil
+    shop = require("shop")
+    cmdHandle.b = shop.onBuyMsg
+    --...
+    print("reload succ")
+}
+```
 
 ### 没有万能药的根源
 
+就算使用脚本语言，热更新也会对程序的写法增加一些限制。那么有没有一种办法，能够针对任何写法，实现热更新呢？
+
+通过一些小技巧来实现全局替换，在热更新时遍历虚拟机中的所有全局变量、局部变量、上值、元表等，替换掉旧方法。这些小技巧往往比较奇妙，请回顾 Skynet 的注入补丁，示例中我们使用 `debug.setupvalue` 替换了本地变量。
+
+例如我们需要对 shop 的出售内容做到限购。
+
+```lua
+--shop.lua
+local M = {}
+local goods = {
+    [1001] = {name = "金创药", coin = 1},
+    [1002] = {name = "葫芦", coin = 2}
+}
+
+local remain = {
+    [1001] = 100, --今日剩余的金创药数量
+    [1002] = 200, --今日剩余的葫芦数量
+}
+
+M.onBuyMsg = function(player, id)
+    local item = goods[id]
+    --省略对金币和限购数量的判定
+    player.coin = player.coin - item.coin
+    remain[id] = remain[id] - 1
+    --...
+    local tip=string.format("player buy item %d, coin:%d remain:%d",
+                                    id, player.coin, remain[id])
+    print(tip)
+
+end
+
+return M
+```
+
+一旦 shop.lua 重新加载 goods 和 remain 会遭到重置。remain 又会从剩余 100 个开始。
+
+没有“万能药”的根源在于代码没有提供足够的信息量，让程序去判断哪些值需要热更新，哪些值要保留。
+
+### lua 热更新工程实践
+
+要实现正确的热更新，就要增加些许限制，一般有三种方法。
+
+- 规范写法以确保模块内无状态，依靠参数传递解决
+
+如果开发者清楚哪些值需要热更新，哪些值不需要，把不需要更新的变量设为全局变量（注意代码中没有 local）。用了一个小技巧“remain=remain or 默认值”，模块第一次加载时，全局变量 remain 的值为空，为它赋予默认值；热更新时，让 remain 继承旧值。
+
+```lua
+--shop.lua
+remain = remain or {
+    [1001] = 100,
+    [1002] = 200
+}
+```
+
+热更新前后，onBugMsg 方法引用了不同的 goods 表，但引用了同一个 remain 表。
+
+使用全局变量之前必须做好命名的规划，在商城模块例子中如果另一个模块也用到了全局变量 remain，并将其设置为奇怪的值，则将产生不可预料的后果。
+
+可以为各模块分配不同的全局空间，以避免发生全局变量冲突。将商城模块的全局变量放到`runtime.shop`中，将成就模块的全局变量放到`runtime.achieve`中，以避免冲突。
+
+可以在每个模块中必须包含一个 reload 方法，服务端在热更新该模块时会调用它，开发者需要在 reload 方法中还原需要保留的值。
+
+```lua
+local M = {}
+--...
+M.reload = function(old_module)
+    remain = old_module.get("remain")
+end
+return M
+```
+
 ### 选择何使的热更新范围
+
+热更新能力和灵活性就像鱼与熊掌的关系一样，难以兼得。要实现更强的热更新能力，就需要遵循更严格的规范，越严格的规范就意味着越多的培训成本。对于大部分项目，通过少量限制，获取有限的热更新能力是面对实际需求权衡之后的选择。
+
+服务端热更新能力的五个层次。一般而言，我们认为实现前 3 个层次的热更新能力是性价比较高的一种做法，这样做既能满足大部分热更新需求，又不至于增加太多写法限制。
+
+![热更新能力的五个层次](../.gitbook/assets/2023-12-03013820.png)
+
+对于架构节点设计，可以整一个 hotfixmgr,可以指定同类型服务的更新，如`reload agent init.lua`来控制各个节点。
