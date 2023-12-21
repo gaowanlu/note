@@ -129,3 +129,62 @@ int main(int argc, char **argv)
     return 0;
 }
 ```
+
+### 判断两个时间戳之间相差几天
+
+其中可以解决夏令时调整问题
+
+```cpp
+#include <iostream>
+#include <ctime>
+
+// 自定义结构体表示本地时间
+struct LocalTime {
+    int year;
+    int month;
+    int day;
+    int hour;
+    int minute;
+    int second;
+};
+
+// 获取每天凌晨5点的时间戳,以什么时间点为分界，可以进行调整
+std::time_t getMidnightTimestamp(const LocalTime& localTime) {
+    struct std::tm tmStruct = {};
+    tmStruct.tm_year = localTime.year - 1900;
+    tmStruct.tm_mon = localTime.month - 1;
+    tmStruct.tm_mday = localTime.day;
+    tmStruct.tm_hour = 5;
+    tmStruct.tm_min = 0;
+    tmStruct.tm_sec = 0;
+
+    // mktime将tm转换为time_t
+    return std::mktime(&tmStruct);
+}
+
+// 计算两个时间戳相差的天数
+int calculateDaysDifference(std::time_t timestamp1, std::time_t timestamp2) {
+    const int secondsInDay = 24 * 60 * 60;
+
+    // 调整到每天凌晨5点的时间戳
+    std::time_t midnight1 = getMidnightTimestamp(*std::localtime(&timestamp1));
+    std::time_t midnight2 = getMidnightTimestamp(*std::localtime(&timestamp2));
+
+    // 计算相差的天数
+    return static_cast<int>((midnight2 - midnight1) / secondsInDay);
+}
+
+int main() {
+    // 假设有两个时间戳（以秒为单位）
+    std::time_t timestamp1 = /* 第一个时间戳 */;
+    std::time_t timestamp2 = /* 第二个时间戳 */;
+
+    // 计算相差的天数
+    int daysDifference = calculateDaysDifference(timestamp1, timestamp2);
+
+    // 输出结果
+    std::cout << "Days difference: " << daysDifference << " days" << std::endl;
+
+    return 0;
+}
+```
