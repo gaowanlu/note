@@ -188,3 +188,12 @@ int main() {
     return 0;
 }
 ```
+
+### 线程不安全问题
+
+有些函数是线程不安全的，需要格外注意，像下面的，直接返回指针，背后肯定有全局变量的，当使用tm类型指针时，可能背后内存里面存储的值，已经不是你想要的了。
+
+```cpp
+std::tm *gmt_time = std::gmtime(&time_now);
+std::tm *newyork_localTime = std::localtime(&time_now);
+```
