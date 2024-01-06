@@ -238,6 +238,19 @@ int main(int argc, char **argv)
 }
 ```
 
+### 类的特殊成员函数
+
+类的特殊成员函数在没有自定义的情况下，编译器会为类添加默认的构造函数
+
+```cpp
+1.默认构造函数
+2.析构函数
+3.复制构造函数
+4.复制赋值运算符函数
+5.移动构造函数(C++11新增)
+6.移动赋值运算符函数(C++11新增)
+```
+
 ### 构造函数
 
 构造函数在创建类的对象实例时被执行\
@@ -1600,12 +1613,25 @@ vector<int> vec(10);//10个int
 
 什么是聚合类？聚合类使得用户可以直接访问其成员，并且具有特殊的初始化语法形式
 
-聚合条件
+C++11 的聚合类型定义
 
-- 所有成员都是 public
-- 没有定义任何构造函数
-- 没有类内初始值
-- 没有基类，没有 virtual 函数
+```cpp
+所有成员都是 public
+没有定义任何构造函数
+没有类内初始值
+没有基类，没有 virtual 函数
+```
+
+聚合类型的条件(按照 C++17 标准)
+
+- 没有用户提供的构造函数
+- 没有私有和受保护的非静态数据成员
+- 没有虚函数
+
+如果类存在继承关系，则应额外满足
+
+- 必须是公开的基类，不能是私有或受保护的基类
+- 必须是非虚继承
 
 ```cpp
 //example40.cpp
@@ -1632,6 +1658,178 @@ int main(int argc, char **argv)
 ```
 
 列表参数值的顺序必须和类内属性定义顺序严格相同
+
+### is_aggregate 判断聚合类型
+
+C++17 标准库`<type_traits>`提供了一个聚合类型的甄别方法`is_aggregate`,可以判断目标类型为聚合类型
+
+```cpp
+#include <iostream>
+#include <type_traits>
+using namespace std;
+
+class MyString : public std::string
+{
+};
+
+// C++17
+int main(int argc, char **argv)
+{
+    // 0
+    std::cout << std::is_aggregate_v<std::string> << std::endl;
+    // 1
+    std::cout << std::is_aggregate_v<MyString> << std::endl;
+    return 0;
+}
+```
+
+std::string 存在用户提供的构造函数是非聚合类型，MyString 满足聚合类型定义
+
+### 聚合类型的初始化
+
+由于聚合类型定义的扩展，聚合对象的初始化方法也发生了变化，过去想要初始化派生类的基类，需要在派生类中提供构造函数。
+
+```cpp
+#include <iostream>
+#include <string>
+using namespace std;
+
+class MyStringWithIndex : public std::string
+{
+public:
+    MyStringWithIndex(const std::string &str, int idx) : std::string(str), index_(idx)
+    {
+    }
+    int index_ = 0;
+};
+
+std::ostream &operator<<(std::ostream &o, const MyStringWithIndex &s)
+{
+    o << s.index_ << ":" << s.c_str();
+    return o;
+}
+
+// c++11
+int main(int argc, char **argv)
+{
+    MyStringWithIndex s("hello world", 11);
+    // 11:hello world
+    std::cout << s << std::endl;
+    return 0;
+}
+```
+
+C++17 如果将派生类修改为符合聚合类定义则可以很方便的像 C 初始化结构体一样
+
+```cpp
+#include <iostream>
+#include <string>
+using namespace std;
+
+class MyStringWithIndex : public std::string
+{
+public:
+    int index_ = 0;
+};
+
+std::ostream &operator<<(std::ostream &o, const MyStringWithIndex &s)
+{
+    o << s.index_ << ":" << s.c_str();
+    return o;
+}
+
+// c++17
+int main(int argc, char **argv)
+{
+    // {}大括号初始化不支持缩窄转换，也就是如double->int 肯定会报错
+    MyStringWithIndex s{{"hell world"}, 11};
+    // 11:hello world
+    std::cout << s << std::endl;
+    return 0;
+}
+```
+
+### 聚合类型多继承初始化
+
+在派生类继承了多个基类时，其初始化顺序是有明确定义的,按着继承声明顺序然后才是自己本身
+
+```cpp
+#include <iostream>
+#include <string>
+using namespace std;
+
+class Num
+{
+public:
+    int num_;
+};
+
+class MyStringWithIndex : public std::string, public Num
+{
+public:
+    int index_ = 0;
+};
+
+std::ostream &operator<<(std::ostream &o, const MyStringWithIndex &s)
+{
+    o << s.index_ << " " << s.c_str() << " " << s.num_;
+    return o;
+}
+
+// c++17
+int main(int argc, char **argv)
+{
+    MyStringWithIndex s{{"hell world"}, 11, 1};
+    // 1 hell world 11
+    std::cout << s << std::endl;
+    return 0;
+}
+```
+
+### 扩展聚合类型的兼容问题
+
+代码使用 C++11 或者 C++14 标准可以编译成功，而使用 C++17 标准编译则会出现错误，主要原因就是聚合类型的定义发生了变化。在 C++17 之前，类 DerivedData 不是一个聚合类型，所以 DerivedData d{}会调用编译器提供的默认构造函数。调用 DerivedData 默认构造函数的同时还会调用 BaseData 的构造函数。虽然这里 BaseData 声明的是受保护的构造函数，但是这并不妨碍派生类调用它。从 C++17 开始情况发生了变化，类 DerivedData 变成了一个聚合类型，以至于 DerivedData d{}也跟着变成聚合类型的初始化，因为基类 BaseData 中的构造函数是受保护的关系，它不允许在聚合类型初始化中被调用，所以编译器无奈之下给出了一个编译错误。
+
+```cpp
+#include <iostream>
+using namespace std;
+
+class BaseData
+{
+    int data_;
+
+public:
+    int Get() { return data_; }
+
+protected:
+    BaseData() : data_(11) {}
+};
+
+class DerivedData : public BaseData
+{
+public:
+    // DerivedData(){};// 可解决C++17编译不过
+};
+
+// C++11 C++14能编译成功
+int main(int argc, char **argv)
+{
+    DerivedData d{};
+    std::cout << d.Get() << std::endl;
+    return 0;
+}
+
+/*
+PS C:\Users\gaowanlu\Desktop\MyProject\note\testcode> g++ main.cpp -o main.exe --std=c++17
+main.cpp: In function 'int main(int, char**)':
+main.cpp:22:19: error: 'BaseData::BaseData()' is protected within this context
+   22 |     DerivedData d{};
+      |                   ^
+main.cpp:12:5: note: declared protected here
+   12 |     BaseData() : data_(11) {}
+      |     ^~~~~~~~
+*/
+```
 
 ### 字面量常量类
 
