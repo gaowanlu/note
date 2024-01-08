@@ -461,7 +461,7 @@ int main(int argc, char **argv)
 }
 ```
 
-### 禁止类成为基类
+### final 禁止类成为基类
 
 有时需要使得一个类不被别的类继承，C++11 中提供特性 final 关键词
 
@@ -678,7 +678,152 @@ int main(int argc, char **argv)
 }
 ```
 
-### final 和 override 说明符
+### 重写、重载和隐藏
+
+重写(override)、重载(overload)和隐藏(overwrite)是 C++中 3 个不同的概念。
+
+1. 重写(override)的意思更接近覆盖,在 C++中是指派生类覆盖了基类的虚函数，这里的覆盖必须满足有相同的函数签名和返回类型，也就是说有相同的函数名、形参列表以及返回类型。
+2. 重载(overload),通常指在同一个类中有两个或两个以上函数，函数名相同，但函数签名不同，也就是有不同的形参。
+3. 隐藏(overwrite),是指基类成员函数，无论是否为虚函数，当派生类出现同名函数时，如果派生类函数签名不同于基类函数，则基类函数会被隐藏，如果派生类函数签名与基类函数相同，则需要确定基类函数是否为虚函数，如果是虚函数，则这里的概念为重写，否则基类函数也会被隐藏，另外如果还想使用基类函数，可以使用 using 关键词将其引入派生类。
+
+overwrite 样例
+
+```cpp
+#include <iostream>
+using namespace std;
+
+class Person
+{
+public:
+    void func()
+    {
+        cout << "Person::func" << endl;
+    }
+};
+
+class Mom : public Person
+{
+public:
+    void func(int n)
+    {
+        cout << "Mom:func" << endl;
+    }
+};
+
+int main(int argc, char **argv)
+{
+    Mom mom;
+    mom.func(); // 无法调用基类func,基类的func被隐藏
+    return 0;
+}
+```
+
+override 样例
+
+```cpp
+#include <iostream>
+using namespace std;
+
+class Person
+{
+public:
+    virtual void func()
+    {
+        cout << "Person::func" << endl;
+    }
+};
+
+class Mom : public Person
+{
+public:
+    void func()
+    {
+        cout << "Mom:func" << endl;
+    }
+};
+
+int main(int argc, char **argv)
+{
+    Mom mom;
+    mom.func(); // 派生类func与基类func函数签名相同,成为了override
+    return 0;
+}
+```
+
+解决 overwrite 问题
+
+```cpp
+#include <iostream>
+using namespace std;
+
+class Person
+{
+public:
+    void func()
+    {
+        cout << "Person::func" << endl;
+    }
+};
+
+class Mom : public Person
+{
+public:
+    using Person::func;
+    void func(int n)
+    {
+        cout << "Mom:func" << endl;
+    }
+};
+
+int main(int argc, char **argv)
+{
+    Mom mom;
+    mom.func(); // Person::func
+    return 0;
+}
+```
+
+### 重写引发的问题
+
+在写代码的过程中，重写虚函数很容易出问题，稍微不注意就会无法重写基类虚函数，更糟糕的是即时写错了，编译器也不会报错。
+
+下面的代码是能编译成功的,但是 4 个函数都没有 override
+
+```cpp
+#include <iostream>
+using namespace std;
+
+class Base
+{
+public:
+    virtual void some_func() {}
+    virtual void foo(int x) {}
+    virtual void bar() const {}
+    void baz() {}
+};
+
+class Derived : public Base
+{
+public:
+    // 名字写错
+    virtual void sone_func() {}
+    // 成了隐藏
+    virtual void foo(int &x) {}
+    // 缺少常量属性
+    virtual void bar() {}
+    // 基类baz不是虚函数所有此处baz函数也不是override,隐藏
+    virtual void baz() {}
+};
+
+int main(int argc, char **argv)
+{
+    return 0;
+}
+```
+
+所以在 C++11 标准中提供了一个非常使用的 override 说明符，必须放在虚函数的尾部，它明确告诉编译器这个虚函数需要覆盖基类的虚函数，一旦不符合虚函数重写规则，则会编译报错。
+
+### override 说明符
 
 当派生类中定义一个名称与基类相同但是参数列表不同的方法，这是完全合法的，但是写代码就会出现些问题，目的就是覆盖掉基类的方法，但是不知道覆盖是否正确，这也正是 override 的作用
 
@@ -724,6 +869,8 @@ int main(int argc, char **argv)
 }
 ```
 
+### final 说明符
+
 final 关键词作用域类则是禁止一个类作为基类，作用于类方法则是禁止派生类对其进行重写,重要的是 final 只能作用于 virtual 成员函数
 
 ```cpp
@@ -761,6 +908,62 @@ int main(int argc, char **argv)
     Mom mom;
     mom.f1(); // f1
     mom.f2(); // Mom f2
+    return 0;
+}
+```
+
+### override 和 final 同时出现
+
+```cpp
+#include <iostream>
+using namespace std;
+
+class Base
+{
+public:
+    virtual void log(const char *) const {}
+    virtual void foo(int x) {}
+};
+
+class BaseWithFileLog : public Base
+{
+public:
+    virtual void log(const char *) const override final
+    {
+    }
+};
+
+class Derived : public BaseWithFileLog
+{
+public:
+    // 无法重写“final”函数 "BaseWithFileLog::log" (已声明 所在行数:14)
+    virtual void log(const char *) const override {}
+    void foo(int x) {}
+};
+
+int main(int argc, char **argv)
+{
+    return 0;
+}
+```
+
+### override 和 final 说明符的特别之处
+
+为了和过去 C++代码保持兼容,增加保留的关键字要十分谨慎，因为一旦增加了某个关键词，过去代码可能面临大量修改，在 C++11 标准中，override 和 final 并没有被作为保留的关键字，其中 override 只有在虚函数末尾才有意义，而 final 只有在虚函数尾部以及类声明的时候才有意义，以下的代码可以被编译
+
+```cpp
+#include <iostream>
+using namespace std;
+
+class Base
+{
+public:
+    void override() {}
+    void final() {}
+};
+
+int main(int argc, char **argv)
+{
     return 0;
 }
 ```
@@ -900,7 +1103,7 @@ public:
     }
 };
 
-// Woman含有纯虚函数 为抽象类
+//  Woman含有纯虚函数 为抽象类
 class Woman : public Person
 {
 public:
@@ -908,7 +1111,7 @@ public:
     void printCode() = 0; //纯虚函数 Woman对象不能被创建
 };
 
-//纯虚函数也可以被定义
+// 纯虚函数也可以被定义
 void Woman::printCode()
 {
     cout << this->Person::code << endl;
