@@ -13,3 +13,7 @@ convert_to_html() {
 for md_file in $(find . -type f -name "*.md"); do
   convert_to_html "$md_file"
 done
+
+sed 's/.md/.html/g' SUMMARY.html > SUMMARY_RESULT.html
+rm SUMMARY.html
+mv SUMMARY_RESULT.html SUMMARY.html
