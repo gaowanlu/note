@@ -352,8 +352,8 @@ int main(int argc, char **argv)
 
 关于直接初始化与拷贝初始化，在 C++11 中，直接初始化和拷贝初始化是两种不同的初始化对象的方式。
 
-* 直接初始化是通过使用圆括号或花括号来初始化对象，例如：
-* 拷贝初始化是通过使用等号来初始化对象
+- 直接初始化是通过使用圆括号或花括号来初始化对象，例如：
+- 拷贝初始化是通过使用等号来初始化对象
 
 直接初始化和拷贝初始化的区别在于对象的构造方式。直接初始化直接调用对象的构造函数进行初始化，而拷贝初始化则是先创建一个临时对象，然后再通过拷贝构造函数将临时对象的值复制给目标对象。
 
@@ -504,10 +504,10 @@ int _a=12,your_num=8,_your_num2=12;
 
 ### C++变量命名规范
 
-* 标识符要能体现其实际含义
-* 变量名一般用小写，如 index，不要使用 Index 或 INDEX（常量除外）
-* 用户自定义的类名一般以大写字母开头，如 Sales\_item
-* 如果标识符有多个单词组成，则单词间应有明显区分,如 student\_loan 或 studentLoan，不要使用 studentloan
+- 标识符要能体现其实际含义
+- 变量名一般用小写，如 index，不要使用 Index 或 INDEX（常量除外）
+- 用户自定义的类名一般以大写字母开头，如 Sales_item
+- 如果标识符有多个单词组成，则单词间应有明显区分,如 student_loan 或 studentLoan，不要使用 studentloan
 
 C++保留关键词
 
@@ -607,10 +607,10 @@ xor_eq ^=
 
 ### 名字的作用域
 
-* 全局作用域
-* 函数作用域
-* 块作用域
-* 嵌套作用域
+- 全局作用域
+- 函数作用域
+- 块作用域
+- 嵌套作用域
 
 ```cpp
 // example12.cpp
@@ -789,22 +789,22 @@ NULL是C语言的内容，使用NULL尽可能引入头文件
 */
 ```
 
-### C++的NULL与nullptr
+### C++的 NULL 与 nullptr
 
-在C中，NULL通常被定义为下面内容
+在 C 中，NULL 通常被定义为下面内容
 
 ```cpp
 #define NULL ((void *)0)
 ```
 
-C中的NULL实际为一个空指针，下面的代码编译是没有问题的，会把空指针赋给int和char指针的时候，发生了隐式类型转换，把void指针转换成了相应类型的指针。
+C 中的 NULL 实际为一个空指针，下面的代码编译是没有问题的，会把空指针赋给 int 和 char 指针的时候，发生了隐式类型转换，把 void 指针转换成了相应类型的指针。
 
 ```cpp
 int *pi = NULL;
 char *pc = NULL;
 ```
 
-上面的代码在C++中编译是会出错的，C++是强类型语言，void\*类型不能隐式转换成其他类型的指针类型。
+上面的代码在 C++中编译是会出错的，C++是强类型语言，void\*类型不能隐式转换成其他类型的指针类型。
 
 ```cpp
 #ifdef _cplusplus
@@ -814,7 +814,7 @@ char *pc = NULL;
 #endif
 ```
 
-用NULL代替0表示空指针在函数重载时会出现问题
+用 NULL 代替 0 表示空指针在函数重载时会出现问题
 
 ```cpp
 #include <iostream>
@@ -840,7 +840,7 @@ int main()
 
 ```
 
-上面代码C++编译会报错
+上面代码 C++编译会报错
 
 ```bash
 [dream@localhost 10:16:34 tmp]$ g++ main.cpp -o main.exe --std=c++11
@@ -856,7 +856,7 @@ main.cpp:10:6: 附注：void func(int)
  void func(int i)
 ```
 
-现代C++尽量用nullptr来代表空指针，C++中的NULL只是一个数字0的宏定义
+现代 C++尽量用 nullptr 来代表空指针，C++中的 NULL 只是一个数字 0 的宏定义
 
 ### 赋值和指针
 
@@ -1748,9 +1748,103 @@ int main(int argc, char **argv)
 }
 ```
 
-### static\_assert 静态断言
+### static_assert 静态断言
 
-静态断言什么时候有需求呢，例如想要在模板实例化的时候对模板参数进行约束。 static\_assert 声明是 C++11 标准引入的，用于程序编译阶段评估常量表达式对返回 false 的表达式断言。
+在 C++11 标准之前， 没有一个标准方法来达到这个目的，我们需要利用其他特性来模拟。 下面给出几个可行的方案：
+
+```cpp
+#include <iostream>
+using namespace std;
+
+#define STATIC_ASSERT_CONCAT_IMP(x, y) x##y
+#define STATIC_ASSERT_CONCAT(x, y) STATIC_ASSERT_CONCAT_IMP(x, y)
+
+// 方案1
+#define STATIC_ASSERT(expr)                   \
+     do                                       \
+     {                                        \
+          char STATIC_ASSERT_CONCAT(          \
+              static_assert_var, __COUNTER__) \
+              [(expr) != 0 ? 1 : -1];         \
+     } while (0);
+
+int main(int argc, char **argv)
+{
+     STATIC_ASSERT(1 == 1);
+     STATIC_ASSERT(1 * 2 == 3);
+     return 0;
+}
+/*
+main.cpp: 在函数‘int main(int, char**)’中:
+main.cpp:13:36: 错误：数组‘static_assert_var1’的大小为负
+               [(expr) != 0 ? 1 : -1];         \
+                                    ^
+main.cpp:19:6: 附注：in expansion of macro ‘STATIC_ASSERT’
+      STATIC_ASSERT(1 * 2 == 3);
+*/
+```
+
+其中`STATIC_ASSERT_CONCAT`实现将两个宏拼接, `__COUNTER__` 是 C++预处理器的内置宏，用于生成一个唯一的整数值。每次使用 `__COUNTER__` 时，它会自增一次，确保在同一范围内的不同地方使用时生成不同的值。这样也以来每次使用`STATIC_ASSERT`背后原理其实是
+
+```cpp
+do
+{
+     char static_asser_var_n [(expr) != 0 ? 1 : -1];
+}while(0);
+```
+
+保证了代码块没作用域封闭，而且当 expr 为假时定义了长度为`-1`的数组，编译时就会报错。`do while`可以使得`STATIC_ASSERT`可以不以`;`结尾。
+
+方案 2 使用模板特化
+
+```cpp
+#include <iostream>
+using namespace std;
+
+// 模板特化声明
+template <bool>
+struct static_assert_st;
+
+// 模板偏特化
+template <>
+struct static_assert_st<true>
+{
+};
+
+#define STATIC_ASSERT(expr) static_assert_st<(expr) != 0>();
+
+int main(int argc, char **argv)
+{
+     STATIC_ASSERT(1 == 1)
+     return 0;
+}
+
+/*
+main.cpp:13:59: 错误：对不完全的类型‘struct static_assert_st<false>’的非法使用
+ #define STATIC_ASSERT(expr) static_assert_st<(expr) != 0>()
+                                                           ^
+main.cpp:17:6: 附注：in expansion of macro ‘STATIC_ASSERT’
+      STATIC_ASSERT(1 == 2);
+      ^
+main.cpp:6:8: 错误：‘struct static_assert_st<false>’的声明
+ struct static_assert_st;
+*/
+```
+
+第 3 种可以将上面两种结合起来
+
+```cpp
+#define STATIC_ASSERT(expr)         \
+    static_assert_st<(expr) != 0>   \
+    STATIC_ASSERT_CONCAT(           \
+    static_assert_var, __COUNTER__);
+```
+
+方案 2 会构造临时对象，这让它无法出现在类和结构体的定义当中。而方案 3 则声明了一个变量，可以出现在结构体和类的定义中，但是它最大的问题是会改变结构体和类的内存布局。
+
+这些方案都是不是完美方案。
+
+静态断言什么时候有需求呢，例如想要在模板实例化的时候对模板参数进行约束。 static_assert 声明是 C++11 标准引入的，用于程序编译阶段评估常量表达式对返回 false 的表达式断言。
 
 1. 处理在编译期间执行，不会有空间或时间上的运行时成本
 2. 具有简单的语法
@@ -1778,46 +1872,100 @@ class C
 template <class T>
 class E
 {
-    static_assert(std::is_base_of<A, T>::value, "T is not base of A");
+     static_assert(std::is_base_of<A, T>::value, "T is not base of A");
 };
 
 int main(int argc, char **argv)
 {
-    static_assert(argc > 2, "");
-    /** 错误：argc>2非常量表达式
-     main.cpp:25:24: error: non-constant condition for static assertion
-   25 |     static_assert(argc > 2, "");
-      |                   ~~~~~^~~
-main.cpp:25:24: error: 'argc' is not a constant expression
+     // static_assert(argc > 0, "argc>0");
+     // 使用错误, argc>0 不是常量表达式
+
+     // E<C> x; // A不是C的基类，触发静态断言
+     /*
+     main.cpp:20:6: 错误：static assertion failed: T is not base of A
+     static_assert(std::is_base_of<A, T>::value, "T is not base of A")
      */
-    static_assert(sizeof(int) >= 4, "");
-    E<B> a;
-    E<C> a1;
-    /*
-    main.cpp:20:42: error: static assertion failed: T is not base of A
-       20 |     static_assert(std::is_base_of<A, T>::value, "T is not base of A");
-    */
-    return 0;
+
+     // 断言通过
+     static_assert(sizeof(int) >= 4, "sizeof(int)>=4");
+
+     // 断言通过
+     E<B> y;
+
+     return 0;
 }
 ```
 
-### C++17 单参数 static\_assert
+### C++17 单参数 static_assert
 
-可以忽略 static\_assert 的第二个错误信息参数
+可以忽略 static_assert 的第二个错误信息参数
+
+```cpp
+#include <type_traits>
+
+class A {
+};
+
+class B : public A {
+};
+
+class C {
+};
+
+template<class T>
+class E {
+  static_assert(std::is_base_of<A, T>::value);
+};
+
+int main(int argc, char *argv[])
+{
+  E<C> x;                         // 使用正确，但由于A不是C的基类，会触发失败断言
+  static_assert(sizeof(int) < 4); // 使用正确，但表达式返回false，会触发失败断言
+}
+```
+
+不过在 GCC 上，即使指定使用 C++11 标准，GCC 依然支持单参数的 static_assert。 MSVC 则不同，要使用单参数的 static_assert 需要指定 C++17 标准。
+
+如果没有 C++17 环境也可以使用宏来解决单参数问题
 
 ```cpp
 #include <iostream>
+#include <type_traits>
 using namespace std;
+
+#define LAZY_STATIC_ASSERT(B) static_assert(B, #B)
+
+class A
+{
+};
+
+class C
+{
+};
+
+template <class T>
+class E
+{
+     LAZY_STATIC_ASSERT((std::is_base_of<A, T>::value));
+};
 
 int main(int argc, char **argv)
 {
-    static_assert(1 > 4);
-    /*
-    main.cpp:6:21: error: static assertion failed
-    6 |     static_assert(1 > 4);
-    */
-    return 0;
+     LAZY_STATIC_ASSERT(sizeof(int) >= 4);
+     // static_assert(sizeof(int) >= 4, "sizeof(int) >= 4")
+
+     E<C> y;
+
+     return 0;
 }
+
+/*
+main.cpp:5:31: 错误：static assertion failed: (std::is_base_of<A, T>::value)
+ #define LAZY_STATIC_ASSERT(B) static_assert(B, #B)
+                               ^
+main.cpp:22:6: 附注：in expansion of macro ‘LAZY_STATIC_ASSERT’
+      LAZY_STATIC_ASSERT((std::is_base_of<A, T>::value));
+*/
 ```
 
 ### 什么时候使用 auto
