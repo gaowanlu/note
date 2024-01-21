@@ -237,7 +237,13 @@ int main(int argc, char **argv)
 
 ### C++17 支持初始化语句的 if
 
-在 if 中使用
+语法格式如下
+
+```cpp
+if (init; condition) {}
+```
+
+其中 init 是初始化语句，condition 是条件语句，它们之间使用分号分隔。 允许初始化语句的 if 结构让以下代码成为可能：
 
 ```cpp
 #include <iostream>
@@ -266,6 +272,25 @@ int main(int argc, char **argv)
 // b=11>10
 ```
 
+if 初始化语句中声明的变量拥有和整个 if 结构一样长的声明周期，所以前面的代码可以等价于：
+
+```cpp
+#include <iostream>
+bool foo()
+{
+  return true;
+}
+int main()
+{
+  {
+       bool b = foo();
+       if (b) {
+            std::cout << std::boolalpha << "good! foo()=" << b << std::endl;
+       }
+  }
+}
+```
+
 也可以在 if else 中使用
 
 ```cpp
@@ -290,9 +315,86 @@ int main(int argc, char **argv)
     {
         cout << b << " " << b1 << endl;
     }
+    else if (bool b2 = func(n); !b2)
+    {
+        cout << b << " " << b1 << " " << b2 << endl;
+    }
     return 0;
 }
 // 0 0
+```
+
+上面代码等价于
+
+```cpp
+#include <iostream>
+using namespace std;
+
+bool func(int n)
+{
+    return n > 10;
+}
+
+int main(int argc, char **argv)
+{
+    int n = 10;
+    {
+        bool b = func(n);
+        if (b)
+        {
+            std::operator<<(std::operator<<(std::cout, "b=").operator<<(n), ">10").operator<<(std::endl);
+        }
+        else
+        {
+            {
+                bool b1 = func(n);
+                if (!b1)
+                {
+                    std::operator<<(std::cout.operator<<(b), " ").operator<<(b1).operator<<(std::endl);
+                }
+                else
+                {
+                    {
+                        bool b2 = func(n);
+                        if (!b2)
+                        {
+                            std::operator<<(std::operator<<(std::cout.operator<<(b), " ").operator<<(b1), " ").operator<<(b2).operator<<(std::endl);
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    return 0;
+}
+```
+
+因为 if 初始化语句声明的变量会贯穿整个 if 结构，所以我们可以利用该特性对整个 if 结构加锁，例如：
+
+```cpp
+#include <mutex>
+std::mutex mx;
+bool shared_flag = true;
+int main()
+{
+    if (std::lock_guard<std::mutex> lock(mx); shared_flag)
+    {
+        shared_flag = false;
+    }
+}
+
+// 其他样例
+
+#include <cstdio>
+#include <string>
+int main()
+{
+  std::string str;
+  if (char buf[10]{0}; std::fgets(buf, 10, stdin)) {
+       str += buf;
+  }
+}
 ```
 
 ### switch 语句
@@ -495,6 +597,38 @@ int main(int argc, char **argv)
     return 0;
 }
 // func(10)=false
+```
+
+例如 switch 配和条件变量使用
+
+```cpp
+#include <iostream>
+#include <condition_variable>
+#include <chrono>
+#include <mutex>
+using namespace std::chrono_literals;
+
+std::condition_variable cv;
+std::mutex cv_m;
+
+int main()
+{
+    switch (std::unique_lock<std::mutex> lk(cv_m); cv.wait_for(lk, 1000ms))
+    {
+    case std::cv_status::timeout:
+    {
+        std::cout << "timeout" << std::endl;
+    }
+        break;
+    case std::cv_status::no_timeout:
+    {
+        std::cout << "no_timeout" << std::endl;
+    }
+        break;
+    }
+}
+
+// timeout
 ```
 
 ### 迭代语句
