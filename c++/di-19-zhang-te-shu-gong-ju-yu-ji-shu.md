@@ -2541,7 +2541,45 @@ int main(int argc, char **argv)
 
 ### 结构化绑定
 
-C++17 中引入了结构化绑定（Structured Bindings）的语法，允许我们将一个结构体或者 tuple 类型的对象解构为多个变量。结构化绑定语法的一般形式如下：
+C++17 C++20 中引入了结构化绑定（Structured Bindings）的语法。允许我们将一个结构体或者 tuple 类型的对象解构为多个变量。
+
+Python 函数可以有多个返回值，例如：
+
+```cpp
+def return_multiple_values():
+    return 11, 7
+
+x, y = return_multiple_values()
+```
+
+C++ 也可以使用 tuple
+
+```cpp
+#include <iostream>
+#include <tuple>
+
+// return std::tuple<int,int>
+auto return_multiple_values()
+{
+    return std::make_tuple(11, 7);
+}
+
+int main()
+{
+    int x = 0, y = 0;
+    std::tie(x, y) = return_multiple_values();
+    // 使用函数模板std::tie将x和y通过引用绑定到std::tuple<int&, int&>上
+    std::cout << "x=" << x << " y=" << y << std::endl;
+    return 0;
+}
+/*
+[dream@localhost 17:52:49 cpp]$ g++ main.cpp -o main.exe --std=c++11
+[dream@localhost 17:53:15 cpp]$ ./main.exe
+x=11 y=7
+*/
+```
+
+C++ 结构化绑定语法的一般形式如下：
 
 ```cpp
 auto [var1, var2, ...] = expression;
@@ -2549,65 +2587,707 @@ auto [var1, var2, ...] { expression };
 auto [var1, var2, ...] ( expression );
 ```
 
-样例
+tuple 结构化绑定简单样例 C++17 标准
 
 ```cpp
 #include <iostream>
-#include <map>
-#include <string>
 #include <tuple>
+
+auto return_multiple_values()
+{
+    return std::make_tuple(11, 7);
+}
+
+int main()
+{
+    auto [x, y] = return_multiple_values();
+    std::cout << "x=" << x << " y=" << y << std::endl;
+    return 0;
+}
+
+/*
+Program returned: 0
+Program stdout
+x=11 y=7
+*/
+```
+
+结构化绑定的目标不必是一个函数的返回结果， 实际上等号的右边可以是任意一个合理的表达式，比如：
+
+```cpp
+#include <iostream>
+#include <string>
+
+struct BindTest {
+    int a{42};
+    std::string b{"hello world"};
+};
+
+int main()
+{
+    BindTest bt;
+    auto[x, y] = bt;
+    std::cout << "x=" << x << " y=" << y << std::endl;
+}
+//x=42 y=hello world
+```
+
+可以看到结构化绑定能够直接绑定到结构体上。
+
+`https://godbolt.org/` 使用 Open in Cppinsights 可以看到结构化绑定背后大致原理。
+
+```cpp
+#include <iostream>
+#include <string>
+
+struct BindTest
+{
+  int a{42};
+  std::basic_string<char> b = std::basic_string<char>{"hello world", std::allocator<char>()};
+  // inline BindTest(const BindTest &) noexcept(false) = default;
+  // inline ~BindTest() noexcept = default;
+  // inline constexpr BindTest() noexcept(false) = default;
+};
+
+int main()
+{
+  BindTest bt = BindTest();
+  BindTest __bt12 = BindTest(bt); // 拷贝副本
+  int & x = __bt12.a;
+  std::basic_string<char> & y = __bt12.b;
+  std::operator<<(std::operator<<(std::operator<<(std::cout, "x=").operator<<(x), " y="), y).operator<<(std::endl);
+  return 0;
+}
+```
+
+将其运用到基于范围的 for 循环中会有更好的效果：
+
+```cpp
+#include <iostream>
+#include <string>
+#include <vector>
+
 using namespace std;
 
-struct Point
+struct BindTest
 {
-    int x;
-    string y;
+    int a = 42;
+    std::string b = "hello world";
 };
 
 int main(int argc, char **argv)
 {
-    // 绑定原生数组
-    int arr[3]{1, 2, 3};
+    std::vector<BindTest> bt{{11, "hello"}, {7, "c++"}, {42, "world"}};
+    for (const auto &[x, y] : bt)
     {
-        auto &[x, y, z] = arr;
-        x = 3;
-        y = 1;
-        z = 2;
-        cout << arr[0] << " " << arr[1] << " " << arr[2] << endl;
-        // 3 1 2
-    }
-    // 结构体
-    Point point;
-    point.x = 100;
-    point.y = "cpp17";
-    auto [x, y] = point;           // int x,int y
-    cout << x << " " << y << endl; // 100 cpp17
-    auto &[x_ref, y_ref] = point;
-    y_ref = "point";
-    cout << point.y << endl; // point
-    // tupe
-    tuple<int, double> mTupe{1, 6.66};
-    auto [width, height] = mTupe;
-    cout << width << " " << height << endl; // 1 6.66
-    auto &[width_ref, height_ref] = mTupe;  // 支持const auto&等
-    width_ref = 666;
-    cout << get<0>(mTupe) << endl; // 6666
-    // map
-    map<string, int> mMap = {{"key1", 1}, {"key2", 2}};
-    for (auto &[key, value] : mMap)
-    {                                        // const std::string&key,int&value
-        cout << key << " " << value << endl; // key1 1 key2 2
+        std::cout << "x=" << x << " y=" << y << std::endl;
     }
     return 0;
 }
 ```
 
-结构化绑定限制
+上面代码 Cppinsights
 
 ```cpp
-auto [first,second]=std::pair<int,int>(1,2);//正常
-constexpr auto [first,second]=std::pair<int,int>(1,2);//无法编译
-static auto [first,second]=std::pair<int,int>(1,2);//无法编译
+#include <iostream>
+#include <string>
+#include <vector>
+
+using namespace std;
+
+struct BindTest
+{
+  int a = 42;
+  std::basic_string<char> b = std::basic_string<char>("hello world", std::allocator<char>());
+  // inline BindTest(const BindTest &) noexcept(false) = default;
+  // inline ~BindTest() noexcept = default;
+};
+
+int main(int argc, char ** argv)
+{
+  std::vector<BindTest, std::allocator<BindTest> > bt = std::vector<BindTest, std::allocator<BindTest> >{std::initializer_list<BindTest>{{11, std::basic_string<char>("hello", std::allocator<char>())}, {7, std::basic_string<char>("c++", std::allocator<char>())}, {42, std::basic_string<char>("world", std::allocator<char>())}}, std::allocator<BindTest>()};
+  {
+    std::vector<BindTest, std::allocator<BindTest> > & __range1 = bt;
+    __gnu_cxx::__normal_iterator<BindTest *, std::vector<BindTest, std::allocator<BindTest> > > __begin1 = __range1.begin();
+    __gnu_cxx::__normal_iterator<BindTest *, std::vector<BindTest, std::allocator<BindTest> > > __end1 = __range1.end();
+    for(; __gnu_cxx::operator!=(__begin1, __end1); __begin1.operator++()) {
+      BindTest const & __operator16 = __begin1.operator*();
+      const int & x = __operator16.a;
+      const std::basic_string<char> & y = __operator16.b;
+      std::operator<<(std::operator<<(std::operator<<(std::cout, "x=").operator<<(x), " y="), y).operator<<(std::endl);
+    }
+
+  }
+  return 0;
+}
 ```
 
-甚至还可以自己实现类元组类型，但是感觉没什么卵用，不了解也罢
+### 结构化绑定 ignore
+
+C++11 std::tie 使用 std::ignore 的方案：
+
+```cpp
+#include <iostream>
+#include <tuple>
+#include <string>
+using namespace std;
+
+int main(int argc, char **argv)
+{
+    auto t = std::make_tuple(42, std::string("hello world"));
+    int x = 0, y = 0;
+    std::tie(x, std::ignore) = t;
+    std::tie(y, std::ignore) = t;
+    x = 99;
+    cout << std::get<0>(t) << endl; // 42
+    cout << y << endl; // 42
+    return 0;
+}
+```
+
+虽然这个方案对于`std::tie`是有效的， 但是结构化绑定的别名还有一个限制：无法在同一个作用域中重复使用。这一点和变量声明是一样的，比如：
+
+```cpp
+#include <iostream>
+#include <tuple>
+#include <string>
+using namespace std;
+
+int main(int argc, char **argv)
+{
+    auto t = std::make_tuple(42, std::string("hello world"));
+    auto [x, ignore] = t;
+    // auto [y, ignore] = t; // 编译错误不能重复声明ignore
+    return 0;
+}
+```
+
+相当于利用 auto 声明了一个名为 ignore 的变量
+
+```cpp
+#include <iostream>
+#include <tuple>
+#include <string>
+using namespace std;
+
+int main(int argc, char ** argv)
+{
+  std::tuple<int, std::basic_string<char> > t = std::make_tuple(42, std::basic_string<char>(std::basic_string<char>("hello world", std::allocator<char>())));
+  std::tuple<int, std::basic_string<char> > __t9 = std::tuple<int, std::basic_string<char> >(t);
+  int && x = std::get<0UL>(static_cast<std::tuple<int, std::basic_string<char> > &&>(__t9));
+  std::basic_string<char> && ignore = std::get<1UL>(static_cast<std::tuple<int, std::basic_string<char> > &&>(__t9));
+  return 0;
+}
+```
+
+### 结构化绑定原生数组
+
+绑定到原生数组即将标识符列表中的别名一一绑定到原生数组对应的元素上。 所需条件仅仅是要求别名的数量与数组元素的个数一致，比如：
+
+```cpp
+#include <iostream>
+using namespace std;
+
+int main(int argc, char **argv)
+{
+    int arr[3]{1, 3, 5};
+    auto[x, y, z] = arr;
+    // int *ptr = arr; // 编译错误 退化为指针就不行了
+    // auto[x, y, z] = ptr;
+    std::cout << "[x, y, z]=["
+    << x << ", "
+    << y << ", "
+    << z << "]" << std::endl;
+    return 0;
+}
+// [x, y, z]=[1, 3, 5]
+
+// Cpp insight
+
+#include <iostream>
+using namespace std;
+
+int main(int argc, char ** argv)
+{
+  int arr[3] = {1, 3, 5};
+  int __arr7[3] = {arr[0], arr[1], arr[2]};
+  int & x = __arr7[0];
+  int & y = __arr7[1];
+  int & z = __arr7[2];
+  std::operator<<(std::operator<<(std::operator<<(std::operator<<(std::cout, "[x, y, z]=[").operator<<(x), ", ").operator<<(y), ", ").operator<<(z), "]").operator<<(std::endl);
+  return 0;
+}
+
+// [x, y, z]=[1, 3, 5]
+```
+
+### 结构化绑定结构体和类对象
+
+首先， 类或者结构体中的非静态数据成员个数必须和标识符列表中的别名的个数相同； 其次，这些数据成员必须是公有的（C++20 标准修改了此项规则）； 这些数据成员必须是在同一个类或者基类中； 最后，绑定的类和结构体中不能存在匿名联合体：
+
+```cpp
+#include <iostream>
+using namespace std;
+
+class BindTest{
+    int a = 42; // 私有成员
+public:
+    double b = 11.7;
+};
+
+int main(int argc, char **argv)
+{
+    BindTest bt;
+    auto [x, y] = bt; // 错误
+    return 0;
+}
+
+/*
+<source>:5:9: note: declared private here
+    5 |     int a = 42; // 私有成员
+*/
+```
+
+以上代码会编译错误，因为 BindTest 成员变量 a 是私有的，违反了绑定结构体的限制条件：
+
+```cpp
+#include <iostream>
+using namespace std;
+
+class BindBase1{
+public:
+    int a = 42;
+    double b = 11.7;
+};
+
+class BindTest1 : public BindBase1
+{
+};
+
+class BindBase2{
+};
+
+class BindTest2 : public BindBase2
+{
+public:
+    int a = 42;
+    double b = 11.7;
+};
+
+class BindBase3
+{
+public:
+    int a = 42;
+};
+
+class BindTest3 : public BindBase3
+{
+public:
+    double b = 11.7;
+};
+
+int main(int argc, char **argv)
+{
+    BindTest1 bt1;
+    BindTest2 bt2;
+    BindTest3 bt3;
+    auto [x1, y1] = bt1; // 编译通过
+    auto [x2, y2] = bt2; // 编译通过
+    auto [x3, y3] = bt3; // 编译错误
+    return 0;
+}
+
+/*
+<source>:43:10: error: cannot decompose class type 'BindTest3': both it and its base class 'BindBase3' have non-static data members
+   43 |     auto [x3, y3] = bt3;
+*/
+```
+
+不能有 `non-const static` 成员变量,继承链上只能有一个类中能有非 static 成员
+
+```cpp
+#include <iostream>
+using namespace std;
+
+class BindBase1{
+public:
+    int a = 42;
+    double b = 11.7;
+    static int c = 10; // 有非const static成员变量
+};
+
+class BindTest1 : public BindBase1
+{
+};
+
+
+int main(int argc, char **argv)
+{
+    BindTest1 bt1;
+    auto [x1, y1] = bt1; // 编译通过
+    return 0;
+}
+
+/*
+<source>:8:16: error: ISO C++ forbids in-class initialization of non-const static member 'BindBase1::c'
+    8 |     static int c = 10;
+*/
+```
+
+不能有匿名联合体成员
+
+```cpp
+#include <iostream>
+using namespace std;
+
+class BindBase1{
+public:
+    int a = 42;
+    double b = 11.7;
+    // 匿名联合体
+    union {
+        int intValue;
+        float floatValue;
+        char charValue;
+    };
+};
+
+class BindTest1 : public BindBase1
+{
+};
+
+
+int main(int argc, char **argv)
+{
+    BindTest1 bt1;
+    auto [x1, y1] = bt1; // 编译失败
+    return 0;
+}
+
+//<source>:24:10: error: cannot decompose class type 'BindBase1' because it has an anonymous union member
+```
+
+### 结构化绑定元组和类元组
+
+对于元组或者类元组类型 T
+
+1. 需要满足`std::tuple_size<T>::value`是一个符合语法的表达式，并且该表达式获得的整数值与标识符列表中的别名个数相同。
+2. 类型 T 还需要保证`std::tuple_element<i, T>::type`也是一个符合语法的表达式，其中 i 是小于`std::tuple_size<T>::value`的整数，表达式代表了类型 T 中第 i 个元素的类型。
+3. 类型 T 必须存在合法的成员函数模板`get<i>()`或者函数模板`get<i>(t)`，其中 i 是小于`std::tuple_size<T>::value`的整数，t 是类型 T 的实例， `get<i>()`和`get<i>(t)`返回的是实例 t 中第 i 个元素的值。
+
+上述条件会发现，它们其实比较抽象。这些条件并没有明确规定结构化绑定的类型一定是元组，任何具有上述条件特征的类型都可以成为绑定的目标。 另外，获取这些条件特征的代价也并不高，只需要为目标类型提供 `std::tuple_size`、`std::tuple_element` 以及 get 的特化或者偏特化版本即可。 实际上，标准库中除了元组本身毫无疑问地能够作为绑定目标以外，`std::pair` 和 `std::array` 也能作为结构化绑定的目标，其原因就是它们是满足上述条件的类元组。
+
+```cpp
+// --std=c++11
+#include <iostream>
+#include <tuple>
+#include <type_traits>
+using namespace std;
+
+int main(int argc, char **argv)
+{
+    auto t = std::make_tuple(1, std::string("hello"));
+    cout << std::tuple_size<decltype(t)>::value << endl;
+    // 2
+    cout << std::is_same<std::tuple_element<0,decltype(t)>::type, int>() << endl;
+    // 1
+    cout << std::get<1>(t) << endl;
+    // hello
+    return 0;
+}
+```
+
+下面这段代码是一个基于范围的 for 循环遍历`std::map`的例子， 其中 elem 是`std::pair<const int, std::string>`类型， 要在循环体中输出 key 和 value 的值就需要访问成员变量 first 和 second。 这个例子中使用基于范围的 for 循环已经比使用迭代器遍历`std::map`简单了很多，但是加入结构化绑定后代码将被进一步简化。 我们可以将`std::pair`的成员变量 first 和 second 绑定到别名 以保证代码阅读起来更加清晰：
+
+```cpp
+#include <iostream>
+#include <string>
+#include <map>
+using namespace std;
+
+int main(int argc, char **argv)
+{
+    std::map<int, std::string> id2str{
+        {1, "hello"},
+        {3, "struct"},
+        {5, "class"}
+    };
+
+    for(const auto & elem : id2str)
+    {
+        cout << "id=" << elem.first << ",str=" << elem.second << endl;
+    }
+
+    return 0;
+}
+
+// insight
+
+#include <iostream>
+#include <string>
+#include <map>
+using namespace std;
+
+int main(int argc, char ** argv)
+{
+  std::map<int, std::basic_string<char, std::char_traits<char>, std::allocator<char> >, std::less<int>, std::allocator<std::pair<const int, std::basic_string<char, std::char_traits<char>, std::allocator<char> > > > > id2str = std::map<int, std::basic_string<char, std::char_traits<char>, std::allocator<char> >, std::less<int>, std::allocator<std::pair<const int, std::basic_string<char, std::char_traits<char>, std::allocator<char> > > > >{std::initializer_list<std::pair<const int, std::basic_string<char, std::char_traits<char>, std::allocator<char> > > >{std::pair<const int, std::basic_string<char, std::char_traits<char>, std::allocator<char> > >{1, "hello"}, std::pair<const int, std::basic_string<char, std::char_traits<char>, std::allocator<char> > >{3, "struct"}, std::pair<const int, std::basic_string<char, std::char_traits<char>, std::allocator<char> > >{5, "class"}}, std::less<int>(), std::allocator<std::pair<const int, std::basic_string<char, std::char_traits<char>, std::allocator<char> > > >()};
+  {
+    std::map<int, std::basic_string<char, std::char_traits<char>, std::allocator<char> >, std::less<int>, std::allocator<std::pair<const int, std::basic_string<char, std::char_traits<char>, std::allocator<char> > > > > & __range1 = id2str;
+    std::_Rb_tree_iterator<std::pair<const int, std::basic_string<char, std::char_traits<char>, std::allocator<char> > > > __begin1 = __range1.begin();
+    std::_Rb_tree_iterator<std::pair<const int, std::basic_string<char, std::char_traits<char>, std::allocator<char> > > > __end1 = __range1.end();
+    for(; !operator==(__begin1, __end1); __begin1.operator++()) {
+      const std::pair<const int, std::basic_string<char, std::char_traits<char>, std::allocator<char> > > & elem = __begin1.operator*();
+      std::operator<<(std::operator<<(std::operator<<(std::cout, "id=").operator<<(elem.first), ",str="), elem.second).operator<<(std::endl);
+    }
+
+  }
+  return 0;
+}
+```
+
+使用结构化绑定
+
+```cpp
+#include <iostream>
+#include <string>
+#include <map>
+using namespace std;
+
+int main(int argc, char **argv)
+{
+    std::map<int, std::string> id2str{
+        {1, "hello"},
+        {3, "struct"},
+        {5, "class"}
+    };
+
+    for(const auto & [id, str] : id2str)
+    {
+        cout << "id=" << id << ",str=" << str << endl;
+    }
+
+    return 0;
+}
+
+// insight
+
+#include <iostream>
+#include <string>
+#include <map>
+using namespace std;
+
+int main(int argc, char ** argv)
+{
+  std::map<int, std::basic_string<char, std::char_traits<char>, std::allocator<char> >, std::less<int>, std::allocator<std::pair<const int, std::basic_string<char, std::char_traits<char>, std::allocator<char> > > > > id2str = std::map<int, std::basic_string<char, std::char_traits<char>, std::allocator<char> >, std::less<int>, std::allocator<std::pair<const int, std::basic_string<char, std::char_traits<char>, std::allocator<char> > > > >{std::initializer_list<std::pair<const int, std::basic_string<char, std::char_traits<char>, std::allocator<char> > > >{std::pair<const int, std::basic_string<char, std::char_traits<char>, std::allocator<char> > >{1, "hello"}, std::pair<const int, std::basic_string<char, std::char_traits<char>, std::allocator<char> > >{3, "struct"}, std::pair<const int, std::basic_string<char, std::char_traits<char>, std::allocator<char> > >{5, "class"}}, std::less<int>(), std::allocator<std::pair<const int, std::basic_string<char, std::char_traits<char>, std::allocator<char> > > >()};
+  {
+    std::map<int, std::basic_string<char, std::char_traits<char>, std::allocator<char> >, std::less<int>, std::allocator<std::pair<const int, std::basic_string<char, std::char_traits<char>, std::allocator<char> > > > > & __range1 = id2str;
+    std::_Rb_tree_iterator<std::pair<const int, std::basic_string<char, std::char_traits<char>, std::allocator<char> > > > __begin1 = __range1.begin();
+    std::_Rb_tree_iterator<std::pair<const int, std::basic_string<char, std::char_traits<char>, std::allocator<char> > > > __end1 = __range1.end();
+    for(; !operator==(__begin1, __end1); __begin1.operator++()) {
+      const std::pair<const int, std::basic_string<char, std::char_traits<char>, std::allocator<char> > > & __operator14 = __begin1.operator*();
+      const int & id = std::get<0UL>(__operator14);
+      const std::basic_string<char, std::char_traits<char>, std::allocator<char> > & str = std::get<1UL>(__operator14);
+      std::operator<<(std::operator<<(std::operator<<(std::cout, "id=").operator<<(id), ",str="), str).operator<<(std::endl);
+    }
+
+  }
+  return 0;
+}
+```
+
+### 实现类元组类型
+
+在下面这段代码中，我们为 BindTest3 实现了 3 种特性以满足类元组的限制条件。首先实现的是：
+
+1. 通过特化让`tuple_size<BindTest3>::value`的值为 2，也就是存在两个子对象。 然后需要明确的是每个子对象和元素的类型：
+2. 同样通过特化的方法指定了两个子对象的具体类型。
+3. 最后需要实现的是 get 函数，注意，get 函数的实现有两种方式，一种需要给 BindTest3 添加成员函数；另一种则不需要，我们通常会选择不破坏原有代码的方案，所以这里先展示后者。
+
+```cpp
+// --std=c++17
+#include <iostream>
+#include <tuple>
+using namespace std;
+
+class BindBase3
+{
+public:
+    int a = 42;
+};
+
+class BindTest3 : public BindBase3
+{
+public:
+    double b = 11.7;
+};
+
+// 偏特化 tuple_size tuple_element
+namespace std
+{
+    template<>
+    struct tuple_size<BindTest3>
+    {
+        static constexpr size_t value = 2;
+    };
+    template<>
+    struct tuple_element<0, BindTest3>
+    {
+        using type = int;
+    };
+    template<>
+    struct tuple_element<1, BindTest3>
+    {
+        using type = double;
+    };
+}
+
+template<std::size_t Idx>
+auto& get(BindTest3 &bt) = delete;
+
+template<>
+auto& get<0>(BindTest3 &bt)
+{
+    return bt.a;
+}
+template<>
+auto& get<1>(BindTest3 &bt)
+{
+    return bt.b;
+}
+
+int main()
+{
+    BindTest3 bt3;
+    auto& [x3, y3] = bt3;
+    x3 = 78;
+    cout << bt3.a << endl;
+    // 78
+    return 0;
+}
+
+// insight
+
+int main()
+{
+  BindTest3 bt3 = BindTest3();
+  BindTest3 & __bt354 = bt3;
+  int & x3 = get<0UL>(__bt354);
+  double & y3 = get<1UL>(__bt354);
+  x3 = 78;
+  std::cout.operator<<(static_cast<BindBase3&>(bt3).a).operator<<(std::endl);
+  return 0;
+}
+```
+
+之所以这里需要返回引用，是因为我希望结构化绑定的别名能够修改 BindTest3 的实例，如果需要的是一个只读的结构化绑定， 则这里可以不必返回引用。最后`template<std::size_t Idx> auto& get(BindTest3 &bt) = delete`可以明确地告知编译器不要生成除了特化版本以外的函数实例以防止 get 函数模板被滥用。
+
+我不推荐实现成员函数版本的 get 函数，因为这需要修改原有的代码。 但是当我们重新编写一个类，并且希望它支持结构化绑定的时候，也不妨尝试实现几个 get 成员函数：
+
+```cpp
+#include <iostream>
+#include <tuple>
+using namespace std;
+
+class BindBase3
+{
+public:
+    int a = 42;
+};
+
+class BindTest3 : public BindBase3
+{
+public:
+    double b = 11.7;
+    template<std::size_t Idx>
+    auto& get() = delete;
+};
+
+template<>
+auto& BindTest3::get<0>()
+{
+    return a;
+}
+
+template<>
+auto& BindTest3::get<1>()
+{
+    return b;
+}
+
+// 偏特化 tuple_size tuple_element
+namespace std
+{
+    template<>
+    struct tuple_size<BindTest3>
+    {
+        static constexpr size_t value = 2;
+    };
+    template<>
+    struct tuple_element<0, BindTest3>
+    {
+        using type = int;
+    };
+    template<>
+    struct tuple_element<1, BindTest3>
+    {
+        using type = double;
+    };
+}
+
+int main()
+{
+    BindTest3 bt3;
+    auto& [x3, y3] = bt3;
+    x3 = 789;
+    cout << bt3.a << endl;
+    // 789
+    return 0;
+}
+```
+
+这段代码中 get 成员函数的优势显而易见，成员函数不需要传递任何参数。另外，特化版本的函数`get<0>`和`get<1>`可以直接返回 a 和 b，这显得格外简洁。
+
+### 结构化绑定 public 权限
+
+当在结构体或者类中使用结构化绑定的时候，需要有公开的访问权限，否则会导致编译失败
+
+```cpp
+#include <iostream>
+using namespace std;
+
+void foo();
+
+struct A
+{
+    friend void foo();
+private:
+    int i;
+};
+
+void foo()
+{
+    A a{};
+    auto x = a.i; // 编译成功
+    auto [y] = a; //编译失败
+    cout << y << endl;
+}
+
+int main()
+{
+    foo();
+    return 0;
+}
+```
+
+在上面这段代码中，foo 是结构体 A 的友元函数，它可以访问 A 的私有成员 i。 但是，结构化绑定却失败了，这就明显不合理了。同样的问题还有访问自身成员的时候：
+
+```cpp
+class C {
+  int i;
+  void foo(const C& other) {
+   auto [x] = other; // 编译失败
+  }
+};
+```
+
+为了解决这类问题，C++20 标准规定结构化绑定的限制不再强调必须为公开数据成员， 编译器会根据当前操作的上下文来判断是否允许结构化绑定。幸运的是，虽然标准是 2018 年提出修改的， 但在我实验的 3 种编译器上，无论是 C++17 还是 C++20 标准，以上代码都可以顺利地通过编译。

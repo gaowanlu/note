@@ -437,6 +437,42 @@ int main(int argc, char **argv)
 }
 ```
 
+不常遇见的有趣例子:为什么有两个同类型的对象，一个对象的方法内可以访问另一个对象的私有成员
+
+```cpp
+#include <iostream>
+using namespace std;
+
+class A;
+
+class A
+{
+private:
+    int n = 199;
+public:
+    void foo(A& a)
+    {
+        cout << a.n << endl;
+        a.func();
+    }
+private:
+    void func()
+    {
+        cout << "hello" << endl;
+    }
+};
+
+int main()
+{
+    A a;
+    A b;
+    a.foo(b);
+    return 0;
+}
+```
+
+因为 foo 是 `A::foo` 所以 `A::foo` 可以访问 A 的所有成员。
+
 ### class 与 struct 关键字
 
 我们一直在使用 struct 也就是结构体，但是我们将其称为类，有点奇怪，其实 C++支持关键词 struct,而支持 struct 是因为要兼容 C 代码
