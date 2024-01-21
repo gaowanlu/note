@@ -586,19 +586,37 @@ int main(int argc, char **argv)
 
 ### 范围 for 循环
 
-C++11 引入了一种新的循环方式，可以用来迭代具有迭代器的对象
+基于范围的 for 循环语法 C++11 标准引入了基于范围的 for 循环特性，该特性隐藏了迭代器的初始化和更新过程，让程序员只需要关心遍历对象本身，其语法也比传统 for 循环简洁很多：
 
-语法格式
+基于范围的 for 循环不需要初始化语句、条件表达式以及更新表达式，取而代之的是一个范围声明和一个范围表达式。其中范围声明是一个变量的声明，其类型是范围表达式中元素的类型或者元素类型的引用。而范围表达式可以是数组或对象，对象必须满足以下 2 个条件中的任意一个。
+
+1. 对象类型定义了 begin 和 end 成员函数。
+2. 定义了以对象类型为参数的 begin 和 end 普通函数。
+
+begin 和 end 函数不必返回相同类型,在 C++11 标准中基于范围的 for 循环相当于以下伪代码：
 
 ```cpp
-for(declaration:expression)
-    statement
-for(declaration:expression){
-
+{
+  auto && __range = range_expression;
+  for (auto __begin = begin_expr, __end = end_expr; __begin != __end; ++__begin) {
+       range_declaration = *__begin;
+       loop_statement
+  }
 }
-//模式上等价于
-for(auto beg=v.begin(),end=v.end();beg!=end;++beg)
-    statement
+```
+
+其中`begin_expr`和`end_expr`可能是`__range.begin()`和`__range.end()`，或者是`begin(__range)`和`end(__range)`。 当然，如果`__range`是一个数组指针，那么还可能是`__range`和`__range+__count`（其中\*\*count 是数组元素个数）。 这段伪代码有一个特点，它要求`begin_expr`和`end_expr`返回的必须是同类型的对象。 但实际上这种约束完全没有必要，只要`begin != __end`能返回一个有效的布尔值即可， 所以 C++17 标准对基于范围的 for 循环的实现进行了改进，伪代码如下：
+
+```cpp
+{
+  auto && __range = range_expression;
+  auto __begin = begin_expr;
+  auto __end = end_expr;
+  for (; __begin != __end; ++__begin) {
+       range_declaration = *__begin;
+       loop_statement
+  }
+}
 ```
 
 代码样例
@@ -632,9 +650,51 @@ int main(int argc, char **argv)
 }
 ```
 
-### 实现基于范围 for 循环的类
+### 范围 for 循环的陷阱`auto&&`
+
+无论是 C++11 还是 C++17 标准，基于范围的 for 循环伪代码都是由以下这句代码开始的：
+
+```cpp
+auto && __range = range_expression;
+```
+
+理解了右值引用的读者应该敏锐地发现了这里存在的陷阱 `auto &&`。对于这个赋值表达式来说， 如果`range_expression`是一个纯右值， 那么右值引用会扩展其生命周期，保证其整个 for 循环过程中访问的安全性。 但如果`range_ expression`是一个泛左值， 那结果可就不确定了，参考以下代码：
+
+```cpp
+class T {
+  std::vector<int> data_;
+public:
+  std::vector<int>& items() { return data_; }
+  // …
+};
+
+T foo()
+{
+    T t;
+    return t;
+}
+for (auto& x : foo().items()) {} // 未定义行为
+```
+
+这里的 for 循环会引发一个未定义的行为，因为`foo().items()`返回的是一个泛左值类型`std::vector&`，于是右值引用无法扩展其生命周期，导致 for 循环访问无效对象并造成未定义行为。 对于这种情况请读者务必小心谨慎，将数据复制出来是一种解决方法：
+
+```cpp
+T thing = foo();
+for (auto & x :thing.items()) {}
+```
+
+在 C++20 标准中，基于范围的 for 循环增加了对初始化语句的支持， 所以在 C++20 的环境下我们可以将上面的代码简化为：
+
+```cpp
+for (T thing = foo(); auto & x :thing.items()) {}
+```
+
+### 实现支持范围 for 循环的类
 
 此部分为高级进阶内容
+
+1. 该类型必须有一组和其类型相关的 begin 和 end 函数，它们可以是类型的成员函数，也可以是独立函数。
+2. begin 和 end 函数需要返回一组类似迭代器的对象，并且这组对象必须支持`operator *`、`operator !=`和`operator ++`运算符函数。
 
 ```cpp
 #include <iostream>
