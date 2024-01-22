@@ -262,7 +262,7 @@ info 是一个混合命令，可以查看当前进程所有线程运行情况,�
 
 ## thread 命令
 
-切换所正在调试的线程,使用gdb调试的默认就是主线程
+切换所正在调试的线程,使用 gdb 调试的默认就是主线程
 
 ```bash
 thread 线程号
@@ -270,7 +270,7 @@ thread 线程号
 
 ## next 命令
 
-next命令简写为n，用于gdb跳到下一行代码
+next 命令简写为 n，用于 gdb 跳到下一行代码
 
 ```bash
 (gdb)next
@@ -281,7 +281,7 @@ next命令简写为n，用于gdb跳到下一行代码
 
 用于单步执行程序的调试过程。它允许你逐行执行程序并跳转到下一行代码
 
-在使用"step"命令时，GDB会执行当前行并进入下一行。如果当前行是函数调用语句，GDB将进入该函数并在函数内部的第一行停下。这使你能够逐行跟踪程序的执行并查看每个步骤的结果。
+在使用"step"命令时，GDB 会执行当前行并进入下一行。如果当前行是函数调用语句，GDB 将进入该函数并在函数内部的第一行停下。这使你能够逐行跟踪程序的执行并查看每个步骤的结果。
 
 请注意，"step"命令将进入所有可执行的代码，包括系统库和其他文件中的代码。如果你只想进入你自己的代码，可以使用"next"命令而不是"step"命令。
 
@@ -301,8 +301,8 @@ next命令简写为n，用于gdb跳到下一行代码
 (gdb)until [location]
 ```
 
-其中，可选的"location"参数指定程序应执行到的位置或行号。如果未提供该参数，GDB将默认执行到当前循环的结尾  
-"until"命令执行程序直到达到指定位置，然后停止执行。这使你能够跳过代码块、循环或函数，并在达到指定位置后继续调试,until只能在调试状态下用，也就是run执行后，程序结束前
+其中，可选的"location"参数指定程序应执行到的位置或行号。如果未提供该参数，GDB 将默认执行到当前循环的结尾  
+"until"命令执行程序直到达到指定位置，然后停止执行。这使你能够跳过代码块、循环或函数，并在达到指定位置后继续调试,until 只能在调试状态下用，也就是 run 执行后，程序结束前
 
 ```bash
 1、执行程序直到下一个关键点
@@ -494,11 +494,11 @@ Source directories searched: /mnt/c/Users/gaowanlu/Desktop/MyProject/note/testco
 
 1、方法一
 
-现在一个窗口用gdb调试父进程，等子进程被fork出来后，再来一个新窗口使用gdb attach命令将gdb attach到子进程上
+现在一个窗口用 gdb 调试父进程，等子进程被 fork 出来后，再来一个新窗口使用 gdb attach 命令将 gdb attach 到子进程上
 
 2、方法二
 
-gdb提供了follow-fork选项，通过set follow-fork mode设置一个进程fork出新的子进程时，gdb是调试父进程还是子进程
+gdb 提供了 follow-fork 选项，通过 set follow-fork mode 设置一个进程 fork 出新的子进程时，gdb 是调试父进程还是子进程
 
 ```bash
 # fork后gdb attach到子进程
@@ -511,16 +511,16 @@ gdb提供了follow-fork选项，通过set follow-fork mode设置一个进程fork
 
 ## GDB 调试技巧
 
-1、将print输出的字符串或字符数组完整显示
+1、将 print 输出的字符串或字符数组完整显示
 
 ```bash
 (gdb)set print element 0
 (gdb)print xxx
 ```
 
-2、让被gdb调试的程序接收信号
+2、让被 gdb 调试的程序接收信号
 
-当在gdb调试时，输入Ctrl+C(SIGINT)信号，信号会被gdb接收让调试器中断，所以无法让程序接收到此信号
+当在 gdb 调试时，输入 Ctrl+C(SIGINT)信号，信号会被 gdb 接收让调试器中断，所以无法让程序接收到此信号
 
 ```bash
 1、在gdb手动使用signal函数发送信息
@@ -531,7 +531,7 @@ gdb提供了follow-fork选项，通过set follow-fork mode设置一个进程fork
 
 3、函数存在，添加断点时却无效
 
-在一个函数存在时，使用函数名进行断点设置，却提示Make breakpoint pending on future shared library load?y/n
+在一个函数存在时，使用函数名进行断点设置，却提示 Make breakpoint pending on future shared library load?y/n
 
 此时需要改变设置策略，改用代码文件和行号添加断点即可
 
@@ -547,6 +547,54 @@ gdb提供了follow-fork选项，通过set follow-fork mode设置一个进程fork
 
 还有一种方法为，先添加断点，然后使用`(gdb)condition 断点编号 断点触发条件`的格式添加
 
-5、自定义gdb调试命令
+5、自定义 gdb 调试命令
 
 在用户目录下定义`.gdbinit`文件，进阶应用可深究
+
+## 网络并发测试
+
+进行压力测试，但是通常我们是没有那么多的主机资源可以用，首先我们找一些免费的主机资源
+
+`https://labs.play-with-docker.com/` 是提供 Docker 练习的。我们可以创建几个 instance
+
+```bash
+docker run -it ubuntu
+```
+
+执行上面命令进入 Ubuntu Docker 容器后
+
+```bash
+apt update
+```
+
+例如要进行 http 压力测试
+
+```bash
+apt install apache2-utils
+```
+
+使用 ab 进行测试
+
+```bash
+ab -c 2000 -n 1000000 https://61.171.51.135:20024/
+```
+
+可以多创建些容器同时执行，达到模拟大量用户同时访问效果，不过还是小心点不要对他人网站进行尝试。
+
+```bash
+apt install htop -y
+apt install iproute2 -y
+apt install iperf -y
+```
+
+使用 iperf 并发 tcp 连接
+
+```bash
+iperf -c [IP] -p [PORT] -P [并发连接数量]
+```
+
+使用 ss 查看端口的连接情况
+
+```bash
+ss -tnap | grep '(:|,)[PORT]' | wc -l
+```
