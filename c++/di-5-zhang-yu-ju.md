@@ -565,6 +565,40 @@ int main(int argc, char **argv)
 //输出 cdc 9
 ```
 
+### 在 switch 内的 continue
+
+下面代码中 continue 的作用域其实是为 for 循环内的代码块范围
+
+```cpp
+#include <iostream>
+using namespace std;
+
+int main(int argc, char **argv)
+{
+    int n = 10;
+    for (int i = 0; i < 10; i++)
+    {
+        cout << i << endl;
+        switch (n)
+        {
+        case 0:
+        {
+            break;
+        }
+        default:
+        {
+            continue;
+        }
+        }
+        cout << i << endl;
+    }
+    return 0;
+}
+// 0 1 2 3 4 5 6 7 8 9
+```
+
+如果没有在 while、for、do while 循环内,单纯在 switch 内使用 continue 是编译不过的。
+
 ### C++17 支持初始化语句的 switch
 
 和 C++17 支持初始化语句的 if 类似

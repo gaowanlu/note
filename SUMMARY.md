@@ -149,6 +149,8 @@
 * [时间](you-xi-fu-wu-duan-kai-fa/shi-jian/README.md)
   * [😎 正确认识时间](you-xi-fu-wu-duan-kai-fa/shi-jian/zheng-que-ren-shi-shi-jian.md)
   * [🍉 C++与时间](you-xi-fu-wu-duan-kai-fa/shi-jian/c++-yu-shi-jian.md)
+* [游戏数学](gamemath/README.md)
+  * [前言](gamemath/introduction.md)
 
 ## 💻 操作系统
 

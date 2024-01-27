@@ -598,3 +598,12 @@ iperf -c [IP] -p [PORT] -P [并发连接数量]
 ```bash
 ss -tnap | grep '(:|,)[PORT]' | wc -l
 ```
+
+### perf 工具
+
+可以监测程序各个函数以及系统调用的消耗分布，可以有效检查哪些地方耗时较多，用于程序优化
+
+```bash
+perf record -p <pid>
+perf report --stdio > perf_report.txt
+```
