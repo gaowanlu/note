@@ -151,6 +151,8 @@
   * [🍉 C++与时间](you-xi-fu-wu-duan-kai-fa/shi-jian/c++-yu-shi-jian.md)
 * [游戏数学](gamemath/README.md)
   * [前言](gamemath/introduction.md)
+  * [笛卡尔坐标系](gamemath/chapter1.md)
+  * [向量](gamemath/chapter2.md)
 
 ## 💻 操作系统
 
