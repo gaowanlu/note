@@ -13,3 +13,8 @@ I have a dream.
 - [做开发终身收益 无论技术还是人生规划](https://balloonwj.github.io/cpp-guide-web/)
 - [leveldb、libevent、memcached 源码分析，cpp 服务器开发](https://cppguide.cn/)
 - [网络、OS、MySQL、Redis](https://xiaolincoding.com/)
+
+TODOLIST:
+
+- noexcept 关键字(https://61.171.51.135:20024/upload/newnote/6.html)
+- 虚函数指针 (https://61.171.51.135:20024/upload/newnote/7.html)
