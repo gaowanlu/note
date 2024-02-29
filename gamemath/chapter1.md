@@ -8,6 +8,8 @@ coverY: 0
 
 ## Cartesian Coordinate Systems
 
+[https://gamemath.com/book/cartesianspace.html](https://gamemath.com/book/cartesianspace.html)
+
 认识基本的 2D 和 3D 中的笛卡尔坐标系，讨论如何使用笛卡尔坐标系来定位空间中的点，还包括对三角函数和求和符号等。
 
 ### 开始

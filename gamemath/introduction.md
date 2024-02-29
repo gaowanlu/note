@@ -8,7 +8,9 @@ coverY: 0
 
 ## 前言
 
-首先先读 `https://gamemath.com/book/intro.html`
+首先先读
+
+[https://gamemath.com/book/intro.html](https://gamemath.com/book/intro.html)
 
 ### 谁需要读这本书
 
