@@ -3291,3 +3291,168 @@ class C {
 ```
 
 为了解决这类问题，C++20 标准规定结构化绑定的限制不再强调必须为公开数据成员， 编译器会根据当前操作的上下文来判断是否允许结构化绑定。幸运的是，虽然标准是 2018 年提出修改的， 但在我实验的 3 种编译器上，无论是 C++17 还是 C++20 标准，以上代码都可以顺利地通过编译。
+
+### 虚函数指针
+
+32 位程序(地址空间 4 字节)，则指针变量大小为 4 字节，指向虚函数表地址的指针变量 本身占用 4 字节 64 位程序(地址空间 8 字节) 则指针变量大小为 8 字节，指向虚函数表地址的指针变量 本身占用 8 字节。
+
+虚函数表的创建：
+
+* 对于包含虚函数的类，编译器会为每个类生成一个虚函数表。
+* 虚函数表是一个数组，其中包含了指向每个虚函数的指针。
+* 每个对象的内存布局中都包含一个指向相应类的虚函数表的指针（通常是对象的开始位置）。
+
+虚函数调用：
+
+* 当通过基类指针或引用调用虚函数时，程序会使用对象的虚函数表来确定要调用的实际函数。
+* 对象中的虚函数表指针被用于找到正确的虚函数表。
+* 然后，通过虚函数表中的函数指针找到实际要调用的函数。
+
+```cpp
+// 返回数组指针的函数
+#include <iostream>
+using namespace std;
+
+int (*func(int (*arr)[5]))[5]
+{
+    for (int i = 0; i < 5; i++)
+    {
+        (*arr)[i] *= 2;
+    }
+    return arr;
+}
+
+int main(int argc, char **argv)
+{
+    int arr[5] = {1, 2, 3, 4, 5};
+    func(&arr);
+    for (int i = 0; i < 5; i++)
+    {
+        cout << arr[i] << endl;
+    }
+    // 2 4 6 8 10
+    return 0;
+}
+```
+
+虚函数背后隐藏内容样例
+
+```cpp
+#include <iostream>
+#include <cstring>
+#include <typeinfo>
+using namespace std;
+
+#pragma pack(1)
+
+class A
+{
+public:
+    int n;
+    virtual void func2()
+    {
+        cout << "A::func2 n=" << n << endl;
+    }
+
+private:
+    char ch;
+};
+
+class B : public A
+{
+public:
+    B()
+    {
+        cout << "B::B" << endl;
+    }
+    void func2() override
+    {
+        cout << "B::func2 n=" << n << endl;
+    }
+    virtual void func3()
+    {
+    }
+    virtual void func4()
+    {
+    }
+};
+
+class C
+{
+public:
+};
+
+class D : private C
+{
+public:
+    virtual void func()
+    {
+    }
+};
+
+class E : private D
+{
+};
+
+#pragma pack()
+
+class Dog
+{
+public:
+    Dog(int n)
+    {
+        this->n = n;
+    }
+    int n;
+};
+
+class Person
+{
+public:
+    Person() : dog(0)
+    {
+    }
+    Dog dog;
+};
+
+int main(int argc, char **argv)
+{
+    A a;
+    a.func2();
+    B b;
+    b.func2();
+    b.func3();
+    b.func4();
+
+    memset(&a, 0, sizeof(a));
+    a.func2();
+    memset(&b, 0, sizeof(b));
+    A &ab = b;
+    ab.n = 999;
+    // 此时调用 ab.func2()则会崩溃 因为虚函数表指针 被置为0了
+
+    cout << "use old memory" << endl;
+    B *bObjectPtr = new (&ab) B; // 用旧内存重新绑定上了虚函数表指针
+    // 内存数据是保留的了，因为B的构造函数没有操作任何成员变量
+    // 即使B里面有嵌套了 对象成员变量 其成员变量本身也有虚函数表指针 则也没问题
+    // 因为调用B的构造函数时，初始化其成员会自动调用构造函数，也会将其虚函数指针寸的地址更新
+    // 进而实现热更新是有可能的,但是别像Person Dog那样dog可能把原来的数据清理掉就行
+
+    // 无法被执行，指向虚函数表的指针被置为0了
+    ab.func2();
+
+    cout << typeid(a).name() << endl;           // 1A
+    cout << typeid(ab).name() << endl;          // 1B
+    cout << typeid(bObjectPtr).name() << endl;  // P1B
+    cout << typeid(*bObjectPtr).name() << endl; // 1B
+
+    cout << sizeof(C) << endl; // 1
+    cout << sizeof(D) << endl; // 4,自己有虚函数
+    cout << sizeof(E) << endl; // 4,继承链上有虚函数，则自己也有虚函数指针
+
+    Person person;
+
+    cout << "end" << endl;
+    return 0;
+}
+```

@@ -450,7 +450,150 @@ int main(int argc, char **argv)
 }
 ```
 
-### 为 noexcept 提供参数
+### 用 noexcept 代替 throw
+
+异常处理是C++语言的重要特性，在C++11标准之前，我们可以使用throw(optional_type_list)声明函数是否抛出异常，并描述函数抛出的异常类型。理论上，运行时必须检查函数发出的任何异常是否确实存在于optional_type_list中，或者是否从该列表中的某个类型派生。如果不是，则会调用处理程序`std::unexpected`。但实际上，由于这个检查实现比较复杂，因此并不是所有编译器都会 遵从这个规范。此外，大多数程序员似乎并不喜欢throw(optional_type_list)这种声明抛出异常 的方式，因为在他们看来抛出异常的类型并不是他们关心的事情，他们只需要关心函数是否会抛出异常， 即是否使用了throw()来声明函数。
+
+```cpp
+// g++ main.cpp -o main.exe --std=c++98
+#include <iostream>
+#include <stdexcept>
+using namespace std;
+
+void func() throw()
+{
+    // 声明了throw()但是抛出了异常，会直接core
+    throw std::runtime_error("hi mom");
+}
+
+int main(int argc, char **argv)
+{
+    try
+    {
+        func();
+    }
+    catch(const std::exception& e)
+    {
+        // 此处并入会进入，因为func声明了throw()
+        std::cerr << e.what() << std::endl;
+    }
+    return 0;
+}
+```
+
+使用throw声明函数是否抛出异常一直没有什么问题， 直到C++11标准引入了移动构造函数。移动构造函数中 包含着一个严重的异常陷阱。
+
+当我们想将一个容器的元素移动到另外一个新的容器中时。 在C++11之前，由于没有移动语义，我们只能将原始容器的数据 复制到新容器中。如果在数据复制的过程中复制构造函数发生了异常， 那么我们可以丢弃新的容器，保留原始的容器。在这个环境中， 原始容器的内容不会有任何变化。
+
+但是有了移动语义，原始容器的数据会逐一地移动到新容器中， 如果数据移动的途中发生异常，那么原始容器也将无法继续使用， 因为已经有一部分数据移动到新的容器中。这里读者可能会有疑问， 如果发生异常就做一个反向移动操作，恢复原始容器的内容不就可以了吗？ 实际上，这样做并不可靠，因为我们无法保证恢复的过程中不会抛出异常。
+
+这里的问题是，throw并不能根据容器中移动的元素是否会抛出异常来 确定移动构造函数是否允许抛出异常。针对这样的问题， C++标准委员会提出了noexcept说明符。
+
+noexcept是一个与异常相关的关键字，它既是一个说明符， 也是一个运算符。作为说明符，它能够用来说明函数是否会抛出异常， 例如：
+
+```cpp
+// --std=c++11
+#include <iostream>
+#include <vector>
+#include <stdexcept>
+
+class MyObject
+{
+public:
+    // 移动构造函数使用了 noexcept
+    MyObject(MyObject &&other) // noexcept
+    {
+        // 如果因为加了throw如果抛出异常外面的try{}则无法捕获到异常
+        // throw std::runtime_error("hi mom");
+        this->n = std::move(other.n);
+        other.n = 0;
+        this->str = std::move(other.str);
+    }
+    MyObject() = default;
+    MyObject(const MyObject &) = default;
+    MyObject &operator=(const MyObject &) = default;
+    int n;
+    std::string str;
+};
+
+int main()
+{
+    try
+    {
+        std::vector<MyObject> originalVector;
+        MyObject object;
+        object.n = 1;
+        object.str = "hi mom";
+        originalVector.push_back(object);
+        originalVector.push_back(object);
+        originalVector.push_back(object);
+
+        // 移动构造函数使用了 noexcept，确保在移动过程中不会抛出异常
+        std::vector<MyObject> newVector(std::make_move_iterator(originalVector.begin()),
+                                        std::make_move_iterator(originalVector.end()));
+
+        //000
+        std::cout << originalVector[0].n << originalVector[1].n << originalVector[2].n << std::endl;
+        //""
+        std::cout << originalVector[0].str << originalVector[1].str << originalVector[2].str << std::endl;
+
+        //111
+        std::cout << newVector[0].n << newVector[1].n << newVector[2].n << std::endl;
+        //"hi momhi momhi mom"
+        std::cout << newVector[0].str << newVector[1].str << newVector[2].str << std::endl;
+    }
+    catch (const std::exception &e)
+    {
+        std::cerr << "Caught an exception: " << e.what() << std::endl;
+    }
+
+    return 0;
+}
+```
+
+throw()与noexcept其实都可以用
+
+```cpp
+#include <iostream>
+#include <stdexcept>
+using namespace std;
+
+struct X
+{
+    int f() const throw()
+    {
+        throw std::runtime_error("hi mom");
+        return 888;
+    }
+    void g() noexcept
+    {
+    }
+};
+
+int main(int argc, char **argv)
+{
+    X x;
+    try
+    {
+        x.f();
+        x.g();
+    }
+    catch (...)
+    {
+    }
+    return 0;
+}
+
+/*
+terminate called after throwing an instance of 'std::runtime_error'
+  what():  hi mom
+已放弃(吐核)
+*/
+```
+
+以上代码非常简单，用noexcept声明了函数foo 以及X的成员函数f和g。指示编译器这几个函数 是不会抛出异常的，编译器可以根据声明优化代码。 请注意，noexcept只是告诉编译器不会抛出异常， 但函数不一定真的不会抛出异常。这相当于对编译器 的一种承诺，当我们在声明了noexcept的函数中抛出异常时， 程序会调用`std::terminate`去结束程序的生命周期。
+
+### 为 noexcept 提供返回布尔的常量表达式
 
 noexcept(true)表示不会抛出异常、noexcept(false)表示可能抛出异常
 
@@ -472,9 +615,60 @@ int main(int argc, char **argv)
 }
 ```
 
+另外，noexcept接受一个返回布尔的常量表达式，当表达式评估为true的时候， 其行为和不带参数一样，表示函数不会抛出异常。反之，当表达式评估为false的时候， 则表示该函数有可能会抛出异常。这个特性广泛应用于模板当中，例如：
+
+```cpp
+#include <iostream>
+#include <stdexcept>
+using namespace std;
+
+// template <class T>
+// T copy(const T &o) noexcept
+// {
+// }
+
+template <class T>
+T copy(const T &o) noexcept(std::is_fundamental<T>::value)
+{
+    return o;
+}
+
+struct X
+{
+    X() = default;
+    X(const X &other)
+    {
+        throw std::runtime_error("hi mom");
+    }
+};
+
+int main(int argc, char **argv)
+{
+    int n = 1;
+    int n1 = copy(n);
+    cout << n << " " << n1 << endl;
+    try
+    {
+        X x;
+        auto x1 = copy(x); // X为非基础类型
+    }
+    catch (const std::exception &e)
+    {
+        std::cerr << e.what() << std::endl;
+    }
+    // 1 1
+    // hi mom
+    return 0;
+}
+```
+
+上面这段代码通过`std::is_fundamental`来判断T是否为基础类型，如果T是基础类型， 则复制函数被声明为`noexcept(true)`，即不会抛出异常。反之， 函数被声明为`noexcept(false)`，表示函数有可能抛出异常。 请注意，由于noexcept对表达式的评估是在编译阶段执行的， 因此表达式必须是一个常量表达式。
+
 ### noexcept 运算符
 
 noexcept 是一个一元运算符，返回值为 bool 类型右值常量表达式
+
+该过程是在编译阶段进行，所以表达式本身并不会被执行。而表达式的结果取决于编译器是否在表达式中找到潜在异常：
 
 ```cpp
 //example13.cpp
@@ -517,6 +711,581 @@ int main(int argc, char **argv)
     cout << noexcept(func4()) << endl; // 1
     //当func4所调用的所有函数都是noexcept,且本身不含有throw时返回true 否则返回false
     cout << noexcept(func5(1)) << endl; // 0
+    return 0;
+}
+```
+
+### 合成 noexcept
+
+当编译器合成拷贝控制成员时，同时会生成一个异常说明，如果该类成员和其基类所有操作都为 noexcept,则合成的成员为 noexcept 的。不满足条件则合成 noexcept(false)的。\
+在析构函数没有提供 noexcept 声明，编译器将会为其合成。合成的为与编译器直接合成析构函数提供的 noexcept 说明相同。
+
+noexcept运算符能够准确地判断函数是否有声明不会抛出异常。有了这个工具， 我们可以进一步优化复制函数模板：
+
+```cpp
+#include <iostream>
+#include <stdexcept>
+using namespace std;
+
+// 判断T的拷贝构造函数,如果拷贝构造函数加了noexcept则copy则也会声明noexcept
+// try{}中直接coredump
+template <class T>
+T copy(const T &o) noexcept(noexcept(T(o)))
+{
+    return o;
+}
+
+struct X
+{
+    X() = default;
+    X(const X &other)
+    {
+        throw std::runtime_error("hi mom");
+    }
+};
+
+int main(int argc, char **argv)
+{
+    try
+    {
+        X x;
+        auto x1 = copy(x);
+    }
+    catch (const std::exception &e)
+    {
+        std::cerr << e.what() << std::endl;
+    }
+    cout << boolalpha << noexcept(int(1)) << noboolalpha << endl; // true
+    return 0;
+}
+```
+
+这段代码看起来有些奇怪，因为函数声明中连续出现了两个noexcept关键字， 只不过两个关键字发挥了不同的作用。其中第二个关键字是运算符， 它判断T(o)是否有可能抛出异常。而第一个noexcept关键字则是说明符， 它接受第二个运算符的返回值，以此决定T类型的复制函数是否声明为不抛出异常。
+
+### noexcept 解决移动构造问题
+
+异常的存在对容器数据的移动构成了威胁， 因为我们无法保证在移动构造的时候不抛出异常。 现在noexcept运算符可以判断目标类型的移动构造函数是否有可能抛出异常。 如果没有抛出异常的可能，那么函数可以选择进行移动操作；否则将使用传统的复制操作。
+
+下面，就来实现一个使用移动语义的容器经常用到的工具函数swap：
+
+```cpp
+#include <iostream>
+#include <stdexcept>
+using namespace std;
+
+void func1() noexcept
+{
+    throw std::runtime_error("hi mom");
+}
+
+void func2() noexcept
+{
+    func1();
+}
+
+int main(int argc, char **argv)
+{
+    try
+    {
+        func2();
+    }
+    catch(const std::exception& e)
+    {
+        std::cerr << e.what() << '\n';
+    }
+    
+    return 0;
+}
+```
+
+这个就有问题,func1不可能抛出异常,func1异常则不可能到func2代码块中,main的catch更不可能捕获到。如果func1没有加noexcept什么都很正常,如果func2声明了noexcept那么写代码时其实也不用去`try{func2()}`了func2根本不会抛出异常。
+
+swap函数：
+
+```cpp
+#include <iostream>
+#include <string>
+using namespace std;
+
+template <class T>
+void swap(T &a, T &b) noexcept(noexcept(T(std::move(a))) && noexcept(a.operator=(std::move(b))))
+{
+    static_assert(noexcept(T(std::move(a))) && noexcept(a.operator=(std::move(b))),
+                  "noexcept(T(std::move(a))) && noexcept(a.operator=(std::move(b)))");
+    T tmp(std::move(a));
+    a = std::move(b);
+    b = std::move(tmp);
+}
+
+int main(int argc, char **argv)
+{
+    string str1 = "hi mom";
+    string str2;
+    cout << str1 << endl; // "hi mom"
+    cout << str2 << endl; // ""
+    swap(str1, str2);
+    cout << str1 << endl; // ""
+    cout << str2 << endl; //"hi mom"
+    return 0;
+}
+```
+
+改进版的swap在函数内部使用static_assert对类型T的移动构造函数和移动赋值函数进行检查， 如果其中任何一个抛出异常，那么函数会编译失败。使用这种方法可以迫使类型T实现不抛出异常 的移动构造函数和移动赋值函数。但是这种实现方式过于强势，我们希望在不满足移动要求的时候， 有选择地使用复制方法完成移动操作。
+
+最终版swap函数:
+
+```cpp
+#include <iostream>
+#include <type_traits>
+using namespace std;
+
+struct X
+{
+    X() {}
+    X(X &&) noexcept {}
+    X(const X &) {}
+    X operator=(X &&) noexcept
+    {
+        return *this;
+    }
+    X operator=(const X &)
+    {
+        return *this;
+    }
+};
+
+struct X1
+{
+    X1() {}
+    X1(X1 &&) {}
+    X1(const X1 &) {}
+    X1 operator=(X1 &&) { return *this; }
+    X1 operator=(const X1 &) { return *this; }
+};
+
+// 是noexcept则用移动语义
+template <typename T>
+void swap_impl(T &a, T &b, std::integral_constant<bool, true>) noexcept
+{
+    T tmp(std::move(a));
+    a = std::move(b);
+    b = std::move(tmp);
+    cout << "move" << endl;
+}
+
+// 不是noexcept则用拷贝构造
+template <typename T>
+void swap_impl(T &a, T &b, std::integral_constant<bool, false>)
+{
+    T tmp(a);
+    a = b;
+    b = tmp;
+    cout << "copy" << endl;
+}
+
+template <typename T>
+void my_swap(T &a, T &b) noexcept(noexcept(swap_impl(a, b,
+                                                     std::integral_constant<bool, noexcept(T(std::move(a))) && noexcept(a.operator=(std::move(b)))>())))
+{
+    swap_impl(a, b,
+              std::integral_constant<bool, noexcept(T(std::move(a))) && noexcept(a.operator=(std::move(b)))>()
+             );
+}
+
+int main(int argc, char **argv)
+{
+    X x1, x2;
+    my_swap(x1, x2); // move
+    X1 x3, x4;
+    my_swap(x3, x4); // copy
+    return 0;
+}
+```
+
+以上代码实现了两个版本的swap_impl，它们的形参列表的前两个形参是相同的， 只有第三个形参类型不同。第三个形参为`std::integral_constant<bool, true>`的函数会使用移动 的方法交换数据，而第三个参数为`std::integral_constant<bool, false>`的函数则会使用复制的 方法来交换数据。swap函数会调用swap_impl，并且以移动构造函数和移动赋值函数是否会抛出异常 为模板实参来实例化swap_impl的第三个参数。这样，不抛出异常的类型会实例化一个类型为 `std::integral_constant<bool, true>`的对象，并调用使用移动方法的swap_impl；反之则调用使用 复制方法的swap_impl。请注意这段代码中，我为了更多地展示noexcept的用法将代码写得有些复杂。 实际上`noexcept(T(std::move(a))) && noexcept(a.operator=(std:: move(b)))`这段代码完全可以 使用`std::is_nothrow_move_constructible<T>::value && std::is_nothrow_move_assignable<T>::value`来代替。
+
+### 对比 noexcept 与 throw()
+
+这两种指明不抛出异常的方法在外在行为上是一样的。 如果用noexcept运算符去探测noexcept和throw()声明的函数，会返回相同的结果。
+
+但实际上在C++11标准中，它们在实现上确实是有一些差异的。 如果一个函数在声明了noexcept的基础上抛出了异常，那么程序将不需要展开堆栈， 并且它可以随时停止展开。另外，它不会调用`std::unexpected`， 而是调用`std::terminate`结束程序。而throw()则需要展开堆栈， 并调用`std::unexpected`。这些差异让使用noexcept程序拥有更高的性能。 在C++17标准中，throw()成为noexcept的一个别名，也就是说throw()和noexcept拥有了同样的行为和实现。 另外，在C++17标准中只有throw()被保留了下来，其他用throw声明函数抛出异常的方法都被移除了。 在C++20中throw()也被标准移除了，使用throw声明函数异常的方法正式退出了历史舞台。总之现代C++只是用noexcept别使用throw()就行了。
+
+```cpp
+#include <iostream>
+#include <stdexcept>
+using namespace std;
+
+void foo() throw()
+{
+    throw std::runtime_error("hi mom");
+}
+
+void my_unexpected_handler()
+{
+    std::cout << "my_unexpected_handler" << std::endl;
+    std::terminate();
+}
+
+int main(int argc, char **argv)
+{
+    std::set_unexpected(my_unexpected_handler);
+
+    try
+    {
+        foo();
+    }
+    catch (const std::runtime_error &e)
+    {
+        std::cerr << e.what() << std::endl;
+    }
+
+    return 0;
+}
+
+// foo()后 使用throw() 会  std::unexpected(); 触发 my_unexpected_handler 然后core
+// foo()后 使用noexcept 会直接core
+```
+
+### 默认使用 noexcept 的函数
+
+C++11 标准规定下面几种函数会默认带有noexcept声明。
+
+Ⅰ 默认构造函数、默认复制构造函数、默认赋值函数、默认移动构造函数和默认移动赋值函数。
+
+```cpp
+#include <iostream>
+using namespace std;
+
+class Base
+{
+public:
+    Base() noexcept
+    {
+    }
+    Base(const Base &other) noexcept
+    {
+        cout << "Base(const Base &other)" << endl;
+    }
+    Base &operator=(const Base &other)
+    {
+        return *this;
+    }
+};
+
+class A : Base
+{
+public:
+    A() = default;
+    A(const A &other) : Base(other)
+    {
+        cout << "A(const A &other)" << endl;
+    }
+    A &operator=(const A &other)
+    {
+        Base::operator=(other);
+        return *this;
+    }
+};
+
+int main(int argc, char **argv)
+{
+    A a;
+    A a1(a);
+    // Base(const Base &other)
+    // A(const A &other)
+
+    cout << noexcept(A()) << endl;                // 1
+    cout << noexcept(A(A())) << endl;             // 1
+    cout << noexcept(A().operator=(A())) << endl; // 0
+    return 0;
+}
+```
+
+有一个额外要求，对应的函数在类型的基类和成员中也具有noexcept声明，否则其对应函数将不再默认带有noexcept声明。 另外，自定义实现的函数默认也不会带有noexcept声明：
+
+```cpp
+#include <iostream>
+using namespace std;
+
+struct X
+{
+};
+
+#define PRINT_NOEXCEPT(x) \
+    std::cout << #x << "=" << x << std::endl;
+
+int main(int argc, char **argv)
+{
+    X x;
+    cout << std::boolalpha;
+    PRINT_NOEXCEPT(noexcept(X())); // 默认构造函数
+    // noexcept(X())=true
+    PRINT_NOEXCEPT(noexcept(X(x))); // 默认拷贝构造函数
+    // noexcept(X(x))=true
+    PRINT_NOEXCEPT(noexcept(X(std::move(x)))); // 默认移动构造函数
+    // noexcept(X(std::move(x)))=true
+    PRINT_NOEXCEPT(noexcept(x.operator=(x))); // 默认赋值函数
+    // noexcept(x.operator=(x))=true
+    PRINT_NOEXCEPT(noexcept(x.operator=(std::move(x)))); // 默认移动赋值函数
+    // noexcept(x.operator=(std::move(x)))=true
+    return 0;
+}
+```
+
+如果在X中嵌入一个M,X没有自定义实现各函数，如调用默认构造函数时也会调用M的默认构造函数，M的相关函数是否为noexcept也会影响X;
+
+```cpp
+#include <iostream>
+using namespace std;
+
+struct M
+{
+    M() {}
+    M(const M &) {}
+    M(M &&) noexcept {}
+    M operator=(const M &) noexcept { return *this; }
+    M operator=(M &&) { return *this; }
+};
+
+struct X
+{
+    M m;
+};
+
+#define PRINT_NOEXCEPT(x) \
+    std::cout << #x << "=" << x << std::endl;
+
+int main(int argc, char **argv)
+{
+    X x;
+    cout << std::boolalpha;
+    PRINT_NOEXCEPT(noexcept(X())); // 默认构造函数
+    // noexcept(X())=false
+    PRINT_NOEXCEPT(noexcept(X(x))); // 默认拷贝构造函数
+    // noexcept(X(x))=false
+    PRINT_NOEXCEPT(noexcept(X(std::move(x)))); // 默认移动构造函数
+    // noexcept(X(std::move(x)))=true
+    PRINT_NOEXCEPT(noexcept(x.operator=(x))); // 默认赋值函数
+    // noexcept(x.operator=(x))=true
+    PRINT_NOEXCEPT(noexcept(x.operator=(std::move(x)))); // 默认移动赋值函数
+    // noexcept(x.operator=(std::move(x)))=false
+    return 0;
+}
+```
+
+Ⅱ 类型的析构函数以及delete运算符默认带有noexcept声明， 请注意即使自定义实现的析构函数也会默认带有noexcept声明， 除非类型本身或者其基类和成员明确使用noexcept(false)声明析构函数， 以上也同样适用于delete运算符：
+
+```cpp
+#include <iostream>
+using namespace std;
+
+struct M
+{
+    ~M() noexcept(false) {}
+};
+
+struct X
+{
+};
+
+struct X1
+{
+    ~X1() {}
+};
+
+struct X2
+{
+    ~X2() noexcept(false) {}
+};
+
+struct X3
+{
+    M m;
+};
+
+#define PRINT_NOEXCEPT(x) \
+    std::cout << #x << " = " << x << std::endl
+
+int main()
+{
+    X *x = new X;
+    X1 *x1 = new X1;
+    X2 *x2 = new X2;
+    X3 *x3 = new X3;
+    std::cout << std::boolalpha;
+    PRINT_NOEXCEPT(noexcept(x->~X()));   // true
+    PRINT_NOEXCEPT(noexcept(x1->~X1())); // true
+    PRINT_NOEXCEPT(noexcept(x2->~X2())); // false
+    PRINT_NOEXCEPT(noexcept(x3->~X3())); // false
+    PRINT_NOEXCEPT(noexcept(delete x));  // true
+    PRINT_NOEXCEPT(noexcept(delete x1)); // true
+    PRINT_NOEXCEPT(noexcept(delete x2)); // false
+    PRINT_NOEXCEPT(noexcept(delete x3)); // false
+
+    return 0;
+}
+```
+
+可以看出noexcept运算符对于析构函数和delete运算符有着同样的结果。 自定义析构函数`X1()`依然会带有noexcept的声明，除非如同`X2()`显示的声明`noexcept(false)`。 X3有一个成员变量m，其类型M的析构函数被声明为`noexcept(false)`，这使X3的析构函数也被声明为`noexcept(false)`。
+
+### 使用 noexcept 的时机
+
+什么时候使用noexcept是一个关乎接口设计的问题。原因是一旦我们用noexcept声明了函数接口， 就需要确保以后修改代码也不会抛出异常，不会有理由让我们删除noexcept声明。这是一种协议， 试想一下，如果客户看到我们给出的接口使用了noexcept声明，他会自然而然地认为“哦好的，这个函数不会抛出异常， 我不用为它添加额外的处理代码了”。如果某天，我们迫于业务需求撕毁了协议，并在某种情况下抛出异常， 这对客户来说是很大的打击。因为编译器是不会提示客户，让他在代码中添加异常处理的。 所以对于大多数函数和接口我们应该保持函数的异常中立。那么哪些函数可以使用noexcept声明呢？ 这里总结了两种情况。
+
+1. 一定不会出现异常的函数。通常情况下，这种函数非常简短，例如求一个整数的绝对值、对基本类型的初始化等。
+2. 当我们的目标是提供不会失败或者不会抛出异常的函数时可以使用noexcept声明。对于保证不会失败的函数，例如内存释放函数，一旦出现异常，相对于捕获和处理异常，终止程序是一种更好的选择。这也是delete会默认带有noexcept声明的原因。另外，对于保证不会抛出异常的函数而言，即使有错误发生，函数也更倾向用返回错误码的方式而不是抛出异常。
+
+除了上述两种理由，我认为保持函数的异常中立是一个明智的选择，因为将函数从没有noexcept声明修改为带noexcept声明并不会付出额外代价，而反过来的代价有可能是很大的。
+
+### 将异常规范作为类型的一部分
+
+在C++17标准之前，异常规范没有作为类型系统的一部分，所以下面的代码在编译阶段不会出现问题：
+
+```cpp
+#include <iostream>
+#include <type_traits>
+using namespace std;
+
+void (*fp)() noexcept = nullptr;
+void foo() {}
+
+int main(int argc, char **argv)
+{
+    // --std=c++11 => 1
+    // --std=c++17 => 0
+    cout << std::is_same<decltype(fp), decltype(&foo)>::value << endl;
+    return 0;
+}
+```
+
+在上面的代码中fp是一个指向确保不抛出异常的函数的指针，而函数foo则没有不抛出异常的保证。在C++17之前，它们的类型是相同的，也就是说`std::is_same<decltype(fp),decltype(&foo)>::value`返回的结果为true。
+
+显然，这种宽松的规则会带来一些问题，例如一个会抛出异常的函数通过一个保证不抛出异常的函数指针进行调用，结果该函数确实抛出了异常，正常流程本应该是由程序捕获异常并进行下一步处理，但是由于函数指针保证不会抛出异常，因此程序直接调用`std::terminate`函数中止了程序：
+
+```cpp
+#include <iostream>
+using namespace std;
+
+void (*fp)() noexcept = nullptr;
+void foo()
+{
+    throw(5);
+}
+
+int main(int argc, char **argv)
+{
+    fp = &foo;
+    try
+    {
+        fp();
+    }
+    catch (int e)
+    {
+        cout << e << endl;
+    }
+    return 0;
+}
+```
+
+以上代码预期中的运行结果应该是输出数字5。但是由于函数指针的使用不当， 导致程序意外中止并且只留下了一句：“terminate called after throwing an instance of ‘int’”。但是实测有些编译器C++11是会输出5的。
+
+为了解决此类问题，C++17标准将异常规范引入了类型系统。这样一来，`fp = &foo`就无法通过编译了，因为fp和&foo变成了不同的类型，`std::is_same <decltype(fp), decltype(&foo)>::value`会返回false。值得注意的是，虽然类型系统引入异常规范导致noexcept声明的函数指针无法接受没有noexcept声明的函数，但是反过来却是被允许的，比如：
+
+```cpp
+void(*fp)() = nullptr;
+void foo() noexcept {}
+
+int main()
+{
+  fp = &foo;
+}
+```
+
+这里的原因很容易理解，一方面这个设定可以保证现有代码的兼容性，旧代码不会因为没有声明noexcept的函数指针而编译报错。另一方面，在语义上也是可以接受的，因为函数指针既没有保证会抛出异常，也没有保证不会抛出异常，所以接受一个保证不会抛出异常的函数也合情合理。同样，虚函数的重写也遵守这个规则，例如：
+
+```cpp
+#include <iostream>
+using namespace std;
+
+class Base
+{
+public:
+    virtual void foo() noexcept {}
+};
+
+class Derived : public Base
+{
+public:
+    void foo() override{}; // 编译错误
+};
+
+int main(int argc, char **argv)
+{
+    return 0;
+}
+```
+
+以上代码无法编译成功，因为派生类试图用没有声明noexcept的虚函数重写基类中声明noexcept的虚函数，这是不允许的。 但反过来是可以通过编译的：
+
+```cpp
+#include <iostream>
+using namespace std;
+
+class Base
+{
+public:
+    virtual void foo() {}
+};
+
+class Derived : public Base
+{
+public:
+    void foo() noexcept override{};
+};
+
+int main(int argc, char **argv)
+{
+    return 0;
+}
+```
+
+最后需要注意的是模板带来的兼容性问题，在标准文档中给出了这样一个例子：
+
+```cpp
+#include <iostream>
+using namespace std;
+
+void g1() noexcept {}
+void g2() {}
+
+template <class T>
+void f(T *, T *) {}
+
+int main(int argc, char **argv)
+{
+    // void f<void ()>(void (*)(), void (*)())
+    f(g1, g2);
+    return 0;
+}
+// --std=c++11 可以编译通过
+// --std=c++17 error: no matching function for call to 'f(void (&)() noexcept, void (&)())'
+```
+
+可以改为
+
+```cpp
+#include <iostream>
+using namespace std;
+
+void g1() noexcept {}
+void g2() {}
+
+template <class T1, class T2>
+void f(T1 *, T2 *) {}
+
+int main(int argc, char **argv)
+{
+    f(g1, g2);
     return 0;
 }
 ```
@@ -581,11 +1350,6 @@ int main(int argc, char **argv)
     return 0;
 }
 ```
-
-### 合成 noexcept
-
-当编译器合成拷贝控制成员时，同时会生成一个异常说明，如果该类成员和其基类所有操作都为 noexcept,则合成的成员为 noexcept 的。不满足条件则合成 noexcept(false)的。\
-在析构函数没有提供 noexcept 声明，编译器将会为其合成。合成的为与编译器直接合成析构函数提供的 noexcept 说明相同
 
 ### 常见异常类继承关系
 

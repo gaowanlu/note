@@ -17,7 +17,6 @@ I have a dream.
 TODOLIST:
 
 - noexcept 关键字(https://61.171.51.135:20024/upload/newnote/6.html)
-- 虚函数指针 (https://61.171.51.135:20024/upload/newnote/7.html)
 
 Financial Independence, Retire Early
 
