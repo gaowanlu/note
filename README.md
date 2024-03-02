@@ -16,8 +16,6 @@ I have a dream.
 
 TODOLIST:
 
-- noexcept 关键字(https://61.171.51.135:20024/upload/newnote/6.html)
-
 Financial Independence, Retire Early
 
 1. The FIRE movement prioritizes saving and investing 50% or more of your income so that you can retire early.
