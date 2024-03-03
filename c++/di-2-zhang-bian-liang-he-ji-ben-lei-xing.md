@@ -1333,7 +1333,12 @@ int main(int argc, char **argv)
 
 ### 类型别名 typedef 与 using
 
-作用为为已有的类型起一个别名
+作用为为已有的类型起一个别名, 比如`std::map<int, std:: string>::const_iterator`。为了让代码看起来更加简洁，往往会使用typedef为较长的类型名定义一个别名，例如：
+
+```cpp
+typedef std::map<int, std::string>::const_iterator map_const_iter;
+map_const_iter iter;
+```
 
 ```cpp
 //example35.cpp
@@ -1362,6 +1367,21 @@ int main(int argc, char **argv)
 可见我们能够玩的非常花里胡哨，但是在实际的开发中我们要根据自己的需要来使用 typeof，而不是一昧的追求新颖
 
 ### 用 using 起别名
+
+C++11标准提供了一个新的定义类型别名的方法，该方法使用using关键字，具体语法如
+
+```cpp
+using identifier = type-id
+```
+
+这种表达式在定义函数指针类型的别名时会显得格外清晰，而typedef有些鸡肋。
+
+```cpp
+typedef void(*func1)(int ,int);
+using func2 = void(*)(int,int);
+```
+
+如果一定要找出typdef在定义类型别名上的一点优势，那应该只有对C语言的支持了。
 
 ```cpp
 //example36.cpp
@@ -1396,7 +1416,7 @@ int main(int argc, char **argv)
     // ptr = nullptr; error: assignment of read-only variable 'ptr'
     // ptr是一个指向int的常量指针
 
-    const int_p *p = &ptr; // const (int*)* p是一个指针类型，指向cosnt (int*)类型
+    const int_p *p = &ptr; // const (int*)* p是一个指针类型，指向const (int*)类型
     cout << **p << endl;   // 999
     //*p = nullptr; // error: assignment of read-only location '* p'
     // 可见这个const是一个底层const 也就是 const (int*)*的效果

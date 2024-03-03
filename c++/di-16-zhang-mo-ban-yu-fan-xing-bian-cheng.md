@@ -567,24 +567,145 @@ int main(int argc, char **argv)
 }
 ```
 
-### 模板类型别名
+### 别名模板
 
-1、为类模板实例起别名
+using承担着一个重要的特性即别名模板。别名模板本质上也是一种模板，它的实例化过程是用自己的模板参数替换原始模板的模板参数。
+
+- 为类模板实例起别名
 
 ```cpp
 typedef A<string> AString;
 AString a;//等价于A<string> a;
 ```
 
-2、不能为类模板本身起别名，因为模板不是一个类型\
-3、为类模板定义类型别名
+- 不能为类模板本身起别名，因为模板不是一个类型
+- 为类模板定义类型别名
 
 ```cpp
-template<typename T> using twin=pair<T,T>;
+template<typename T>
+using twin=pair<T,T>;
+
 twin<string> data;//等价于 pair<string,string> data;
 
-template<typename T> using m_pair=pair<T,usigned>;
+template<typename T>
+using m_pair=pair<T,usigned>;
+
 m_pair<int> a;//等价于 pair<int,unsigned>a;
+```
+
+- 用typedef也可以实现上面的“为类模板定义类型别名”
+
+```cpp
+#include <iostream>
+#include <map>
+#include <string>
+
+using namespace std;
+
+template <class T>
+struct int_map
+{
+    typedef std::map<int, T> type;
+};
+
+int main(int argc, char **argv)
+{
+    int_map<std::string>::type int2string;
+    return 0;
+}
+```
+
+用typedef和类型嵌套的方案也能达到同样的目的，不过方案比较复杂，不仅要定义一个int_map结构体类型，还要在类型里使用
+typedef来定义目标类型，最后必须使用`int_map<std::string>::type`来声明变量，除此之外如果遇见待决得类型，还需要在
+变量声明前加上typename关键字。
+
+```cpp
+#include <iostream>
+#include <map>
+#include <string>
+
+using namespace std;
+
+template <class T>
+struct int_map
+{
+    typedef std::map<int, T> type;
+};
+
+template <class T>
+struct X
+{
+    typename int_map<T>::type int2other;
+    // 必须带有typename关键字，否则编译错误
+};
+
+int main(int argc, char **argv)
+{
+    X<std::string> x;
+    return 0;
+}
+```
+
+为什么要加typename呢，类模板X没有确定模板参数T得类型。
+所以`int_map<T>::type`是一个未决类型，`int_map<T>::type` 可能是一个类型 也可能是一个静态成员变量。
+编译器会无法处理，这种情况应该用typename关键字告诉编译器应该将`int_map<T>::type`作为类型来处理。
+
+然而使用using则不会有这种问题
+
+```cpp
+#include <iostream>
+#include <map>
+#include <string>
+
+using namespace std;
+
+template <class T>
+using int_map = std::map<int, T>;
+
+template <class T>
+struct X
+{
+    int_map<T> int2other;
+};
+
+int main(int argc, char **argv)
+{
+    X<std::string> x;
+    return 0;
+}
+```
+
+虽然别名模板有很多typedef不具备的优势，但是C++11标准库中的模板元编程函数还是使用的typedef和类型嵌套的方案，如标准库中的`enable_if`,下面是模仿一下写成`_enable_if`:
+
+```cpp
+#include <iostream>
+using namespace std;
+
+template <bool, typename _Tp = void>
+struct _enable_if
+{
+};
+
+template <typename _Tp>
+struct _enable_if<true, _Tp>
+{
+    typedef _Tp type;
+};
+
+int main(int argc, char **argv)
+{
+    _enable_if<true, int>::type n;
+    n = 999;
+    cout << n << endl;
+    return 0;
+}
+```
+
+在C++14中标准库中模板元编程函数已经有了别名模板的版本，为了保证与老代码的兼容性，typedef的方案依然存在，别名模板的模板元编程函数使用_t作为名称的后缀以示区分:
+
+```cpp
+template<bool _Cond, typename _Tp = void>
+using enable_if_t = typename enable_if<_Cond, _Tp>::type;
 ```
 
 ### 类模板的 static 成员
