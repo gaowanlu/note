@@ -804,15 +804,29 @@ int *pi = NULL;
 char *pc = NULL;
 ```
 
-上面的代码在 C++中编译是会出错的，C++是强类型语言，void\*类型不能隐式转换成其他类型的指针类型。
+在C++标准中有一条特殊的规则,即0是一个整型常量，又是一个空指针常量，0作为空指针常量还能隐式地转换为各种指针类型
 
 ```cpp
-#ifdef _cplusplus
-#define NULL 0
-#else
-#define NULL ((void*)0)
+char *p = NULL;
+int x = 0;
+```
+
+这里的NULL是一个宏,在C++11标准之前其本质就是0
+
+```cpp
+#ifndef NULL
+    #ifdef __cpluscplus
+        #define NULL 0
+    #else
+        #define NULL ((void*)0)
+    #endif
 #endif
 ```
+
+C++将NULL定义为0,而C语言将NULL定义为`(void *)0`,之所以有区别，是因为C++和C的标准定义不同
+
+- C++标准中定义空指针常量是评估为0的整数类型的常量表达式右值。
+- C标准中定义0为整型常量或者类型为`void*`的空指针常量。
 
 用 NULL 代替 0 表示空指针在函数重载时会出现问题
 
@@ -835,6 +849,7 @@ int main()
 {
     func(NULL);
     func(nullptr);
+    func(reinterpret<void*>(NULL)); // 调用void func(void* i)不是void func(int i)
     return 0;
 }
 
@@ -856,7 +871,120 @@ main.cpp:10:6: 附注：void func(int)
  void func(int i)
 ```
 
+下面的例子看起来更加奇怪了
+
+```cpp
+std::string s1(false);
+std::string s2(true);
+```
+
+s1可以编译成功，s2失败，原因是false被隐式转为了0，而0又能作为空指针常量转换为`const char* const`所以s1成功，
+true没有这样的待遇。如果使用`C++ -std=c++11`及其以后的标准来编译，两条均会报错。
+
 现代 C++尽量用 nullptr 来代表空指针，C++中的 NULL 只是一个数字 0 的宏定义
+
+`std::nullptr_t`类型的纯右值。nullptr的用途非常单纯，就是用来指示空指针，
+它不允许运用在算术表达式中或者与非指针类型进行比较（除了空指针常量0）。
+它还可以隐式转换为各种指针类型，但是无法隐式转换到非指针类型。
+注意，0依然保留着可以代表整数和空指针常量的特殊能力，保留这一点是为了让C++11标准兼容以前的C++代码。
+
+```cpp
+// 全都可以编译
+char* ch = nullptr;
+char* ch2 = 0;
+assert(ch == 0);
+assert(ch == nullptr);
+assert(!ch);
+assert(ch2 == nullptr);
+assert(nullptr == 0);
+```
+
+虽然nullptr可以和0进行比较，但这并不代表它的类型为整型，同时它也不能隐式转换为整型：
+
+```cpp
+int n1 = nullptr; // 错误 nullptr不是int类型
+char* ch2 = true ? 0 : nullptr; // 错误 0与nullptr类型不一致
+int n2 = true ? nullptr : nullptr; // 错误 nullptr不是int类型
+int n3 = true ? 0 : nullptr; // 错误 0与nullptr类型不一致
+```
+
+nullptr的类型`std::nullptr_t`，它并不是一个关键字，而是使用decltype将nullptr的类型定义在代码中，
+C++标准规定该类型的长度和`void *`相同：
+
+```cpp
+namespace std
+{
+    using nullptr_t = decltype(nullptr);
+    // 等价于
+    typedef decltype(nullptr) nullptr_t;
+}
+static_assert(sizeof(std::nullptr_t) == sizeof(void*));
+```
+
+我们可以使用`std::nullptr_t`创建自己的nullptr，并且有与nullptr相同的功能,
+
+```cpp
+std::nullptr_t null1,null2;
+char* ch = null1;
+char* ch2 = null2;
+assert(ch == 0);
+assert(ch == nullptr);
+assert(ch == null2);
+assert(null1 == null2);
+assert(nullptr == null1);
+```
+
+虽然这段代码中null1、null2和nullptr的能力相同，但是它们还是有很大区别的。首先，nullptr是关键字，而其他两个是声明的变量。其次，nullptr是一个纯右值，而其他两个是左值
+
+```cpp
+std::nullptr_t null1,null2;
+std::cout << &null1 << std::endl;
+std::cout << &null2 << std::endl;
+// null1和null2是左值，可以成功获取对象指针
+// 并且指针指向的内存地址不同
+
+std::cout << &nullptr << std::endl; // 错误 nullptr是一个右值
+```
+
+nullptr可以解决 `void f(int)` 与 `void f(char *)`调用问题，因为nullptr可以隐式转换为`char*`不能转换为int。
+
+除此之外，可以为函数模板或者类设计一些空指针类型的特化版本。在C++11以前这是不可能实现的，因为0的推导类型是int而不是空指针类型
+
+```cpp
+#include <iostream>
+using namespace std;
+
+template <class T>
+struct widget
+{
+    widget()
+    {
+        std::cout << "template" << std::endl;
+    }
+};
+
+template <>
+struct widget<std::nullptr_t>
+{
+    widget()
+    {
+        std::cout << "nullptr" << std::endl;
+    };
+};
+
+template <class T>
+widget<T> *make_widget(T)
+{
+    return new widget<T>();
+}
+
+int main(int argc, char **argv)
+{
+    auto w1 = make_widget(0);       // template
+    auto w2 = make_widget(nullptr); // nullptr
+    return 0;
+}
+```
 
 ### 赋值和指针
 
