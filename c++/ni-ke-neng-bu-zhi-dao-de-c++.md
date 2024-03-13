@@ -220,4 +220,60 @@ C++中的默认值初始化规则并不一致，需要根据变量的定义方�
 
 对于这种操作内存的语言，有一丝丝相信编译器都是犯罪。
 
+```cpp
+#include <iostream>
+#include <cstdlib>
+#include <cstring>
+
+using namespace std;
+
+class A
+{
+public:
+    A()
+    {
+    }
+    ~A()
+    {
+    }
+    int n;
+    int n1;
+};
+
+int main()
+{
+    void *mem = ::malloc(sizeof(A));
+    if (!mem)
+    {
+        exit(EXIT_FAILURE);
+    }
+
+    memset(mem, 1, sizeof(A));
+
+    A *ptrA = new (mem) A;
+    cout << ptrA->n << endl;
+    cout << ptrA->n1 << endl;
+
+    ptrA->~A();
+    free(mem);
+
+    return 0;
+}
+
+// 会发现 输出了 16843009 和 16843009
+
+// class A
+// {
+// public:
+//     A() : n(99)
+//     {
+//     }
+//     ~A()
+//     {
+//     }
+//     int n{9};
+//     int n1 = 100;
+// };
+// // 会输出 n=99 n1=100
+```
 
