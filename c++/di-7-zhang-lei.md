@@ -2024,21 +2024,21 @@ using namespace std;
 
 class A{
 public:
-	void name() {
-		cout << "A" << endl;
-	}
-	static A* ptr;
+ void name() {
+  cout << "A" << endl;
+ }
+ static A* ptr;
 private:
-	A() = default;
+ A() = default;
 };
 
 //A a; //“A::A”: 无法访问 private 成员(在“A”类中声明)
 A* A::ptr = new A;//本质上初始化器在类内进行
 
 int main() {
-	A::ptr->name();//A
-	delete A::ptr;
-	return 0;
+ A::ptr->name();//A
+ delete A::ptr;
+ return 0;
 }
 ```
 
@@ -2067,6 +2067,59 @@ int main(int argc,char**argv){
     return 0;
 }
 ```
+
+### 函数方法中的static变量
+
+在函数内的定义的static局部变量只根据方法的标识确定是否是同一个，如
+
+```cpp
+#include <iostream>
+
+using namespace std;
+
+class A
+{
+public:
+    class B
+    {
+    public:
+        void func();
+    };
+};
+
+void A::B::func()
+{
+    static int n = 0;
+    n++;
+    cout << "A::B::func n=" << n << endl;
+}
+
+void func()
+{
+    static int n = 0;
+    n++;
+    cout << "func() n=" << n << endl;
+}
+
+int main()
+{
+    A::B b1;
+    b1.func(); // A::B::func n=1
+
+    A::B b2;
+    b2.func(); // A::B::func n=2
+
+    A::B b3;
+    b3.func(); // A::B::func n=3
+
+    func(); // func() n=1
+    func(); // func() n=2
+    func(); // func() n=3
+    return 0;
+}
+```
+
+上面因为函数方法的标识都是`A::B`所以，三个对象操作的n都是同一个n。
 
 ### C++20 指定初始化
 
