@@ -78,6 +78,7 @@
   * [GCC](buildtool/gcc.md)
   * [Make](buildtool/make.md)
   * [CMake](buildtool/cmake.md)
+  * [静态库与动态库](buildtool/library.md)
 
 ## 🐶 GoLang
 
