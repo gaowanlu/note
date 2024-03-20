@@ -566,3 +566,12 @@ int main()
 
 }
 ```
+
+### 详细了解NAT
+
+* https://www.idcbest.com/idcnews/11003735.html
+
+### 不同NAT类型对打洞能不能成功的影响
+
+* https://support.dh2i.com/docs/kbs/general/understanding-different-nat-types-and-hole-punching/
+
