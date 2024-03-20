@@ -575,3 +575,92 @@ int main()
 
 * https://support.dh2i.com/docs/kbs/general/understanding-different-nat-types-and-hole-punching/
 
+### 游戏用KCP进行通信
+
+客户端与公网服务器可以进行UDP双方收发数据，而KCP是建立在UDP上的可靠的应用层协议，可靠的UDP，UDP版本的TCP。
+
+### 用KCP建立游戏服务器软路由
+
+可以防止被攻击，被攻击时多搞点软路由，新软路由节点用新IP就行了,为什么用KCP而不是KCP，因为TCP是有状态的，玩家断线后不知道哪些内容已经被游戏服接收了，哪些需要重发。
+
+```cpp
+CDN(客户端从CDN拉去软路由列表 即路由的UDP IP 和 端口)
+|
+client<---kcp-->router<---kcp-->gate<---ipc--->gameworld_1
+client<---kcp-->router<---kcp-->gate<---ipc--->gameworld_2
+client<---kcp-->router<---kcp-->gate<---ipc--->gameworld_3
+```
+
+首先client会向router回报转发规则到哪里，router会将客户端发的每个UDP数据包转发到gate去，gate确认后 router知道了才通知 client说收到了(我们换router时gate正向router发udp包告诉router确认，但是router挂了，这也没关系，当client通过新router转发上来后gate可以继续原来的kcp要发的数据)。
+如果有人攻击router，我们准备换一批router，client重新连接到新router告诉router转发规则后，继续上次的kcp任务，进而client与gate就又打通了。
+而且是无缝衔接。
+
+```cpp
+#include <array>
+#include <iostream>
+#include <kcp/kcp.h>
+#include <sys/socket.h>
+#include <unistd.h>
+
+constexpr size_t BUFFER_SIZE = 1024;
+constexpr size_t SERVER_PORT = 8080;
+constexpr char SERVER_ADDRESS[] = "127.0.0.1";
+
+int main() {
+    // Initialize KCP
+    uint32_t conv = 0;
+    kcp_t* kcp = kcp_create(conv);
+    kcp_set_nodelay(kcp, 1, 10, 2, 1);
+    kcp_set_wndsize(kcp, 128, 128);
+
+    // Create a UDP socket
+    int sockfd = socket(AF_INET, SOCK_DGRAM, 0);
+    if (sockfd < 0) {
+        std::cerr << "Failed to create socket" << std::endl;
+        return 1;
+    }
+
+    sockaddr_in server_addr;
+    server_addr.sin_family = AF_INET;
+    server_addr.sin_port = htons(SERVER_PORT);
+    server_addr.sin_addr.s_addr = inet_addr(SERVER_ADDRESS);
+
+    // Send data using KCP
+    std::array<char, BUFFER_SIZE> input_buf;
+    std::array<char, BUFFER_SIZE> output_buf;
+
+    // Fill input_buf with your custom protocol data
+    // For example, let's use a simple string
+    std::string protocol_data = "Hello, KCP Server!";
+    std::copy(protocol_data.begin(), protocol_data.end(), input_buf.begin());
+
+    kcp_input(kcp, input_buf.data(), protocol_data.size());
+
+    while (true) {
+        kcp_update(kcp, kcp_ticks(1));
+
+        // Send data
+        int sent_len = kcp_send(kcp, output_buf.data(), BUFFER_SIZE);
+        if (sent_len > 0) {
+            sendto(sockfd, output_buf.data(), sent_len, 0,
+                   (sockaddr*)&server_addr, sizeof(server_addr));
+        }
+
+        // Receive data
+        sockaddr_in client_addr;
+        socklen_t client_len = sizeof(client_addr);
+        int recv_len = recvfrom(sockfd, input_buf.data(), input_buf.size(), 0,
+                               (sockaddr*)&client_addr, &client_len);
+        if (recv_len > 0) {
+            // Process received data if needed
+            std::cout << "Received: " << input_buf.data() << std::endl;
+        }
+    }
+
+    // Release resources
+    kcp_release(kcp);
+    close(sockfd);
+
+    return 0;
+}
+```
