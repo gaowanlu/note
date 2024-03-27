@@ -48,6 +48,7 @@
     "cinttypes": "cpp",
     "list": "cpp",
     "map": "cpp",
-    "condition_variable": "cpp"
+    "condition_variable": "cpp",
+    "thread": "cpp"
   }
 }
