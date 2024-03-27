@@ -8,19 +8,16 @@ coverY: 0
 
 I have a dream.
 
-学习网站推荐
+正在读的:
 
-- [做开发终身收益 无论技术还是人生规划](https://balloonwj.github.io/cpp-guide-web/)
-- [leveldb、libevent、memcached 源码分析，cpp 服务器开发](https://cppguide.cn/)
-- [网络、OS、MySQL、Redis](https://xiaolincoding.com/)
+- 3D数学 <https://gamemath.com/book/multiplespaces.html>  
+- 《现代C++语言核心特性解析》 第25章 线程局部存储(正在进行中...)
 
-2024内搞定?:
+2024:
 
-- 现代C++语言核心特性解析 第24章三向比较(C++20)(阅读中)
 - Redis设计与实现第2版 第一部分: 数据结构与对象(待开始)
 - SQL经典实例第2版 第1章 检索记录(待开始)
 - 高性能MySQL 第1章MySQL架构(待开始)
-- 3D数学基础 图形和游戏开发(阅读中)
 - 游戏编程模式
 - Linux内核完全注释20周年版
 - 精通区块链开发技术
@@ -59,3 +56,9 @@ Financial Independence, Retire Early
 2. FIRE followers dramatically reduce their expenses, seek ways to increase income, and invest heavily.
 3. Many FIRE followers also go by the rule of 25, saving 25 times your annual expenses to retire, and the 4% rule, withdrawing 4% or less per year.
 4. FIRE is popular among millennials, but because of the strict expense cuts, it may not work for everyone.
+
+学习网站推荐
+
+- [做开发终身收益 无论技术还是人生规划](https://balloonwj.github.io/cpp-guide-web/)
+- [leveldb、libevent、memcached 源码分析，cpp 服务器开发](https://cppguide.cn/)
+- [网络、OS、MySQL、Redis](https://xiaolincoding.com/)
