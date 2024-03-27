@@ -32,15 +32,11 @@
   * [C++ 11 补充](c++/cpp11-patch.md)
   * [C++ 17 补充](c++/cpp17-patch.md)
   * [C++ 20 补充](c++/cpp20-patch.md)
+  * [协程](c++/coroutine.md)
 
 ## 🤡 C++ 进阶
 
-* [Effective C++](cpppro/effective\_cpp.md)
-* [Effective Modern C++](cpppro/effective\_modern\_cpp.md)
-* [More Effective C++](cpppro/more\_effective\_cpp.md)
-* [深度探索 C++对象模型](cpppro/inside\_the\_cpp\_object\_model.md)
-* [C++ 沉思录](cpppro/rumination\_on\_cpp.md)
-* [Google C++](cpppro/codestyle.md)
+* [Effective C++](cpppro/effective_cpp.md)
 * [并发编程](bing-fa-bian-cheng/README.md)
   * [第 1 章 你好并发世界](bing-fa-bian-cheng/di-1-zhang-ni-hao-bing-fa-shi-jie.md)
   * [第 2 章 线程管理](bing-fa-bian-cheng/di-2-zhang-xian-cheng-guan-li.md)

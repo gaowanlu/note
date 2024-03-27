@@ -29,6 +29,10 @@ I have a dream.
 
 可能会读的有趣读物:
 
+- Effective Modern C++
+- More Effective C++
+- 深度探索C++对象模型
+- C++沉思录
 - 网络游戏核心技术与实战
 - 网络多人游戏架构与编程
 - Game Programming in C++
