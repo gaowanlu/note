@@ -569,11 +569,11 @@ int main()
 
 ### 详细了解NAT
 
-* https://www.idcbest.com/idcnews/11003735.html
+* <https://www.idcbest.com/idcnews/11003735.html>
 
 ### 不同NAT类型对打洞能不能成功的影响
 
-* https://support.dh2i.com/docs/kbs/general/understanding-different-nat-types-and-hole-punching/
+* <https://support.dh2i.com/docs/kbs/general/understanding-different-nat-types-and-hole-punching/>
 
 ### 游戏用KCP进行通信
 
@@ -660,6 +660,82 @@ int main() {
     // Release resources
     kcp_release(kcp);
     close(sockfd);
+
+    return 0;
+}
+```
+
+### TCP打洞
+
+TCP NAT，两端获得自己对方 二元组后，建立个新套接字 设置复用 bind复用原来已经映射到NAT的二元组，让后不断地调用connect目标地址为对方二元组，两端都同时不断connect ，connect 如果能返回新fd ，则就把连接搞到手了^_^。
+
+```cpp
+#include
+
+#include <unistd.h>
+
+#include <sys/socket.h>
+
+#include <netinet/in.h>
+
+void createSocket(int port)
+{
+
+    // 创建一个 UDP socket
+
+    int sock = socket(AF_INET, SOCK_DGRAM, 0);
+
+    if (sock == -1)
+    {
+
+        std::cerr << "Failed to create socket." << std::endl;
+
+        exit(1);
+    }
+
+    // 设置 SO_REUSEADDR 选项以启用端口复用
+
+    int yes = 1;
+
+    if (setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, &yes, sizeof(yes)) == -1)
+    {
+
+        std::cerr << "Failed to set socket option." << std::endl;
+
+        exit(1);
+    }
+
+    // 绑定 socket 到指定端口
+
+    struct sockaddr_inaddr;
+
+    memset(&addr, 0, sizeof(addr));
+
+    addr.sin_family = AF_INET;
+
+    addr.sin_port = htons(port);
+
+    addr.sin_addr.s_addr = INADDR_ANY;
+
+    if (bind(sock, (struct sockaddr *)&addr, sizeof(addr)) == -1)
+    {
+
+        std::cerr << "Failed to bind socket." << std::endl;
+
+        exit(1);
+    }
+
+    std::cout << "Socket created and bound to port " << port << std::endl;
+}
+
+int main()
+{
+
+    // 创建两个套接字，使用相同的端口
+
+    createSocket(5001);
+
+    createSocket(5001);
 
     return 0;
 }

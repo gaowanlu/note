@@ -363,3 +363,160 @@ int main(int argc, char **argv)
 // 0
 // 888888
 ```
+
+#### 简单理解协程调度
+
+从这个例子中其实可以看 其实协程可以看成任务状态机，通过promise与coroutine_handle与外界交互
+只不过最大优势就是 可以自动维持上下文，状态机挂起的时候，可以自动回到触发状态机的地方即调用resume()的地方。
+
+这么一来像做服务器的有什么打的优势，其实就是epoll+协程+非阻塞IO，而且可以做到单线程并发
+例如epoll 来了新连接 则为新连接创建协程，epoll监听连接套接字可读时 可以向promise中标记 你可以读了 或者 可以写了。然后进行resume() 每个协程内部其实就是死循环 read process write之类的相关操作，要暂时不处理了比如EAGAIN了，完全可以co_wait出去回到原来要执行的地方，可能会处理下一个协程，这么一来可以发现 C++协程更像是一种状态机的语法糖一样的感觉，而且很容易围绕非阻塞IO去做
+一些异步任务，而且完全可以单线程，安全好用简单，在必要的时候进行resume触发执行，协程也有自知之明 自己会co_wait co_yield co_return不会进行阻塞 不是在运行就是在挂起等待被resume 这才是关键与精髓。
+
+```cpp
+
+#include <coroutine>
+#include <future>
+#include <thread>
+#include <iostream>
+#include <unordered_map>
+#include <unordered_set>
+#include <vector>
+
+
+using namespace std;
+
+struct CoRet
+{
+    struct promise_type
+    {
+        int _in;
+        int _out;
+        int _res;
+        suspend_never initial_suspend() {return {};}
+        suspend_always final_suspend() noexcept {return {};}
+        void unhandled_exception() {}
+        CoRet get_return_object()
+        { return 
+            {coroutine_handle<promise_type>::from_promise(*this)};
+        }
+        suspend_always yield_value(int r) {
+            _out = r;
+            return {};
+        }
+        void return_value(int r) {
+            _res = r;
+        }
+    };
+
+    coroutine_handle<promise_type> _h; // _h.resume(), _h()
+};
+
+struct Input
+{
+    int* _in;
+    int* _out;
+    bool await_ready() { return false; }
+    void await_suspend(coroutine_handle<CoRet::promise_type> h) 
+    { _in = &h.promise()._in; _out = &h.promise()._out; }
+    int await_resume() { return *_in; }
+};
+
+// 协程
+CoRet Guess() {
+    // co_await promise.initial_suspend();
+    int res = (rand()%30)+1;
+    Input input;
+    int numGuess = 0;
+    while(true)
+    {
+        int g = co_await input;
+        
+        ++numGuess;
+        (*input._out) = (res>g ? 1: (res == g? 0 : -1));
+        if((*input._out) == 0) co_return numGuess;
+    }    
+    // co_await promise.final_suspend();...
+}
+
+
+
+struct Hasher
+{
+    size_t operator() (const pair<int, int>& p) const
+    {
+        return (size_t)(p.first << 8) + (size_t)(p.second); 
+    }
+};
+int main()
+{
+    srand(time(nullptr));
+
+    unordered_map<pair<int, int>, vector<CoRet>, Hasher> buckets;
+    for(auto i = 0; i<100; ++i) buckets[make_pair(1, 30)].push_back(Guess());
+
+    while(!buckets.empty())
+    {
+        auto it = buckets.begin();
+        auto& range = it->first;//1
+        auto& handles = it->second;//vector<CoRet>存放协程
+                
+        int g = (range.first+range.second)/2;//中间数
+        auto ur = make_pair(g+1, range.second);//右边部分
+        auto lr = make_pair(range.first, g-1);//左边部分
+
+        vector<future<int>> cmp;
+        cmp.reserve(handles.size());
+
+        // 这个循环是非阻塞的非常快
+        for(auto& coret : handles)
+        {
+            // 为每个任务去开线程 去执行协程
+            cmp.push_back(async(launch::async, [&coret, g]() { // 判断中间数
+                coret._h.promise()._in = g;
+                coret._h.resume(); // 协程内部遇见co_wait co_yield会返回来               
+                return coret._h.promise()._out;
+            }));
+            // 获得许多future 即lamda返回值向条件变量一样
+        }
+
+        // 遍历所有协程，前面已经让协程去异步运行了
+        for(int i=0; i< handles.size(); ++i)
+        {
+            int r = cmp[i].get(); // 等待future返回值这里是阻塞的 只有相应协程被resume lamda返回才可以get()返回
+            
+            if(r == 0) {//猜对了
+                cout << "The secret number is " << handles[i]._h.promise()._in
+                << ", total # guesses is " << handles[i]._h.promise()._res
+                << endl;
+            }            
+            else if (r == 1) buckets[ur].push_back(handles[i]);//将协程移到右边部分去执行
+            else buckets[lr].push_back(handles[i]);//将协程移到左边部分去执行
+        }
+        buckets.erase(it);//删除原来范围的，猜中了的不用再猜协程中的数字了，剩余协程不是去左边就是右边
+    }
+
+/*
+    auto ret = Guess();
+    pair<int, int> range = {1,30};    
+    int in, out;
+    do
+    {
+        in = (range.first+range.second)/2;
+        ret._h.promise()._in = in; 
+        cout << "main: make a guess: " << ret._h.promise()._in << endl;
+
+        ret._h.resume(); // resume from co_await
+
+        out = ret._h.promise()._out;
+        cout << "main: result is " << 
+        ((out == 1) ? "larger" :
+        ((out == 0) ? "the same" : "smaller"))
+            << endl;
+        if(out == 1) range.first = in+1;
+        else if(out == -1) range.second = in-1;
+    }
+    while(out != 0);
+*/
+}
+```
