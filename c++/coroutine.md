@@ -521,3 +521,139 @@ int main()
 */
 }
 ```
+
+### 不同线程resume同一个协程
+
+一个线程程将一个协程运行到某个位置 然后协程挂起了。
+完全可以使用其他线程 继续完成协程。
+谁进行resume谁就执行协程 而且resume内部还可能触发另一个协程handle的resume。
+这里就发现了，其实resume需要保证线程安全，通过一个挂起的协程handle被多个线程同时handle,会出现问题的。
+C++协程是无栈协程 其协程frame存放在堆上 而且是对称的协程 也就是协程之间地位是平等的 一个协程可以随便
+跳到其他协程 哪怕在两个协程见反复横跳都没问题 但是如果我们用一起的函数调用 这样loop多了就会栈溢出了
+而无栈协程不会，只是在两个状态机之间切换跳转。
+
+```cpp
+#include <iostream>
+#include <coroutine>
+#include <string_view>
+#include <thread>
+#include <future>
+
+class CoMessage
+{
+public:
+    std::string_view str;
+};
+
+struct Awaitable;
+
+struct CoRet
+{
+    struct promise_type
+    {
+        CoMessage _message;
+        std::string_view _out;
+
+        std::suspend_always initial_suspend()
+        {
+            std::cout << "3=>" << std::this_thread::get_id() << std::endl;
+            return {};
+        }
+
+        std::suspend_never final_suspend() noexcept;
+
+        void unhandled_exception()
+        {
+        }
+
+        CoRet get_return_object()
+        {
+            std::cout << "4=>" << std::this_thread::get_id() << std::endl;
+            return {std::coroutine_handle<promise_type>::from_promise(*this)};
+        }
+
+        std::suspend_never yield_value(std::string_view r)
+        {
+            _out = r;
+            return {};
+        }
+
+        // void return_void()
+        // {
+        // }
+
+        void return_value(std::string_view str)
+        {
+            std::cout << "5=>" << std::this_thread::get_id() << std::endl;
+            _out = str;
+        }
+    };
+
+    std::coroutine_handle<promise_type> _h;
+};
+
+struct Awaitable
+{
+    CoMessage *_message;
+    bool await_ready() noexcept
+    {
+        return false;
+    }
+
+    void await_suspend(std::coroutine_handle<CoRet::promise_type> h) noexcept
+    {
+        _message = &h.promise()._message;
+    }
+
+    CoMessage await_resume() noexcept
+    {
+        std::cout << "6=>" << std::this_thread::get_id() << std::endl;
+        return *_message;
+    }
+};
+
+std::suspend_never CoRet::promise_type::final_suspend() noexcept
+{
+    std::cout << "7=>" << std::this_thread::get_id() << std::endl;
+    return {};
+}
+
+CoRet CoFunction()
+{
+    std::cout << "2=>" << std::this_thread::get_id() << std::endl;
+    CoMessage message1 = co_await Awaitable();
+    CoMessage message2 = co_await Awaitable();
+    CoMessage message3 = co_await Awaitable();
+    co_return "888888";
+}
+
+int main(int argc, char **argv)
+{
+    std::cout << "1=>" << std::this_thread::get_id() << std::endl;
+    CoRet ret = CoFunction();
+    ret._h();
+    ret._h.promise()._message.str = "hello";
+    ret._h.resume();
+    // 开新线程去处理协程
+    std::future<int> fu = std::async(
+        [&]
+        {
+            ret._h.resume();
+            ret._h.resume();
+            return 999;
+        });
+    fu.get(); // 等待异步任务
+    return 0;
+}
+
+// 1=>140087387162432
+// 4=>140087387162432
+// 3=>140087387162432
+// 2=>140087387162432
+// 6=>140087387162432
+// 6=>140087383815744
+// 6=>140087383815744
+// 5=>140087383815744
+// 7=>140087383815744
+```
+
