@@ -244,7 +244,8 @@ struct CoRet
         // 返回类型为awaitable
         std::suspend_never final_suspend() noexcept
         {
-            // 1 再final_suspend前协程handle状态已经为done
+            // final_suspend返回值决定了协程会不会被destory 当返回std::suspend_never时final_suspend执行后协程handle被destory 在调用handle.done()返回0
+            // 当返回std::suspend_always也就是协程最后有被挂起，那么handle.done()会返回真，而且如果返回std::suspend_always我们是需要在它处显示handle.destory()
             std::cout << std::coroutine_handle<promise_type>::from_promise(*this).done() << std::endl;
             std::cout << "final_suspend" << std::endl;
             std::cout << "co_return " << _out << std::endl;
@@ -344,8 +345,8 @@ int main(int argc, char **argv)
     ret._h.resume();                         // 回到co_await Awaitable();
     std::cout << "over" << std::endl;
     std::cout << ret._h.done() << std::endl; // 0
-    // 1 done一旦返回true 则协程内容被回收了不能访问了 这取决于final_suspend的返回值被挂起我们才能在此用协程内容
-    std::cout << ret._h.promise()._out << std::endl; // 888888 ,如果co_await promise.final_suspend()没有被挂起这里不能访问promise否则会段错误
+    std::cout << ret._h.promise()._out << std::endl; // 888888
+    // 协程结束后不能在被resume了
 
     return 0;
 }
