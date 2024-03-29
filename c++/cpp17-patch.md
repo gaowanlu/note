@@ -24,4 +24,15 @@ C++17 引入了许多新特性和语言改进，下面是其中一些主要的�
 
 11、UTF-8 字符串字面量：C++17 支持 UTF-8 字符串字面量，可以更好地处理多语言字符集。
 
-12、其他细节改进：C++17 还引入了一些其他的细节改进，如 constexpr lambda 表达式、std::invoke()函数、std::optional<T>类模板等。
+12、std::variant类型
+
+13、std::any类型
+
+14、并行算法库
+
+15、std::filesystem 文件系统库
+
+16、新的字符串字面值后缀 sv, if and s
+
+17、其他细节改进：C++17 还引入了一些其他的细节改进，如 constexpr lambda 表达式、std::invoke()函数、std::optional<T>类模板等。
+
