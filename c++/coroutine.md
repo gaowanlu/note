@@ -657,3 +657,352 @@ int main(int argc, char **argv)
 // 7=>140087383815744
 ```
 
+### C风格揭秘协程
+
+CppCon 2016 C++ Coroutines Under the Covers
+
+Coroutines In C
+
+```cpp
+void* f(int n)
+{
+    void* hdl = CORO_BEGIN(malloc);
+    for(int i = n;; ++i)
+    {
+        CORO_SUSPEND(hdl);
+        print(i);
+        CORO_SUSPEND(hdl);
+        print(-i);
+    }
+    CORO_END(hdl, free);
+}
+int main()
+{
+    void* coro = f(1);
+    for(int i = 0; i < 4; ++i)
+    {
+        CORO_RESUME(coro);
+    }
+    CORO_DESTROY(coro);
+}
+// 输出 1,-1,2,-2
+
+define i32 @main()
+{
+    call void @print(i32 1)
+    call void @print(i32 -1)
+    call void @print(i32 2)
+    call void @print(i32 -2)
+    ret i32 0
+}
+```
+
+如何建立协程的帧 Build Coroutine Frame
+
+```cpp
+void* f(int n)
+{
+    void* hdl = CORO_BEGIN(malloc);
+    for(int i = n;; ++i)
+    {
+        CORO_SUSPEND(hdl);
+        print(i);
+        CORO_SUSPEND(hdl);
+        print(-i);
+    }
+    CORO_END(hdl, free);
+}
+// 只需要记录声明周期跨越CORO_SUSPEND的
+struct f.frame {
+    int i;
+};
+```
+
+解密创建协程帧
+
+```cpp
+struct f.frame {
+    int i;
+}
+void* f(int n)
+{
+    void* hdl = CORO_BEGIN(malloc);
+    f.frame* frame = (f.frame*)hdl;
+    for(frame->i = n;; ++frame->i)
+    {
+        CORO_SUSPEND(hdl);
+        print(frame->i);
+        CORO_SUSPEND(hdl);
+        print(-frame->i);
+    }
+    CORO_END(hdl, free);
+}
+```
+
+解密创建跳跃点 Create Jump Points，像游戏存档一样
+
+```cpp
+struct f.frame
+{
+    int suspend_index;
+    int i;
+};
+void* f(int n)
+{
+    void* hdl = CORO_BEGIN(malloc);
+    f.frame* frame = (f.frame*)hdl;
+    for(frame->i = n;; ++frame->i)
+    {
+        frame->suspend_index = 0;
+r0:     CORO_SUSPEND(hdl);
+        print(frame->i);
+        frame->suspend_index = 1;
+r1:     CORO_SUSPEND(hdl);
+        print(-frame->i);
+    }
+    CORO_END(hdl, free);
+}
+```
+
+背后可以分为三部分
+
+```cpp
+// Coroutine Start Function
+void* f(int n)
+{
+    void* hdl = CORO_BEGIN(malloc);
+    //...
+    return hdl;
+}
+// Coroutine Resume Function
+void f.resume(f.frame* frame)
+{
+    switch(frame->suspend_index)
+    {
+        //...
+    }
+}
+// Coroutine Destroy Function
+void f.destroy(f.frame* frame)
+{
+    switch(frame->suspend_index)
+    {
+        //...
+    }
+    free(frame);
+}
+```
+
+假设编译器生成的f.resume
+
+```cpp
+void f.resume(f.frame* frame)
+{
+    switch (frame->suspend_index)
+    {
+        case 0: goto r0;
+        default: goto r1;
+    }
+    for(frame->i = n;;++frame->i)
+    {
+        frame->suspend_index = 0;
+r0:     CORO_SUSPEND(hdl);
+        print(frame->i);
+        frame->suspend_index = 1;
+r1:     CORO_SUSPEND(hdl);
+        print(-frame->i);
+    }
+    CORO_END(hdl, free);
+}
+```
+
+After CleanUp
+
+```cpp
+void* f(int* n)
+{
+// 进一步抽象
+    void* hdl = CORO_BEGIN(malloc);
+    f.frame* frame = (f.frame*)hdl;
+    frame->ResumeFn = &f.resume;
+    frame->DestroyFn = &f.destroy;
+    frame->i = n;
+    frame->suspend_index = 0;
+    return coro_hdl;
+}
+void f.destroy(f.frame* frame)
+{
+    free(frame);
+}
+void f.cleanup(f.frame* frame){}
+void f.resume(f.frame* frame)
+{
+    if(frame->index == 0)
+    {
+        print(frame->i);
+        frame->suspend_index = 1;
+    }
+    else
+    {
+        print(-frame->i);
+        ++frame->i;
+        frame->suspend_index = 0;
+    }
+}
+struct f.frame
+{
+    FnPtr ResumeFn;
+    FnPtr DestroyFn;
+    int suspend_index;
+    int i;
+};
+```
+
+### std::noop_coroutine
+
+std::noop_coroutine() 是 C++20 中引入的一个函数，位于 <coroutine> 头文件中。它是一个空的协程（coroutine），用作协程（coroutine）的占位符或者空操作。
+
+### 尽可能用协程替代std::future与std::promise
+
+因为future和promise 需要分配内存 原子操作 互斥锁 条件变量等，开销比较大。例如，假设在某些代码中需要传递一个协程对象，但是实际上不需要执行该协程，这时就可以使用 std::noop_coroutine() 来代替，以达到占位的目的。
+
+![future与promise](../.gitbook/assets/2024-03-30172542.png)
+
+可以免去额外的内存申请 原子操作 互斥锁 条件变量的开销
+
+下面代码整体经过流程
+
+1. 创建王子协程 suspend_always。
+2. 创建公主协程 suspend_always。  
+3. 将公主协程赋值到王子协程的promise _next上去
+4. 公主协程去co_await王子
+5. 进而触发王子的await_suspend 在其中进行std::async对王子进行resume
+王子 std::this_thread::sleep_for(500ms); 然后co_return将金币赋值到了promise上
+最后利用王子 final_suspend 返回一个awaiter await_ready返回false 触发 await_suspend 返回值 决定跳往哪里王子的有_next则跳往公主的int c = co_await future; 得到了王子co_return的金币量。  
+6. 最后公主也co_return了，其返回awaiter的await_ready返回false,公主协程被done了标记为1，而且awaiter await_suspend返回空协程，最后我们async创建的协程其实结束了,主线程一直循环检查公主done,此时公主done了，一切都结束了。
+
+```cpp
+#include <iostream>
+#include <chrono>
+#include <future>
+#include <thread>
+#include <coroutine>
+using namespace std;
+
+struct Task
+{
+    struct promise_type
+    {
+        int _result;
+        coroutine_handle<> _next = nullptr;
+
+        Task get_return_object()
+        {
+            return Task{coroutine_handle<promise_type>::from_promise(*this)};
+        }
+
+        std::suspend_always initial_suspend()
+        {
+            return {};
+        }
+
+        // 协程结束时 王子结束时利用最后的co_wait final_suspend() 利用final_suspend返回值运行公主协程
+        auto final_suspend() noexcept
+        {
+            struct next_awaiter
+            {
+                promise_type *me;
+                bool await_ready() noexcept
+                {
+                    return false;
+                }
+                coroutine_handle<> await_suspend(coroutine_handle<promise_type> h) noexcept
+                {
+                    // 跳到哪里
+                    if (h.promise()._next)
+                    {
+                        return h.promise()._next; // 有公主就跳到公主挂起哪里
+                    }
+                    else
+                    {
+                        return std::noop_coroutine();
+                    }
+                }
+                void await_resume() noexcept
+                {
+                }
+            };
+            return next_awaiter{this};
+        }
+
+        void return_value(int i) { _result = i; }
+        void unhandled_exception() {}
+    };
+
+    using handle = coroutine_handle<promise_type>;
+    handle _h;
+    std::future<void> _t;
+
+    // awaiter
+    bool await_ready()
+    {
+        return false;
+    }
+    void await_suspend(handle h)
+    {
+        _h.promise()._next = h;
+        _t = std::async(
+            [&]()
+            {
+                _h.resume();
+            });
+    }
+    int await_resume()
+    {
+        return _h.promise()._result;
+    }
+};
+
+Task Prince()
+{
+    int coins = 1;
+    std::this_thread::sleep_for(500ms);
+    std::cout << std::this_thread::get_id() << "Prince - found treasure!" << std::endl;
+    co_return coins;
+}
+
+Task Princess(Task &future)
+{
+    std::cout << std::this_thread::get_id() << "Princess - wait for Prince" << std::endl;
+    int c = co_await future; // 触发Prince的await_suspend 把公主协程挂到王子的promise的next 然后开一个线程去resume王子
+    std::cout << std::this_thread::get_id() << "Princess - got" << c << " coins." << std::endl;
+    co_return 0;
+}
+
+int main(int argc, char **argv)
+{
+    auto prince = Prince();           // 创建王子协程
+    auto princess = Princess(prince); // 创建公主协程
+    princess._h.resume();             // 会执行到co_wait future返回
+
+    while (!princess._h.done())
+    {
+        cout << std::this_thread::get_id() << " main wait ...\n";
+        std::this_thread::sleep_for(100ms);
+    }
+    std::cout << std::this_thread::get_id() << " main: done" << std::endl;
+    return 0;
+}
+
+/*
+140521947157440Princess - wait for Prince
+140521947157440 main wait ...
+140521947157440 main wait ...
+140521947157440 main wait ...
+140521947157440 main wait ...
+140521947157440 main wait ...
+140521947141696Prince - found treasure!
+140521947141696Princess - got1 coins.
+140521947157440 main: done
+*/
+```
