@@ -11,7 +11,7 @@ I have a dream.
 正在读的:
 
 - 3D数学 <https://gamemath.com/book/multiplespaces.html>  
-- 《现代C++语言核心特性解析》 第25章 线程局部存储(正在进行中...)
+- 《现代C++语言核心特性解析》 第27章 常量表达式(正在进行中...)
 
 2024:
 

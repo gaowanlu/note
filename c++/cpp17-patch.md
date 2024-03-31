@@ -156,3 +156,90 @@ int main()
     return 0;
 }
 ```
+
+## 扩展的inline说明符
+
+### 定义非常量静态成员变量的问题
+
+在C++17标准以前，定义类的非常量静态成员变量是一件让人头痛的事情，因为变量的声明和定义必须分开进行。
+
+```cpp
+#include <iostream>
+using namespace std;
+
+class X
+{
+public:
+    static std::string text;
+};
+
+std::string X::text{"hello"};
+
+int main(int argc, char **argv)
+{
+    X::text += " world";
+    std::cout << X::text << std::endl;
+    return 0;
+}
+```
+
+`static std::string text`是静态成员变量的声明，`std::string X::text{"hello"}`
+是静态成员变量的定义和初始化。为了保证代码能够顺利地编译，必须保证
+静态成员变量地定义有且只有一份，非常引发错误，比较常见的就是为了方便
+将静态成员变量的定义放在头文件中。
+
+```cpp
+#ifndef X_H
+#define X_H
+class X
+{
+public:
+    static std::string text;
+};
+std::string X::text{"hello"};
+#endif
+```
+
+因为被include到多个cpp文件中，在链接时会发生重复定义的错误。对于一些字面量类型如 整型、浮点型等，这种情况有所缓解，至少对于它们而言静态成员
+变量可以一边声明一边定义的。
+
+```cpp
+#include <iostream>
+#include <string>
+class X
+{
+public:
+    static const int num{5};
+};
+int main()
+{
+    std::cout << X::num << std::endl;
+    return 0;
+}
+```
+
+虽然常量可以让它们方便地声明和定义，但却丢失了修改变量地能力，对于std::string这种非字面量类型，这种方法是无能为力的。
+
+### C++17内联定义静态变量
+
+C++17标准中增强了inline说明符的能力，允许内联定义静态变量。
+
+下面代码可以编译和运行，即使将类X的定义作为头文件包含在多个CPP中也不会有任何问题，这种情况下，编译器会在类X的定义首次出现时对内联静态成员进行定义和初始化。
+
+```cpp
+#include <iostream>
+using namespace std;
+
+class X
+{
+public:
+    inline static std::string text{"hello"};
+};
+
+int main(int argc, char **argv)
+{
+    X::text += " world";
+    std::cout << X::text << std::endl;
+    return 0;
+}
+```
