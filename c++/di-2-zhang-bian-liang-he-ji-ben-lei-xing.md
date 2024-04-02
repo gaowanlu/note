@@ -402,7 +402,7 @@ int main(int argc, char **argv)
 
 ### 默认初始化值
 
-当定义变量时没有初始化初值，则变量被默认初始化，初始化为什么由变量类型决定
+当定义变量时没有初始化初值，则变量被默认初始化，初始化为什么由变量类型决定,但是有时候会神奇的发现有些变量没有被默认初始化 原因规则可以看 （你可能不知道的C++ 部分的） （为什么声明的变量没有被默认初始化）
 
 ```cpp
 //example9.cpp
@@ -1306,6 +1306,153 @@ int main(int argc, char **argv)
 现在我们知道了，有一种限制是对相应地址内存操作进行了限制，也就是常量的指针，我们可以改变指针存储的地址，但不能改变相应地址变量存储的数据，这种 const 被称为底层 const(low-level const)
 
 顶层 const(top-level const) 则是，一个指针本身也是一个变量，const 作用为一旦指针存储的地址被初始化，则不能再被改变。
+
+### 为什么需要 constexpr
+
+C++11提供了constexpr，但是为什么C++需要constexpr呢，以下从`常量的不确定性`说起。
+
+在C++11标准以前，没有一种方法能高效要求一个变量或者函数在编译阶段就计算出结果。应用场景主要有
+case语句、数组长度、枚举成员的值以及非类型的模板参数。
+
+```cpp
+#include <iostream>
+#include <tuple>
+using namespace std;
+
+const int index0 = 0;
+#define index1 1
+const int x_size = 5 + 8;
+#define y_size 6 + 7
+
+// 数组长度
+char buffer[x_size][y_size] = {0};
+
+// 枚举成员
+enum
+{
+    enum_index0 = index0,
+    enum_index1 = index1,
+};
+
+int main(int argc, char **argv)
+{
+    // case 语句
+    switch (argc)
+    {
+    case index0:
+        std::cout << "index0" << std::endl;
+        break;
+    case index1:
+        std::cout << "index1" << std::endl;
+        break;
+    default:
+        std::cout << "none" << std::endl;
+    }
+
+    // 非类型的模板参数
+    std::tuple<int, char> tp = std::make_tuple(4, '3');
+    int x1 = std::get<index0>(tp);
+    char x2 = std::get<index1>(tp);
+
+    return 0;
+}
+```
+
+上面的代码可以顺利编译成功，const定义的常量和宏都能在要求编译阶段确定值得语句中使用。其实这种方式不是很完美，C++程序员应该尽量少使用宏，预处理器对于宏只是简单的字符替换，完全没有类型检查，宏使用不当很难排查。而且对于const定义的常量可能是运行时常量，这种情况无法再case语句以及数组长度等语句中使用。
+
+```cpp
+#include <iostream>
+#include <tuple>
+using namespace std;
+
+int get_index0()
+{
+    return 0;
+}
+
+int get_index1()
+{
+    return 1;
+}
+
+int get_x_size()
+{
+    return 5 + 8;
+}
+
+int get_y_size()
+{
+    return 6 + 7;
+}
+
+const int index0 = get_index0();
+#define index1 get_index1()
+
+const int x_size = get_x_size();
+#define y_size get_y_size()
+char buffer[x_size][y_size] = {0};
+// 变量 "x_size" (已声明 所在行数:27) 的值不可用作常量
+// 无法调用非 constexpr 函数 "get_y_size" (已声明 所在行数:19)
+
+enum
+{
+    enum_index0 = index0, // 变量 "index0" (已声明 所在行数:24) 的值不可用作常量
+    enum_index1 = index1, // 无法调用非 constexpr 函数 "get_index1" (已声明 所在行数:9)
+};
+
+std::tuple<int, char> tp = std::make_tuple(4, '3');
+int x1 = std::get<index0>(tp);  // 没有与参数列表匹配的 重载函数 "std::get" 实例
+char x2 = std::get<index1>(tp); // 没有与参数列表匹配的 重载函数 "std::get" 实例
+
+int main(int argc, char **argv)
+{
+    int i = 0;
+    switch (argc)
+    {
+    case index0: // 变量 "index0" (已声明 所在行数:24) 的值不可用作常量
+        std::cout << "index0" << std::endl;
+        break;
+    case index1: // 无法调用非 constexpr 函数 "get_index1" (已声明 所在行数:9)
+        std::cout << "index1" << std::endl;
+        break;
+    default:
+        std::cout << "none" << std::endl;
+    }
+    return 0;
+}
+```
+
+这种情况不仅仅可能出现在我的自己的代码中，标准库也有这种情况，对于limits
+
+```cpp
+// C语言中有头文件<limits.h> 中用宏定义了各个整型类型的最大值和最小值
+#define UCHAR_MAX 0xff // unsigned char类型的最大值
+// 我们可以用宏代替数字
+char buffer[UCHAR_MAX] = {0};
+// C++标准库为我们提供了 <limits>
+char buffer[std::numeric_limits<unsigned char>::max()] = {0}; // 编译不过 函数返回值必须在运行时计算
+```
+
+所以为了以上的常量无法确定问题，C++11标准中提供了新的关键字 constexpr。
+
+### TODO
+
+- [x] 常量的不确定性
+- [ ] constexpr值
+- [ ] constexpr函数
+- [ ] constexpr构造函数
+- [ ] 对浮点的支持
+- [ ] C++14标准对常量表达式函数的增强
+- [ ] constexpr lambdas表达式
+- [ ] constexpr的内联属性
+- [ ] if constexpr
+- [ ] 允许constexpr虚函数
+- [ ] 允许在constexpr函数中出现Try-catch
+- [ ] 允许在constexpr中进行平凡的默认初始化
+- [ ] 允许在constexpr中更改联合类型的有效成员
+- [ ] 使用consteval声明立即函数
+- [ ] 使用constinit检查常量初始化
+- [ ] 判断常量求值环境
 
 ### constexpr 和常量表达式
 
