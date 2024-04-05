@@ -1437,22 +1437,20 @@ char buffer[std::numeric_limits<unsigned char>::max()] = {0}; // 编译不过 �
 
 ### TODO
 
-- [x] 常量的不确定性
-- [ ] constexpr值
-- [ ] constexpr函数
-- [ ] constexpr构造函数
-- [ ] 对浮点的支持
-- [ ] C++14标准对常量表达式函数的增强
-- [ ] constexpr lambdas表达式
-- [ ] constexpr的内联属性
-- [ ] if constexpr
-- [ ] 允许constexpr虚函数
-- [ ] 允许在constexpr函数中出现Try-catch
-- [ ] 允许在constexpr中进行平凡的默认初始化
-- [ ] 允许在constexpr中更改联合类型的有效成员
-- [ ] 使用consteval声明立即函数
-- [ ] 使用constinit检查常量初始化
-- [ ] 判断常量求值环境
+constexpr函数 |
+constexpr构造函数 |
+对浮点的支持 |
+C++14标准对常量表达式函数的增强 |
+constexpr lambdas表达式 |
+constexpr的内联属性 |
+if constexpr |
+允许constexpr虚函数 |
+允许在constexpr函数中出现Try-catch |
+允许在constexpr中进行平凡的默认初始化 |
+允许在constexpr中更改联合类型的有效成员 |
+使用consteval声明立即函数 |
+使用constinit检查常量初始化 |
+判断常量求值环境 |
 
 ### constexpr 和常量表达式
 
@@ -1485,7 +1483,7 @@ int main(int argc, char **argv){
 
 ### constexpr 变量
 
-可见写代码时很难确定是不是常量表达式，C++11 为我们提供了一种机制，将变量定义为 constexpr 变量其被定义的时候需要初始化，且右值必须为常量表达式，也就是我们提供了判断常量表达式的方式
+可见写代码时很难确定是不是常量表达式，C++11 为我们提供了一种机制，将变量定义为 constexpr 变量其被定义的时候需要初始化，且右值必须为常量表达式，也就是我们提供了判断常量表达式的方式。constexpr是一个加强版的const，不仅要求常量表达式是常量，并且要求是一个编译阶段就够确定其值的常量。
 
 ```cpp
 //example32.cpp
@@ -1507,6 +1505,53 @@ int main(int argc, char **argv)
 ```
 
 使用规则：如果你认为一个变量是常量表达式，那就把它声明成 constexpr 类型
+
+```cpp
+#include <iostream>
+using namespace std;
+
+constexpr int x = 42;
+char buffer[x] = {0};
+const int x1 = 42;
+char buffer1[x1] = {0};
+
+int main(int argc, char **argv)
+{
+    return 0;
+}
+```
+
+上面的constexpr与const变量都能正确的初始化数组长度,但是const并没有确保编译期常量的特性
+
+```cpp
+#include <iostream>
+using namespace std;
+
+int x1 = 42;
+const int x2 = x1;     // 运行时x2才被初始化
+char buffer[x2] = {0}; // error: size of array ‘buffer’ is not an integral constant-expression
+
+int main(int argc, char **argv)
+{
+    return 0;
+}
+```
+
+而将const换为constexpr，会有不同的情况发生
+
+```cpp
+#include <iostream>
+using namespace std;
+
+int x1 = 42;
+constexpr int x2 = x1; // error: the value of ‘x1’ is not usable in a constant expression
+char buffer[x2] = {0}; // error: size of array ‘buffer’ is not an integral constant-expression
+
+int main(int argc, char **argv)
+{
+    return 0;
+}
+```
 
 ### 使用 constexpr 的好处
 
