@@ -1430,14 +1430,13 @@ int main(int argc, char **argv)
 // 我们可以用宏代替数字
 char buffer[UCHAR_MAX] = {0};
 // C++标准库为我们提供了 <limits>
-char buffer[std::numeric_limits<unsigned char>::max()] = {0}; // 编译不过 函数返回值必须在运行时计算
+char buffer[std::numeric_limits<unsigned char>::max()] = {0}; // 编译不过 函数返回值必须在运行时计算 但是后面STL有了constexpr函数 所以numeric_limits::max()会返回constexpr支持了数组长度初始化
 ```
 
 所以为了以上的常量无法确定问题，C++11标准中提供了新的关键字 constexpr。
 
 ### TODO
 
-constexpr函数 |
 constexpr构造函数 |
 对浮点的支持 |
 C++14标准对常量表达式函数的增强 |
@@ -1454,7 +1453,7 @@ if constexpr |
 
 ### constexpr 和常量表达式
 
-常量表达式为在编译过程中就能得到计算结果的表达式，字面值属于常量表达式，常量表达式初始化的 const 对象也是常量表达式。
+常量表达式为在编译过程中就能得到计算结果的表达式，字面值属于常量表达式，常量表达式初始化的 const 对象也是常量表达式。constexpr不仅仅可以作用于值还可以作用于函数，可以看第6章函数 constexpr函数。
 
 ### 常量表达式
 

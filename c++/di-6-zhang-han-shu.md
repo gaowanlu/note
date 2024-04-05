@@ -1536,12 +1536,89 @@ int main(int argc, char **argv)
 
 ### constexpr 函数
 
-也就是返回值为字面值的函数
+constexpr函数，常量表达式函数的返回值可以在编译阶段就计算出来，不过在定义常量表示函数的时候，会遇到更多的约束规则，在C++14后标准对这些规则有所放宽。
+
+1. 函数必须返回一个值，所以返回值类型不能是void。
+2. 函数体必须只有一条语句: `return expr`,其中expr必须是一个常量表达式，如果函数有形参，则将形参替换到expr中后，expr仍然必须是一个常量表达式。
+3. 函数使用之前必须有定义。
+4. 函数必须用constexpr声明。
+
+constexpr函数反例
+
+```cpp
+// constexpr函数反例 C++11标准
+#include <iostream>
+using namespace std;
+
+// constexpr 函数不能具有非文本返回类型 "void"
+constexpr void foo()
+{
+}
+
+// constexpr 函数返回值不是常量
+constexpr int next(int x)
+{
+    return ++x;
+}
+
+int g()
+{
+    return 42;
+}
+
+// constexpr 函数返回值不是常量
+constexpr int f()
+{
+    return g();
+}
+
+constexpr int max_unsigned_char2();
+enum
+{
+    max_uchar = max_unsigned_char2(); // 未定义 constexpr 函数 "max_unsigned_char2"
+}
+
+constexpr int abs2(int x)
+{
+    if (x > 0) // 语句不能出现在 constexpr 函数中
+    {
+        return x;
+    }
+    else
+    {
+        return -x;
+    }
+}
+// abs2改为 return x > 0 ? x : -x; C++11即可编译通过
+
+constexpr int sum(int x)
+{
+    int result = 0;
+    while (x > 0) // 语句不能出现在 constexpr 函数中
+    {
+        result += x--;
+    }
+    return result;
+}
+// sum改为 x > 0 ? x + sum(x-1) : 0; C++11即可编译通过
+
+int main(int argc, char **argv)
+{
+    return 0;
+}
+```
+
+C++11标准使用正确
 
 ```cpp
 //example45.cpp
 #include <iostream>
 using namespace std;
+
+constexpr int square(int x)
+{
+    return x * x;
+}
 
 constexpr char *func1()
 {
@@ -1551,16 +1628,6 @@ constexpr char *func1()
 constexpr float version()
 {
     return 1.12;
-}
-
-//返回的不一定是常量，是常量表达式
-constexpr int code(int c)
-{
-    if (c > 0)
-    {
-        return c * 5;
-    }
-    return c * 2;
 }
 
 constexpr int index(int num)
@@ -1576,8 +1643,6 @@ int main(int argc, char **argv)
     cout << version() << endl; // 1.12
     int version_ = version();
     cout << version_ << endl; // 1
-    cout << code(1) << endl;  // 5
-    cout << code(-1) << endl; //-2
 
     constexpr int length = 10;
     int arr1[length];
@@ -1585,14 +1650,50 @@ int main(int argc, char **argv)
     int arr3[index(length)];
     int size = 99;
 
-    int arr4[index(size)]; //虽然没报错，但本质是错误的，index(size)不是常量表达式
-    //当constexpr 函数返回值利用形参，当实参传入的也是consexpr时函数才会返回constexpr
+    int arr4[index(size)]; // 虽然没报错，但本质是错误的，index(size)不是常量表达式
+    // 当constexpr 函数返回值利用形参，当实参传入的也是consexpr时函数才会返回constexpr
     arr4[0] = 322;
     cout << arr4[0] << endl; // 322
 
     return 0;
 }
 ```
+
+有了常量表达式函数的支持，C++标准对STL也做了一些改进，比如在`<limits>`中增加了constexpr声明
+
+```cpp
+#include <iostream>
+#include <limits>
+using namespace std;
+
+// C++11就可编译成功
+char buffer[std::numeric_limits<unsigned char>::max()] = {0};
+
+int main(int argc, char **argv)
+{
+    return 0;
+}
+```
+
+### constexpr函数退化为普通函数
+
+虽然常量表达式函数的返回值可以在编译期计算出来，但是行为并不是确定的，如，带形参的常量表达式函数接受了一个非常量实参时，常量表达式函数可能会退化为普通函数。
+
+```cpp
+#include <iostream>
+using namespace std;
+
+constexpr int square(int x) { return x * x; }
+
+int main(int argc, char **argv)
+{
+    int x = 5;
+    std::cout << square(x) << "\n";
+    return 0;
+}
+```
+
+x不是一个常量因此square的返回值也可能无法在编译期确定，但是它依然能成功编译运行，因为该函数退化成了一个普通函数。
 
 ### 内联函数与 constexpr 函数放在头文件内
 
