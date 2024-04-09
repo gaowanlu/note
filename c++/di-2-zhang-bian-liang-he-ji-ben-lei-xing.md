@@ -1437,7 +1437,6 @@ char buffer[std::numeric_limits<unsigned char>::max()] = {0}; // 编译不过 �
 
 ### TODO
 
-constexpr构造函数 |
 对浮点的支持 |
 C++14标准对常量表达式函数的增强 |
 constexpr lambdas表达式 |

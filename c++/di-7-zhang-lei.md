@@ -1880,8 +1880,94 @@ main.cpp:12:5: note: declared protected here
 
 ### constexpr 构造函数
 
-constexpr 构造函数必须初始化所有数据成员\
-constexpr 的对象可以调用 const 的方法，如果此方法有返回值，则返回值的类型必须为 constexpr
+constexpr可以声明基础类型从而获得常量表达式，除此之外constexpr还能声明用户自定义类型。
+
+```cpp
+#include <iostream>
+using namespace std;
+
+struct X
+{
+    int x1;
+};
+constexpr X x = {1};
+char buffer[x.x1] = {0};
+
+int main(int argc, char **argv)
+{
+    return 0;
+}
+```
+
+不过有时候并不希望成员变量被暴露出来
+
+```cpp
+#include <iostream>
+using namespace std;
+
+class X
+{
+public:
+    X() : x1(5) {}
+    int get() const
+    {
+        return x1;
+    }
+
+private:
+    int x1;
+};
+
+constexpr X x;              // 编译失败，X不是字面类型
+char buffer[x.get()] = {0}; // 编译失败，x.get()无法在编译阶段计算
+
+int main(int argc, char **argv)
+{
+    return 0;
+}
+```
+
+只需要用constexpr声明X类的构造函数，也就是声明一个常量表达式构造函数，需要遵循一些规则：
+
+- 构造函数必须用constexpr声明
+- 构造函数初始化列表中必须是常量表达式
+- 构造函数的函数体必须为空(基于构造函数没有返回值，所以不存在return expr)
+
+```cpp
+#include <iostream>
+using namespace std;
+
+class X
+{
+public:
+    constexpr X() : x1(5) {}
+    constexpr X(int i) : x1(i) {}
+    constexpr int get() const
+    {
+        return x1;
+    }
+
+private:
+    int x1;
+};
+
+int main(int argc, char **argv)
+{
+    constexpr X x;
+    char buffer[x.get()] = {0};
+    constexpr X x1 = 1;
+    constexpr X x2(5);
+    std::cout << x1.get() << std::endl; // 1
+    std::cout << x2.get() << std::endl; // 5
+
+    int i = 9;
+    // constexpr X x3(i); // 编译错误 退化为了普通构造函数
+    X x4(i);
+    return 0;
+}
+```
+
+另一个例子
 
 ```cpp
 //example41.cpp
@@ -1897,7 +1983,7 @@ public:
     constexpr Debug(bool h, bool i, bool o) : hw(h), io(i), other(o)
     {
     }
-    //除了构造函数其他方法如果返回constexpr则为const函数
+
     constexpr bool any() const
     {
         return hw || io || other;
@@ -1927,11 +2013,62 @@ int main(int argc, char **argv)
     // debug是const的又是constexpr
     cout << (debug.any() ? "true" : "false") << endl; // false
     // debug.set_hw(false);//debug是constexpr不允许调用非const方法
-    //编译时会直接展开debug.any()
+
     Debug d = debug;
     d.set_hw(true);                                   //非constexpr实例可以调用非const方法
     cout << (d.any() ? "true" : "false") << endl;     // true
     cout << (debug.any() ? "true" : "false") << endl; // false
+    return 0;
+}
+```
+
+使用constexpr声明自定义类型的变量，必须确保自定义类型的析构函数是平凡的，否则无法通过编译
+
+- 自定义类型中不能有用户自定义的析构函数
+- 析构函数不能是虚函数
+- 基类和成员的析构函数必须是平凡的
+
+```cpp
+#include <iostream>
+using namespace std;
+
+class A
+{
+public:
+    constexpr A()
+    {
+    }
+    ~A() {} // 自定义类型中不能有用户自定义的析构函数
+};
+
+class B
+{
+public:
+    constexpr B() {}
+    // 析构函数不能是虚函数
+    // virtual ~B() {}
+};
+
+class C : public B
+{
+public:
+    constexpr C() : B() {}
+    // 析构函数不能是虚函数 因为基类的析构函数是virtual的 则其派生类析构函数自动默认是virtual的
+};
+
+class D
+{
+public:
+    constexpr D() {}
+    // 基类和成员的析构函数必须都是平凡的
+    // A a;
+};
+
+int main(int argc, char **argv)
+{
+    // constexpr A a; // 编译错误 自定义类型中有用户自定义的析构函数
+    constexpr C c;
+    constexpr D d;
     return 0;
 }
 ```
