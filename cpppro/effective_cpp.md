@@ -905,6 +905,22 @@ public:
 
 ### 13、以对象管理资源
 
+* 获得资源后立刻放进管理对象内，“以对象管理资源”的观念常被成为“资源取得时机便是初始化实际(Resource Acquisition Is Initialization RAII)”
+* 管理对象运用析构函数确保资源被释放
+* 可以使用stl智能指针管理在堆上的对象
+
+下面的就是风险较大的情况
+
+```cpp
+void func()
+{
+    int *ptr = new int(5);
+    // ...
+    // ... 做许多事情，中间可能会return,措施delete执行
+    delete ptr;
+}
+```
+
 ### 14、在资源管理类中小心 copying 行为
 
 ### 15、在资源管理类中提供对原始资源的访问
