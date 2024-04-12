@@ -286,6 +286,79 @@ int& n(){
 }
 ```
 
+上面例子可能还不清楚看下面这个
+
+```cpp
+//main.cpp
+#include <iostream>
+#include "main1.h"
+#include "main2.h"
+using namespace std;
+
+int main(int argc, char **argv)
+{
+    return 0;
+}
+//main1.h
+#pragma once
+
+class main1
+{
+public:
+    main1();
+};
+//main1.cpp
+#include "main1.h"
+#include <iostream>
+
+main1 main1Object;
+
+main1::main1()
+{
+    std::cout << "main1" << std::endl;
+}
+//main2.h
+#pragma once
+#include "main1.h"
+
+class main2
+{
+private:
+    /* data */
+public:
+    main2(/* args */);
+};
+//main2.cpp
+#include "main2.h"
+#include <iostream>
+
+main2 main2Object;
+
+main2::main2(/* args */)
+{
+    std::cout << "main2" << std::endl;
+}
+```
+
+请问main1和main2谁先输出，答案是不确定的,所以总之记住全局变量之间不要互相引用初始化，特别是在不同源文件中的不同全局变量。
+
+```cpp
+gaowanlu@DESKTOP-QDLGRDB:/mnt/c/Users/gaowanlu/Desktop/MyProject/note/testcode$ g++ -c main1.cpp
+gaowanlu@DESKTOP-QDLGRDB:/mnt/c/Users/gaowanlu/Desktop/MyProject/note/testcode$ g++ -c main2.cpp
+gaowanlu@DESKTOP-QDLGRDB:/mnt/c/Users/gaowanlu/Desktop/MyProject/note/testcode$ g++ -c main.cpp
+gaowanlu@DESKTOP-QDLGRDB:/mnt/c/Users/gaowanlu/Desktop/MyProject/note/testcode$ g++ main.o main1.o main2.o -o main.exe
+gaowanlu@DESKTOP-QDLGRDB:/mnt/c/Users/gaowanlu/Desktop/MyProject/note/testcode$ ./main.exe
+main1
+main2
+gaowanlu@DESKTOP-QDLGRDB:/mnt/c/Users/gaowanlu/Desktop/MyProject/note/testcode$ g++ main.o main2.o main1.o -o main.exe
+gaowanlu@DESKTOP-QDLGRDB:/mnt/c/Users/gaowanlu/Desktop/MyProject/note/testcode$ ./main.exe
+main2
+main1
+gaowanlu@DESKTOP-QDLGRDB:/mnt/c/Users/gaowanlu/Desktop/MyProject/note/testcode$ 
+```
+
+还心存执念，那你循环引用下，初始化肯定有问题吧，n1在main.cpp,n2在main1.cpp,n1用n2初始化，n2用n1初始化。这样虽然能编译，能运行，但它们的初始化确实有问题。
+
 ## 构造析构赋值运算
 
 ### 5、了解 C++默默编写并调用哪些函数
@@ -415,7 +488,7 @@ class B : public A
 public:
     B() {}
     ~B() = default;
-    // 里应当自动生成拷贝构造和赋值操作函数，但是由于不能访问基类部分，所以不能自动生成
+    // 理应当自动生成拷贝构造和赋值操作函数，但是由于不能访问基类部分，所以不能自动生成
 };
 
 int main(int argc, char **argv)

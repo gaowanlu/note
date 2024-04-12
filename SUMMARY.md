@@ -36,6 +36,8 @@
 ## 🤡 C++ 进阶
 
 * [Effective C++](cpppro/effective_cpp.md)
+* [深度探索C++对象模型](cpppro/deepexplore_cpp_object_model.md)
+* [More Effective C++](cpppro/more_effective_cpp.md)
 * [并发编程](bing-fa-bian-cheng/README.md)
   * [第 1 章 你好并发世界](bing-fa-bian-cheng/di-1-zhang-ni-hao-bing-fa-shi-jie.md)
   * [第 2 章 线程管理](bing-fa-bian-cheng/di-2-zhang-xian-cheng-guan-li.md)
