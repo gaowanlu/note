@@ -1435,21 +1435,6 @@ char buffer[std::numeric_limits<unsigned char>::max()] = {0}; // 编译不过 �
 
 所以为了以上的常量无法确定问题，C++11标准中提供了新的关键字 constexpr。
 
-### TODO
-
-对浮点的支持 |
-C++14标准对常量表达式函数的增强 |
-constexpr lambdas表达式 |
-constexpr的内联属性 |
-if constexpr |
-允许constexpr虚函数 |
-允许在constexpr函数中出现Try-catch |
-允许在constexpr中进行平凡的默认初始化 |
-允许在constexpr中更改联合类型的有效成员 |
-使用consteval声明立即函数 |
-使用constinit检查常量初始化 |
-判断常量求值环境 |
-
 ### constexpr 和常量表达式
 
 常量表达式为在编译过程中就能得到计算结果的表达式，字面值属于常量表达式，常量表达式初始化的 const 对象也是常量表达式。constexpr不仅仅可以作用于值还可以作用于函数，可以看第6章函数 constexpr函数。
@@ -1644,6 +1629,26 @@ int main(int argc, char **argv)
 ```
 
 新的知识，全局变量在编译时就确定了其内存地址。
+
+### constexpr 对浮点的支持
+
+constexper引入前，C++开发经常用enum hack使得编译器在编译阶段计算常量表达式的值。但是enum只支持整形，所以无法用于浮点类型的编译期计算。 constexpr支持浮点类型的常量表达式值，标准规定其精度必须至少和运行时的精度相同。
+
+```cpp
+#include <iostream>
+#include <stdint.h>
+constexpr double sum(double x)
+{
+    return x > 0 ? x + sum(x - 1) : 0;
+}
+
+int main()
+{
+    constexpr double n = sum(10.10);
+    std::cout << n << std::endl; // 56.1
+    return 0;
+}
+```
 
 ### 处理类型
 

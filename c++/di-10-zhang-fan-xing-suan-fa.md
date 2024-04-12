@@ -748,6 +748,97 @@ auto关键字可以根据右侧表达式的类型进行类型推导，
 */
 ```
 
+### C++17 constexpr lambda表达式
+
+从C++17开始，lambda表达式在条件允许的情况下都会隐式声明constexpr
+
+```cpp
+#include <iostream>
+using namespace std;
+
+constexpr int foo()
+{
+    return []() -> int
+    { return 58; }();
+}
+
+// auto : class lambda [](int i)->int
+auto get_size = [](int i)
+{ return i * 2; };
+
+char buffer1[foo()] = {0};
+char buffer2[get_size(5)] = {0};
+
+int main(int argc, char **argv)
+{
+    return 0;
+}
+```
+
+实际上这里`[](int i){return i*2;}`相当于
+
+```cpp
+class GetSize
+{
+public:
+    constexpr int operator()(int i) const
+    {
+        return i * 2;
+    }
+};
+```
+
+当lambda表达式不满足constexpr条件时，lambda表达式也不会编译错误，会作为运行时lambda表达式存在即退化了
+
+```cpp
+#include <iostream>
+using namespace std;
+
+int i = 5;
+auto get_size = [](int i)
+{ return i * 2; };
+
+// char buffer1[get_size(i)] = {0};//编译错误i运行时 所以get_size也是运行时
+int a1 = get_size(i); // 退化
+
+auto get_count = []()
+{
+    static int x = 5;
+    return x;
+};
+
+int a2 = get_count(); // 运行时 因为内部static x运行时才会初始化
+
+int main(int argc, char **argv)
+{
+    return 0;
+}
+```
+
+可以强制要求lambda表达式是一个常量表达式，用constexpr声明即可
+
+```cpp
+#include <iostream>
+using namespace std;
+
+auto get_size = [](int i) constexpr -> int
+{ return i * 2; };
+
+char buffer2[get_size(5)] = {0};
+
+// 编译错误 x是一个static变量
+// auto get_count = []() constexpr -> int
+// {
+//     static int x = 5; // error:constexpr 函数中的变量不具有自动存储持续时间
+//     return x;
+// }
+
+int main(int argc, char **argv)
+{
+    return 0;
+}
+```
+
 ### transform
 
 将所在位置修改为 lambda 表达式返回的内容

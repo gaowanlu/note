@@ -243,3 +243,43 @@ int main(int argc, char **argv)
     return 0;
 }
 ```
+
+### C++17 constexpr内联属性
+
+C++17中，constexpr声明静态成员变量时，被赋予了变量的内联属性，如
+
+```cpp
+#include <iostream>
+using namespace std;
+
+class X
+{
+public:
+    static constexpr int num{5};
+};
+
+// 以上代码在C++17中等同于
+
+class A
+{
+public:
+    inline static constexpr int num{5};
+};
+
+int main(int argc, char **argv)
+{
+    char buffer1[X::num]{0};
+    char buffer2[A::num]{0};
+    return 0;
+}
+```
+
+自C++11以来就有,这种用法，那么C++11和C++17中有什么区别。
+
+```cpp
+static constexpr int num{5};
+```
+
+C++11 ，num是只有声明没有定义的，虽然我们可以通过`std::cout << X::num << std::endl`输出其结果，但这实际上是编译器的一个小把戏，它将`X::num`直接替换为了5。如果将输出语句修改为`std::cout << &X::num << std::endl`，那么链接器会明确报告`X::num`缺少定义。
+
+从C++17开始情况发生了变化，`static constexpr int num{5}`既是声明也是定义，所以在C++17标准中`std::cout << &X::num << std::endl`可以顺利编译链接，并且输出正确的结果。值得注意的是，对于编译器而言为`X::num`产生定义并不是必需的，如果代码只是引用了`X::num`的值，那么编译器完全可以使用直接替换为值的技巧。只有当代码中引用到变量指针的时候，编译器才会为其生成定义。

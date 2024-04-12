@@ -1695,6 +1695,96 @@ int main(int argc, char **argv)
 
 x不是一个常量因此square的返回值也可能无法在编译期确定，但是它依然能成功编译运行，因为该函数退化成了一个普通函数。
 
+### C++14对常量表达式函数的增强
+
+C++11标准对常量表达式函数的要求是非常严格的，影响该特性的实用性。
+
+C++14得到了改善
+
+1. 函数体允许声明变量，除了没有初始化、static、和thread_local变量。
+2. 函数允许出现if和switch语句，不能使用go语句。
+3. 函数允许所有的循环语句，包括for while do-while
+4. 函数可以修改声明周期和常量表达式相同的对象
+5. 函数的返回值可以声明为void
+6. constexpr声明的成员函数不再具有const属性
+7. 常量表达式函数的增强同样会影响常量表达式构造函数(第7章节 constexpr 构造函数)
+
+```cpp
+#include <stdint.h>
+#include <iostream>
+
+// 支持if
+constexpr int my_abs(int x)
+{
+    if (x > 0)
+    {
+        return x;
+    }
+    else
+    {
+        return -x;
+    }
+}
+
+// 支持声明变量 出现while 修改变量等
+constexpr int sum(int x)
+{
+    int result = 0;
+    while (x > 0)
+    {
+        result += x--;
+    }
+    return result;
+}
+
+constexpr int next(int x) { return ++x; }
+
+// C++14常量表达式函数的增强同样会影响常量表达式构造函数
+class X
+{
+public:
+    constexpr X() : x1(5) {}
+    constexpr X(int i) : x1(0)
+    {
+        if (i > 0)
+        {
+            x1 = 5;
+        }
+        else
+        {
+            x1 = 8;
+        }
+    }
+    constexpr void set(int i) { x1 = i; }
+    constexpr int get() const { return x1; }
+
+private:
+    int x1;
+};
+
+// 支持声明变量
+constexpr X make_x()
+{
+    X x; // 此处的x并不是一个constexpr
+    x.set(42);
+    return x;
+}
+
+int main()
+{
+    char buffer1[sum(5)] = {0};
+    char buffer2[my_abs(-5)] = {0};
+    char buffer3[next(9)] = {0};
+
+    constexpr X x1(-1);
+    constexpr X x2 = make_x();
+    constexpr int a1 = x1.get();
+    constexpr int a2 = x2.get();
+    std::cout << a1 << "," << a2 << std::endl; // 8,42
+    return 0;
+}
+```
+
 ### 内联函数与 constexpr 函数放在头文件内
 
 与其他函数不同的是，内联函数和 constexpr 函数可以在程序中多次定义，因为在每个 cpp 单独编译时，比如内联函数，他就要将代码填充至调用处了，所以 constexpr 函数与 inline 函数通常定义在头文件中

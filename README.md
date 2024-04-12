@@ -13,6 +13,19 @@ I have a dream.
 - 3D数学 <https://gamemath.com/book/multiplespaces.html>  
 - 《现代C++语言核心特性解析》 第27章 常量表达式(正在进行中...)
 
+## ToDo
+
+if constexpr C++17|  
+允许constexpr虚函数 C++20|  
+允许在constexpr函数中出现Try-catch C++20|  
+允许在constexpr中进行平凡的默认初始化 C++20|  
+允许在constexpr中更改联合类型的有效成员 C++20|  
+使用consteval声明立即函数 C++20|  
+使用constinit检查常量初始化 C++20|  
+判断常量求值环境 C++20|  
+  
+## Maybe
+
 2024:
 
 - Redis设计与实现第2版 第一部分: 数据结构与对象(待开始)
