@@ -923,11 +923,123 @@ void func()
 
 ### 14、在资源管理类中小心 copying 行为
 
+* 禁止复制，许多时候允许RAII对象被复制并不合理，如果复制动作对RAII class并不合理，便应该禁止。可以将copying操作声明为private。
+* 对底层资源祭出引用计数法，有时候我们希望保有资源，直到它的最后一个使用者(某对象)被销毁，这种情况下复制RAII对象时，应该将资源的“被引用数”递增。
+* 复制底部资源，需要“资源管理类”的唯一理由是，当你不再需要某个复件时确保它被释放，在此情况下复制资源管理对象，应该同时也复制其所包覆的资源，复制资源管理对象时，进行的是“深度拷贝”。
+* 转移底部资源的所有权，有些场景可能希望永远只有一个RAII对象指向一个未加工资源，即使RAII对象被复制依然如此。此时资源的拥有权会从被复制物转移到目标物。
+
+请记住：
+
+1. 复制RAII对象必须一并复制它所管理的资源，所以资源的copying行为决定RAII对象的copying行为。
+2. 普遍常见的RAII class copying行为是：抑制copying、施行引用计数法。
+
 ### 15、在资源管理类中提供对原始资源的访问
+
+* API往往要求访问原始资源，所以每一个RAII class应该提供一个“取得其所管理之资源”得方法。
+* 对原始资源得访问可能经由显式转换或隐式转换，一般而言显式转换比较安全，但隐式转换对客户比较方便。
+
+```cpp
+#include <iostream>
+using namespace std;
+
+class RAII
+{
+public:
+    RAII(int *ptr)
+    {
+        m_ptr = ptr;
+    }
+    ~RAII()
+    {
+        if (m_ptr)
+        {
+            delete m_ptr;
+        }
+    }
+
+    int *get()
+    {
+        return m_ptr;
+    }
+
+    operator int()
+    {
+        if (m_ptr)
+        {
+            return *m_ptr;
+        }
+        return 0;
+    }
+
+    operator int *()
+    {
+        return m_ptr;
+    }
+
+private:
+    int *m_ptr{nullptr};
+};
+
+int main(int argc, char **argv)
+{
+    RAII ptr(new int(9));
+    *ptr.get() = 323;
+    std::cout << (*ptr.get()) << std::endl; // 323
+
+    int *resource = ptr;
+    std::cout << *resource << std::endl; // 323
+
+    return 0;
+}
+```
 
 ### 16、成对使用 new 和 delete 时要采取相同形式
 
+* 如果你在new表达式中使用`[]`,必须在相应得delete表达式中也使用`[]`。如果你在new表达式中不使用`[]`,一定不要在相应delete表达式中使用`[]`
+
+```cpp
+#include <iostream>
+using namespace std;
+
+int main(int argc, char **argv)
+{
+    int *arr = new int[100];
+    int *ptr = new int;
+
+    delete[] arr;
+    delete ptr;
+
+    return 0;
+}
+```
+
 ### 17、以独立语句将 newed 对象置入智能指针
+
+* 独立语旬将newed对象存储千（置入）智能指针内。如果不这样做，一旦异常被抛出，有可能导致难以察觉的资源泄漏。
+
+这句话什么意思呢？
+
+```cpp
+void function(RAII raii, int i)
+{
+    // do something
+}
+
+function(RAII(new int(1)), otherFunction(199));
+```
+
+这样可能存在内存泄露的风险，因为可能出现下面的情况
+
+1. 执行new int
+2. 调用otherFunction
+3. 调用RAII的构造函数
+
+万一中间调用otherFunction出现异常就完蛋了，所以请遵守规则，独立创建RAII
+
+```cpp
+RAII raii(new int(1));
+function(raii, otherFunction(199));
+```
 
 ## 设计与声明
 
