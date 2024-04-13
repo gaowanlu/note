@@ -10,7 +10,6 @@ I have a dream.
 
 ## 🚲
 
-if constexpr C++17|  
 允许constexpr虚函数 C++20|  
 允许在constexpr函数中出现Try-catch C++20|  
 允许在constexpr中进行平凡的默认初始化 C++20|  

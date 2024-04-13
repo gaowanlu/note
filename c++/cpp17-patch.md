@@ -283,3 +283,208 @@ static constexpr int num{5};
 C++11 ，num是只有声明没有定义的，虽然我们可以通过`std::cout << X::num << std::endl`输出其结果，但这实际上是编译器的一个小把戏，它将`X::num`直接替换为了5。如果将输出语句修改为`std::cout << &X::num << std::endl`，那么链接器会明确报告`X::num`缺少定义。
 
 从C++17开始情况发生了变化，`static constexpr int num{5}`既是声明也是定义，所以在C++17标准中`std::cout << &X::num << std::endl`可以顺利编译链接，并且输出正确的结果。值得注意的是，对于编译器而言为`X::num`产生定义并不是必需的，如果代码只是引用了`X::num`的值，那么编译器完全可以使用直接替换为值的技巧。只有当代码中引用到变量指针的时候，编译器才会为其生成定义。
+
+### C++17 if constexpr
+
+if constexpr 是C++17标准提出的特性。
+
+1. if constexpr的条件必须是编译期就能确定结果的常量表达式
+2. 条件结果一旦确定，编译器将只编译符合条件的代码块
+3. 和运行时if的另一个不同点：if constexpr不支持短路规则
+
+错误样例
+
+```cpp
+#include <iostream>
+using namespace std;
+
+void check1(int i)
+{
+    if constexpr (i > 0) // 编译失败，不是常量表达式
+    {
+        std::cout << "i>0" << std::endl;
+    }
+    else
+    {
+        std::cout << "i<=0" << std::endl;
+    }
+}
+
+int main(int argc, char **argv)
+{
+    return 0;
+}
+```
+
+正确样例
+
+```cpp
+#include <iostream>
+using namespace std;
+
+void check2()
+{
+    if constexpr (sizeof(int) > sizeof(char))
+    {
+        std::cout << "sizeof(int) > sizeof(char)" << std::endl;
+    }
+    else
+    {
+        std::cout << "sizeof(int) <= sizeof(char)" << std::endl;
+    }
+}
+
+int main(int argc, char **argv)
+{
+    check2();
+    return 0;
+}
+// sizeof(int) > sizeof(char)
+```
+
+其中check2函数会被编译器省略为
+
+```cpp
+void check2()
+{
+    std::cout << "sizeof(int) > sizeof(char)" << std::endl;
+}
+```
+
+if constexpr还可以用于模板
+
+```cpp
+#include <iostream>
+using namespace std;
+
+template <class T>
+bool is_same_value(T a, T b)
+{
+    return a == b;
+}
+
+// 针对浮点特化
+template <>
+bool is_same_value<double>(double a, double b)
+{
+    if (std::abs(a - b) < 0.0001)
+    {
+        return true;
+    }
+    else
+    {
+        return false;
+    }
+}
+
+int main(int argc, char **argv)
+{
+    double x = 0.1 + 0.1 + 0.1 - 0.3;
+    std::cout << is_same_value(5, 5) << std::endl;  // 1
+    std::cout << (x == 0.) << std::endl;            // 0
+    std::cout << is_same_value(x, 0.) << std::endl; // 1
+    return 0;
+}
+```
+
+上面的例子如果不用模板特化，使用if constexpr即可写到一个模板函数中。
+
+```cpp
+#include <iostream>
+#include <type_traits>
+
+using namespace std;
+
+template <class T>
+auto is_same_value(T a, T b)
+{
+    if constexpr (std::is_same<T, double>::value)
+    {
+        if (std::abs(a - b) < 0.0001)
+        {
+            return true;
+        }
+        else
+        {
+            return false;
+        }
+    }
+    else
+    {
+        return a == b;
+    }
+}
+
+int main(int argc, char **argv)
+{
+    double x = 0.1 + 0.1 + 0.1 - 0.3;
+    std::cout << (x == 0.) << std::endl;            // 0
+    std::cout << is_same_value(x, 0.) << std::endl; // 1
+    std::cout << is_same_value(1, 1) << std::endl;  // 1
+    return 0;
+}
+```
+
+最重要的一点是if constexpr不支持短路规则。
+
+```cpp
+#include <iostream>
+#include <string>
+#include <type_traits>
+
+using namespace std;
+
+template <class T>
+auto any2i(T t)
+{
+    if constexpr (std::is_same<T, std::string>::value && T::npos == -1)
+    {
+        return atoi(t.c_str());
+    }
+    else
+    {
+        return t;
+    }
+}
+
+int main(int argc, char **argv)
+{
+    std::cout << any2i(std::string("6")) << std::endl; // 6
+    std::cout << any2i(6) << std::endl;                // 编译错误 因为int::npos是非法的
+    // if constexpr 的表达式是先全部确定后再进行计算出结果的 和运行时的if不一样
+    return 0;
+}
+```
+
+可以这样修改一些 用 if constexpr嵌套
+
+```cpp
+#include <iostream>
+#include <string>
+#include <type_traits>
+
+using namespace std;
+
+template <class T>
+auto any2i(T t)
+{
+    if constexpr (std::is_same<T, std::string>::value)
+    {
+        if constexpr (T::npos == -1)
+        {
+            return atoi(t.c_str());
+        }
+    }
+    else
+    {
+        return t;
+    }
+}
+
+int main(int argc, char **argv)
+{
+    std::cout << any2i(std::string("6")) << std::endl; // 6
+    std::cout << any2i(6) << std::endl;                // 6
+    return 0;
+}
+```
