@@ -4,7 +4,9 @@ coverY: 0
 
 # 🚜 你可能不知道的 C++
 
-## 小技巧&#x20;
+## 你可能不知道的 C++
+
+各种超级骚操作
 
 ### 当 C 函数与成员函数重名时 ::name() 的作用
 
@@ -190,7 +192,6 @@ new 是 C++中的操作符，用于在堆上分配动态内存，并调用对象
 
 malloc 是 C 语言中的函数，用于在堆上分配指定大小的内存块，并返回一个指向该内存块的指针。由于 malloc 函数不会调用构造函数，因此它不能用于分配对象，而只适用于分配内存块。使用 malloc 函数分配的内存块可以使用 free 函数来释放。同时，malloc 返回的指针类型是 void\*，需要显式转换为所需类型的指针。
 
-
 ### 为什么声明的变量没有被默认初始化
 
 真是个好问题，但是和 `placement new(A*ptr=new(addr)A;)` 机制关系不大，
@@ -277,3 +278,107 @@ int main()
 // // 会输出 n=99 n1=100
 ```
 
+### 成员指针运算符`::*`
+
+`::*` 是 C++ 中的成员指针运算符，它用于声明指向类成员的指针。其实这种骚操作尽量不要用，不要用。
+
+1、 指向成员变量的指针
+
+```cpp
+int MyClass::*ptr = &MyClass::memberVariable;
+```
+
+这里 `MyClass::*` 声明了一个指向 MyClass 类中的成员变量的指针。ptr 就是指向 memberVariable 的指针。
+
+2、指向成员函数的指针
+
+```cpp
+int (MyClass::*ptr)() = &MyClass::memberFunction;
+```
+
+这里 `int (MyClass::*)()` 声明了一个指向 MyClass 类中的成员函数的指针。ptr 就是指向 memberFunction 成员函数的指针。
+
+成员变量使用样例
+
+```cpp
+#include <iostream>
+using namespace std;
+
+struct A
+{
+    int a;
+};
+
+int main(int argc, char **argv)
+{
+    int(A::*ptr_a) = &A::a;
+    A obj{.a = 23};
+    std::cout << (obj.*ptr_a) << std::endl; // 23
+    A obj1{.a = 999};
+    std::cout << obj1.a << std::endl; // 999
+    obj1.*ptr_a = 888;
+    std::cout << obj1.a << std::endl; // 888
+    return 0;
+}
+```
+
+成员函数使用样例
+
+```cpp
+#include <iostream>
+using namespace std;
+
+class Shape
+{
+public:
+    virtual void draw() const = 0;
+    int gid{0};
+};
+
+class Circle : public Shape
+{
+public:
+    void draw() const override
+    {
+        std::cout << "Drawing Circle" << std::endl;
+    }
+};
+
+class Square : public Shape
+{
+public:
+    void draw() const override
+    {
+        std::cout << "Drawing Square" << std::endl;
+    }
+};
+
+void drawAllShapes(const Shape *shapes[], size_t numShapes, void (Shape::*drawFunction)() const)
+{
+    for (size_t i = 0; i < numShapes; ++i)
+    {
+        (shapes[i]->*drawFunction)();
+    }
+}
+
+int main(int argc, char **argv)
+{
+    Circle circle;
+    Square square;
+    const Shape *ptr_arr[] = {&circle, &square};
+    auto arr_ptr = &ptr_arr; // const Shape *(*arr_ptr)[2]
+    drawAllShapes(*arr_ptr, 2, &Shape::draw);
+    drawAllShapes(*arr_ptr, 2, &Shape::draw);
+    drawAllShapes(*arr_ptr, 2, &Shape::draw);
+    // Drawing Circle
+    // Drawing Square
+    // Drawing Circle
+    // Drawing Square
+    // Drawing Circle
+    // Drawing Square
+    auto circle_draw = &Circle::draw;
+    ((Circle *)ptr_arr[0]->*circle_draw)();
+    // Drawing Circle
+    return 0;
+}
+```

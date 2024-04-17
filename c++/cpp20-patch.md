@@ -1495,3 +1495,108 @@ int main(int argc, char **argv)
 140521947157440 main: done
 */
 ```
+
+## C++20关于constexpr的优化
+
+### 允许constexpr虚函数
+
+在C++20标准前，虚函数是不允许声明为constexpr的。很多时候虚函数是无状态的，这种情况下是有条件作为常量表达式被优化的。
+
+```cpp
+#include <iostream>
+using namespace std;
+
+struct X
+{
+    virtual int f() const { return 1; }
+};
+
+int main(int argc, char **argv)
+{
+    X x;
+    int i = x.f();
+    return 0;
+}
+```
+
+如果作为常量表达式进行优化，则可以减少函数调用。可惜在C++17标准中不允许我们这么做，直到C++20标准明确允许在常量表达式中使用虚函数，所以上面的代码可以修改为：
+
+```cpp
+#include <iostream>
+using namespace std;
+
+struct X
+{
+    constexpr virtual int f() const
+    {
+        int res = 999;
+        return res;
+    }
+};
+
+int main(int argc, char **argv)
+{
+    X x;
+    constexpr int i = x.f();
+    // 此处等价于
+    // constexpr int i = 999;
+    std::cout << i << std::endl; // 999
+    return 0;
+}
+```
+
+constexpr虚函数在继承重写上并没有其他特殊的要求，constexpr的虚函数可以覆盖重写普通虚函数，普通虚函数也可以覆盖重写constexpr的虚函数。
+
+```cpp
+#include <iostream>
+using namespace std;
+
+struct X1
+{
+    virtual int f() const = 0;
+};
+
+struct X2 : public X1
+{
+    constexpr virtual int f() const { return 2; }
+};
+
+struct X3 : public X2
+{
+    constexpr virtual int f() const { return 4; }
+};
+
+struct X4 : public X3
+{
+    virtual int f() const { return 5; }
+};
+
+constexpr int (X1::*pf)() const = &X1::f;
+
+constexpr X2 x2;
+static_assert(x2.f() == 2);
+static_assert((x2.*pf)() == 2);
+
+constexpr X1 const &r2 = x2;
+static_assert(r2.f() == 2);
+static_assert((r2.*pf)() == 2);
+
+constexpr const X1 *p2 = &x2;
+static_assert(p2->f() == 2);
+static_assert((p2->*pf)() == 2);
+
+constexpr X3 x3;
+static_assert(x3.f() == 4);
+
+constexpr X4 x4;
+// static_assert(x4.f() == 5); // 编译错误 X4::f 不是constexpr
+constexpr const X1 *p4 = &x4;
+// static_assert(p4->f() == 4); // 编译错误 X4::f 不是constexpr
+
+int main(int argc, char **argv)
+{
+    return 0;
+}
+```
+
+总之就是constexpr越来越自由了，如果采用新版本的C++，其实不用特意去记忆这些东西，毕竟IDE会智能提示我们的。只需要知道有些场景中使用这些特性可以变得更高效就好了。

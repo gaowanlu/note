@@ -10,42 +10,56 @@ I have a dream.
 
 ## 🚲
 
-允许constexpr虚函数 C++20|  
-允许在constexpr函数中出现Try-catch C++20|  
-允许在constexpr中进行平凡的默认初始化 C++20|  
-允许在constexpr中更改联合类型的有效成员 C++20|  
-使用consteval声明立即函数 C++20|  
-使用constinit检查常量初始化 C++20|  
-判断常量求值环境 C++20|  
+* [ ] 允许在constexpr函数中出现Try-catch C++20
+* [ ] 允许在constexpr中进行平凡的默认初始化 C++20
+* [ ] 允许在constexpr中更改联合类型的有效成员 C++20
+* [ ] 使用consteval声明立即函数 C++20
+* [ ] 使用constinit检查常量初始化 C++20
+* [ ] 判断常量求值环境 C++20
+* [ ] 第28章 确定的表达式求值顺序C++17
+* [ ] 第29章 字面量优化C++11 ~ C++17
+* [ ] 第30章 alignas和alignofC++11 ~ C++17
+* [ ] 第31章 属性说明符和标准属性C++11 ~ C++20
+* [ ] 第32章 新增预处理器和宏C++17 ~ C++20
+* [ ] 第33章 协程C++20
+* [ ] 第34章 基础特性的其他优化C++11 ~ C++20
+* [ ] 第35章 可变参数模板C++11 C++17 C++20
+* [ ] 第36章 typename优化C++17 ~ C++20
+* [ ] 第37章 模板参数优化C++11 C++17 C++20
+* [ ] 第38章 类模板的模板实参推导C++17 C++20
+* [ ] 第39章 用户自定义推导指引C++17
+* [ ] 第40章 SFINAE C++11
+* [ ] 第41章 概念和约束C++20
+* [ ] 第42章 模板特性的其他优化C++11 C++14
 
 ## Maybe
 
 2024:
 
-- 3D数学 <https://gamemath.com/book/multiplespaces.html>  
-- 《现代C++语言核心特性解析》 第27章 常量表达式(正在进行中...)
-- Redis设计与实现第2版 第一部分: 数据结构与对象(待开始)
-- SQL经典实例第2版 第1章 检索记录(待开始)
-- PulsarDocs <https://pulsar.apache.org/docs> (待开始)
-- C++并发编程实战 第2版(阅读中)
-- 高性能MySQL 第1章MySQL架构
-- 游戏编程模式
-- Linux C与C++一线开发实践
+* 3D数学 <https://gamemath.com/book/multiplespaces.html>  
+* 《现代C++语言核心特性解析》 第27章 常量表达式(正在进行中...)
+* Redis设计与实现第2版 第一部分: 数据结构与对象(待开始)
+* SQL经典实例第2版 第1章 检索记录(待开始)
+* PulsarDocs <https://pulsar.apache.org/docs> (待开始)
+* C++并发编程实战 第2版(阅读中)
+* 高性能MySQL 第1章MySQL架构
+* 游戏编程模式
+* Linux C与C++一线开发实践
 
 可能会读的有趣读物:
 
-- Effective Modern C++
-- More Effective C++
-- 深度探索C++对象模型
-- 腾讯游戏开发精粹Ⅰ服务器部分
-- 腾讯游戏开发精粹 Ⅱ 服务器部分
-- C++函数式编程
-- 高效C/C++调试
-- C++高性能编程
-- C++高效编程:内存与性能优化
+* Effective Modern C++
+* More Effective C++
+* 深度探索C++对象模型
+* 腾讯游戏开发精粹Ⅰ服务器部分
+* 腾讯游戏开发精粹 Ⅱ 服务器部分
+* C++函数式编程
+* 高效C/C++调试
+* C++高性能编程
+* C++高效编程:内存与性能优化
 
-- [leveldb、libevent、memcached 源码分析，cpp 服务器开发](https://cppguide.cn/)
-- [8钩](https://xiaolincoding.com/)
+* [leveldb、libevent、memcached 源码分析，cpp 服务器开发](https://cppguide.cn/)
+* [8钩](https://xiaolincoding.com/)
 
 ## Life
 
