@@ -1600,3 +1600,423 @@ int main(int argc, char **argv)
 ```
 
 总之就是constexpr越来越自由了，如果采用新版本的C++，其实不用特意去记忆这些东西，毕竟IDE会智能提示我们的。只需要知道有些场景中使用这些特性可以变得更高效就好了。
+
+### 允许在constexpr函数中出现try-catch
+
+在C++20标准以前try-catch是不能出现在constexpr函数中的，如
+
+```cpp
+#include <iostream>
+using namespace std;
+
+constexpr int f(int x)
+{
+    try
+    {
+        return x + 1;
+    }
+    catch (...)
+    {
+        return 0;
+    }
+}
+
+int main(int argc, char **argv)
+{
+    constexpr int n = f(1);
+    return 0;
+}
+```
+
+C++17编译上面代码会得到一个友好的警告，C++20标准编译时，允许try-catch存在于
+constexpr函数，但是throw语句依旧是被禁止的，也就是catch部分永远不会被执行，没有什么意义。
+
+### 允许在constexpr中进行平凡的默认初始化
+
+从C++20开始，标准允许在constexpr中进行平凡的默认初始化。
+
+```cpp
+#include <iostream>
+using namespace std;
+
+struct X
+{
+    bool val;
+};
+
+constexpr void f()
+{
+    X x;
+}
+
+int main(int argc, char **argv)
+{
+    f();
+    return 0;
+}
+```
+
+C++17编译则会报错，提示x没有初始化，需要用户提供一个构造函数，或者C++17这样写
+
+```cpp
+struct X
+{
+    bool value = false;
+};
+```
+
+虽然C++20标准的编译器是能够编译，但是我们依然应该养成声明对象时随手初始化的习惯，避免让代码出现未定义的行为。 可以看 你可能不知道的C++部分 的 “为什么声明的变量没有被默认初始化”部分。
+
+### 允许在constexpr中更改联合类型的有效成员
+
+C++20之前对constexpr的另一个限制就是禁止更改联合类型的有效成员，如
+
+```cpp
+#include <iostream>
+using namespace std;
+
+union Foo
+{
+    int i;
+    float f;
+};
+
+constexpr int use()
+{
+    Foo foo{};
+    foo.f = 1.2f;
+    foo.i = 3; // C++20之前将会编译失败
+    return foo.i;
+}
+
+int main(int argc, char **argv)
+{
+    int arr[use()] = {0};
+    return 0;
+}
+```
+
+在GCC和MSVC C++17中上面代码是能够编译通过的。C++20除此之外还允许许多特性，如允许dynamic_cast和typeid出现在
+常量表达式中，允许在constexpr函数使用未经评估的内联汇编。
+
+### 使用consteval声明立即函数
+
+constexpr声明函数并不一来常量表达式上下文环境，在非常量表达式环境中，函数可以退化表现为普通函数。但是有时候
+我们希望确保函数在编译期就执行计算，无法在编译期确定的直接让编译器报错。
+C++20推出了一个新的概念 立即函数，立即函数需要使用consteval说明符来声明。
+
+```cpp
+#include <iostream>
+using namespace std;
+
+consteval int sqr(int n)
+{
+    return n * n;
+}
+
+constexpr int r = sqr(100);
+int x = 100;
+int r2 = sqr(x); // 编译错误 调用 consteval 函数 "sqr" 不会生成有效的常数表达式
+// 因为x不是const也不是constexpr
+// sqr用consteval声明不会退化为普通函数
+
+int main(int argc, char **argv)
+{
+    return 0;
+}
+```
+
+如果一个立即函数在另外一个立即函数中被调用，则函数定义时的上下文环境不必是一个常量表达式。怎么理解呢，就是传参问题，下面的n在sqrsqr函数中看，不是常量表达式,但是是没问题的。
+
+```cpp
+#include <iostream>
+using namespace std;
+
+consteval int sqr(int n)
+{
+    return n * n;
+}
+
+consteval int sqrsqr(int n)
+{
+    n = 5;//这里没问题
+    return sqr(sqr(n));
+}
+
+int main(int argc, char **argv)
+{
+    int arr[sqrsqr(10)]{0};
+    std::cout << sizeof(arr) / sizeof(int) << std::endl; // 625
+    return 0;
+}
+```
+
+lambda表达式也可以使用consteval说明符
+
+```cpp
+#include <iostream>
+using namespace std;
+
+auto sqr = [](int n) consteval
+{ return n * n; };
+int r = sqr(100);
+
+int main(int argc, char **argv)
+{
+    std::cout << r << std::endl; // 10000
+    auto ptr = sqr;//gcc实测获取立即函数的函数地址是没有问题的
+    std::cout << ptr(100) << std::endl;
+    return 0;
+}
+```
+
+### 使用constinit检查常量初始化
+
+C++中有一种典型的错误叫做 “Static Initialization Order Fiasco”,指的是因为静态初始化顺序错误导致的问题，
+因为这种错误往往发生在main函数之前，所以比较难以排查。在Effective C++中也有讲到。
+
+```cpp
+//a.cpp
+static int a = 100;
+```
+
+```cpp
+//b.cpp
+extern int a;
+struct X
+{
+    X(){
+        n = a;
+    }
+    int n{0};
+};
+
+static X x;
+```
+
+没错就是这样，我们没办法控制哪个对象先构造，如果x在y之前构造，就会引发一个未定义的结果。
+为了避免这种问题，我们通常希望使用常量初始化程序去初始化静态变量，不幸的是常量初始化规则很复杂。
+C++20引入constinit说明符用，主要用于具有静态存储持续时间的变量声明，它要求变量具有常量初始化程序。
+
+```cpp
+#include <iostream>
+using namespace std;
+
+constinit int x = 11; // 编译成功，全局变量具有静态存储持续
+
+int main(int argc, char **argv)
+{
+    constinit static int y = 42; // 编译成功，静态变量具有静态存储持续
+    constinit int z = 7;         // 编译失败，局部变量是动态分配的
+    return 0;
+}
+```
+
+其次，constinit要求变量 初始化的程序部分应该是常量初始化程序
+
+```cpp
+#include <iostream>
+using namespace std;
+
+const char *f()
+{
+    return "hello";
+}
+
+constexpr const char *g() { return "cpp"; }
+constinit const char *str1 = f(); // 编译错误 f()不是一个常量初始化程序
+constinit const char *str2 = g(); // 编译成功
+
+int main(int argc, char **argv)
+{
+    return 0;
+}
+```
+
+constinit还能用于非初始化声明，告知编译器thread_local变量已经被初始化
+
+```cpp
+#include <iostream>
+using namespace std;
+
+thread_local int x = 100;
+
+extern thread_local constinit int x;
+
+int f()
+{
+    return x;
+}
+
+// constinit强调常量初始化 但是初始化的对象并不要求具有常量属性
+constinit int number = 999;
+
+int main(int argc, char **argv)
+{
+    std::cout << number << std::endl;
+    return 0;
+}
+```
+
+constinit强调常量初始化 但是初始化的对象并不要求具有常量属性。
+
+### 判断常量求值环境
+
+- `std:is_constant_evaluated`
+
+用于检查当前表达式是否是一个常量求值环境 返回bool类型
+
+```cpp
+#include <iostream>
+#include <cmath>
+using namespace std;
+
+int main(int argc, char **argv)
+{
+    std::cout << std::pow(2.0, 3) << std::endl; // 8
+    return 0;
+}
+```
+
+```cpp
+#include <iostream>
+#include <cmath>
+#include <type_traits>
+using namespace std;
+
+constexpr double power(double b, int x)
+{
+    if (std::is_constant_evaluated() && x >= 0)
+    {
+        double r = 1.0, p = b;
+        unsigned int u = (unsigned int)x;
+        while (u != 0)
+        {
+            if (u & 1)
+                r *= p;
+            u /= 2;
+            p *= p;
+        }
+        return r;
+    }
+    else
+    {
+        return std::pow(b, (double)x);
+    }
+}
+
+int main(int argc, char **argv)
+{
+    // 常量环境 编译期间就算好了
+    constexpr double kilo = power(10.0, 3);
+    int n = 3;
+    // 非常量环境 运行时算
+    double mucho = power(10.0, n);
+    std::cout << kilo << std::endl;  // 1000
+    std::cout << mucho << std::endl; // 1000
+
+    int n1 = -1;
+    constexpr double q = power(10.0, n1); // 编译错误  ‘int n1’ is not const
+    std::cout << q << std::endl;
+    // 因为会走std::pow
+
+    return 0;
+}
+```
+
+有一个概念叫做 明显常量求值
+
+1. 常量表达式，如数组长度、case表达式、非类型模板实参等
+2. if constexpr语句中的条件
+3. constexpr变量的初始化程序
+4. 立即函数的调用
+5. 约束概念表达式
+6. 可在常量表达式中使用或具有常量初始化的变量初始化程序
+
+```cpp
+#include <iostream>
+#include <type_traits>
+using namespace std;
+
+template <bool>
+struct X
+{
+};
+
+X<std::is_constant_evaluated()> x;
+// 非类型模板实参，函数返回true，最终类型为X<true>
+
+int main(int argc, char **argv)
+{
+    return 0;
+}
+```
+
+```cpp
+#include <iostream>
+#include <type_traits>
+using namespace std;
+
+constexpr int f()
+{
+    const int n = std::is_constant_evaluated() ? 13 : 17; // n是13
+    int m = std::is_constant_evaluated() ? 13 : 17;       // m可能是13或者17，取决于函数环境
+    char arr[n] = {};                                     // char[13]
+    return m + sizeof(arr);
+}
+
+int main(int argc, char **argv)
+{
+    int p = f();     // m为13，p为26
+    int q = p + f(); // m为17，q为56 因为这里p是非const的 赋值右边不是常量求值环境
+    return 0;
+}
+```
+
+如果当判断是否为明显常量求值时存在多个条件，那么编译器会试探`std::is_constant_evaluated()`两种情况求值，比如：
+
+```cpp
+#include <iostream>
+#include <type_traits>
+using namespace std;
+
+int y = 1000;
+const int a = std::is_constant_evaluated() ? y : 1;
+const int b = std::is_constant_evaluated() ? 2 : y;
+
+int main(int argc, char **argv)
+{
+    std::cout << a << std::endl; // 1
+    std::cout << b << std::endl; // 2
+    return 0;
+}
+```
+
+- 当对a求值时，编译器试探`std::is_constant_evaluated()==true`的情况，发现y会改变a的值，所以最后选择`std::is_constant_evaluated()==false`
+- 当对b求值时，编译器试探`std::is_constant_evaluated()==true`的情况，发现结果恒为2，于是直接在编译时完成初始化
+
+```cpp
+#include <iostream>
+#include <type_traits>
+using namespace std;
+
+int x = 2000;
+int y = 1000;
+const int a = std::is_constant_evaluated() ? y : 2; // (true,y)不符合 (false,2)符合
+const int b = std::is_constant_evaluated() ? 5 : y; // (true,5)符合
+const int c = std::is_constant_evaluated() ? 3 : 4; // (true,3)符合
+const int d = std::is_constant_evaluated() ? x : y; // (true,x)不符合 (false,y)符合
+
+int main(int argc, char **argv)
+{
+    std::cout << a << std::endl; // 2
+    std::cout << b << std::endl; // 5
+    std::cout << c << std::endl; // 3
+    std::cout << d << std::endl; // 1000
+    return 0;
+}
+```
+
+### C++20constexpr总结
+
+我只想喊，什么狗屎C++，大傻逼。

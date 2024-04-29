@@ -10,12 +10,6 @@ I have a dream.
 
 ## 🚲
 
-* [ ] 允许在constexpr函数中出现Try-catch C++20
-* [ ] 允许在constexpr中进行平凡的默认初始化 C++20
-* [ ] 允许在constexpr中更改联合类型的有效成员 C++20
-* [ ] 使用consteval声明立即函数 C++20
-* [ ] 使用constinit检查常量初始化 C++20
-* [ ] 判断常量求值环境 C++20
 * [ ] 第28章 确定的表达式求值顺序C++17
 * [ ] 第29章 字面量优化C++11 ~ C++17
 * [ ] 第30章 alignas和alignofC++11 ~ C++17
