@@ -34,7 +34,7 @@ C++17 引入了许多新特性和语言改进，下面是其中一些主要的�
 
 16、新的字符串字面值后缀 sv, if and s
 
-17、其他细节改进：C++17 还引入了一些其他的细节改进，如 constexpr lambda 表达式、std::invoke()函数、std::optional<T>类模板等。
+17、其他细节改进：C++17 还引入了一些其他的细节改进，如 constexpr lambda 表达式、std::invoke()函数、`std::optional<T>`类模板等。
 
 ## 文件系统库
 
@@ -488,3 +488,62 @@ int main(int argc, char **argv)
     return 0;
 }
 ```
+
+## 确定的表达式求值顺序
+
+### 表达式求值顺序的不确定性
+
+C++作者贾尼·斯特劳斯特卢普的作品《C++程序设计语言（第4版）》中有一段这样的代码：
+
+```cpp
+#include <iostream>
+#include <cassert>
+using namespace std;
+
+void f2()
+{
+    std::string s = "but I have heard it works even if you don't believe in it";
+    s.replace(0, 4, "").replace(s.find("even"), 4, "only").replace(s.find(" don't"), 6, "");
+    assert(s == "I have heard it works only if you believe in it"); // OK
+}
+
+int main(int argc, char **argv)
+{
+    f2();
+    return 0;
+}
+```
+
+这段代码本意是描述string的replace用法，但C++17之前隐含着一个很大的问题，根源是表达式求值顺序。
+也就是说如C++17之前 `foo(a, b, c)`，这里foo、a、b、c的求值顺序是没有确定的。
+
+从C++17开始，函数表达式一定会在函数的参数之前求值，foo一定会在a、b、c之前求值，但是参数之间的求值顺序依然没有确定。  
+对于后缀表达式和移位操作符而言，表达式求值总是从左往右，比如：
+
+```cpp
+E1[E2]
+E1.E2
+E1.*E2
+E1->*E2
+E1<<E2
+E1>>E2
+```
+
+对于赋值表达式，顺序是从右往左：
+
+```cpp
+E1=E2
+E1+=E2
+E1-=E2
+E1*=E2
+E1/=E2
+.......
+```
+
+对于new表达式，C++17也做了规定。new表达式的内存分配总是优先于T构造函数中参数E的求值。
+
+```cpp
+new T(E)
+```
+
+涉及重载运算符的表达式的求值顺序应由与之相应的内置运算符的求值顺序确定，而不是函数调用的顺序规则。
