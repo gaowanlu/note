@@ -547,3 +547,444 @@ new T(E)
 ```
 
 涉及重载运算符的表达式的求值顺序应由与之相应的内置运算符的求值顺序确定，而不是函数调用的顺序规则。
+
+## 字面量优化
+
+### 十六进制浮点字面量
+
+C++11开始，标准库引入了`std::hexfloat`、`std::defaultfloat`来修改浮点输入和输出的默认格式化。
+
+```cpp
+#include <iostream>
+using namespace std;
+
+int main(int argc, char **argv)
+{
+    double float_array[]{5.875, 1000, 0.117};
+    for (auto elem : float_array)
+    {
+        std::cout << std::hexfloat << elem << " = " << std::defaultfloat << elem << std::endl;
+    }
+    // 0x1.78p+2 = 5.875
+    // 0x1.f4p+9 = 1000
+    // 0x1.df3b645a1cac1p-4 = 0.117
+    return 0;
+}
+// 0x1.f40000p+9可以表示为： 0x1.f4 * (2^9)。
+```
+
+虽然C++11能在输入输出的时候将浮点数格式化为十六进制的能力，但不能在源码中使用，在C++17中得到了支持。
+
+```cpp
+#include <iostream>
+using namespace std;
+
+int main(int argc, char **argv)
+{
+    double float_array[]{0x1.7p+2, 0x1.f4p+9, 0x1.df3b64p-4};
+    for (auto elem : float_array)
+    {
+        std::cout << std::hexfloat << elem << " = " << std::defaultfloat << elem << std::endl;
+    }
+    return 0;
+}
+
+// 0x1.7p+2 = 5.75
+// 0x1.f4p+9 = 1000
+// 0x1.df3b64p-4 = 0.117
+```
+
+使用十六进制字面量的优势很明显，可以更精准地表示浮点数。例如`IEE-754`标准最小的单精度值很容易写为`0x1.0p-126`。缺点就是可读性较差。
+
+### 二进制整数字面量
+
+在C++14标准中，定义了二进制整数字面量，如十六进制(0x 0X)和八进制`0`都有固定前缀一样，二进制整数也有字面量前缀`0b`和`0B`,
+GCC的扩展很早就支持了二进制整数字面量，只不过到C++14才纳入标准。
+
+```cpp
+#include <iostream>
+using namespace std;
+
+int main(int argc, char **argv)
+{
+    auto x = 0b11001101L + 0xcd1 + 077LL + 42; // long long x
+    std::cout << x << std::endl;               // 3591
+    return 0;
+}
+```
+
+### 单引号作为整数分隔符
+
+C++14标准还增加了一个用单引号作为整数分隔符的特性，目的是让比较长的整数阅读起来更加容易。单引号整数分隔符对于十进制、八进制、十六进制、二进制整数都是有效的，比如：
+
+```cpp
+#include <iostream>
+using namespace std;
+
+constexpr int x = 123'456;
+static_assert(x == 0x1e'240);
+static_assert(x == 036'11'00);
+static_assert(x == 0b11'110'001'001'000'000);
+
+int main(int argc, char **argv)
+{
+    return 0;
+}
+```
+
+由于单引号在过去有用于界定字符的功能，因此这种改变可能会引起一些代码的兼容性问题，比如：
+
+```cpp
+#include <iostream>
+
+#define M(x, ...) __VA_ARGS__
+int x[2] = {M(1'2, 3'4)};
+
+int main()
+{
+    // C++14以上，x[0] = 34, x[1] = 0
+    std::cout << "x[0] = " << x[0] << ", x[1] = " << x[1] << std::endl;
+    return 0;
+    // C++11为 x[0] = 0, x[1] = 0
+    // 因为C++11将“1'2, 3'4”整体作为了一个参数
+}
+```
+
+### 原生字符串字面量
+
+C++中嵌入一段带格式和特殊符号的字符串是比较麻烦的，如HTML嵌入到源代码中。
+
+原生字符串字面量并不是一个新的概念，比如在Python中已经支持在字符串之前加R来声明原生字符串字面量了。使用原生字符串字面量的代码会在编译的时候被编译器直接使用，也就是说保留了字符串里的格式和特殊字符，同时它也会忽略转移字符，概括起来就是所见即所得。
+
+```cpp
+prefix R"delimiter(raw_characters)delimiter"
+```
+
+prefix与delimiter是可选部分
+
+```cpp
+#include <iostream>
+using namespace std;
+
+int main(int argc, char **argv)
+{
+    char hello_world_html[] = R"(<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=yes">
+  <title>Hello World!</title>
+</head>
+<body>
+Hello World!
+</body>
+</html>
+)";
+    printf("%s", hello_world_html);
+    return 0;
+}
+```
+
+delimiter可以是由除括号、反斜杠和空格以外的任何源字符构成的字符序列，长度至多为16个字符。通过添加delimiter可以改变编译器对原生字符串字面量范围的判定，从而顺利编译带有`)"`的字符串
+
+```cpp
+char hello_world_html[] = R"cpp(<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=yes">
+  <title>Hello World!</title>
+</head>
+<body>
+"(Hello World!)"
+< / body >
+< / html>
+)cpp";
+```
+
+C++11标准除了让我们能够定义char类型的原生字符串字面量外，对于`wchar_t`、`char8_t`（C++20标准开始）、`char16_t`和`char32_t`类型的原生字符串字面量也有支持。要支持这4种字符类型，就需要用到另外一个可选元素prefix了。这里的prefix实际上是声明4个类型字符串的前缀L、u、U和u8。
+
+```cpp
+#include <iostream>
+using namespace std;
+
+int main(int argc, char **argv)
+{
+    char8_t utf8[] = u8R"(你好世界)"; // C++20标准开始
+    char16_t utf16[] = uR"(你好世界)";
+    char32_t utf32[] = UR"(你好世界)";
+    wchar_t wstr[] = LR"(你好世界)";
+    return 0;
+}
+```
+
+原生字符串字面量除了能连接原生字符串字面量以外，还能连接普通字符串字面量。
+
+* 普通字符串字面量：
+
+```cpp
+普通字符串字面量是用双引号 " 括起来的字符序列。例如："Hello, World!"。
+在普通字符串中，特殊字符（如换行符 \n、制表符 \t 等）需要使用转义序列表示。
+例如，要表示一个包含换行符的字符串，可以写成 "Hello\nWorld"。
+```
+
+* 原生字符串字面量：
+
+```cpp
+原生字符串字面量是用两个R"()"包围的字符序列，中间的括号可以自定义。例如：R"(Hello, World!)"。
+原生字符串字面量中的内容会按照字面的形式来进行解释，不对特殊字符进行转义。因此，可以直接包含特殊字符而无需使用转义序列。
+例如，要表示一个包含换行符的字符串，可以写成 R"(Hello World)"，其中换行符直接在字符串中表现为换行。
+原生字符串字面量通常用于包含大量特殊字符或者需要在字符串中使用大量反斜杠的情况，以提高可读性。
+```
+
+### 用户自定义字面量
+
+在C++11标准中新引入了一个用户自定义字面量的概念，程序员可以通过自定义后缀将整数、浮点数、字符和字符串转化为特定的对象。
+
+```cpp
+#include <iostream>
+using namespace std;
+
+template <int scale, char... Unit_char>
+struct LengthUnit
+{
+    constexpr static int value = scale;
+    constexpr static char unit_str[sizeof...(Unit_char) + 1] = {Unit_char..., '\0'};
+};
+
+template <class T>
+class LengthWithUnit
+{
+public:
+    LengthWithUnit() : length_unit_(0) {}
+    LengthWithUnit(unsigned long long length) : length_unit_(length * T::value)
+    {
+    }
+
+    template <class U>
+    LengthWithUnit<std::conditional_t<(T::value > U::value), U, T>>
+    operator+(const LengthWithUnit<U> &rhs)
+    {
+        // 返回单位比较小的
+        using unit_type = std::conditional_t<(T::value > U::value), U, T>;
+        return LengthWithUnit<unit_type>((length_unit_ + rhs.get_length() / unit_type::value));
+    }
+
+    unsigned long long get_length() const { return length_unit_; }
+    constexpr static const char *get_unit_str() { return T::unit_str; }
+
+private:
+    unsigned long long length_unit_;
+};
+
+template <class T>
+std::ostream &operator<<(std::ostream &out, const LengthWithUnit<T> &unit)
+{
+    out << unit.get_length() / T::value << LengthWithUnit<T>::get_unit_str();
+    return out;
+}
+
+int main(int argc, char **argv)
+{
+    using MMUnit = LengthUnit<1, 'm', 'm'>;       // 1 mm
+    using CMUnit = LengthUnit<10, 'c', 'm'>;      // 1 cm = 10 mm
+    using DMUnit = LengthUnit<100, 'd', 'm'>;     // 1 dm = 100 mm
+    using MUnit = LengthUnit<1000, 'm'>;          // 1 m = 1000 mm
+    using KMUnit = LengthUnit<1000000, 'k', 'm'>; // 1 km = 100 0000 mm
+
+    using LengthWithMMUnit = LengthWithUnit<MMUnit>;
+    using LengthWithCMUnit = LengthWithUnit<CMUnit>;
+    using LengthWithDMUnit = LengthWithUnit<DMUnit>;
+    using LengthWithMUnit = LengthWithUnit<MUnit>;
+    using LengthWithKMUnit = LengthWithUnit<KMUnit>;
+
+    auto total_length = LengthWithCMUnit(1) + LengthWithMUnit(2) + LengthWithMMUnit(4); // LengthWithMMUnit total_length
+    std::cout << total_length << std::endl;                                             // 2104mm
+    return 0;
+}
+```
+
+这样写LengthWithUnit太麻烦了,可以使用自定义字面量改造
+
+语法
+
+```cpp
+retrun_type operator "" identifier (params)
+```
+
+样例
+
+```cpp
+#include <iostream>
+using namespace std;
+
+template <int scale, char... Unit_char>
+struct LengthUnit
+{
+    constexpr static int value = scale;
+    constexpr static char unit_str[sizeof...(Unit_char) + 1] = {Unit_char..., '\0'};
+};
+
+template <class T>
+class LengthWithUnit
+{
+public:
+    LengthWithUnit() : length_unit_(0) {}
+    LengthWithUnit(unsigned long long length) : length_unit_(length * T::value)
+    {
+    }
+
+    template <class U>
+    LengthWithUnit<std::conditional_t<(T::value > U::value), U, T>>
+    operator+(const LengthWithUnit<U> &rhs)
+    {
+        // 返回单位比较小的
+        using unit_type = std::conditional_t<(T::value > U::value), U, T>;
+        return LengthWithUnit<unit_type>((length_unit_ + rhs.get_length() / unit_type::value));
+    }
+
+    unsigned long long get_length() const { return length_unit_; }
+    constexpr static const char *get_unit_str() { return T::unit_str; }
+
+private:
+    unsigned long long length_unit_;
+};
+
+template <class T>
+std::ostream &operator<<(std::ostream &out, const LengthWithUnit<T> &unit)
+{
+    out << unit.get_length() / T::value << LengthWithUnit<T>::get_unit_str();
+    return out;
+}
+
+using MMUnit = LengthUnit<1, 'm', 'm'>;       // 1 mm
+using CMUnit = LengthUnit<10, 'c', 'm'>;      // 1 cm = 10 mm
+using DMUnit = LengthUnit<100, 'd', 'm'>;     // 1 dm = 100 mm
+using MUnit = LengthUnit<1000, 'm'>;          // 1 m = 1000 mm
+using KMUnit = LengthUnit<1000000, 'k', 'm'>; // 1 km = 100 0000 mm
+
+using LengthWithMMUnit = LengthWithUnit<MMUnit>;
+using LengthWithCMUnit = LengthWithUnit<CMUnit>;
+using LengthWithDMUnit = LengthWithUnit<DMUnit>;
+using LengthWithMUnit = LengthWithUnit<MUnit>;
+using LengthWithKMUnit = LengthWithUnit<KMUnit>;
+
+LengthWithMMUnit operator"" _mm(unsigned long long length)
+{
+    return LengthWithMMUnit(length);
+}
+
+LengthWithCMUnit operator"" _cm(unsigned long long length)
+{
+    return LengthWithCMUnit(length);
+}
+
+LengthWithDMUnit operator"" _dm(unsigned long long length)
+{
+    return LengthWithDMUnit(length);
+}
+
+LengthWithMUnit operator"" _m(unsigned long long length)
+{
+    return LengthWithMUnit(length);
+}
+
+LengthWithKMUnit operator"" _km(unsigned long long length)
+{
+    return LengthWithKMUnit(length);
+}
+
+int main(int argc, char **argv)
+{
+    auto total_length = 1_cm + 2_m + 4_mm;
+    std::cout << total_length; // 2104mm
+    return 0;
+}
+```
+
+不得不说C++确实是狗屎，就是因为扩展性太高太灵活内容太多包袱重，狗屎中的狗屎。
+
+用户自定义字面量支持整数、浮点数、字符和字符串4种类型。虽然它们都通过字面量运算符函数来定义，但是对于不同的类型字面量运算符函数，语法在参数上有略微的区别。
+
+对于整数字面量运算符函数有3种不同的形参类型`unsigned long long`、`const char *`以及形参为空。其中`unsigned long long`和`const char*`比较简单，编译器会将整数字面量转换为对应的无符号`long long`类型或者常量字符串类型，然后将其作为参数传递给运算符函数。而对于无参数的情况则使用了模板参数，形如`operator "" identifier<char…c>()`。
+
+对于浮点数字面量运算符函数也有3种形参类型`long double`、`const char *`以及形参为空。和整数字面量运算符函数相比，除了将`unsigned long long`换成了`long double`，没有其他的区别。
+
+对于字符串字面量运算符函数目前只有一种形参类型列表`const char * str`, `size_t len`。其中str为字符串字面量的具体内容，len是字符串字面量的长度。
+
+```cpp
+#include <iostream>
+using namespace std;
+
+unsigned long long operator"" _w1(unsigned long long n)
+{
+    return n;
+}
+
+const char *operator"" _w2(const char *str)
+{
+    return str;
+}
+
+unsigned long long operator"" _w3(long double n)
+{
+    return n;
+}
+
+std::string operator"" _w4(const char *str, size_t len)
+{
+    return str;
+}
+
+char operator""_w5(char n)
+{
+    return n;
+}
+
+unsigned long long operator""if(unsigned long long n)
+{
+    if (n < 100)
+    {
+        return 0;
+    }
+    return n;
+}
+
+int main(int argc, char **argv)
+{
+    auto x1 = 123_w1;           // unsigned long long x1
+    auto x2_1 = 123_w2;         // const char *x2_1
+    auto x2_2 = 12.3_w2;        // const char *x2_2
+    auto x3 = 12.3_w3;          // unsigned long long x3
+    auto x4 = "hello world"_w4; // std::string x4
+    auto x5 = 'a'_w5;           // char x5
+    auto x6 = 123if;            // unsigned long long x6
+    return 0;
+}
+```
+
+字面量运算符函数使用模板参数,在这种情况下函数本身没有任何形参，字面量的内容通过可变模板参数列表`<char…>`传到函数，例如：
+
+```cpp
+#include <iostream>
+using namespace std;
+
+template <char... c>
+std::string operator"" _w()
+{
+    std::string str;
+    // (str.push_back(c),...);//C++17折叠表达式
+    using unused = int[];
+    unused arr{(str.push_back(c), 0)...};
+    return str;
+}
+
+int main(int argc, char **argv)
+{
+    auto x = 123_w;              // std::string x
+    auto y = 12.3_w;             // std::string y
+    std::cout << x << std::endl; // 123
+    std::cout << y << std::endl; // 12.3
+    return 0;
+}
+```
