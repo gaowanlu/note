@@ -163,10 +163,10 @@
 ## 🪅 中间件
 
 * [中间件](zhongjianjian/README.md)
-  * [MySQL](zhongjianjian/mysql.md)
-  * [Redis](zhongjianjian/redis.md)
-  * [Nginx](zhongjianjian/nginx.md)
-  * [消息队列](zhong-jian-jian/zhongjianjian/xiao-xi-dui-lie.md)
+  * [MySQL](db/mysql.md)
+  * [Redis](redis/redis.md)
+  * [Nginx](nginx/nginx.md)
+  * [消息队列](mq/xiao-xi-dui-lie.md)
 
 ## 🪅 Shell
 
