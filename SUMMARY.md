@@ -131,6 +131,7 @@
   * [笛卡尔坐标系](gamemath/chapter1.md)
   * [向量](gamemath/chapter2.md)
   * [多个坐标空间](gamemath/chapter3.md)
+  * [矩阵简介](gamemath/chapter4.md)
 
 ## 💻 操作系统
 
