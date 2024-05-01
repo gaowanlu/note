@@ -235,3 +235,413 @@ int main(int argc, char **argv)
 // 139681113507392|threadfunc2#foo :ref count add 1 to i(2)
 // 139681113507392|threadfunc2#foo :dtor i(3)
 ```
+
+## alignas和alignof
+
+### 不可忽视的字节对齐问题
+
+C++11中新增了alignof和alignas两个关键字，其中alignof运算符可以用于获取类型的对齐字节长度，alignas说明符可以用来改变类型的默认对齐字节长度。这两个关键字的出现解决了长期以来C++标准中无法对数据对齐进行处理的问题。
+
+字节对齐的知识可以看 C++ 第 19 章 特殊工具与技术 内存字节对齐部分
+
+### C++11标准之前控制数据对齐的方法
+
+C++11之前没有一个标准的方法设定数据的对齐字节长度，只能依靠编程技巧和各种编译器提供的扩展功能。
+
+```cpp
+#include <iostream>
+using namespace std;
+
+#define ALIGNOF(type, result)   \
+    struct type##_alignof_trick \
+    {                           \
+        char c;                 \
+        type member;            \
+    };                          \
+    result = offsetof(type##_alignof_trick, member)
+
+// offsetof: Offset of member MEMBER in a struct of type TYPE.
+
+int main(int argc, char **argv)
+{
+    int x1 = 0;
+    ALIGNOF(int, x1);
+    std::cout << x1 << std::endl; // 4
+    return 0;
+}
+```
+
+上面的把戏不能在某些类型使用，如函数指针
+
+```cpp
+int x1 = 0;
+ALIGNOF(void(*)(), x1); // 无法通过编译
+```
+
+可以使用typedef解决
+
+```cpp
+#include <iostream>
+using namespace std;
+
+#define ALIGNOF(type, result)   \
+    struct type##_alignof_trick \
+    {                           \
+        char c;                 \
+        type member;            \
+    };                          \
+    result = offsetof(type##_alignof_trick, member)
+
+// offsetof: Offset of member MEMBER in a struct of type TYPE.
+
+int main(int argc, char **argv)
+{
+    int x1 = 0;
+    typedef void (*f)();
+    ALIGNOF(f, x1);
+    std::cout << x1 << std::endl; // 8
+    return 0;
+}
+```
+
+一种更好的写法使用类模板
+
+```cpp
+#include <iostream>
+using namespace std;
+
+template <class T>
+struct alignof_trick
+{
+    char c;
+    T member;
+};
+
+#define ALIGNOF(type) offsetof(alignof_trick<type>, member)
+
+int main(int argc, char **argv)
+{
+    auto x1 = ALIGNOF(int);
+    auto x2 = ALIGNOF(void (*)());
+    auto x3 = ALIGNOF(char *);
+    std::cout << x1 << " " << x2 << " " << x3 << std::endl; // 4 8 8
+    return 0;
+}
+```
+
+MSVC和GCC C++11之前提供了自己的alignof
+
+```cpp
+// MSVC
+auto x1 = __alignof(int)
+auto x2 = __alignof(void(*)())
+// GCC
+#include <iostream>
+using namespace std;
+
+auto x3 = __alignof__(int);
+auto x4 = __alignof__(void (*)());
+
+int main(int argc, char **argv)
+{
+    std::cout << x3 << " " << x4 << std::endl; // 4 8
+    return 0;
+}
+```
+
+对于设置字节对齐C++11之前不得不用编译器提供的扩展功能。
+
+```cpp
+// MSVC
+short x1;
+__declspec(align(8)) short x2;
+std::cout << "x1 = " << __alignof(x1) << std::endl;
+std::cout << "x2 = " << __alignof(x2) << std::endl;
+```
+
+```cpp
+#include <iostream>
+using namespace std;
+
+short x3;
+__attribute__((aligned(8))) short x4;
+
+int main(int argc, char **argv)
+{
+    std::cout << __alignof__(x3) << std::endl; // 2
+    std::cout << __alignof__(x4) << std::endl; // 8
+    return 0;
+}
+```
+
+### C++11使用alignof运算符
+
+```cpp
+#include <iostream>
+using namespace std;
+
+int main(int argc, char **argv)
+{
+    auto x1 = alignof(int);
+    auto x2 = alignof(void (*)());
+    int a = 0;
+    auto x3 = alignof(a);
+    auto x4 = alignof(decltype(a));
+    std::cout << x1 << " " << x2 << " " << x3 << " " << x4 << std::endl;
+    // 4 8 4 4
+    return 0;
+}
+```
+
+假设我们为a设置下字节对齐
+
+```cpp
+#include <iostream>
+using namespace std;
+
+int main(int argc, char **argv)
+{
+    auto x1 = alignof(int);
+    auto x2 = alignof(void (*)());
+    alignas(8) int a = 0;
+    auto x3 = alignof(a);
+    auto x4 = alignof(decltype(a));
+    std::cout << x1 << " " << x2 << " " << x3 << " " << x4 << std::endl;
+    // 4 8 8 4
+    return 0;
+}
+```
+
+可以通过alignof获得类型`std::max_align_t`的对齐字节长度，这是一个非常重要的值。C++11定义了`std::max_align_t`，它是一个平凡的标准布局类型，其对齐字节长度要求至少与每个标量类型一样严格。也就是说，所有的标量类型都适应`std::max_align_t`的对齐字节长度。C++标准还规定，诸如new和malloc之类的分配函数返回的指针需要适合于任何对象，也就是说内存地址至少与`std::max_align_t`严格对齐。
+
+```cpp
+#include <iostream>
+#include <cstddef>
+using namespace std;
+
+int main(int argc, char **argv)
+{
+    for (int i = 0; i < 100; i++)
+    {
+        auto *p = new char;
+        auto addr = reinterpret_cast<std::uintptr_t>(p);
+        std::cout << addr % alignof(std::max_align_t) << std::endl; // 全输出0
+        delete p;
+    }
+    std::cout << alignof(std::max_align_t) << std::endl; // 16
+    return 0;
+}
+
+//std::uintptr_t 是 C++ 标准库中定义的一种整数类型，它是无符号整数类型，足以容纳指针的位数，并且可以用于在指针和整数之间进行转换。在 C++11 标准之后引入，位于 <cstdint> 头文件中。
+//这种类型的主要作用是在需要在指针和整数之间进行转换时提供一种标准的方式，通常在涉及低级内存操作或者跨平台开发时会用到。
+```
+
+### C++11使用alignas说明符
+
+```cpp
+alignas(n)
+// n必须为2的幂值
+```
+
+```cpp
+#include <iostream>
+using namespace std;
+
+struct X
+{
+    char a1;
+    int a2;
+    double a3;
+};
+
+struct X1
+{
+    alignas(16) char a1;
+    alignas(double) int a2;
+    double a3;
+};
+
+int main(int argc, char **argv)
+{
+    std::cout << alignof(X) << std::endl;     // 8
+    std::cout << sizeof(X) << std::endl;      // 16
+    std::cout << alignof(X1) << std::endl;    // 16
+    std::cout << sizeof(X1) << std::endl;     // 32
+    std::cout << sizeof(double) << std::endl; // 8
+    return 0;
+}
+```
+
+还可以设置结构体的对齐方式
+
+```cpp
+#include <iostream>
+using namespace std;
+
+struct alignas(16) X2
+{
+    char a1;
+    int a2;
+    double a3;
+};
+
+struct alignas(16) X3
+{
+    alignas(8) char a1;
+    alignas(double) int a2;
+    double a3;
+};
+
+struct alignas(4) X4
+{
+    alignas(8) char a1;
+    alignas(double) int a2;
+    double a3;
+};
+
+// alignas(1)作用就是X5占用的字节数是1的倍数，就是设置1没有什么意义
+struct alignas(1) X5
+{
+    alignas(1) char a1;
+    alignas(1) int a2;
+    alignas(1) char a3;
+};
+
+int main(int argc, char **argv)
+{
+    std::cout << alignof(X2) << std::endl; // 16
+    std::cout << sizeof(X2) << std::endl;  // 16
+
+    std::cout << alignof(X3) << std::endl; // 16
+    std::cout << sizeof(X3) << std::endl;  // 32
+
+    std::cout << alignof(X4) << std::endl; // 8
+    std::cout << sizeof(X4) << std::endl;  // 24
+
+    std::cout << alignof(X5) << std::endl;      // 4
+    std::cout << sizeof(X5) << std::endl;       // 12
+    std::cout << offsetof(X5, a1) << std::endl; // 0
+    std::cout << offsetof(X5, a2) << std::endl; // 4
+    std::cout << offsetof(X5, a3) << std::endl; // 8
+
+    alignas(4) X5 x5;
+    std::cout << alignof(x5) << std::endl; // 4
+    return 0;
+}
+```
+
+### C++11其他对齐字节长度的支持
+
+C++11提供了 `alignof`和`alignas`支持对齐字节长度的控制之外，还提供了
+`std::alignment_of`、`std::aligned_storage`、`std::aligned_union`类模板以及
+`std::align`函数模板支持对于对齐字节长度的控制。
+
+* `std::alignment_of`和`alignof`功能相似，可以获取类型的对齐字节长度
+
+```cpp
+#include <iostream>
+using namespace std;
+
+int main(int argc, char **argv)
+{
+    std::cout << std::alignment_of<int>::value << std::endl; // 4
+    std::cout << std::alignment_of<int>() << std::endl;      // 4
+
+    std::cout << std::alignment_of<double>::value << std::endl; // 8
+    std::cout << std::alignment_of<double>() << std::endl;      // 8
+    return 0;
+}
+```
+
+* `std::aligned_storage`可以用来分配一块指定对齐字节长度和大小的内存
+
+```cpp
+#include <iostream>
+using namespace std;
+
+int main(int argc, char **argv)
+{
+    std::aligned_storage<128, 16>::type buffer;
+    std::cout << sizeof(buffer) << std::endl;                     // 128 内存长度
+    std::cout << alignof(buffer) << std::endl;                    // 16对齐长度
+    std::cout << (sizeof(buffer) % alignof(buffer)) << std::endl; // 0
+    return 0;
+}
+```
+
+* `std::aligned_union`接受一个`std::size_t`作为分配内存的大小，以及不定数量的类型。`std::aligned_union`会获取这些类型中对齐字节长度最大作为分配内存的对齐字节长度。
+
+```cpp
+#include <iostream>
+using namespace std;
+
+int main(int argc, char **argv)
+{
+    std::aligned_union<64, double, int, char>::type buffer;
+    std::cout << sizeof(buffer) << std::endl;  // 64
+    std::cout << alignof(buffer) << std::endl; // 8
+    std::cout << alignof(double) << std::endl; // 8
+    std::cout << alignof(int) << std::endl;    // 4
+    std::cout << alignof(char) << std::endl;   // 1
+    return 0;
+}
+```
+
+* `std::aligned_alloc` 是 C++17 中引入的函数，用于分配一块特定对齐要求的内存。
+
+```cpp
+// void* aligned_alloc(std::size_t alignment, std::size_t size);
+#include <iostream>
+using namespace std;
+
+int main(int argc, char **argv)
+{
+    char *buffer = (char *)std::aligned_alloc(8, 5);
+    for (int i = 0; i < 5; i++)
+    {
+        buffer[i] = i;
+    }
+    std::free(buffer);
+    return 0;
+}
+```
+
+* `std::align`函数模板，该函数接受一个指定大小的缓冲区空间的指针和一个对齐字节长度，返回一个该缓冲区中最近的能找到符合指定对齐字节长度的指针。通常来说，我们传入的缓冲区内存大小为预分配的缓冲区大小加上预指定对齐字节长度的字节数。
+
+```cpp
+void* align(std::size_t alignment, std::size_t size, void*& ptr, std::size_t& space);
+```
+
+```cpp
+#include <iostream>
+#include <memory>
+using namespace std;
+
+int main(int argc, char **argv)
+{
+    constexpr int align_size = 32;
+    constexpr int alloc_size = 10001;
+    constexpr int buff_size = align_size + alloc_size;
+    char dest[buff_size]{0};
+    char src[buff_size]{0};
+    void *dest_ori_ptr = dest;
+    void *src_ori_ptr = src;
+
+    size_t dest_size = sizeof(dest);
+    size_t src_size = sizeof(src);
+
+    char *dest_ptr = static_cast<char *>(std::align(align_size, alloc_size, dest_ori_ptr, dest_size));
+    char *src_ptr = static_cast<char *>(std::align(align_size, alloc_size, src_ori_ptr, src_size));
+
+    printf("%lu\n", reinterpret_cast<std::uintptr_t>(dest));                       // 140728303141552
+    std::cout << reinterpret_cast<std::uintptr_t>(dest) % align_size << std::endl; // 16
+    printf("%lu\n", reinterpret_cast<std::uintptr_t>(src));                        // 140728303151600
+    std::cout << reinterpret_cast<std::uintptr_t>(src) % align_size << std::endl;  // 16
+
+    printf("%lu\n", reinterpret_cast<std::uintptr_t>(dest_ptr));                       // 140728303141568
+    std::cout << reinterpret_cast<std::uintptr_t>(dest_ptr) % align_size << std::endl; // 0
+    printf("%lu\n", reinterpret_cast<std::uintptr_t>(src_ptr));                        // 140728303151616
+    std::cout << reinterpret_cast<std::uintptr_t>(src_ptr) % align_size << std::endl;  // 0
+    return 0;
+}
+```

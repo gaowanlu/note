@@ -988,3 +988,36 @@ int main(int argc, char **argv)
     return 0;
 }
 ```
+
+## C++17中使用new分配指定对齐字节长度的对象
+
+内存分配器会按照`std::max_align_t`的对齐字节长度分配对象的内存空间。这一点在C++17标准中发生了改变，new运算符也拥有了根据对齐字节长度分配对象的能力。
+这个能力是通过让new运算符接受一个`std::align_val_t`类型的参数来获得分配对象需要的对齐字节长度来实现的：
+
+```cpp
+void* operator new(std::size_t, std::align_val_t);
+void* operator new[](std::size_t, std::align_val_t);
+```
+
+编译器会自动从类型对齐字节长度的属性中获取这个参数并且传参，不需要额外的代码介入。例如：
+
+```cpp
+#include <iostream>
+using namespace std;
+
+union alignas(256) X
+{
+    char a1;
+    int a2;
+    double a3;
+};
+
+int main(int argc, char **argv)
+{
+    std::cout << sizeof(X) << std::endl; // 256
+    X *x = new X();
+    std::cout << reinterpret_cast<std::uintptr_t>(x) % 256 << std::endl; // C++17:0 C++11:可能不是0
+    delete x;
+    return 0;
+}
+```

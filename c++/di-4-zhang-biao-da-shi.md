@@ -931,7 +931,7 @@ int main(int argc, char **argv)
 
 ### reinterpret_cast
 
-提供了一种切换从内存解释的方法,怎么理解呢?
+提供了一种切换从内存解释的方法,怎么理解呢? reinterpret_cast 是一个强制类型转换，它通常用于将指针或者引用转换为不同类型的指针或者引用。对于基本数据类型的转换，通常使用 static_cast 或者 C 风格的强制类型转换更为合适。
 
 ```cpp
 //example27.cpp
@@ -943,7 +943,7 @@ int main(int argc, char **argv)
 {
     int arr[1];
     int *arr_ptr = arr;
-    char *chs = reinterpret_cast<char *>(arr_ptr);
+    char *chs = reinterpret_cast<char *>(arr_ptr);// 将arr_ptr存储的地址赋给chs
     chs[0] = '1';
     chs[1] = '2';
     chs[2] = '3';
@@ -974,6 +974,27 @@ int main(int argc, char **argv)
 
     //为什么是反着存储的呢
     //因为对于int的内存使用都是从低位开始使用的，也就是内存的起始地址在右边
+
+    return 0;
+}
+```
+
+整数与地址的转换，除此外还有许多和指针 引用类型相互转换的骚操作
+
+```cpp
+#include <iostream>
+using namespace std;
+
+int main(int argc, char **argv)
+{
+    char ch = 0;
+    char *ptr = &ch;
+    std::uintptr_t addr = reinterpret_cast<std::uintptr_t>(ptr);
+    std::cout << addr << std::endl; // 140729386273623
+                                    // 将整数转为地址
+    char *ptr_cp = reinterpret_cast<char *>(addr);
+    *ptr_cp = 'p';
+    std::cout << *ptr << std::endl; // p
     return 0;
 }
 ```
