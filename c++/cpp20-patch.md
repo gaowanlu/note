@@ -2020,3 +2020,460 @@ int main(int argc, char **argv)
 ### C++20constexpr总结
 
 我只想喊，什么狗屎C++，大傻逼。
+
+## 属性说明符和标准属性
+
+各种编译器GCC、MSVC等等 提供了自家的属性语法
+
+GCC
+
+```cpp
+_attribute__((attribute-list))
+// 例如
+_attribute__((aligned(16))) class X
+{
+    int i;
+};
+```
+
+MSVC
+
+```cpp
+__declspec(attribute-list)
+```
+
+不过别管这些，也不要关心，也不要了解，理解使用这些东西只会增加开发的负担。我们应该只关注C++标准，
+使用C++标准。
+
+### 标准属性说明符语法
+
+C++11标准的属性表示方法是
+
+```cpp
+[[attr]] [[attr1, attr2, attr3(args)]]
+[[namespace:::attr(args)]]
+```
+
+有属性命名空间的概念如
+
+```cpp
+[[gnu::always_inline]] [[gnu::hot]] [[gnu::const]] [[nodiscard]]
+inline int f();
+// 或者
+[[gnu::always_inline, gnu::hot, gnu::const, nodiscard]]
+inline int f();
+```
+
+C++17标准对命名空间属性声明做了优化引入了using关键词打开属性命名空间
+
+```cpp
+[[ using attribute-namespace : attribute-list]]
+```
+
+如改写函数f
+
+```cpp
+[[using gnu : always_inline, hot, const]]
+[[nodiscard]]
+inline int f();
+```
+
+### 标准属性
+
+C++11到C++20一共定义了9种标准属性。
+
+### noreturn
+
+C++11引入了noreturn属性，它是一种函数属性，用于告诉编译器函数不会返回。这在编写特定类型的函数时非常有用，例如终止程序的函数或者永远不会返回的函数。一个常见的用例是在函数中使用`abort()`函数，该函数会立即终止程序执行。通常情况下，`abort()`函数被调用后程序不会再继续执行，因此可以将其声明为noreturn，以便通知编译器这一点。
+
+这有助于编译器进行更好的优化，同时也向代码的读者传达了清晰的意图。注意这里的不会返回不是返回void，而是什么都不返回不会返回。
+
+```cpp
+#include <iostream>
+using namespace std;
+
+[[noreturn]] void foo()
+{
+    std::cout << "foo()" << std::endl;
+    abort();
+}
+
+void bar()
+{
+    std::cout << "bar()" << std::endl;
+}
+
+int main(int argc, char **argv)
+{
+    foo();
+    bar();
+    return 0;
+}
+```
+
+### carries_dependency
+
+指示释放消费 `std::memory_order` 中的依赖链传进和传出该函数，这允许编译器跳过不必要的内存栅栏指令。
+
+此属性可在两种情形中出现：
+
+- 它可应用于函数或 lambda 表达式的形参声明，该情况下它指示从该形参的初始化向该对象的左值到右值转换中携带依赖。
+- 它可应用于函数声明整体，该情况下它指示从返回值向函数调用表达式的求值中携带依赖。此属性必须出现在任意翻译单元中某个函数或其形参之一的首个声明上。若另一翻译单元中的该函数或其形参的首个声明上未使用该属性，则程序非良构；不要求诊断。
+
+反正我现在这个菜鸡是不理解，后面学过原子操作的再看吧。
+
+### deprecated
+
+deprecated是在C++14标准中引入的属性，带有此属性的实体被声明为弃用，虽然在代码中依然可以使用它们，但是并不鼓励这么做。当代码中出现带有弃用属性的实体时，编译器通常会给出警告而不是错误。
+
+```cpp
+#include <iostream>
+using namespace std;
+
+[[deprecated("foo was deprecated, use bar instead")]] void foo()
+{
+}
+// warning: ‘void foo()’ is deprecated: foo was deprecated, use bar instead [-Wdeprecated-declarations]
+
+class [[deprecated]] X
+{
+};
+
+int main(int argc, char **argv)
+{
+    X x;
+    foo();
+    return 0;
+}
+```
+
+### fallthrough
+
+fallthrough是C++17标准中引入的属性，该属性可以在switch语句的上下文中提示编译器直落行为是有意的，并不需要给出警告。
+
+```cpp
+#include <iostream>
+using namespace std;
+
+void bar()
+{
+    std::cout << "bar()" << std::endl;
+}
+
+void foo(int a)
+{
+    switch (a)
+    {
+    case 0:
+        break;
+    case 1:
+        bar();
+        [[fallthrough]];
+    case 2:
+        bar();
+        break;
+    default:
+        break;
+    }
+}
+
+int main(int argc, char **argv)
+{
+    foo(1);
+    // bar()
+    // bar()
+    return 0;
+}
+```
+
+### nodiscard
+
+nodiscard是在C++17标准中引入的属性，该属性声明函数的返回值不应该被舍弃，否则鼓励编译器给出警告提示。nodiscard属性也可以声明在类或者枚举类型上，但是它对类或者枚举类型本身并不起作用，只有当被声明为nodiscard属性的类或者枚举类型被当作函数返回值的时候才发挥作用：
+
+```cpp
+#include <iostream>
+using namespace std;
+
+class [[nodiscard]] X
+{
+};
+
+[[nodiscard]] int foo()
+{
+    return 1;
+}
+
+X bar()
+{
+    return X();
+}
+
+int main(int argc, char **argv)
+{
+    X x;
+    foo();
+    // warning: ignoring return value of ‘int foo()’, declared with attribute ‘nodiscard’ [-Wunused-result]
+    bar();
+    // warning: ignoring returned value of type ‘X’, declared with attribute ‘nodiscard’ [-Wunused-result]
+    return 0;
+}
+```
+
+nodiscard属性只适用于返回值类型的函数，对于返回引用的函数使用nodiscard属性是没有作用的
+
+```cpp
+#include <iostream>
+using namespace std;
+
+class [[nodiscard]] X
+{
+};
+
+X &bar(X &x)
+{
+    return x;
+}
+
+int main(int argc, char **argv)
+{
+    X x;
+    bar(x); // bar返回引用,nodiscard不起作用，编译时不会引发警告
+    return 0;
+}
+```
+
+nodiscard属性有几个常用场合
+
+1. 防止资源泄露，对于像malloc或者new这样的函数或者运算符，它们返回的内存指针是需要及时释放的，可以使用nodiscard属性提示调用者不要忽略返回值。
+2. 对于工厂函数而言，真正有意义的是回返的对象而不是工厂函数，将nodiscard属性应用在工厂函数中也可以提示调用者别忘了使用对象，否则程序什么也不会做。
+3. 对于返回值会影响程序运行流程的函数而言，nodiscard属性也是相当合适的，它告诉调用方其返回值应该用于控制后续的流程。如返回错误码，保证程序有进行判断
+
+C++20开始，nodiscard属性支持将一个字符串字面量作为属性参数，字符串会包在警告中
+
+```cpp
+#include <iostream>
+using namespace std;
+
+class [[nodiscard("my nodiscard alert")]] X
+{
+};
+
+X bar(X &x)
+{
+    return x;
+}
+
+int main(int argc, char **argv)
+{
+    X x;
+    bar(x);
+    // warning: ignoring returned value of type ‘X’, declared with attribute ‘nodiscard’: ‘my nodiscard alert’ [-Wunused-result]
+    return 0;
+}
+```
+
+C++20开始，nodiscard属性还能用于构造函数，它会在类型构建临时对象的时候让编译器发出警告
+
+```cpp
+#include <iostream>
+using namespace std;
+
+class X
+{
+public:
+    [[nodiscard]] X() {}
+    X(int a) {}
+};
+
+int main(int argc, char **argv)
+{
+    X x;
+    X{}; // warning: ignoring return value of ‘X::X()’, declared with attribute ‘nodiscard’ [-Wunused-result]
+    X{42};
+    return 0;
+}
+// X {}
+// 构造了临时对象，于是编译器给出忽略X::X() 返回值的警告；X{42};
+// 不会产生编译警告，因为X(int a) {}
+// 没有nodicard属性。
+```
+
+### maybe_unused
+
+maybe_unused是在C++17标准中引入的属性，该属性声明实体可能不会被应用以消除编译器警告。
+
+```cpp
+#include <iostream>
+using namespace std;
+
+int foo(int a [[maybe_unused]], int b [[maybe_unused]])
+{
+    return 5;
+}
+
+int main(int argc, char **argv)
+{
+    foo(1, 2);
+    int a [[maybe_unused]] = 9;
+    return 0;
+}
+```
+
+maybe_unused属性除作为函数形参属性外，还可以用在很多地方，比如类、结构体、联合类型、枚举类型、函数、变量等。
+
+### likely和unlikely
+
+likely和unlikely是C++20标准引入的属性，两个属性都是声明在标签或者语句上的。其中likely属性允许编译器对该属性所在的执行路径相对于其他执
+行路径进行优化；而unlikely属性恰恰相反。通常，likely和unlikely被声明在switch语句：
+
+通常情况下，编译器会假定条件分支的可能性是均等的，但实际情况中，某些分支可能会更有可能发生，而某些分支则较少发生。通过使用`[[likely]]`和`[[unlikely]]`属性，开发人员可以向编译器提供关于条件分支可能性的提示，以便编译器可以相应地优化生成的代码。
+
+```cpp
+#include <iostream>
+using namespace std;
+
+int main(int argc, char **argv)
+{
+    int a = 1, b = 2;
+    if (a < b) [[likely]]
+    {
+    }
+    else if (a == b) [[unlikely]]
+    {
+    }
+    else
+    {
+    }
+    return 0;
+}
+```
+
+```cpp
+#include <iostream>
+using namespace std;
+
+int f(int i)
+{
+    switch (i)
+    {
+    case 1:
+        [[fallthrough]];
+    [[likely]] case 2:
+        return 1;
+    default:
+        break;
+    }
+    return 2;
+}
+
+int main(int argc, char **argv)
+{
+    f(1);
+    return 0;
+}
+```
+
+### no_unique_address
+
+no_unique_address是C++20标准引入的属性，该属性指示编译器该数据成员不需要唯一的地址，也就是说它不需要与其他非静态数据成员使用不同的地址。注意，该属性声明的对象必须是非静态数据成员且不为位域：
+
+```cpp
+#include <iostream>
+using namespace std;
+
+struct Empty
+{
+};
+
+struct X
+{
+    int i;
+    Empty e;
+};
+
+int main(int argc, char **argv)
+{
+    std::cout << sizeof(Empty) << std::endl; // 1
+    std::cout << sizeof(X) << std::endl;     // 8
+    X x;
+    printf("%p\n", &x.i); // 0x7ffe56fc7510
+    printf("%p\n", &x.e); // 0x7ffe56fc7514
+    return 0;
+}
+```
+
+有一种方法是让空的e没有自己的地址,使用no_unique_address
+
+```cpp
+#include <iostream>
+using namespace std;
+
+struct Empty
+{
+};
+
+struct X
+{
+    int i;
+    [[no_unique_address]] Empty e;
+};
+
+int main(int argc, char **argv)
+{
+    std::cout << sizeof(Empty) << std::endl; // 1
+    std::cout << sizeof(X) << std::endl;     // 4
+    X x;
+    printf("%p\n", &x.i); // 0x7ffc99948c04
+    printf("%p\n", &x.e); // 0x7ffc99948c04
+    return 0;
+}
+```
+
+如果存在两个相同的类型且它们都具有no_unique_address属性，编译器不会重复地将其堆在同一个地址
+
+```cpp
+#include <iostream>
+using namespace std;
+
+struct Empty
+{
+};
+
+struct Empty1
+{
+};
+
+struct X
+{
+    int i;
+    [[no_unique_address]] Empty e, e1;
+};
+
+struct X1
+{
+    int i;
+    [[no_unique_address]] Empty e;
+    [[no_unique_address]] Empty1 e1;
+};
+
+int main(int argc, char **argv)
+{
+    std::cout << sizeof(Empty) << std::endl; // 1
+    std::cout << sizeof(X) << std::endl;     // 8
+    X x;
+    printf("%p\n", &x.i);  // 0x7fff305d0640
+    printf("%p\n", &x.e);  // 0x7fff305d0640
+    printf("%p\n", &x.e1); // 0x7fff305d0644
+
+    X1 x1;
+    printf("%p\n", &x1.i);  // 0x7ffe49f9036c
+    printf("%p\n", &x1.e);  // 0x7ffe49f9036c
+    printf("%p\n", &x1.e1); // 0x7ffe49f9036c
+
+    return 0;
+}
+```
+
+no_unique_address这个属性的使用场景。读者一定写过无状态的类，这种类不需要有数据成员，唯一需要做的就是实现一些必要的函数，
+常见的是STL中一些算法函数所需的函数对象（仿函数）。而这种类作为数据成员加入其他类时，会占据独一无二的内存地址，实际上这是没有必要的。
+所以，在C++20的环境下，我们可以使用no_unique_address属性，让其不需要占用额外的内存地址空间。
