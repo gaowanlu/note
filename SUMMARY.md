@@ -132,6 +132,7 @@
   * [向量](gamemath/chapter2.md)
   * [多个坐标空间](gamemath/chapter3.md)
   * [矩阵简介](gamemath/chapter4.md)
+  * [矩阵和线性变换](gamemath/chapter5.md)
 
 ## 💻 操作系统
 
