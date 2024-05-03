@@ -6,7 +6,7 @@ coverY: 0
 
 # Don't be a noob
 
-I have a dream.
+I have a dream. Keep going.
 
 ## 🚲
 
@@ -23,32 +23,32 @@ I have a dream.
 
 ## Maybe
 
-2024:
+2024
 
-* 3D数学 <https://gamemath.com/book/multiplespaces.html>  
-* 《现代C++语言核心特性解析》 第27章 常量表达式(正在进行中...)
-* Redis设计与实现第2版 第一部分: 数据结构与对象(待开始)
-* SQL经典实例第2版 第1章 检索记录(待开始)
-* PulsarDocs <https://pulsar.apache.org/docs> (待开始)
-* C++并发编程实战 第2版(阅读中)
-* 高性能MySQL 第1章MySQL架构
-* 游戏编程模式
-* Linux C与C++一线开发实践
+* [ ] 3D数学 <https://gamemath.com/book/multiplespaces.html>  
+* [ ] 《现代C++语言核心特性解析》 第27章 常量表达式(正在进行中...)
+* [ ] Redis设计与实现第2版 第一部分: 数据结构与对象(待开始)
+* [ ] SQL经典实例第2版 第1章 检索记录(待开始)
+* [ ] PulsarDocs <https://pulsar.apache.org/docs> (待开始)
+* [ ] C++并发编程实战 第2版(阅读中)
+* [ ] 高性能MySQL 第1章MySQL架构
+* [ ] 游戏编程模式
+* [ ] Linux C与C++一线开发实践
 
-可能会读的有趣读物:
+可能会读的有趣读物
 
-* Effective Modern C++
-* More Effective C++
-* 深度探索C++对象模型
-* 腾讯游戏开发精粹Ⅰ服务器部分
-* 腾讯游戏开发精粹 Ⅱ 服务器部分
-* C++函数式编程
-* 高效C/C++调试
-* C++高性能编程
-* C++高效编程:内存与性能优化
+* [ ] Effective Modern C++
+* [ ] More Effective C++
+* [ ] 深度探索C++对象模型
+* [ ] 腾讯游戏开发精粹Ⅰ服务器部分
+* [ ] 腾讯游戏开发精粹 Ⅱ 服务器部分
+* [ ] C++函数式编程
+* [ ] 高效C/C++调试
+* [ ] C++高性能编程
+* [ ] C++高效编程:内存与性能优化
 
-* [leveldb、libevent、memcached 源码分析，cpp 服务器开发](https://cppguide.cn/)
-* [8钩](https://xiaolincoding.com/)
+* [ ] leveldb、libevent、memcached 源码分析，cpp 服务器开发(https://cppguide.cn/)
+* [ ] 8钩(https://xiaolincoding.com/)
 
 ## Life
 
