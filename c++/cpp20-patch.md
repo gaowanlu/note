@@ -2477,3 +2477,190 @@ int main(int argc, char **argv)
 no_unique_address这个属性的使用场景。读者一定写过无状态的类，这种类不需要有数据成员，唯一需要做的就是实现一些必要的函数，
 常见的是STL中一些算法函数所需的函数对象（仿函数）。而这种类作为数据成员加入其他类时，会占据独一无二的内存地址，实际上这是没有必要的。
 所以，在C++20的环境下，我们可以使用no_unique_address属性，让其不需要占用额外的内存地址空间。
+
+## 新增预处理器和宏
+
+### 预处理器__has_include
+
+C++17为预处理器增加了一个新特性，`__has_include`,用于判断某个头文件是否能被包含进来
+
+```cpp
+#include <iostream>
+
+#if __has_include(<optional>)
+#include <optional>
+#define have_optional 1
+#elif __has_include(<experimental/optional>)
+#include <experimental/optional>
+#define have_optional 1
+#define experimental_optional 1
+#else
+#define have_optional 0
+#endif
+
+using namespace std;
+
+int main(int argc, char **argv)
+{
+    std::cout << have_optional << std::endl;
+    return 0;
+}
+```
+
+### 特性测试宏
+
+C++20标准添加了一组用于测试功能特性的宏，这组宏可以帮助我们测试当前的编译环境对各种功能特性的支持程度。
+
+### 属性特性测试宏
+
+```cpp
+std::cout << __has_cpp_attribute(deprecated);
+// 将会输出该属性添加到标准时的年份和月份 201309
+```
+
+```cpp
+属性        值
+carries_dependency 200809L
+deprecated 201309L
+fallthrough 201603L
+likely 201803L
+maybe_unused 201603L
+no_unique_address 201803L
+nodiscard 201603L
+noreturn 200809L
+unlikely 201803L
+```
+
+### 语言功能特性测试宏
+
+以下列表的宏代表编译环境所支持的语言功能特性，每个宏将被展开为该特性
+添加到标准时的年份和月份。请注意，这些宏展开的值会随着特性的变更而更新。
+
+```cpp
+#include <iostream>
+using namespace std;
+
+int main(int argc, char **argv)
+{
+    std::cout << __cpp_aggregate_bases << std::endl; // 201603
+    return 0;
+}
+```
+
+<https://en.cppreference.com/w/cpp/feature_test>
+
+```cpp
+宏         值
+__cpp_aggregate_bases 201603L
+__cpp_aggregate_nsdmi 201304L
+__cpp_aggregate_paren_init 201902L
+__cpp_alias_templates 200704L
+__cpp_aligned_new 201606L
+__cpp_attributes 200809L
+__cpp_binary_literals 201304L
+__cpp_capture_star_this 201603L
+__cpp_char8_t 201811L
+__cpp_concepts 201907L
+__cpp_conditional_explicit 201806L
+__cpp_consteval 201811L
+__cpp_constexpr 201907L
+__cpp_constexpr_dynamic_alloc 201907L
+__cpp_constexpr_in_decltype 201711L
+__cpp_constinit 201907L
+__cpp_coroutines 201902L
+__cpp_decltype 200707L
+__cpp_decltype_auto 201304L
+// ...............
+```
+
+### 标准库功能特性测试宏
+
+以下列表的宏代表编译环境所支持的标准库功能特性，通常包含在`<version>`头文件或者表中的任意对应头文件中。
+每个宏将被展开为该特性添加到标准时的年份和月份。请注意，这些宏展开的值会随着特性的变更而更新。
+
+<https://en.cppreference.com/w/cpp/utility/feature_test>
+
+```cpp
+宏      值       头文件
+__cpp_lib_addressof_constexpr 201603L <memory>
+
+__cpp_lib_allocator_traits_is_always_equal
+201411L
+<memory> <scoped_allocator> <string> <deque> <forward_list> <list> <vector> <map><set> <unordered_map> <unordered_set>
+
+__cpp_lib_any 201606L <any>
+__cpp_lib_apply 201603L <tuple>
+// ...............
+```
+
+### 新增宏VA_OPT
+
+从C99标准开始，C语言引入了可变参数宏`__VA_ARGS`,C++11标准也将其纳入了标准。`__VA_ARGS__`常见的用法如打印日志上。
+
+```cpp
+#include <iostream>
+using namespace std;
+
+#define LOG(msg, ...) printf("[\"__FILE__\":%d]" msg "\n", __LINE__, __VA_ARGS__)
+
+int main(int argc, char **argv)
+{
+    LOG("hello %d", 2024); //["__FILE__":8]hello 2024
+    printf("hello" "world\n");//helloworld
+    return 0;
+}
+```
+
+上面有个问题就是如果LOG只用第一个参数会报错,问题就是多了个 `,`
+
+```cpp
+#include <iostream>
+using namespace std;
+
+#define LOG(msg, ...) printf("[\"__FILE__\":%d]" msg "\n", __LINE__, __VA_ARGS__)
+
+int main(int argc, char **argv)
+{
+    LOG("hello");
+    // 扩展到printf("[\"__FILE__\":%d]" "hello" "\n", 8, )
+    return 0;
+}
+```
+
+可以使用 `##` 连接`__VA_ARGS__`
+
+在C/C++中，`##` 是预处理器中的连接运算符。它的作用是在宏展开过程中，
+将其前后的标识符连接成一个单独的标识符或者删除前面的逗号。
+
+```cpp
+#include <iostream>
+using namespace std;
+
+#define LOG(msg, ...) printf("[\"__FILE__\":%d]" msg "\n", __LINE__, ##__VA_ARGS__)
+
+int main(int argc, char **argv)
+{
+    LOG("hello"); // ["__FILE__":8]hello
+    // 扩展到printf("[\"__FILE__\":%d]" "hello" "\n", 8)
+    return 0;
+}
+```
+
+C++20引入了一个新的宏`__VA_OPT__`令可变参数宏更容易在可变参数为空的情况下使用
+
+```cpp
+#include <iostream>
+using namespace std;
+
+#define LOG(msg, ...) printf("[" __FILE__      \
+                             ":%d] " msg "\n", \
+                             __LINE__ __VA_OPT__(, ) __VA_ARGS__)
+
+int main(int argc, char **argv)
+{
+    // 扩展到 printf("[" "/mnt/c/Users/gaowanlu/Desktop/MyProject/note/testcode/main.cpp" ":%d] " "hello" "\n", 11  )
+    LOG("hello");
+    // [/mnt/c/Users/gaowanlu/Desktop/MyProject/note/testcode/main.cpp:10] hello
+    return 0;
+}
+```
