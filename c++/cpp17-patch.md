@@ -1021,3 +1021,55 @@ int main(int argc, char **argv)
     return 0;
 }
 ```
+
+## C++17 std::launder
+
+`std::launder()`是C++17新引入的函数，它想要解决C++的一个核心问题。
+
+```cpp
+#include <iostream>
+using namespace std;
+
+struct X
+{
+    const int n;
+};
+
+union U
+{
+    X x;
+    float f;
+};
+
+int main(int argc, char **argv)
+{
+    U u = {{1}};
+    // u.x.n = 10; // 表达式必须是可修改的左值
+    std::cout << u.x.n << std::endl; // 1
+
+    X *p = new (&u.x) X{2};
+    std::cout << u.x.n << std::endl; // 2
+    std::cout << p->n << std::endl;  // 2
+    return 0;
+}
+```
+
+虽然这里`u.x.n`也变为了2，但是编译器有理由认为`u.x.n`一但被初始化后不能被修改，从标准来看这个结果是未定义的。标准库引入`std::launder()`就是为了解决此问题。它的目的是防止编译器追踪到数据的来源以阻止编译器对数据的优化。
+
+```cpp
+int main(int argc, char **argv)
+{
+    U u = {{1}};
+    std::cout << u.x.n << std::endl; // 1
+
+    X *p = new (&u.x) X{2};
+    assert(*std::launder(&u.x.n) == 2);
+    return 0;
+}
+```
+
+## 返回值优化
+
+返回值优化设计C++11 ~ C++17。
+
+TODO

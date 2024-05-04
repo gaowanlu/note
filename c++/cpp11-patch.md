@@ -645,3 +645,143 @@ int main(int argc, char **argv)
     return 0;
 }
 ```
+
+## C++11显式自定义类型转换运算符
+
+C++支持自定义类型转换运算符，自定义转换运算符可以对原本没有关系的两个类型进行转换。C++专家对自定义类型转换都保持谨慎的态度，原因是自定义类型转换可能更容易写出
+与实际期待不符的代码，编译器无法给出提示。
+
+```cpp
+#include <iostream>
+#include <vector>
+using namespace std;
+
+template <class T>
+class SomeStorage
+{
+public:
+    SomeStorage() = default;
+    SomeStorage(std::initializer_list<T> l) : data_(l){};
+    operator bool() const
+    {
+        std::cout << typeid(T).name() << " "
+                  << "operator bool()" << std::endl;
+        return !data_.empty();
+    }
+
+private:
+    std::vector<T> data_;
+};
+
+int main(int argc, char **argv)
+{
+    SomeStorage<float> s1{1., 2., 3.};
+    SomeStorage<int> s2{1, 2, 3};
+    std::cout << std::boolalpha << "s1 == s2 : " << (s1 == s2) << std::endl;
+    std::cout << "s1 + s2 : " << (s1 + s2) << std::endl;
+    /*
+    s1 == s2 : f operator bool()
+    i operator bool()
+    true
+    s1 + s2 : f operator bool()
+    i operator bool()
+    2
+    */
+    return 0;
+}
+```
+
+在s1和s2比较和相加的过程中，编译器会对它们做隐式的自定义类型转换以符合比较和相加的条件。求和运算会将bool转为int,结果输出2。可见，自定义类型
+转换运算符有时候就是这么不尽如人意。类型转换问题不止存在于自定义类型转换运算符，构造函数中也有同样问题。
+
+```cpp
+#include <iostream>
+#include <cstring>
+using namespace std;
+
+class SomeString
+{
+public:
+    SomeString(const char *p) : str_(strdup(p)) {}
+    SomeString(int alloc_size) : str_((char *)malloc(alloc_size)) {}
+    ~SomeString() { free(str_); }
+
+private:
+    char *str_;
+    friend void PrintStr(const SomeString &str);
+};
+
+void PrintStr(const SomeString &str)
+{
+    std::cout << str.str_ << std::endl;
+}
+
+int main(int argc, char **argv)
+{
+    PrintStr("hello world");
+    PrintStr(58); // 代码写错 却编译成功了 漏写了 "58"
+    return 0;
+}
+```
+
+因为58隐式调用了`SomeString(int alloc_size)`。当然C++已经考虑到这种情况，可以使用explicit说明符将构造函数声明为显式，这样隐式的构造将无法通过
+编译。
+
+```cpp
+class SomeString
+{
+public:
+    SomeString(const char *p) : str_(strdup(p)) {}
+    explicit SomeString(int alloc_size) : str_((char *)malloc(alloc_size)) {}
+    ~SomeString() { free(str_); }
+
+private:
+    char *str_;
+    friend void PrintStr(const SomeString &str);
+};
+
+PrintStr(SomeString(58));
+```
+
+借鉴构造函数的explicit,C++11将explicit引入自定义类型转换中，称为显式自定义类型转换。
+
+```cpp
+#include <iostream>
+#include <vector>
+using namespace std;
+
+template <class T>
+class SomeStorage
+{
+public:
+    SomeStorage() = default;
+    SomeStorage(std::initializer_list<T> l) : data_(l) {}
+    explicit operator bool() const
+    {
+        return !data_.empty();
+    }
+
+private:
+    std::vector<T> data_{};
+};
+
+int main(int argc, char **argv)
+{
+    SomeStorage<float> s1{1., 2., 3.};
+    SomeStorage<int> s2{1, 2, 3};
+    // std::cout << (s1 == s2) << std::endl; // 编译失败 没有与这些操作数匹配的 "==" 运算符C/C++(349) 编译器推断不出来
+    // std::cout << (s1 + s2) << std::endl;  // 编译失败 没有与这些操作数匹配的 "+" 运算符C/C++(349)
+
+    std::cout << static_cast<bool>(s1) << std::endl; // 1 可以显式转换成功
+    std::cout << static_cast<bool>(s2) << std::endl; // 1 可以显式转换成功
+    return 0;
+}
+```
+
+对于布尔转换，在以下几种语境，可以隐式执行布尔转换，即使这个转换被声明为explicit
+
+* if、while、for的控制表达式
+* 内建逻辑运算符 `!`、`&&`、`||`的操作数
+* 条件运算符`?:`的首个操作数
+* static_assert声明中的bool常量表达式
+* noexcept说明符中的表达式
