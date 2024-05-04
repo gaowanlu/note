@@ -1070,6 +1070,152 @@ int main(int argc, char **argv)
 
 ## 返回值优化
 
-返回值优化设计C++11 ~ C++17。
+返回值优化设计C++11 ~ C++17。返回值优化是C++中的一种编译优化技术，允许编译器将返回的对象直接构造到它们本要存储的变量空间中，而不产生临时对象。严格来说返回值优化分为RVO（Return Value Optimization）和NRVO（Named Return Value Optimization），不过在优化方法上的区别并不大，一般来说当返回语句的操作数为临时对象时，我们称之为RVO；而当返回语句的操作数为具名对象时，我们称之为NRVO。在C ++ 11标准中，这种优化技术被称为`复制消除`（copy elision）。如果使用GCC作为编译器，则这项优化技术是默认开启的，取消优化需要额外的编译参数`-fno-elide- constructors`。
 
-TODO
+```cpp
+#include <iostream>
+using namespace std;
+
+class X
+{
+public:
+    X()
+    {
+        std::cout << "X()" << std::endl;
+    }
+    X(const X &x)
+    {
+        std::cout << "X(const X &x)" << std::endl;
+    }
+    ~X()
+    {
+        std::cout << "~X()" << std::endl;
+    }
+};
+
+X make_x()
+{
+    X x1;
+    return x1;
+}
+
+int main(int argc, char **argv)
+{
+    X x2 = make_x();
+    // X()
+    // ~X()
+    return 0;
+}
+```
+
+整个过程一次复制构造函数都没有调用，这就是NRVO的效果，即使将make_x改为下面
+
+```cpp
+X make_x()
+{
+ return X();
+}
+```
+
+也会收到同样的效果，只不过优化技术名称从NRVO变成了RVO。如果在编译命令行中添加`-fno-elide-constructors`,则会输出
+
+```cpp
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -g -Wall -O0")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -std=c++11 -Wall -O0 -fno-elide-constructors")
+
+// X()
+// X(const X &x)
+// ~X()
+// X(const X &x)
+// ~X()
+// ~X()
+```
+
+但是实测C++20哪怕加了`-fno-elide-constructors`也是仅仅输出
+
+```cpp
+// X()
+// ~X()
+```
+
+实际上返回值优化是很容易失效的，例如
+
+```cpp
+#include <iostream>
+#include <ctime>
+using namespace std;
+
+class X
+{
+public:
+    X()
+    {
+        std::cout << "X()" << std::endl;
+    }
+    X(const X &x)
+    {
+        std::cout << "X(const X &x)" << std::endl;
+    }
+    ~X()
+    {
+        std::cout << "~X()" << std::endl;
+    }
+};
+
+X make_x()
+{
+    X x1, x2;
+    if (std::time(nullptr) % 50 == 0)
+    {
+        return x1;
+    }
+    else
+    {
+        return x2;
+    }
+}
+
+int main(int argc, char **argv)
+{
+    X x3 = make_x();
+    return 0;
+}
+```
+
+输出
+
+```cpp
+X()
+X()
+X(const X &x)
+~X()
+~X()
+~X()
+```
+
+发生了复制，这是由于x1或者x2复制到x3是无法在编译器决定的。因此编译器无法在默认构造阶段
+就对x3进行构造，它需要分别将x1和x2构造后，根据运行时的结果将x1或者x2复制构造到x3。
+在这个过程中返回值优化技术也尽其所能将中间的临时对象优化掉了，所以这里只会看到一次复制构造函数的调用。
+
+很明显C++11这样的优化，是需要复制构造函数是能够访问的。到了C++17指定，在传递临时对象或者从函数返回临时对象的情况下，编译器应该省略对象的复制和移动构造函数，即使这些复制和移动构造还有一些额外的作用，最终还是
+直接将对象构造到目标的存储变量上，从而避免临时对象的产生，标准还强调，复制和移动构造函数甚至可以是不存在或者不可访问的。对于C++17，所有类型都能使用工厂函数，即使该类型没有复制或者移动构造函数，例如：
+
+```cpp
+#include <iostream>
+#include <atomic>
+using namespace std;
+
+template <class T, class Arg>
+T create(Arg &&arg)
+{
+    return T(std::forward<Arg>(arg));
+}
+
+int main(int argc, char **argv)
+{
+    std::atomic<int> x = create<std::atomic<int>>(11);
+    return 0;
+}
+```
+
+由于`std::atomic`的复制构造函数被显式删除了，同时编译器也不会提供默认的移动构造函数，上面代码在C++17之前无法编译成功。
