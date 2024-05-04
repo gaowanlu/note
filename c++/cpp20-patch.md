@@ -2664,3 +2664,408 @@ int main(int argc, char **argv)
     return 0;
 }
 ```
+
+## 允许按值进行默认比较
+
+在C++20之前的标准中，类的默认比较规则要求类C可以有一个参数为`const C&`的非静态成员函数，或者有两个参数为`const C&`的友元函数。
+
+C++20 标准对这一条规则做了适度的放宽，它规定类的默认比较运算符函数可以是一个参数为`const C&`的非静态成员函数，或者两个参数为`const C&`或`C`的友元函数(不能一个const一个非const混用)。
+
+```cpp
+#include <iostream>
+using namespace std;
+
+struct C
+{
+    int i;
+    friend bool operator==(C, C) = default;
+    //  error: defaulted ‘bool operator==(C, C)’ only available with ‘-std=c++20’ or ‘-std=gnu++20’
+};
+
+int main(int argc, char **argv)
+{
+    return 0;
+}
+```
+
+C++20的三种选择
+
+```cpp
+friend bool operator==(const C &, const C &) = default;
+friend bool operator==(C, C) = default;
+bool operator==(const C &) const = default;
+```
+
+## 支持new表达式推导数组长度
+
+一直以来，C++在声明数组的时候都支持通过初始化时的元素个数推导数组长度，如：
+
+```cpp
+#include <iostream>
+using namespace std;
+
+int main(int argc, char **argv)
+{
+    int x[] = {1, 2, 3};
+    char s[] = {"hello world"};
+    char s1[]{"hello world"};
+    std::cout << x[0] << " " << x[1] << " " << x[2] << std::endl; // 1 2 3
+    std::cout << s << std::endl;                                  // hello world
+    std::cout << s1 << std::endl;                                 // hello world
+    return 0;
+}
+```
+
+但是C++20之前不支持new数组时自动推导，C++20得到了支持。
+
+```cpp
+#include <iostream>
+using namespace std;
+
+int main(int argc, char **argv)
+{
+    int *x = new int[]{1, 2, 3};
+    char *s = new char[]{"hello world"};
+
+    std::cout << x[0] << " " << x[1] << " " << x[2] << std::endl; // 1 2 3
+    std::cout << s << std::endl;                                  // hello world
+
+    delete[] x;
+    delete[] s;
+    return 0;
+}
+```
+
+## 允许数组转换为未知范围的数组
+
+C++20允许数组转换为未知范围的数组，如
+
+```cpp
+#include <iostream>
+using namespace std;
+
+void f(int (&)[]) {}
+int arr[1]{0};
+
+int main(int argc, char **argv)
+{
+    f(arr);
+    int(&r)[] = arr;
+    return 0;
+}
+```
+
+对于重载函数的情况，编译器依旧会选择更为精准匹配的函数：
+
+```cpp
+#include <iostream>
+using namespace std;
+
+void f(int (&)[])
+{
+    std::cout << "void f(int (&)[])" << std::endl;
+}
+
+void f(int (&)[1])
+{
+    std::cout << "void f(int (&)[1])" << std::endl;
+}
+
+int arr[1]{0};
+
+int main(int argc, char **argv)
+{
+    f(arr); // void f(int (&)[1])
+    return 0;
+}
+```
+
+## 在delete运算符函数中析构对象
+
+通常情况delete一个对象，编译器会先调用该对象的析构函数，之后才会调用delete运算符删除内存。
+
+```cpp
+#include <iostream>
+#include <new>
+using namespace std;
+
+struct X
+{
+    X()
+    {
+        std::cout << "X()" << std::endl;
+    }
+    ~X()
+    {
+        std::cout << "~X()" << std::endl;
+    }
+
+    void *operator new(size_t s)
+    {
+        std::cout << "void *operator new(size_t s)" << std::endl;
+        return ::operator new(s);
+    }
+
+    void operator delete(void *ptr)
+    {
+        std::cout << "void operator delete(void *ptr)" << std::endl;
+        ::operator delete(ptr);
+    }
+};
+
+int main(int argc, char **argv)
+{
+    X *x = new X;
+    delete x;
+    // void *operator new(size_t s)
+    // X()
+    // ~X()
+    // void operator delete(void *ptr)
+    return 0;
+}
+```
+
+上面代码有个问题就是，析构和释放内存的操作是完全由编译器控制的，但是从C++20开始
+可以将其分解开来。
+
+```cpp
+#include <iostream>
+#include <new>
+using namespace std;
+
+struct X
+{
+    X()
+    {
+        std::cout << "X()" << std::endl;
+    }
+    ~X()
+    {
+        std::cout << "~X()" << std::endl;
+    }
+
+    void *operator new(size_t s)
+    {
+        std::cout << "void *operator new(size_t s)" << std::endl;
+        return ::operator new(s);
+    }
+
+    void operator delete(X *ptr, std::destroying_delete_t)
+    {
+        ptr->~X(); // 手动调用析构函数
+        std::cout << "void operator delete(X *ptr, std::destroying_delete_t)" << std::endl;
+        ::operator delete(ptr);
+    }
+};
+
+int main(int argc, char **argv)
+{
+    X *x = new X;
+    delete x;
+    // void *operator new(size_t s)
+    // X()
+    // ~X()
+    // void operator delete(X *ptr, std::destroying_delete_t)
+    return 0;
+}
+```
+
+## 调用伪析构函数结束对象声明周期
+
+C++20标准完善了调用伪析构函数结束对象声明周期的规则，在过去，调用伪析构函数会
+根据对象的不同执行不同的行为。C++20之前当T为非平凡类型时,`p->~T()`会结束对象声明周期；
+当T为平凡类型时，如int类型`p->~T()`会被当做无效语句。C++修不了这个行为不一致的规则，它规定伪析构函数的调用总是会结束对象的生命周期，即使对象是一个平凡类型。
+
+```cpp
+#include <iostream>
+using namespace std;
+
+struct B
+{
+    B() = default;
+    ~B()
+    {
+        std::cout << "~B()" << std::endl;
+    }
+    int a{0};
+};
+
+template <typename T>
+void destroy(T *p)
+{
+    p->~T();
+}
+
+int main(int argc, char **argv)
+{
+    B *b = new B;
+    destroy(b); //~B()
+    ::free(b);
+    // 在C++20之前，调用伪析构函数结束int对象的声明周期可能被视为无效
+    int x = 5;
+    destroy(&x);
+    std::cout << x << std::endl; // 实测GCC c++11和c++20都是输出5
+    return 0;
+}
+```
+
+## 修复const和默认复制构造函数不匹配造成无法编译的问题
+
+下面需要关注的就是，MyType提供复制构造函数形参是非const的而Wrapper提供的是const的，这是不符合规定的，
+const的不能兼容非const的，但是C++20得到了兼容，但是GCC在C++17就已经做了优化。
+
+```cpp
+#include <iostream>
+using namespace std;
+
+struct MyType
+{
+    MyType() = default;
+    MyType(MyType &){};
+};
+
+template <typename T>
+struct Wrapper
+{
+    Wrapper() = default;
+    Wrapper(const Wrapper &) = default;
+    T t;
+};
+
+int main(int argc, char **argv)
+{
+    [[maybe_unused]] Wrapper<MyType> var;
+    return 0;
+}
+```
+
+不过实测我的环境GCC是仅支持下面的,总之我们还是写最规范的代码吧，别玩什么稀罕的花招。
+
+```cpp
+#include <iostream>
+using namespace std;
+
+struct MyType
+{
+    MyType() = default;
+    MyType(const MyType &){};
+};
+
+template <typename T>
+struct Wrapper
+{
+    Wrapper() = default;
+    Wrapper(const Wrapper &) = default;
+    T t;
+};
+
+int main(int argc, char **argv)
+{
+    [[maybe_unused]] Wrapper<MyType> var1;
+    [[maybe_unused]] Wrapper<MyType> var2(var1);
+    return 0;
+}
+```
+
+## 不推荐使用volatile的情况
+
+volatile关键字是用来告诉编译器，被它修饰的变量可以被意外的修改，因此编译器在优化时不应该对这些变量的存取进行任何优化。volatile并不是线程安全的。主要作用包括：
+
+- 禁止编译器对变量的优化：编译器在优化代码时，可能会对一些变量的读取和存储进行优化，例如，将变量缓存到寄存器中。然而，如果这个变量可能被外部因素修改，如中断服务程序，硬件操作等，则会导致程序的行为出现问题。使用 volatile 关键字可以告诉编译器不要对这些变量进行优化，每次都要从内存中读取或写入变量的值。
+- 与硬件相关的变量：在嵌入式系统或与硬件相关的程序中，经常需要使用 volatile 关键字来声明与硬件寄存器通信的变量。这些寄存器的值可能会在程序的运行期间被外部设备修改，因此需要使用 volatile 来确保对这些变量的读取和写入是及时有效的。
+- 线程间通信：在多线程编程中，如果一个变量被多个线程共享并且可能被一个线程修改，另一个线程读取，那么这个变量通常需要声明为 volatile。这可以确保线程之间的可见性，即一个线程对变量的修改会立即被其他线程看到。
+总之，volatile关键字主要用于告诉编译器这个变量具有易失性（volatile），可能被外部因素修改，因此编译器不应该对其进行优化。
+
+- 不推荐算术类型的后缀`++`和`--`表达式以及前缀`++`和`--`使用表达式volatile限定符。
+
+```cpp
+volatile int d = 5;
+d++;
+--d;
+```
+
+- 不推荐非类类型左操作数的赋值使用volatile限定符
+
+```cpp
+volatile int d = 5;
+d += 2;
+d *= 3;
+```
+
+- 不推荐函数形参和返回类型使用volatile限定符
+
+```cpp
+volatile int f() { return 1;}
+int g(volatile int v) {return v;}
+```
+
+- 不推荐结构化绑定使用volatile限定符
+
+```cpp
+struct X
+{
+ int a;
+ short b;
+};
+X x{ 11, 7 };
+volatile auto [a,b] = x;
+```
+
+以上4种情况在C++20标准的编译环境中编译都会给出·`volatile - qualified type is deprecated`的警告信息。
+
+其实这里volatile的内容，不是说这样用是错误，只不过容易给人造成误解，有很多人误以为volatile是线程安全的。
+
+## 不推荐在下标表达式中使用逗号运算符
+
+逗号运算符可以让多个表达式按照从左往右的顺序进行计算，整体的结果为系列种最后一个表达式的值。
+
+```cpp
+#include <iostream>
+using namespace std;
+
+int main(int argc, char **argv)
+{
+    int a[]{1, 2, 3};
+    int x = 1, y = 2;
+    std::cout << a[x, y]; // 3
+    return 0;
+}
+
+// /mnt/c/Users/gaowanlu/Desktop/MyProject/note/testcode/main.cpp:8:21: warning: top-level comma expression in array subscript is deprecated [-Wcomma-subscript]
+//     8 |     std::cout << a[x, y];
+//       |                     ^
+// /mnt/c/Users/gaowanlu/Desktop/MyProject/note/testcode/main.cpp:8:20: warning: left operand of comma operator has no effect [-Wunused-value]
+//     8 |     std::cout << a[x, y];
+```
+
+C++20开始上面的代码会给出警告，如果仍旧想这么用可以使用
+
+```cpp
+std::cout << a[(x, y)]; // 3
+```
+
+## 模块
+
+模块(module)是C++20标准引入的一个新特性，它的主要用途是将大型工程中的代码拆分成独立的逻辑单元，以方便大型工程的代码管理。模块能够大大减少使用头文件带来的问题，例如在使用头文件时经常会遇到宏和函数的重定义，而模块则会好很多，因为宏和未导出名称对于导入模块是不可见的。使用模块也能大幅提升编译效率，因为编译后的模块信息会存储在一个二进制文件中，编译器对于它的处理速度要远快于单纯使用文本替换的头文件方法。可惜到目前为止并没有主流编译器完全支持该特性，所以这里只做简单介绍：
+
+```cpp
+// main1.cpp
+export module helloworld;
+import std.core;
+
+export void hello()
+{
+    std::cout << "hello world" << std::endl;
+}
+```
+
+```cpp
+// main.cpp
+import helloworld;
+
+int main(int argc, char **argv)
+{
+    hello();
+    return 0;
+}
+```
