@@ -10,7 +10,6 @@ I have a dream. Keep going.
 
 ## 🚲
 
-* [ ] 第36章 typename优化C++17 ~ C++20
 * [ ] 第37章 模板参数优化C++11 C++17 C++20
 * [ ] 第38章 类模板的模板实参推导C++17 C++20
 * [ ] 第39章 用户自定义推导指引C++17
@@ -18,7 +17,8 @@ I have a dream. Keep going.
 * [ ] 第41章 概念和约束C++20
 * [ ] 第42章 模板特性的其他优化C++11 C++14
 
-## MAYBE
+
+## WANT
 
 2024
 
@@ -30,6 +30,8 @@ I have a dream. Keep going.
 * [ ] PulsarDocs <https://pulsar.apache.org/docs>
 * [ ] C++并发编程实战 第2版
 * [ ] 高性能MySQL 第1章MySQL架构
+
+## MAYBE
 
 可能会读的有趣读物
 

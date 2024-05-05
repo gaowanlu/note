@@ -3173,3 +3173,89 @@ int main(int argc, char **argv)
     return 0;
 }
 ```
+
+## 减少typename使用的必要性
+
+当使用未决类型的内嵌类型时，例如`X<T>::Y`，需要使用typename明确告知编译器`X<T>::Y`
+是一个类型，否则编译器会将其当做一个表达式的名称，比如一个静态数据成员或者静态成员函数。
+
+```cpp
+template<class T> void f(T::R);
+template<class T> void f(typename T::R);
+```
+
+在C++20之前，有两种情况例外，分别是指定基类和成员初始化，如
+
+```cpp
+#include <iostream>
+using namespace std;
+
+struct Impl
+{
+};
+
+struct Wrap
+{
+    using B = Impl;
+};
+
+template <class T>
+struct D : T::B
+{
+    D() : T::B() {}
+};
+
+int main(int argc, char **argv)
+{
+    D<Wrap> var;
+    return 0;
+}
+```
+
+还有其他情况从语义中明确地判断出`X<T>::Y`表示的是类型，比如使用using创建类型别名
+
+```cpp
+using R = typename T::B;
+// 这里的typename完全没必要
+```
+
+在C++20中，增加了一些情况可以让我们省略typename关键词。
+
+- 在上下文仅可能是类型标识的情况，可以忽略typename
+
+```cpp
+// static_cast、const_cast、reinterpret_cast或dynamic_cast等类型转换
+static_cast<T::B>(p);
+// 定义类型别名
+using R = T::B;
+// 后置返回类型
+auto g() -> T::B;
+// 模板类型形参的默认参数
+template<class R = T::B>
+struct X;
+```
+
+- 其他情况等
+
+```cpp
+// 全局或者命名空间中简单的声明或者函数的定义
+template<class T>
+T::R f();
+// 结构体的成员
+template<class T>
+struct D : T::B
+{
+	D() : T::B(){}
+	T::B b; // 编译成功
+};
+// 作为 成员函数或者lambda表达式 形参声明
+template<class T>
+struct D : T::B
+{
+	D() : T::B(){}
+	T::B f(T::B){ return T::B(); } // C++20可编译
+};
+```
+
+总之这种不要记，毕竟我们谁不用IDE呢，这种东西了解点就好，每个新版本几乎都会解决一些历史原因给开发写代码带来的一些限制，但是人们往往还想现在写的代码可以在低版本C++去编译，真是大傻逼，所以积极拥抱新特性吧，确实爽
+各种语法糖。

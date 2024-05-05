@@ -1473,3 +1473,32 @@ int main(int argc, char **argv)
     return 0;
 }
 ```
+
+## typename优化
+
+几乎用不到
+
+### 允许使用typename声明模板形参
+
+在C++17标准之前，必须使用class来声明模板形参，而typename是不允许使用的，如
+
+```cpp
+// GCC C++11是没有问题的，支持typename
+#include <iostream>
+using namespace std;
+
+// C++11 别名模板
+template <typename T>
+using A = int;
+
+template <template <typename> typename T>
+struct B
+{
+};
+
+int main(int argc, char **argv)
+{
+    [[maybe_unused]] B<A> ba{};
+    return 0;
+}
+```
