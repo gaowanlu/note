@@ -1219,3 +1219,257 @@ int main(int argc, char **argv)
 ```
 
 由于`std::atomic`的复制构造函数被显式删除了，同时编译器也不会提供默认的移动构造函数，上面代码在C++17之前无法编译成功。
+
+## 折叠表达式
+
+C++17引入了折叠表达式的新特性，例如用折叠表达式方式写模板递归
+
+```cpp
+#include <iostream>
+using namespace std;
+
+template <class... Args>
+auto sum(Args... args)
+{
+    return (args + ...);
+}
+
+// template <>
+// double sum<int, double, double>(int __args0, double __args1, double __args2)
+// {
+//     return static_cast<double>(__args0) + (__args1 + __args2);
+// }
+
+int main(int argc, char **argv)
+{
+    std::cout << sum(1, 5.0, 11.) << std::endl; // 17
+    return 0;
+}
+```
+
+### 四种折叠方式
+
+在上面的例子，我们不再需要编写多个sum函数，然后通过递归的方式求和。C++17标准中有4种折叠规则，分别是一元向左折叠、一元向右折叠、二元向左折叠、二元向右折叠。
+
+上面的例子是一个典型的一元向右折叠
+
+```cpp
+(args op ...)折叠为(arg0 op (arg1 op .. (argN-1 op argN)))
+```
+
+一元向左折叠
+
+```cpp
+(... op args)折叠为((((arg0 op arg1) op arg2) op ...) op argN)
+```
+
+二元向右折叠，二元折叠与一元唯一区别是多了一个初始值
+
+```cpp
+(args op ... op init)折叠为(arg0 op (arg1 op ...(argN-1 op (argN op init))))
+```
+
+二元向左折叠
+
+```cpp
+(init op ... op args)折叠为(((((init op arg0) op arg1) op arg2) op ..) op argN)
+```
+
+```cpp
+#include <iostream>
+using namespace std;
+
+// 一元向右折叠
+template <class... Args>
+auto sum1(Args... args)
+{
+    return (args + ...);
+}
+
+// template <>
+// double sum1<int, double, double>(int __args0, double __args1, double __args2)
+// {
+//     return static_cast<double>(__args0) + (__args1 + __args2);
+// }
+
+// 一元向左折叠
+template <class... Args>
+auto sum2(Args... args)
+{
+    return (... + args);
+}
+
+// template <>
+// double sum2<int, double, double>(int __args0, double __args1, double __args2)
+// {
+//     return (static_cast<double>(__args0) + __args1) + __args2;
+// }
+
+// 二元向右折叠
+template <class... Args>
+auto sum3(Args... args)
+{
+    return (1 + ... + args);
+}
+
+// template <>
+// double sum3<int, double, double>(int __args0, double __args1, double __args2)
+// {
+//     return ((static_cast<double>(1 + __args0)) + __args1) + __args2;
+// }
+
+// 二元向左折叠
+template <class... Args>
+auto sum4(Args... args)
+{
+    return (args + ... + 1);
+}
+
+// template <>
+// double sum4<int, double, double>(int __args0, double __args1, double __args2)
+// {
+//     return static_cast<double>(__args0) + (__args1 + (__args2 + 1));
+// }
+
+int main(int argc, char **argv)
+{
+    std::cout << sum1(1, 5.0, 11.) << std::endl; // 17
+    std::cout << sum2(1, 5.0, 11.) << std::endl; // 17
+
+    std::cout << sum3(1, 5.0, 11.) << std::endl; // 18
+    std::cout << sum4(1, 5.0, 11.) << std::endl; // 18
+    return 0;
+}
+```
+
+还有可以用在`std::cout`,毕竟`<<`是操作符，符合折叠表达式规则。
+
+```cpp
+#include <iostream>
+#include <string>
+using namespace std;
+
+template <class... Args>
+void print(Args... args)
+{
+    (std::cout << ... << args) << std::endl;
+}
+
+// template <>
+// void print<std::basic_string<char, std::char_traits<char>, std::allocator<char>>, const char *, const char *>(std::basic_string<char, std::char_traits<char>, std::allocator<char>> __args0, const char *__args1, const char *__args2)
+// {
+//     std::operator<<(std::operator<<(std::operator<<(std::cout, __args0), __args1), __args2).operator<<(std::endl);
+// }
+
+int main(int argc, char **argv)
+{
+    print(std::string("hello "), "c++ ", "world");
+    // hello c++ world
+    return 0;
+}
+```
+
+### 一元折叠表达式种空参数包的特殊处理
+
+一元折叠表达式对空参数包展开有一些特殊规则，就是编译器无法确定折叠表达式最终的求值类型
+
+```cpp
+template <typename... Args>
+auto sum(Args... args)
+{
+    return (args + ...);
+}
+```
+
+如果Args为空则auto无法确定值类型了，二元折叠表达式不会，因为可以指定一个初始值。
+
+```cpp
+template <typename... Args>
+auto sum(Args... args)
+{
+    return (args + ... + 0);
+}
+```
+
+为了解决一元折叠表达式种参数包为空的问题，以下规则必须遵守
+
+1. 只有`&&`、`||`和`,`运算符能够在空参数包的一元折叠表达式中使用。
+2. `&&`的求值结果一定为true
+3. `||`的求值结果一定为false
+4. `,`的求值结果为`void()`
+5. 其他运算符都是非法的
+
+```cpp
+#include <iostream>
+using namespace std;
+
+template <typename... Args>
+auto andop(Args... args)
+{
+    return (args && ...);
+}
+
+int main(int argc, char **argv)
+{
+    std::cout << std::boolalpha << andop(); // true
+    return 0;
+}
+```
+
+### using声明中的包展开
+
+从C++17标准开始，包展开允许出现在using声明的列表中，这对于可变参数类模板派生于形参包的情况很有用。下面是使用using进行继承构造函数
+
+```cpp
+#include <iostream>
+#include <string>
+using namespace std;
+
+template <class T>
+class Base
+{
+public:
+    Base() {}
+    Base(T t) : t_(t) {}
+
+private:
+    T t_;
+};
+
+template <class... Args>
+class Derived : public Base<Args>...
+{
+public:
+    using Base<Args>::Base...;
+};
+
+// template <>
+// class Derived<int, std::basic_string<char, std::char_traits<char>, std::allocator<char>>, bool> : public Base<int>, public Base<std::basic_string<char, std::char_traits<char>, std::allocator<char>>>, public Base<bool>
+// {
+
+// public:
+//     inline Derived(int t) noexcept(false)
+//         : Base<int>(t), Base<std::basic_string<char, std::char_traits<char>, std::allocator<char>>>(), Base<bool>()
+//     {
+//     }
+
+//     // inline constexpr ~Derived() noexcept = default;
+//     inline Derived(std::basic_string<char, std::char_traits<char>, std::allocator<char>> t) noexcept(false)
+//         : Base<int>(), Base<std::basic_string<char, std::char_traits<char>, std::allocator<char>>>(t), Base<bool>()
+//     {
+//     }
+
+//     inline Derived(bool t) noexcept(false)
+//         : Base<int>(), Base<std::basic_string<char, std::char_traits<char>, std::allocator<char>>>(), Base<bool>(t)
+//     {
+//     }
+// };
+
+int main(int argc, char **argv)
+{
+    Derived<int, std::string, bool> d1 = 11;
+    Derived<int, std::string, bool> d2 = std::string("hello");
+    Derived<int, std::string, bool> d3 = true;
+    return 0;
+}
+```

@@ -3069,3 +3069,107 @@ int main(int argc, char **argv)
     return 0;
 }
 ```
+
+## lambda表达式初始化捕获的包展开
+
+lambda表达式使用可变参数模板有这么一个例子
+
+```cpp
+// 使用 decltype(auto) 可以确保返回类型与 std::invoke(f, args...) 的返回类型完全一致，包括引用和cv 限定符。而使用 auto 则只是根据表达式的返回类型进行推导，不一定会完全保留std::invoke(f, args...) 的类型特性。
+
+template <class F, class..Args>
+auto delay_invoke(F f, Args... args)
+{
+    return [f, args...]() -> decltype(auto)
+    {
+        return std::invoke(f, args...);
+    }
+}
+```
+
+这里有个问题就是，按值捕获的性能问题，如果delay_invoke传递的实参都是复杂的数据结构且数据量非常大，这种按值捕获显然不是一个理想状态。如果用引用捕获，在delay_invoke的使用场景下很容易造成未定义的结果。
+
+可以结合初始化捕获和移动语义。
+
+```cpp
+#include <iostream>
+#include <tuple>
+using namespace std;
+
+template <class F, class... Args>
+auto delay_invoke(F f, Args... args)
+{
+    return [f = std::move(f), tup = std::make_tuple(std::move(args)...)]() -> decltype(auto)
+    {
+        // std::apply 可以将元组的元素作为参数传递给函数或者函数对象。
+        return std::apply(f, tup);
+    };
+}
+
+// template <class F, class... Args>
+// auto delay_invoke(F f, Args... args)
+// {
+
+//     class __lambda_8_12
+//     {
+//     public:
+//         inline decltype(auto) operator()() const
+//         {
+//             return std::apply(f, tup);
+//         }
+
+//     private:
+//         auto f;
+//         auto tup;
+
+//     public:
+//         __lambda_8_12(auto _f, auto _tup)
+//             : f{_f}, tup{_tup}
+//         {
+//         }
+
+//     } __lambda_8_12{std::move(f), std::make_tuple(std::move(args)...)};
+
+//     return __lambda_8_12;
+// }
+
+int add(int a, int b, int c)
+{
+    return a + b + c;
+}
+
+int main(int argc, char **argv)
+{
+    auto f = delay_invoke(add, 2, 3, 4);
+    auto res = f();
+    std::cout << res << std::endl; // 9
+    return 0;
+}
+```
+
+C++20支持lambda表达式初始化捕获的包展开。
+
+```cpp
+#include <iostream>
+#include <functional>
+using namespace std;
+
+template <class F, class... Args>
+auto delay_invoke(F f, Args... args)
+{
+    return [f = std::move(f), ... args = std::move(args)]() -> decltype(auto)
+    {
+        return std::invoke(f, args...);
+    };
+}
+
+int main(int argc, char **argv)
+{
+    auto f = delay_invoke([](int a, int b, int c) -> int
+                          { return a + b + c; },
+                          1, 2, 3);
+    auto res = f();
+    std::cout << res << std::endl; // 6
+    return 0;
+}
+```

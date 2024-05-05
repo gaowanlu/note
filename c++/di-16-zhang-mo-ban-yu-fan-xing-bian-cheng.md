@@ -2408,15 +2408,473 @@ int main(int argc, char **argv)
     // void foo<char [4]>
     foo("oop"); //模板参数包为空
 
+    foo<int, char, double>(1, '3', 3.);
+
     return 0;
 }
 ```
 
-拥有这样的特性，存在着巨大的潜在能力
+对于参数包，函数模板允许参数包在非最后一个未知，类模板只允许参数包在最后一个未知。
+
+```cpp
+#include <iostream>
+using namespace std;
+
+template <typename... Args, typename T>
+void foo(const T &t, const Args &...args)
+{
+}
+
+// 模板参数包不在参数列表结尾
+// template <typename... Args, typename T>
+// class A
+// {
+// };
+
+int main(int argc, char **argv)
+{
+    foo(1, 1, 1);
+    return 0;
+}
+```
+
+参数包也可以进行特化
+
+```cpp
+#include <iostream>
+using namespace std;
+
+template <int... Args>
+void foo()
+{
+}
+
+template <int... Args>
+class A
+{
+};
+
+int main(int argc, char **argv)
+{
+    foo<1, 2, 3, 4>();
+    A<1, 2, 3> a;
+    return 0;
+}
+```
+
+### 形参包展开
+
+可变参模板只有结合了包展开，才能发挥变参模板的能力，包展开并不是在所有的情况下都能进行，允许包展开的场景包括以下几种：
+
+1. 表达式列表
+2. 初始化列表
+3. 基类描述
+4. 成员初始化列表
+5. 函数参数列表
+6. 模板参数列表
+7. lambda表达式捕获列表
+8. sizeof...运算符
+9. 对其运算符
+10. 属性列表
+11. 等等
+
+注释部分就是编译器展开的部分
+
+```cpp
+#include <iostream>
+using namespace std;
+
+template <class T, class U>
+T baz(T t, U u)
+{
+    std::cout << t << ":" << u << std::endl;
+    return t;
+}
+
+// template <>
+// int *baz<int *, int>(int *t, int u)
+// {
+//     std::operator<<(std::cout.operator<<(t), ":").operator<<(u).operator<<(std::endl);
+//     return t;
+// }
+
+// template <>
+// double *baz<double *, double>(double *t, double u)
+// {
+//     std::operator<<(std::cout.operator<<(t), ":").operator<<(u).operator<<(std::endl);
+//     return t;
+// }
+
+// template <>
+// unsigned int *baz<unsigned int *, unsigned int>(unsigned int *t, unsigned int u)
+// {
+//     std::operator<<(std::cout.operator<<(t), ":").operator<<(u).operator<<(std::endl);
+//     return t;
+// }
+
+template <class... Args>
+void foo(Args... args)
+{
+}
+
+// template <>
+// void foo<int *, double *, unsigned int *>(int *__args0, double *__args1, unsigned int *__args2)
+// {
+// }
+
+template <class... Args>
+class bar
+{
+public:
+    bar(Args... args)
+    {
+        foo(baz(&args, args)...);
+    }
+};
+
+// template <>
+// class bar<int, double, unsigned int>
+// {
+
+// public:
+//     inline bar(int __args0, double __args1, unsigned int __args2)
+//     {
+//         foo(baz(&__args0, __args0), baz(&__args1, __args1), baz(&__args2, __args2));
+//     }
+// };
+
+int main(int argc, char **argv)
+{
+    bar<int, double, unsigned int> b(1, 5.0, 9);
+    return 0;
+}
+/*
+0x7ffe86fa1a00:9
+0x7ffe86fa19f8:5
+0x7ffe86fa1a04:1
+*/
+```
+
+还可以更骚的操作
+
+```cpp
+#include <iostream>
+using namespace std;
+
+template <class... T>
+int baz(T... t)
+{
+    return 0;
+}
+
+template <class... Args>
+void foo(Args... args)
+{
+}
+
+template <class... Args>
+class A
+{
+public:
+    A(Args... args)
+    {
+        foo(baz(&args...) + args...);
+    }
+};
+
+// template <>
+// class A<int, double, unsigned int>
+// {
+
+// public:
+//     inline A(int __args0, double __args1, unsigned int __args2)
+//     {
+//         foo(baz(&__args0, &__args1, &__args2) + __args0, static_cast<double>(baz(&__args0, &__args1, &__args2)) + __args1, static_cast<unsigned int>(baz(&__args0, &__args1, &__args2)) + __args2);
+//     }
+// };
+
+int main(int argc, char **argv)
+{
+    A<int, double, unsigned int> a(1, 5., 8);
+    return 0;
+}
+```
+
+### 形参包展开函数指针
+
+下面的也是个骚操作
+
+```cpp
+#include <iostream>
+using namespace std;
+
+int add(int a, int b)
+{
+    return a + b;
+}
+
+int sub(int a, int b)
+{
+    return a - b;
+}
+
+template <class... Args>
+void foo(Args (*...args)(int, int))
+{
+    int tmp[] = {(std::cout << args(7, 11) << std::endl, 0)...};
+}
+
+// template <>
+// void foo<int, int>(int (*__args0)(int, int), int (*__args1)(int, int))
+// {
+//     int tmp[2] = {(std::cout.operator<<(__args0(7, 11)).operator<<(std::endl), 0), (std::cout.operator<<(__args1(7, 11)).operator<<(std::endl), 0)};
+// }
+
+int main(int argc, char **argv)
+{
+    foo(add, sub);
+    int n = (1, 2);
+    std::cout << n << std::endl; // 2
+    return 0;
+}
+```
+
+### 形参包展开类的继承
+
+形参包可以在基类列表展开。将形参包作为自己的基类并且在其构造函数的初始化列表中对函数形参包进行了解包，其中`Args(args)…`是包展开，`Args(args)`是模式。
+
+```cpp
+#include <iostream>
+using namespace std;
+
+template <class... Args>
+class Derived : public Args...
+{
+public:
+    Derived(const Args &...args) : Args(args)... {}
+};
+
+class Base1
+{
+public:
+    Base1() {}
+    Base1(const Base1 &)
+    {
+        std::cout << "Base1(const Base1 &)" << std::endl;
+    }
+};
+
+class Base2
+{
+public:
+    Base2() {}
+    Base2(const Base2 &)
+    {
+        std::cout << "Base2(const Base2 &)" << std::endl;
+    }
+};
+
+int main(int argc, char **argv)
+{
+    Base1 base1;
+    Base2 base2;
+    Derived<Base1, Base2> d(base1, base2);
+// Base1(const Base1 &)
+// Base2(const Base2 &)
+    return 0;
+}
+```
+
+### 参数包展开模板
+
+避免使用，避免使用，实在太傻逼了，太逆天了，代码只有自己看得懂，可能对于解决某一个问题是比较爽，但是我认为这种代码就是一坨屎。
+
+```cpp
+#include <iostream>
+using namespace std;
+
+template <template <class...> class... Args>
+class Bar : public Args<int, double>...
+{
+public:
+    Bar(const Args<int, double> &...args) : Args<int, double>(args)...
+    {
+    }
+};
+
+template <class... Args>
+class Baz1
+{
+};
+
+template <class... Args>
+class Baz2
+{
+};
+
+int main(int argc, char **argv)
+{
+    Baz1<int, double> a1;
+    Baz2<int, double> a2;
+    Bar<Baz1, Baz2> b(a1, a2);
+    return 0;
+}
+```
+
+需要注意上面代码，Bar的两个参数类型的参数列表需要完全相同，否下下面的代码就有问题
+
+```cpp
+int main(int argc, char **argv)
+{
+    Baz1<int, double> a1;
+    Baz2<double, double> a2;
+    Bar<Baz1, Baz2> b(a1, a2);
+    // error: no matching function for call to ‘Bar<Baz1, Baz2>::Bar(Baz1<int, double>&, Baz2<double, double>&)’
+    return 0;
+}
+```
+
+下面有种更骚的操作
+
+```cpp
+#include <iostream>
+using namespace std;
+
+template <class...>
+struct Tuple
+{
+};
+
+template <class T1, class T2>
+struct Pair
+{
+};
+
+template <class... Args1>
+struct Zip
+{
+    template <class... Args2>
+    struct With
+    {
+        typedef Tuple<Pair<Args1, Args2>...> type;
+    };
+};
+
+int main(int argc, char **argv)
+{
+    Zip<short, int>::With<unsigned short, unsigned>::type t1;
+    // error: mismatched argument pack lengths while expanding ‘Pair<Args1, Args2>’
+    // Zip<short>::With<unsigned short, unsigned>::type t2;
+    return 0;
+}
+```
+
+### 参数包展开lambda表达式捕获列表
+
+```cpp
+#include <iostream>
+using namespace std;
+
+template <class... Args>
+void foo(Args... args)
+{
+    int tmp[] = {(std::cout << ++(*args) << std::endl, 0)...};
+}
+
+template <class... Args>
+class Bar
+{
+public:
+    Bar(Args &...args)
+    {
+        auto lm = [&args...]
+        { foo(&args...); };
+        lm();
+    }
+};
+
+int main(int argc, char **argv)
+{
+    int n1 = 1;
+    double n2 = 9.;
+    Bar<int, double> b2(n1, n2);
+    // 2
+    // 10
+    std::cout << n1 << " " << n2 << std::endl; // 2 10
+    return 0;
+}
+```
+
+下面可能会在实际生产种用到的例子。
+
+`std::invoke` 是 C++17 标准库中引入的一个函数模板，位于 `<functional>` 头文件中。它用于调用可调用对象（函数、函数指针、成员函数、成员函数指针等）。
+`std::invoke` 具有通用性，可以通过统一的方式调用各种可调用对象，不需要在调用点区分它们的类型。这种统一的调用方式简化了代码，并提高了灵活性。
+
+```cpp
+#include <iostream>
+#include <functional>
+using namespace std;
+
+template <class F, class... Args>
+auto delay_invoke(F f, Args... args)
+{
+    return [f, args...]() -> auto
+    {
+        return std::invoke(f, args...);
+    };
+}
+
+void printf_int(int n)
+{
+    std::cout << n << std::endl;
+}
+
+int main(int argc, char **argv)
+{
+    auto f = delay_invoke(printf_int, 1);
+    f(); // 1
+    return 0;
+}
+```
+
+### 定参模板与变参模板优先级
+
+在推导的形参同时满足定参函数模板和可变参数函数模板的时候，编译器将`优先选择定参函数模板`，因为它比可变参数函数模板更加精确。
+
+```cpp
+#include <iostream>
+using namespace std;
+
+template <class... Args>
+void foo(Args... args)
+{
+    std::cout << "foo(Args... args)" << std::endl;
+}
+
+template <class T1, class... Args>
+void foo(T1 a1, Args... args)
+{
+    std::cout << "void foo(T1 a1, Args... args)" << std::endl;
+}
+
+template <class T1, class T2>
+void foo(T1 a1, T2 a2)
+{
+    std::cout << "void foo(T1 a1, T2 a2)" << std::endl;
+}
+
+int main(int argc, char **argv)
+{
+    foo();        // foo(Args... args)
+    foo(1, 2, 3); // void foo(T1 a1, Args... args)
+    foo(1, 2);    // void foo(T1 a1, T2 a2)
+    return 0;
+}
+```
 
 ### sizeof...运算符
 
-使用 sizeof...运算符可以知道参数包内有多少个参数
+使用 sizeof...运算符可以知道参数包内有多少个参数，返回类型是`std::size_t`
 
 ```cpp
 //example53.cpp
@@ -2547,6 +3005,33 @@ void func(const Args &...args)
 int main(int argc, char **argv)
 {
     func(1, 2, 3, 4); // 2 3 4 5
+    return 0;
+}
+```
+
+### 可变参数模板的递归计算
+
+C++11标准中，要对可变参数模板形参包的包展开进行逐个计算需要用到递归的方法
+
+```cpp
+#include <iostream>
+using namespace std;
+
+template <class T>
+T sum(T arg)
+{
+    return arg;
+}
+
+template <class T1, class... Args>
+auto sum(T1 arg1, Args... args)
+{
+    return arg1 + sum(args...);
+}
+
+int main(int argc, char **argv)
+{
+    std::cout << sum(1, 2, 3, 4) << std::endl; // 10
     return 0;
 }
 ```
