@@ -1919,3 +1919,183 @@ int main(int argc, char **argv)
     return 0;
 }
 ```
+
+## 用户自定义推导指引
+
+### 使用自定义推导指引推导模板实例
+
+以一个我们想自己写一个pair为例子
+
+```cpp
+#include <iostream>
+using namespace std;
+
+template <typename T1, typename T2>
+struct MyPair
+{
+    MyPair(const T1 &x, const T2 &y) : first(x), second(y)
+    {
+    }
+    T1 first;
+    T2 second;
+};
+
+int main(int argc, char **argv)
+{
+    MyPair p(5, 11.7); // struct MyPair<int, double>
+    // MyPair p1(5, "hello"); // MyPair<int, char [6]> p1
+    return 0;
+}
+```
+
+有点出乎意料`hello`并没有被当做`const char*`处理而是被当作`char[6]`处理了。
+因为MyPair的构函数参数都是引用类型，所以无法触发数组类型的衰退为指针。
+
+可以用下面的自定义makePair,现进行值传递进行退化为指针
+
+```cpp
+#include <iostream>
+using namespace std;
+
+template <typename T1, typename T2>
+struct MyPair
+{
+    MyPair(const T1 &x, const T2 &y) : first(x), second(y)
+    {
+    }
+    T1 first;
+    T2 second;
+};
+
+template <typename T1, typename T2>
+inline MyPair<T1, T2>
+makePair(T1 x, T2 y)
+{
+    return MyPair<T1, T2>(x, y);
+}
+
+int main(int argc, char **argv)
+{
+    makePair(1, "hello");
+    // inline MyPair<int, const char *> makePair<int, const char *>(int x, const char *y)
+    return 0;
+}
+```
+
+但是支持了用户自定义推导指引，可以这样写
+
+```cpp
+#include <iostream>
+using namespace std;
+
+template <typename T1, typename T2>
+struct MyPair
+{
+    MyPair(const T1 &x, const T2 &y) : first(x), second(y)
+    {
+    }
+    T1 first;
+    T2 second;
+};
+
+// 按值处理
+template <typename _T1, typename _T2>
+MyPair(_T1, _T2) -> MyPair<_T1, _T2>;
+
+int main(int argc, char **argv)
+{
+    MyPair p(1, "hello");
+    // MyPair<int, const char *> p
+    return 0;
+}
+```
+
+用户自定义推导指引的目的是告诉编译器如何进行推导。自定义推导指引可以以更灵活方式使用
+
+```cpp
+#include <iostream>
+#include <vector>
+using namespace std;
+
+namespace std
+{
+    template <class... T>
+    vector(T &&...t) -> vector<std::common_type_t<T...>>;
+}
+
+int main(int argc, char **argv)
+{
+    std::vector v{1, 5u, 3.0}; // std::vector<double, std::allocator<double>> v
+    std::common_type_t<int, unsigned, double>;
+    // using std::common_type_t<int, unsigned int, double> = double
+    return 0;
+}
+```
+
+自定义推导指引的对象不一定是模板，例如下面的有点特化的模样
+
+```cpp
+MyPair<int, const char*)->MyPair<long long, std::string>;
+MyPair p2(5, "hello");
+```
+
+自定义推导指引支持explicit说明符，作用和其他使用场景类似，都要求对象显式构造
+
+```cpp
+explicit MyPair(int, const char*)->MyPair<long long, std::string>;
+MyPair p1(5, "hello");
+MyPair p2{5, "hello"};
+MyPair p3 = {5, "hello"}; // 错误，因为是explicit的
+```
+
+用户自定义推导指引声明的前半部分就如同一个构造函数声明，这就引发了一个新的问题，当类模板的构造函数和用户自定义推导指引同时满足实例化要求的时候编译器是如何选择的？
+
+```cpp
+#include <iostream>
+using namespace std;
+
+template <typename T1, typename T2>
+struct MyPair
+{
+    MyPair(T1 x, T2 y) : first(x), second(y) {}
+    T1 first;
+    T2 second;
+};
+
+MyPair(int, const char *) -> MyPair<long long, std::string>;
+
+int main(int argc, char **argv)
+{
+    MyPair p1(5u, "hello"); // MyPair<unsigned int, const char *> p1
+    MyPair p2(5, "hello");  // MyPair<long long, std::string> p2
+    return 0;
+}
+```
+
+p1第一个参数不满足int,所以不会采用`MyPair(int, const char *) -> MyPair<long long, std::string>;`
+
+### 聚合类型类模板的推导指引
+
+C++20之前聚合类型的类模板是无法进行模板实参推导的，可以使用推导指引解决，如果有C++20环境不加
+推导指引也没问题。
+
+```cpp
+#include <iostream>
+using namespace std;
+
+template <class T>
+struct Wrap
+{
+    T data;
+};
+
+template <class T>
+Wrap(T) -> Wrap<T>;
+
+int main(int argc, char **argv)
+{
+    Wrap w1{7};
+    Wrap w2 = {7};
+    return 0;
+}
+```
