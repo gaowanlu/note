@@ -876,3 +876,264 @@ int main(int argc, char **argv)
     return 0;
 }
 ```
+
+## SFINAE
+
+### 替换失败和编译错误
+
+SFINAE（Substitution Failure Is Not An Error，替换失败不是错误）主要是指在函数模板重载时，当模板形参替换为指定的实参或由函数实参推导出模板形参的过程中出现了失败，则放弃这个重载而不是抛出一个编译失败。
+
+```cpp
+#include <iostream>
+using namespace std;
+
+template <int I>
+struct X
+{
+};
+
+char foo(int);
+char foo(float);
+
+template <class T>
+X<sizeof(foo((T)0))> f(T)
+{
+    return X<sizeof(foo((T)0))>();
+}
+
+int main(int argc, char **argv)
+{
+    f(1);
+    return 0;
+}
+```
+
+在这段代码中，模板参数推导过程会推导出 T 为 int 类型。然后，在实例化函数模板 f 时，
+编译器会尝试调用 `foo((T)0)`。由于 foo 函数有多个重载，编译器无法确定调用哪个版本。
+但是根据 SFINAE 规则，编译器不会报错，而是会将这个候选项从候选集合中排除掉。
+因此，这个模板实例化过程不会导致编译错误。
+
+### SFINAE规则详解
+
+在SFINAE规则中，模板形参的替换有两个时机，首先是在模板推导的最开始阶段，当明确地指定替换模板形参的实参时进行替换；
+其次在模板推导的最后，模板形参会根据实参进行推导或使用默认的模板实参。这个替换会覆盖到函数模板和模板形参中的所有类型和表达式。
+
+```cpp
+#include <iostream>
+using namespace std;
+
+template <class T>
+T foo(T &t)
+{
+    T tt(t);
+    return tt;
+}
+
+void foo(...) {}
+
+int main(int argc, char **argv)
+{
+    double x = 7.0;
+    foo(x); // double foo<double>(double &t)
+    foo(5); // void foo(...)
+    return 0;
+}
+```
+
+`foo(x)`推导符合foo模板,而`foo(5)`不行，则将其交给了`void foo(...)`
+
+下面的例子中，`foo(bar)`推导符合foo模板，然后完成替换进行下一步编译工作，编译器发现Bar无法生成隐式的复制构造函数。
+想使用替换失败为时已晚，只能编译报错。
+
+```cpp
+#include <iostream>
+using namespace std;
+
+template <class T>
+T foo(T &t)
+{
+    T tt(t);
+    return tt;
+}
+
+void foo(...) {}
+
+class Bar
+{
+public:
+    Bar() {}
+    Bar(Bar &&) {}
+};
+
+int main(int argc, char **argv)
+{
+    Bar bar;
+    foo(bar);
+    // note: ‘constexpr Bar::Bar(const Bar&)’ is implicitly declared as deleted because ‘Bar’ declares a move constructor or move assignment operator
+    return 0;
+}
+```
+
+下面的例子也比较类似,是推断时符合模板参数替换规则，编译进行下一步时发现构造函数不能访问，为时已晚只能编译报错。
+
+```cpp
+#include <iostream>
+using namespace std;
+
+template <class T>
+T foo(T *t)
+{
+    return T();
+}
+
+void foo(...) {}
+
+class Bar
+{
+    Bar() {}
+};
+
+int main(int argc, char **argv)
+{
+    foo(static_cast<Bar *>(nullptr));
+    // error: ‘Bar::Bar()’ is private within this context
+    return 0;
+}
+```
+
+还有些其他的样例如下
+
+```cpp
+#include <iostream>
+using namespace std;
+
+template <class T>
+struct A
+{
+    using X = typename T::X;
+};
+
+template <class T>
+typename T::X foo(typename A<T>::X);
+
+template <class T>
+void foo(...) {}
+
+template <class T>
+auto bar(typename A<T>::X) -> typename T::X; // 后置返回
+
+template <class T>
+void bar(...) {}
+
+int main()
+{
+    foo<int>(0); // 编译通过 void foo<int>(...)
+    bar<int>(0); // error: ‘int’ is not a class, struct, or union type
+    return 0;
+}
+```
+
+下面是一个标准文档中的一个例子
+
+```cpp
+#include <iostream>
+using namespace std;
+
+struct X
+{
+};
+struct Y
+{
+    Y(X) {}
+}; // X 可以转化为 Y
+
+X foo(Y, Y) { return X(); }
+
+template <class T>
+auto foo(T t1, T t2) -> decltype(t1 + t2)
+{
+    return t1 + t2;
+}
+
+// 先模板推导，不符合+规则 替换失败处理 切好X能转化为Y
+int main(int argc, char **argv)
+{
+    X x1, x2;
+    X x3 = foo(x1, x2); // X foo(Y, Y)
+    Y y1(x1), y2(x2);
+    return 0;
+}
+```
+
+下面的是一个非类型替换的SFINAE例子
+
+```cpp
+#include <iostream>
+using namespace std;
+
+template <int I>
+void foo(char (*)[I % 2 == 0] = 0)
+{
+    std::cout << "I%2==0" << std::endl;
+}
+
+template <int I>
+void foo(char (*)[I % 2 == 1] = 0)
+{
+    std::cout << "I%2==1" << std::endl;
+}
+
+int main(int argc, char **argv)
+{
+    char a[1];
+    foo<1>(&a); // void foo<1>(char (*)[1] = (char (*)[1])0)
+    foo<2>(&a); // void foo<2>(char (*)[1] = (char (*)[1])0)
+    foo<3>(&a); // void foo<3>(char (*)[1] = (char (*)[1])0)
+                // I%2==1
+                // I%2==0
+                // I%2==1
+    return 0;
+}
+```
+
+SFINAE结合decltype关键字发挥作用
+
+```cpp
+#include <iostream>
+using namespace std;
+
+class SomeObj1
+{
+public:
+    void Dump2File() const
+    {
+        std::cout << "dump this object to file" << std::endl;
+    }
+};
+
+class SomeObj2
+{
+};
+
+template <class T>
+auto DumpObj(const T &t) -> decltype(((void)t.Dump2File()), void())
+{
+    t.Dump2File();
+}
+
+void DumpObj(...)
+{
+    std::cout << "the object must have a member function Dump2File" << std::endl;
+}
+
+int main(int argc, char **argv)
+{
+    DumpObj(SomeObj1()); // auto DumpObj<SomeObj1>(const SomeObj1 &t)->void
+    DumpObj(SomeObj2()); // void DumpObj(...)
+    // dump this object to file
+    // the object must have a member function Dump2File
+    return 0;
+}
+```
+
+请注意这里的写法`decltype(((void)t.Dump2File()),void())`，在括号里利用逗号表达式让编译器从左往右进行替换和推导，逗号右边的是最终我们想设置的函数返回值类型，而逗号左边则检查了对象t的类型是否具有Dump2File成员函数。如果成员函数存在，即符合语法规则，可以顺利地调用模板版本的函数；反之则产生替换失败，调用另一个重载版本的DumpObj函数。
