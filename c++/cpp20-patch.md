@@ -3556,3 +3556,63 @@ int main(int argc, char **argv)
     return 0;
 }
 ```
+
+## 概念和约束
+
+TODO
+
+### 使用std::enable_if约束模板
+
+TODO
+
+### 概念的背景介绍
+
+TODO
+
+### 使用concept和约束表达式定义概念
+
+TODO
+
+### requires子句和约束检查顺序
+
+TODO
+
+### 原子约束
+
+TODO
+
+### requires表达式
+
+TODO
+
+#### 简单要求
+
+TODO
+
+#### 类型要求
+
+TODO
+
+#### 复合要求
+
+TODO
+
+#### 嵌套要求
+
+TODO
+
+### 约束可变参数模板
+
+TODO
+
+### 约束类模板特化
+
+TODO
+
+### 约束auto
+
+TODO
+
+## explicit(bool)
+
+TODO
