@@ -1707,3 +1707,215 @@ int main(int argc, char **argv)
     return 0;
 }
 ```
+
+## 类模板的模板实参推导
+
+### 通过初始化构造推导类模板的模板实参
+
+C++17之前，实例化类模板必须显式指定模板实参
+
+```cpp
+#include <iostream>
+using namespace std;
+
+int main(int argc, char **argv)
+{
+    std::tuple<int, double, const char *> v{5, 11.7, "hello world"};
+    return 0;
+}
+```
+
+上面太麻烦所以出现了`std::make_pair`和`std::make_tuple`这样的函数
+
+```cpp
+auto v = std::make_tuple(5, 11.7, "hello world");
+```
+
+C++17支持了类模板的模板实参推导，上面的代码可以进一步简化
+
+```cpp
+std::tuple v{5, 11.7, "hello world"};
+// std::tuple<int, double, const char *> v
+```
+
+实参推导对非类型形参的类模板同样适用
+
+```cpp
+#include <iostream>
+using namespace std;
+
+template <class T, std::size_t N>
+struct MyCountOf
+{
+    MyCountOf(T (&)[N]) {}
+    std::size_t value{N};
+};
+
+int main(int argc, char **argv)
+{
+    MyCountOf c("hello");              // struct MyCountOf<const char, 6UL>
+    std::cout << c.value << std::endl; // 6
+    return 0;
+}
+```
+
+对非类型模板形参为auto占位符的情况也是支持推导的
+
+```cpp
+#include <iostream>
+using namespace std;
+
+template <class T, auto N>
+struct X
+{
+    X(T (&)[N]) {}
+};
+
+int main(int argc, char **argv)
+{
+    X x("hello");
+    return 0;
+}
+```
+
+与函数模板不同，类模板实参是不允许部分推导的
+
+```cpp
+#include <iostream>
+using namespace std;
+
+template <class T1, class T2>
+void foo(T1, T2)
+{
+}
+
+template <class T1, class T2>
+struct A
+{
+    A(T1, T2) {}
+};
+
+int main(int argc, char **argv)
+{
+    foo<int>(5, 6.8);          // 函数模板允许部分推导 void foo<int, double>(int, double)
+    A<> a1(2, 3.3);            // 编译错误
+    A<int> a2(5, 6.8);         // 编译错误
+    A<int, double> a3(5, 6.8); // OK
+    A a4(5, 6.8);              // OK
+    return 0;
+}
+```
+
+### 拷贝初始化优先
+
+在类模板参数实参推导时，拷贝初始化优先
+
+```cpp
+#include <iostream>
+#include <vector>
+#include <tuple>
+using namespace std;
+
+int main(int argc, char **argv)
+{
+    std::vector v1{1, 2, 3};
+    // std::vector<int, std::allocator<int>> v1
+    std::vector v2{v1};
+    // std::vector<int, std::allocator<int>> v2
+
+    std::tuple t1{5, 6.8, "hello"};
+    // std::tuple<int, double, const char *> t1
+    std::tuple t2{t1};
+    // std::tuple<int, double, const char *> t2
+
+    // 也就是拷贝初始化优先而不是套了一层
+
+    std::vector v3{v1};
+    // std::vector<int, std::allocator<int>> v3
+    std::vector v4 = {v1};
+    // std::vector<int, std::allocator<int>> v4
+    auto v5 = std::vector{v1};
+    // std::vector<int, std::allocator<int>> v5
+    return 0;
+}
+```
+
+使用列表初始化的时候，仅当初始化列表只有一个与目标类模板相同的元素才会触发拷贝初始化，其他情况会创建新的类型。
+
+```cpp
+#include <iostream>
+#include <vector>
+#include <tuple>
+using namespace std;
+
+int main(int argc, char **argv)
+{
+    std::vector v1{1, 2, 3};
+    std::vector v3{v1, v1};
+    // std::vector<std::vector<int, std::allocator<int>>, std::allocator<std::vector<int, std::allocator<int>>>> v3
+
+    std::tuple t1{5, 6.8, "hello"};
+    std::tuple t3{t1, t1};
+    // std::tuple<std::tuple<int, double, const char *>, std::tuple<int, double, const char *>> t3
+    return 0;
+}
+```
+
+### lambda类型的用途
+
+要将一个lambda表达式作为数据成员存储在某个对象中，如何编写这类的代码
+
+```cpp
+#include <iostream>
+using namespace std;
+
+template <class T>
+struct LambdaWarp
+{
+    LambdaWarp(T t) : func(t) {}
+    template <class... Args>
+    void operator()(Args &&...arg)
+    {
+        func(std::forward<Args>(arg)...);
+    }
+    T func;
+};
+
+int main(int argc, char **argv)
+{
+    auto l = [](int a, int b)
+    {
+        std::cout << a + b << std::endl;
+    };
+    LambdaWarp<decltype(l)> x(l);
+    x(11, 7); // 18
+    return 0;
+}
+```
+
+C++17支持了类模板的模板实参推导后，可以进行一些代码优化
+
+```cpp
+#include <iostream>
+using namespace std;
+
+template <class T>
+struct LambdaWarp
+{
+    LambdaWarp(T t) : func(t) {}
+    template <class... Args>
+    void operator()(Args &&...arg)
+    {
+        func(std::forward<Args>(arg)...);
+    }
+    T func;
+};
+
+int main(int argc, char **argv)
+{
+    LambdaWarp x([](int a, int b)
+                 { std::cout << a + b << std::endl; });
+    x(11, 7); // 18
+    return 0;
+}
+```

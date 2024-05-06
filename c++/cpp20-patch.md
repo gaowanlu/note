@@ -3420,3 +3420,139 @@ int main(int argc, char **argv)
     return 0;
 }
 ```
+
+## 类模板的模板实参推导
+
+### 别名模板的类模板实参推导
+
+C++20支持了别名模板的类模板实参推导。实测GCC不行，无法通过编译
+
+```cpp
+#include <iostream>
+using namespace std;
+
+template <class T, class U>
+struct X
+{
+    X(T, U) {}
+};
+
+template <class V>
+using A = X<V *, V *>;
+
+int main(int argc, char **argv)
+{
+    int i;
+    double d;
+
+    A a1(&i, &i); // 可以推导为A<int>
+    // A a2(i, i); // i无法推导为V*
+    // A a3(&i, &d); // (int*, double*)无法推导为(V*, V*)
+    return 0;
+}
+```
+
+### 聚合类型的类模板实参推导
+
+除了别名模板，C++20还规定聚合类型也可以进行类模板的实参推导
+
+```cpp
+#include <iostream>
+using namespace std;
+
+template <class T>
+struct S
+{
+    T x;
+    T y;
+};
+
+int main(int argc, char **argv)
+{
+    S s1{1, 2}; // S<int> s1
+    // S s2{1, 2u}; //无法推导类模板参数
+    return 0;
+}
+```
+
+嵌套聚合类型,下面代码对于X的T不是由`{1,2}`推导出来的，而是由`4`推导出来的
+
+```cpp
+#include <iostream>
+using namespace std;
+
+template <class T>
+struct S
+{
+    T x;
+    T y;
+};
+
+template <class T, class U>
+struct X
+{
+    S<T> s;
+    U u;
+    T t;
+};
+
+int main(int argc, char **argv)
+{
+    X x{{1, 2}, 3u, 4};
+    return 0;
+}
+```
+
+如果显式制指定了，`S<T>`的模板实参，则初始化列表的子括号可以忽略
+
+```cpp
+#include <iostream>
+using namespace std;
+
+template <class T>
+struct S
+{
+    T x;
+    T y;
+};
+
+template <class T, class U>
+struct X
+{
+    S<int> s;
+    U u;
+    T t;
+};
+
+int main(int argc, char **argv)
+{
+    X x{1, 2, 3u, 4};
+    return 0;
+}
+```
+
+C++20还规定，聚合类型中的数组也可以是推导对象。
+
+```cpp
+#include <iostream>
+using namespace std;
+
+template <class T, std::size_t N>
+struct A
+{
+    T array[N];
+};
+
+template <typename T>
+struct B
+{
+    T array[2];
+};
+
+int main(int argc, char **argv)
+{
+    A a{{1, 2, 3, 4}};
+    B b = {0, 1};
+    return 0;
+}
+```
