@@ -785,3 +785,94 @@ int main(int argc, char **argv)
 * 条件运算符`?:`的首个操作数
 * static_assert声明中的bool常量表达式
 * noexcept说明符中的表达式
+
+## 模板参数优化
+
+### 允许局部和匿名类型作为模板实参
+
+在C++11之前，将局部或匿名类型作为模板实参是不被允许的，C++11之后允许了。
+
+```cpp
+#include <iostream>
+using namespace std;
+
+template <class T>
+class X
+{
+};
+
+template <class T>
+void f(T t){};
+
+struct
+{
+} unnamed_obj;
+
+int main(int argc, char **argv)
+{
+    struct A
+    {
+    };
+    enum
+    {
+        e1
+    };
+    typedef struct
+    {
+    } B;
+    B b;
+    X<A> x1;
+    X<A *> x2;
+    X<B> x3;
+    f(e1);
+    f(unnamed_obj);
+    f(b);
+    return 0;
+}
+```
+
+### 允许函数模板的默认模板参数
+
+C++11中，可以自由在函数模板中使用默认的模板参数，C++11之前只能在类模板中 函数模板不支持。
+
+```cpp
+#include <iostream>
+using namespace std;
+
+template <class T = double>
+void foo()
+{
+    T t;
+}
+
+template <class T = double>
+void foo1(T t)
+{
+}
+
+int main(int argc, char **argv)
+{
+    foo();   // void foo<double>()
+    foo1(1); // void foo1<int>(int t)
+    return 0;
+}
+```
+
+我们知道类模板的默认模板参数以及函数的默认参数都要保证从右往左定义默认值，而函数模板没有
+这样的限制。
+
+```cpp
+#include <iostream>
+using namespace std;
+
+template <class T = double, class U, class R = double>
+void foo(U u)
+{
+}
+
+int main(int argc, char **argv)
+{
+    foo(5);
+    return 0;
+}
+```

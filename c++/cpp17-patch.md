@@ -1502,3 +1502,208 @@ int main(int argc, char **argv)
     return 0;
 }
 ```
+
+## 模板参数优化
+
+相对于以类型为模板参数的模板以非类型为模板参数的模板实例化规则更严格。C++17之前主要包括以下几种规则：
+
+* 如果是整型作为模板实参，则必须是模板参数类型的经转换常量表达式。
+
+```cpp
+#include <iostream>
+using namespace std;
+
+constexpr char v = 42;
+constexpr char foo()
+{
+    return 42;
+}
+
+template <int>
+struct X
+{
+};
+
+int main(int argc, char **argv)
+{
+    X<v> x1;
+    X<foo()> x2;
+    return 0;
+}
+// constexpr char到int的转换满足隐式转换和常量表达式
+```
+
+* 如果对象指针作为模板实参，则必须是静态或者有内部或者外部链接的完整对象
+* 如果函数指针作为模板实参，则必须是有链接的函数指针
+* 如果左值引用的形参作为模板实参，则必须也有内部或外部链接
+* 对于成员指针作为模板实参，必须是静态成员
+
+后面的四条规则都强调了两种特性:链接和静态
+
+```cpp
+#include <iostream>
+using namespace std;
+
+template <const char *>
+struct Y
+{
+};
+
+extern const char str1[] = "hello world"; // 外部链接
+const char str2[] = "hello world";        // 内部链接
+
+int main(int argc, char **argv)
+{
+    Y<str1> y1;
+    Y<str2> y2;
+    return 0;
+}
+```
+
+C++17之前返回指针的常量表达式的返回值作为模板实参是不能编译通过的
+
+```cpp
+#include <iostream>
+using namespace std;
+
+int v = 42;
+constexpr int *foo() { return &v; }
+template <const int *>
+struct X
+{
+};
+
+int main(int argc, char **argv)
+{
+    X<foo()> x; // C++11 类型 "const int *" 的非类型模板参数无效
+    // C++17可以编译通过
+    return 0;
+}
+```
+
+C++17强调了一条规则，非类型模板形参使用的实参可以是该模板形参类型的任何经转换常量表达式，其中经转换常量表达式的定义添加了对象、数组、函数等到指针的转换。上面代码C++17可以，因为新规则不再强调经转换常量表达式的求值结果为整型。也不再要求指针是具有链接的，取而代之的是必须满足经转换常量表达式求值。
+
+```cpp
+// C++17可以编译通过
+#include <iostream>
+using namespace std;
+
+template <const char *>
+struct Y
+{
+};
+
+int main(int argc, char **argv)
+{
+    static const char str[] = "hello world";
+    Y<str> y; // C++11 模板参数不能封引用非外部实体
+    // C++11 error: ‘& str’ is not a valid template argument of type ‘const char*’ because ‘str’ has no linkage
+    return 0;
+}
+```
+
+以下对象作为非类型模板实参依旧会造成编译错误，但也是不一定的不同编译器之间有很大的不同
+
+1. 对象的非静态成员对象
+2. 临时对象
+3. 字符串字面量
+4. typeid的结果
+5. 预定义变量
+
+```cpp
+// 非静态成员对象不是常量表达式
+#include <iostream>
+using namespace std;
+
+struct X
+{
+    int x;
+};
+
+template <int>
+struct Y
+{
+};
+
+int main(int argc, char **argv)
+{
+    X obj;
+    Y<obj.x> y; // err 毕竟obj.x是运行时才确定的 模板实参需要编译时就能确定
+    return 0;
+}
+```
+
+### 扩展的模板参数匹配规则
+
+一直以来，模板形参只能精确匹配实参列表，实参列表里的每一项必须和模板形参有着相同的类型。
+
+```cpp
+#include <iostream>
+using namespace std;
+
+template <template <typename> class T, class U>
+void foo()
+{
+    T<U> n;
+}
+template <class, class = int>
+struct bar
+{
+};
+
+int main(int argc, char **argv)
+{
+    foo<bar, double>(); // compile: C++11 failed C++17 succ
+    return 0;
+}
+```
+
+C++11写成下面也会报错
+
+```cpp
+#include <iostream>
+using namespace std;
+
+template <template <typename, typename> class T, class U>
+void foo()
+{
+    // T<U> n; // 不注释掉就会报错
+ // error: wrong number of template arguments (1, should be 2)
+}
+template <class, class = int>
+struct bar
+{
+};
+
+int main(int argc, char **argv)
+{
+    foo<bar, double>();
+    return 0;
+}
+```
+
+### 非类型模板形参使用auto作为占位符
+
+C++17可以在非类型模板形参使用auto作为占位符,下面代码中的全部auto都被推导为了int
+
+```cpp
+#include <iostream>
+using namespace std;
+
+template <template <auto> class T, auto N>
+void foo()
+{
+    T<N> n;
+}
+
+template <auto>
+struct bar
+{
+};
+
+int main(int argc, char **argv)
+{
+    foo<bar, 5>();
+    return 0;
+}
+```

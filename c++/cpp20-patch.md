@@ -3245,17 +3245,178 @@ T::R f();
 template<class T>
 struct D : T::B
 {
-	D() : T::B(){}
-	T::B b; // 编译成功
+ D() : T::B(){}
+ T::B b; // 编译成功
 };
 // 作为 成员函数或者lambda表达式 形参声明
 template<class T>
 struct D : T::B
 {
-	D() : T::B(){}
-	T::B f(T::B){ return T::B(); } // C++20可编译
+ D() : T::B(){}
+ T::B f(T::B){ return T::B(); } // C++20可编译
 };
 ```
 
 总之这种不要记，毕竟我们谁不用IDE呢，这种东西了解点就好，每个新版本几乎都会解决一些历史原因给开发写代码带来的一些限制，但是人们往往还想现在写的代码可以在低版本C++去编译，真是大傻逼，所以积极拥抱新特性吧，确实爽
 各种语法糖。
+
+## 模板参数优化
+
+### C++ ADL 是什么
+
+C++的ADL（Argument-Dependent Lookup），也称为Koenig查找（Koenig Lookup），是一种名称查找规则，用于确定函数调用时所涉及的命名空间范围。ADL允许在函数调用中使用的命名空间扩展到函数参数的命名空间。这种查找规则使得在C++中更容易地编写通用代码，并且有助于实现“接口与实现分离”的设计思想。
+
+当在一个函数调用中使用某个函数名作为实参，但该函数名并非定义在函数所在的命名空间内时，编译器会尝试在实参类型所属的命名空间中查找这个函数名。这种查找规则适用于非成员函数、友元函数和操作符重载。
+
+```cpp
+#include <iostream>
+using namespace std;
+
+namespace NS
+{
+    struct X
+    {
+    };
+    void foo(X)
+    {
+        std::cout << "foo from NS" << std::endl;
+    }
+}
+
+int main()
+{
+    NS::X x;
+    foo(x); // 在此处调用foo，函数foo并未直接定义在main函数所在的命名空间内，但是通过ADL，编译器会在NS命名空间内查找foo函数
+    return 0;
+}
+```
+
+### 函数模板添加到ADL查找规则
+
+在C++20之前，ADL的查找规则是不能查找到带显式指定模板实参的函数模板的
+
+```cpp
+#include <iostream>
+using namespace std;
+
+namespace N
+{
+    struct A
+    {
+    };
+    template <class T>
+    int f(T t) { return 1; }
+};
+
+int main(int argc, char **argv)
+{
+    // C++17 大多数编译器找不到函数f 或者有的警告是否要调用N::f
+    int x = f<N::A>(N::A());
+    return 0;
+}
+```
+
+但是有个问题，明明可以这样写,why not? 写代码更加清晰
+
+```cpp
+NS::foo<NS::X>(x);
+```
+
+C++20中ADL也不是万能的也会出现下面行不通的情况
+
+```cpp
+#include <iostream>
+using namespace std;
+
+int h = 0;
+void g() {}
+namespace N
+{
+    struct A
+    {
+    };
+    template <class T>
+    int f(T) { return 1; }
+    template <class T>
+    int g(T) { return 2; }
+    template <class T>
+    int h(T) { return 3; }
+}
+
+int main(int argc, char **argv)
+{
+    int x = f<N::A>(N::A());    // 编译成功 查找f没有找到任何定义，f被认为是模板
+    int y = f<N::A>(N::A());    // 编译成功 查找g找到一个函数 g被认为是模板
+    int z = h<N::A>(N::A());    // 编译失败
+    int q = N::h<N::A>(N::A()); // 编译成功
+    return 0;
+}
+```
+
+### 允许非类型模板形参中的字面量类类型
+
+C++20之前，非类型模板形参可以是整数类型、枚举类型、指针类型、引用类型和`std::nullptr_t`,而类类型是不可以的。
+
+```cpp
+#include <iostream>
+using namespace std;
+
+struct A
+{
+};
+
+template <A a>
+struct B
+{
+};
+
+int main(int argc, char **argv)
+{
+    A a;
+    B<a> b; // C++20之前编译失败
+    return 0;
+}
+```
+
+C++20开始，字面量类类型(literal class)可以作为形参在非类型模板形参列表中使用了。
+
+1. 所有基类和非静态数据成员都是公开且不可变的
+2. 所有基类和非静态数据成员的类型都是标量类型、左值引用或者前者的数组（可能是多维）。
+
+因为模板实参不支持字符串字面量，现在我们可以自定义类类型了
+
+```cpp
+#include <iostream>
+using namespace std;
+
+template <typename T, std::size_t N>
+struct basic_fixed_string
+{
+    constexpr basic_fixed_string(const T (&foo)[N + 1])
+    {
+        std::copy_n(foo, N + 1, data_);
+    }
+    T data_[N + 1];
+};
+
+// C++17 函数模板的推导引导(function template deduction guide)
+// 这个特性的主要目的是简化模板的使用，尤其是当模板参数可以从其他参数推导出来时。
+// 通过使用类模板参数推导，可以在函数返回类型中使用复杂的表达式，以便更方便地推导模板参数。
+template <typename T, std::size_t N>
+basic_fixed_string(const T (&str)[N]) -> basic_fixed_string<T, N - 1>;
+
+template <basic_fixed_string Str>
+struct X
+{
+    X()
+    {
+        std::cout << Str.data_ << std::endl;
+    }
+};
+
+int main(int argc, char **argv)
+{
+    X<"Hello World"> x; // Hello World
+    return 0;
+}
+```
