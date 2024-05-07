@@ -3559,27 +3559,514 @@ int main(int argc, char **argv)
 
 ## 概念和约束
 
-TODO
-
 ### 使用std::enable_if约束模板
 
-TODO
+```cpp
+#include <iostream>
+#include <string>
+using namespace std;
+
+template <class T, class U = std::enable_if_t<std::is_integral_v<T>>>
+struct X
+{
+};
+
+template <typename T>
+std::enable_if_t<std::is_integral_v<T>, void> foo(T value)
+{
+    std::cout << "This is an integral type" << std::endl;
+}
+
+template <typename T>
+std::enable_if_t<!std::is_integral_v<T>, void> foo(T value)
+{
+    std::cout << "This is not an integral type" << std::endl;
+}
+
+int main(int argc, char **argv)
+{
+    X<int> x1; // X<int> x1 编译成功
+    // X<std::string> x2; // 编译错误
+    X<std::string, void> x3; // 编译成功
+
+    foo(1);                    // This is an integral type
+    foo(std::string("hello")); // This is not an integral type
+    return 0;
+}
+```
+
+对于x2无法推到出X的U的默认实参，所以必须提供两个实参。而x1则推到为了`X<int,void>`
+
+我们也可以简单实现enable_if
+
+```cpp
+#include <iostream>
+using namespace std;
+
+template <bool B, class T = void>
+struct my_enable_if
+{
+};
+
+template <class T>
+struct my_enable_if<true, T>
+{
+    using type = T;
+};
+
+int main(int argc, char **argv)
+{
+    // my_enable_if<false, int>::type; // 类 "my_enable_if<false, int>" 没有成员 "type"
+    my_enable_if<true, int>::type n = 11;
+    std::cout << n << std::endl; // 11
+    return 0;
+}
+```
+
+可以看到enable_if的实现十分简单，而让它发挥如此大作用的幕后功臣就是SFINAE规则。
+不过使用`std::enable_if`作为模板实参约束也有一些硬伤，比如使用范围窄，需要加入额外的模板形参等。
+于是为了更好地对模板进行约束，C++20标准引入了`概念（concept）`。
 
 ### 概念的背景介绍
 
-TODO
+概念是对C++核心语言特性中模板功能的扩展。它在编译时进行评估，对类模板、函数模板以及类模板的成员函数进行约束：它限制了能被接受为模板形参的实参集。
+
+```cpp
+#include <iostream>
+using namespace std;
+
+template <class C>
+concept IntegerType = std::is_integral_v<C>;
+
+template <IntegerType T>
+struct X
+{
+    T t;
+};
+
+int main(int argc, char **argv)
+{
+    X<int> x1{1};
+    X x2{2};
+    // X<std::string> x3; // 编译失败
+    std::cout << x1.t << " " << x2.t << std::endl; // 1 2
+    return 0;
+}
+```
+
+对于X的模板参数T必须满足 `std::is_integral_v` 为true;
+
+上面代码还可以使用requires关键字进行代替，直接约束模板形参T，可以达到相同的效果。
+
+```cpp
+#include <iostream>
+using namespace std;
+
+template <class T>
+requires std::is_integral_v<T>
+struct X
+{
+    T t;
+};
+
+int main(int argc, char **argv)
+{
+    X x1{1};
+    // X<std::string> x2;
+    return 0;
+}
+```
+
+比起使用`std::enable_if`使用concept和requires，编译器编译错误时会给出相对更清晰的信息。
 
 ### 使用concept和约束表达式定义概念
 
-TODO
+可以使用concept关键字来定义概念，如
+
+```cpp
+template <class C>
+concept IntegerType = std::is_integral_v<C>;
+```
+
+其中的`IntegerType`是概念名，`std::is_integral_v<C>`称为约束表达式。
+
+约束表达式应该是一个bool类型的纯右值常量表达式，当实参替换形参后，表达式计算结果为true则满足约束条件。否则相反。
+
+这里所谓的计算都是在编译期间执行的，概念的最终结果是一个bool类型的纯右值。
+
+```cpp
+template <class T>
+concept TestConcept = true;
+
+static_assert(TestConcept<int>);
+```
+
+概念能够直接为static_assert的实参。`TestConcept<int>`是一个bool类型的常量表达式。
+
+约束表达式还支持一般的逻辑操作，包括合取和析取。
+
+```cpp
+#include <iostream>
+using namespace std;
+
+// 合取
+template <class C>
+concept SignedIntegerType = std::is_integral_v<C> && std::is_signed_v<C>;
+
+// 析取
+template <class C>
+concept IntegerFloatingType = std::is_integral_v<C> || std::is_floating_point_v<C>;
+
+template <SignedIntegerType T>
+class X
+{
+public:
+    T t;
+};
+
+template <IntegerFloatingType T>
+class Y
+{
+public:
+    T f;
+};
+
+int main(int argc, char **argv)
+{
+    X<int> x1{1};
+    Y<float> f1;
+    f1.f = 1.2;
+    // T<std::string> f2; // 编译错误
+    return 0;
+}
+```
+
+除了逻辑操作的合取和析取之外，约束表达式还有一种特殊情况叫做`原子约束`。
 
 ### requires子句和约束检查顺序
 
-TODO
+除了concept之外，还可以使用requires子句直接约束模板实参
+
+```cpp
+#include <iostream>
+using namespace std;
+
+template <typename T>
+requires std::is_integral_v<T> && std::is_signed_v<T>
+class X
+{
+public:
+    T t;
+};
+
+template <typename T>
+requires std::is_integral<T>::value || std::is_floating_point_v<T>
+class Y
+{
+public:
+    T f;
+};
+
+int main(int argc, char **argv)
+{
+    return 0;
+}
+```
+
+requires紧跟的必须是一个类型为bool的常量表达式，除此外还对紧跟的常量表达式有一些额外的要求。
+
+- 是一个初等表达式或者带括号的任意表达式
+
+```cpp
+#include <iostream>
+using namespace std;
+
+constexpr bool bar()
+{
+    return true;
+}
+
+template<class T>
+requires bar()
+struct X{
+};
+
+int main(int argc, char **argv)
+{
+    return 0;
+}
+```
+
+其中`requires bar()`中`bar()`不是一个初等表达式，需要采用`requires (bar())`
+
+```cpp
+constexpr bool bar()
+{
+    return true;
+}
+
+template<class T>
+requires (bar()) && true || false
+struct X{
+};
+```
+
+requires子句除了能出现在模板形参列表尾部，还可以出现在函数模板声明末尾。
+
+```cpp
+#include <iostream>
+using namespace std;
+
+constexpr bool bar()
+{
+    return true;
+}
+
+template<class T>
+void X(T t) requires (bar()) && true || false
+{
+};
+
+int main(int argc, char **argv)
+{
+    return 0;
+}
+```
+
+当一个模板同时具备多种约束时，优先级是怎样的,按照下面1 2 3 4优先级依次进行，越靠前越优先。
+
+```cpp
+#include <iostream>
+using namespace std;
+
+template <class C>
+concept ConstType = std::is_const_v<C>;
+
+template <class C>
+concept IntegralType = std::is_integral_v<C>;
+
+template <ConstType T>                      // 1
+    requires std::is_pointer_v<T>           // 2
+void foo(IntegralType auto)                 // 3
+    requires std::is_same_v<T, char *const> // 4
+{
+}
+
+int main(int argc, char **argv)
+{
+    // foo<int>(1.5); // 不满足所有
+    // foo<const int>(1.5); // 只满足1
+    // foo<int *const>(1.5); // 满足 1 2
+    // foo<int *const>(1); // 满足1 2 3
+    foo<char *const>(1); // 满足1 2 3 4
+    return 0;
+}
+```
 
 ### 原子约束
 
-TODO
+原子约束是 表达式 和 表达式中模板形参 到模板实参 映射的组合（简称为形参映射）。
+比较两个原子约束是否相同的方法很特殊，除了比较代码上是否有相同表现，还需要比较
+形参映射是否相同，也就是说功能上相同的原子约束可能是不同的原子约束。
+
+```cpp
+#include <iostream>
+using namespace std;
+
+template <int N>
+constexpr bool Atomic = true;
+
+template <int N>
+concept C = Atomic<N>;
+
+template <int N>
+concept Add1 = C<N + 1>;
+
+template <int N>
+concept AddOne = C<N + 1>;
+
+template <int M>
+void f()
+    requires Add1<2 * M>
+{};
+
+template <int M>
+void f()
+    requires AddOne<2 * M> && true
+{};
+
+int main(int argc, char **argv)
+{
+    f<0>();
+    return 0;
+}
+```
+
+上面的Add1和AddOne效果其实是一样的，这两个函数中的概念C都是形参映射从N变到2M+1。在两个函数都符合约束的情况下
+编译器会选择约束更为复杂的`requires AddOne<2*M> && true`作为目标函数。
+因为`AddOne<2*M>&&true`包含了`AddOne<2*M>`。
+
+下面的代码会产生二义性，虽然都是概念Add1,但它们形参映射不同，分别为`2*N+1`和`N*2+1`,所以`Add1<N*2>&&true`并不能
+包含`Add1<2*N>`。
+
+```cpp
+#include <iostream>
+using namespace std;
+
+template <int N>
+constexpr bool Atomic = true;
+
+template <int N>
+concept C = Atomic<N>;
+
+template <int N>
+concept Add1 = C<N + 1>;
+
+template <int N>
+void f2()
+    requires Add1<2 * N>
+{};
+
+template <int N>
+void f2()
+    requires Add1<N * 2> && true
+{};
+
+int main(int argc, char **argv)
+{
+    f2<0>(); // 编译失败 有多个 重载函数 "f2" 实例与参数列表匹配:
+    return 0;
+}
+```
+
+当约束表达式中存在原子约束时，如果约束表达式结果相同，则约束表达式应该是相同的，否则会编译失败。下面的两个约束表达式结果相同，但是约束表达式不相同，产生二义性。下面代码中`!sad<T>`就是原子约束。
+
+```cpp
+#include <iostream>
+using namespace std;
+
+template <class T>
+concept sad = false;
+
+template <class T>
+int f1(T)
+    requires(!sad<T>)
+{
+    return 1;
+};
+
+template <class T>
+int f1(T)
+    requires(!sad<T>) && true
+{
+    return 2;
+};
+
+int main(int argc, char **argv)
+{
+    f1(0); // error: call of overloaded ‘f1(int)’ is ambiguous
+    return 0;
+}
+```
+
+可以进行改造一下,没有什么是加一层解决不掉的，下面代码可以编译成功了
+
+```cpp
+#include <iostream>
+using namespace std;
+
+template <class T>
+concept sad = false;
+
+template <class T>
+concept not_sad = !sad<T>;
+
+template <class T>
+int f1(T)
+    requires(not_sad<T>)
+{
+    return 1;
+};
+
+template <class T>
+int f1(T)
+    requires(not_sad<T>) && true
+{
+    return 2;
+};
+
+int main(int argc, char **argv)
+{
+    f1(0);
+    return 0;
+}
+```
+
+例如，下面的雷同情况的,就会产生二义性，`not_sad<T>==true`是原子约束
+
+```cpp
+#include <iostream>
+using namespace std;
+
+template <class T>
+concept sad = false;
+
+template <class T>
+concept not_sad = !sad<T>;
+
+template <class T>
+int f1(T)
+    requires(not_sad<T> == true)
+{
+    return 1;
+};
+
+template <class T>
+int f1(T)
+    requires(not_sad<T> == true) && true
+{
+    return 2;
+};
+
+int main(int argc, char **argv)
+{
+    f1(0);
+    return 0;
+}
+```
+
+可以再套一层
+
+```cpp
+#include <iostream>
+using namespace std;
+
+template <class T>
+concept sad = false;
+
+template <class T>
+concept not_sad_is_true = !sad<T> == true;
+
+template <class T>
+int f1(T)
+    requires not_sad_is_true<T>
+{
+    return 1;
+};
+
+template <class T>
+int f1(T)
+    requires not_sad_is_true<T> && true
+{
+    return 2;
+};
+
+int main(int argc, char **argv)
+{
+    f1(0);
+    return 0;
+}
+```
 
 ### requires表达式
 
