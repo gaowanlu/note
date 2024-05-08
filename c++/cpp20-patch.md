@@ -4070,19 +4070,202 @@ int main(int argc, char **argv)
 
 ### requires表达式
 
-TODO
+requires关键字除了可以引入requires子句，还可以用来定义一个requires表达式，该表达式同样是一个纯右值表达式。
+
+表达式为true时表示满足约束条件，反之false表示不满足约束条件。
+
+需要特别说明的是requires表达式的判定标准，因为这个标准比较特殊，具体来说是对requires表达式进行模板实参的替换，如果替换之后requires表达式中出现无效类型或者表达式违反约束条件，则requires表达式求值为false，
+反之则requires表达式求值为true。例如：
+
+```cpp
+#include <iostream>
+#include <string>
+#include <vector>
+#include <array>
+using namespace std;
+
+template <class T>
+concept Check = requires {
+    T().clear();
+};
+
+template <Check T>
+struct G
+{
+};
+
+int main(int argc, char **argv)
+{
+    G<std::vector<char>> x;
+    G<std::string> y;
+    std::vector<int> v;
+    // G<std::array<char, 10>> z; // std::array<char, 10> clear无效类型
+    return 0;
+}
+```
+
+上面requires表达式定义了概念Check,Check要求`T().clear()`是一个合法的表达式。因此vector、string可以编译通过。而array因为因为没有成员函数clear导致编译失败。
+
+requires表达式还支持形参列表，例如上面的例子除了检查clear成员函数还需要检查是否支持+运算符。
+
+```cpp
+#include <iostream>
+#include <string>
+#include <vector>
+#include <array>
+using namespace std;
+
+template <class T>
+concept Check = requires {
+    T().clear();
+    T() + T();
+};
+
+template <Check T>
+struct G
+{
+};
+
+int main(int argc, char **argv)
+{
+    // G<std::vector<char>> x; // 编译错误 std::vector<char>不支持+
+    G<std::string> y;
+    return 0;
+}
+```
+
+但是一般不会像上面那样做而是用requires表达式的形参列表,检查内容都是在编译时检查的，并不会真的运行时执行clear和相加。
+
+```cpp
+template <class T>
+concept Check = requires(T a, T b) {
+    a.clear();
+    a + b;
+};
+```
+
+requires形参列表不支持 运行时计算实参数量的不定参数列表
+
+```cpp
+// requires 表达式中不允许使用省略号参数
+template <typename T>
+concept C = requires(T t, ...) {};
+```
+
+在上面的requires表达式中,`a.clear()`和`a + b`可以说是对模板实参的两个要求，这些要求在C++标准中称为要求序列(requirement-seq)。要求序列分为4种，包括简单要求、类型要求、符合要求、嵌套要求。
 
 #### 简单要求
 
-TODO
+简单要求是`不以requires关键字开始`，它只断言表达式的有效性，并不做表达式的求值操作。如果表达式替换模板实参失败，则该要求的计算结果为false：
+
+```cpp
+template <typename T>
+concept C = requires(T a, T b) {
+    a + b;
+};
+```
+
+上面代码中`a + b`是一个简单要求，编译器会断言`a + b`的合法性，并不会计算其最终结果。`不以requires关键字开始是简单表达式的重要特征`。
 
 #### 类型要求
 
-TODO
+类型要求是以typename关键字开始的，紧跟typename的是一个类型名。
+通常可以检查 嵌套类型、类模板 以及 别名模板特化 的有效性。如果模板实参替换失败，则要求表达式的计算结果为false。
+
+```cpp
+#include <iostream>
+#include <string>
+using namespace std;
+
+// 要求类型T有一个type嵌套类型且可以被初始化为0
+template <typename T, typename T::type = 0>
+struct S; // 声明
+
+template <typename T>
+using Ref = T &;
+
+template <typename T>
+concept C = requires {
+    typename T::inner; // 要求T有个嵌套类型inner
+    typename S<T>;     // 要求模板特化
+    typename Ref<T>;   // 要求别名模板特化
+};
+
+struct ExampleForC
+{
+    using inner = std::string;
+    using type = char; // S要求type能被0赋值 如果次数char替换为std::string就会报错了
+};
+
+template <C c>
+struct UsingC
+{
+};
+
+int main(int argc, char **argv)
+{
+    UsingC<ExampleForC> c;
+    return 0;
+}
+```
 
 #### 复合要求
 
-TODO
+断言一个符合要求需要按照一下顺序
+
+1. 替换模板实参{E}中的表达式E,检测表达式的有效性。
+2. 如果使用了noexcept，则需要检查并确保{E}中的表达式E不会有抛出异常的可能。
+3. 如果使用了`->`后的返回类型约束，则需要将模板实参替换到返回类型约束中，并且确保表达式E的结果类型即`decltype((E))`,满足返回类型约束。
+
+```cpp
+#include <iostream>
+#include <vector>
+using namespace std;
+
+template <class T>
+concept Check = requires(T a, T b) {
+    {
+        a.clear()
+    } noexcept;
+    {
+        a + b
+    } noexcept -> std::same_as<int>;
+};
+
+// 声明即可满足requires表达式检查不用一定要定义完整
+int operator+(const std::vector<char> &v1, const std::vector<char> &v2) noexcept;
+
+template <Check c>
+struct UsingCheck
+{
+};
+
+int main(int argc, char **argv)
+{
+    UsingCheck<std::vector<char>> c;
+    return 0;
+}
+```
+
+其中的`std::same_as`是一个概念，其实现使用`std::is_same_v`实现的
+
+```cpp
+namespace __detail
+{
+  template<typename _Tp, typename _Up>
+    concept __same_as = std::is_same_v<_Tp, _Up>;
+} // namespace __detail
+/// [concept.same], concept same_as
+template<typename _Tp, typename _Up>
+  concept same_as
+    = __detail::__same_as<_Tp, _Up> && __detail::__same_as<_Up, _Tp>;
+```
+
+代码中的`std::same_as`返回类型要求，实际编译代码类似于
+
+```cpp
+std::same_as<decltype((a + b)), int>
+```
 
 #### 嵌套要求
 
