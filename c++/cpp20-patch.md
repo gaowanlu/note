@@ -4593,4 +4593,179 @@ int main(int argc, char **argv)
 
 ## explicit(bool)
 
-TODO
+C++20扩展了explicit说明符，它可以接受一个求值类型为bool的常量表达式，用于指定explicit的功能是否生效。
+
+```cpp
+#include <iostream>
+#include <vector>
+using namespace std;
+
+std::pair<std::string, std::string> safe()
+{
+    return {"meow", "purr"}; // 编译成功
+}
+
+std::pair<std::vector<int>, std::vector<int>> unsafe()
+{
+    return {11, 22}; // 编译失败
+}
+
+int main(int argc, char **argv)
+{
+    return 0;
+}
+```
+
+上面的编译失败是因为`std::vector<int>`的构造函数使用了explicit说明符,所以需要显式构造。
+
+但是怎么指定pair应该显式构造呢
+
+```cpp
+#include <iostream>
+#include <vector>
+using namespace std;
+
+template <class T1, class T2>
+struct MyPair
+{
+    template <class U1, class U2>
+    explicit MyPair(const U1 &u1, const U2 &u2) : first_(u1), second_(u2) {}
+    T1 first_;
+    T2 second_;
+};
+
+MyPair<std::string, std::string> safe()
+{
+    return {"meow", "purr"}; // 编译失败
+}
+
+MyPair<std::vector<int>, std::vector<int>> unsafe()
+{
+    return {11, 22}; // 编译失败
+}
+
+int main(int argc, char **argv)
+{
+    return 0;
+}
+```
+
+但是这样又导致safe编译失败了，为了解决问题，标准库采用SFINAE和概念的方法实现了pair的构造函数，代码类似于
+不过看过代码，我感叹像我这样的菜鸡，这种代码看读懂写不出也罢，了解下即可。
+
+```cpp
+#include <iostream>
+using namespace std;
+
+// SFINAE版本
+template <typename T1, typename T2>
+struct MyPair
+{
+    template <typename U1 = T1, typename U2 = T2,
+              std::enable_if_t<
+                std::is_constructible_v<T1, U1> && 
+                std::is_constructible_v<T2, U2> && 
+                std::is_convertible_v<U1, T1> && 
+                std::is_convertible_v<U2, T2>,
+                int> = 0> 
+    constexpr MyPair(U1 &&, U2 &&);
+
+    template <typename U1 = T1, typename U2 = T2,
+              std::enable_if_t<
+                std::is_constructible_v<T1, U1> &&
+                std::is_constructible_v<T2, U2> &&
+                !(std::is_convertible_v<U1, T1> &&
+                std::is_convertible_v<U2, T2>),
+                int> = 0>
+    explicit constexpr MyPair(U1 &&, U2 &&);
+};
+
+int main(int argc, char **argv)
+{
+    return 0;
+}
+```
+
+概念版本，比SFINAE容易很多
+
+```cpp
+#include <iostream>
+using namespace std;
+
+// 概念版本
+template <typename T1, typename T2>
+struct MyPair
+{
+    template <typename U1 = T1, typename U2 = T2>
+        requires std::is_constructible_v<T1, U1> &&
+                 std::is_constructible_v<T2, U2> &&
+                 std::is_convertible_v<U1, T1> &&
+                 std::is_convertible_v<U2, T2>
+    constexpr MyPair(U1 &&, U2 &&);
+
+    // U1可构造T1 且 U2可构造T2
+    // 则采用带有explicit的
+    template <typename U1 = T1, typename U2 = T2>
+        requires std::is_constructible_v<T1, U1> &&
+                 std::is_constructible_v<T2, U2>
+    explicit constexpr MyPair(U1 &&, U2 &&);
+};
+
+int main(int argc, char **argv)
+{
+    return 0;
+}
+```
+
+恰好`explicit(bool)`特性能更好的解决上面的问题
+
+SFINAE版本
+
+```cpp
+#include <iostream>
+using namespace std;
+
+// SFINAE版本
+template <typename T1, typename T2>
+struct MyPair
+{
+    template <typename U1 = T1, typename U2 = T2,
+              std::enable_if_t<
+                  std::is_constructible_v<T1, U1> &&
+                      std::is_constructible_v<T2, U2>,
+                  int> = 0>
+    explicit(!(std::is_convertible_v<U1, T1> &&
+               std::is_convertible_v<U2, T2>)) constexpr MyPair(U1 &&, U2 &&);
+};
+
+int main(int argc, char **argv)
+{
+    return 0;
+}
+```
+
+概念版本
+
+```cpp
+#include <iostream>
+using namespace std;
+
+// 概念版本
+template <typename T1, typename T2>
+struct MyPair
+{
+    template <typename U1 = T1, typename U2 = T2>
+    explicit(std::is_constructible_v<T1, U1> &&
+             std::is_constructible_v<T2, U2>) constexpr MyPair(U1 &&, U2 &&);
+};
+
+int main(int argc, char **argv)
+{
+    return 0;
+}
+```
+
+## 对于C++新特性的感叹
+
+C++版本不断升级改进，使得特性越来越多，语法越来越抽象，特别是关于模板编程的内容，很容易令人头大。只看看代码学习就费脑子，更不用说用新特性写代码了，C++新版本特性似乎不是留给普通开发人员用的，
+更像时优化标准库，写类工具库的大佬们用的，便于他们的开发，然后他们的成功惠及像我这样的菜鸡。

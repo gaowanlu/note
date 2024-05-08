@@ -10,20 +10,13 @@ I have a dream. Keep going.
 
 ## 🚲
 
-* [ ] 第42章 模板特性的其他优化C++11 C++14
-
-## WANT
-
-2024
-
+* [ ] C++并发编程实战 第2版
 * [ ] 3D数学 <https://gamemath.com/book/matrixtransforms.html>  
-* [ ] 《现代C++语言核心特性解析》
-* [ ] libevent <https://aceld.gitbook.io/libevent>
 * [ ] Redis设计与实现第2版
 * [ ] SQL经典实例第2版
-* [ ] PulsarDocs <https://pulsar.apache.org/docs>
-* [ ] C++并发编程实战 第2版
+* [ ] libevent <https://aceld.gitbook.io/libevent>
 * [ ] 高性能MySQL 第1章MySQL架构
+* [ ] PulsarDocs <https://pulsar.apache.org/docs>
 
 ## MAYBE
 

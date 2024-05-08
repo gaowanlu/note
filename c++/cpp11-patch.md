@@ -1140,12 +1140,264 @@ int main(int argc, char **argv)
 
 ## 外部模板
 
-TODO
+先回顾以下C和C++中extern关键字的作用：它可以在声明变量和函数的时候使用，用于指定目标为外部链接，但本身并不参与目标的定义，所以对目标的属性没有影响。extern最常被使用的场景是当一个变量需要在多份源代码中使用的时候，如果每份源代码都定义一个变量，在代码链接时会出错，正确的方法是在其中一个源代码中定义该变量，在其他的源代码中使用extern声明该变量为外部变量。
+
+```cpp
+// src1.cpp
+int x = 0;
+// src2.cpp
+extern int x;
+x = 11;
+```
+
+但是我们知道，在多份源代码中同一模板进行相同的实例化不会有任何链接问题
+
+```cpp
+// header.h
+template<class T>
+bool foo(T t)
+{
+	return true;
+}
+// src1.cpp
+#include <header.h>
+bool b = foo(7);
+// src2.cpp
+#include <header.h>
+bool b = foo(11);
+```
+
+之所以没有连接问题，是因为连接器对模板有特殊待遇。 编译器在编译每份源代码的时候会按照单个源代码的需要生成模板的实例，
+而连接器对于这些实例会进行一次去重操作。它将完全相同的实例删除，最后只留下一份实例。
+
+这样就有了，问题，如果成千上万的源文件，都这样搞编译和链接将会符出大量的额外时间成本。
+
+为了优化编译和链接的性能，C++11提出了外部模板的特性，这个特性保留了extern关键字的语义并扩展了关键字的功能，让它能够声明一个外部模板实例。
+
+先回顾如何显式实例化一个模板
+
+```cpp
+// header.h
+template<class T>
+bool foo(T t)
+{
+	return true;
+}
+// src1.cpp
+#include "header.h"
+template bool foo<double>(double);
+// src2.cpp
+#include "header.h"
+template bool foo<double>(double);
+```
+
+上面的每个源文件都实例化了一个模板实例，在链接时将其中一个副本删除。如果想在这里声明一个外部模板，只需要在其中一个
+显式实例化前加上extern template，例如
+
+```cpp
+// header.h
+template<class T> bool foo(T t)
+{
+	return true;
+}
+// src1.cpp
+#include <header.h>
+extern template bool foo<double>(double);
+// src2.cpp
+#include <header.h>
+template bool foo<double>(double);
+```
+
+这样以来省去了之前的冗余副本实例生成和删除的过程，改变了构建过程。
+
+外部模板同样支持类模板，例如
+
+```cpp
+// header.h
+template<class T> 
+class bar
+{
+public:
+	void foo(T t) {};
+};
+// src1.cpp
+#include<header.h>
+extern template class bar<int>;
+extern template void bar<int>::foo(int);
+// src2.cp
+#include<header.h>
+template class bar<int>;
+```
+
+extern template不仅可以声明外部模板实例，还可以明确具体的外部实例成员函数。
+
+工程实践：通常在实际的工程应用中并不会使用外部模板这个特性，因为这回大大增加项目代码的维护成本。但理论上，这种优化应该是比较有效的。
 
 ## 连续右尖括号的解析优化
 
-TODO
+C++11有个很扯淡的情况，两个连续的右尖括号`>>`会被编译器解析为右移。
+
+```cpp
+#include <vector>
+typedef std::vector<std::vector<int> > Table; // 编译成功
+typedef std::vector<std::vector<bool>> Flags; // 编译失败 >>被解析为右移
+```
+
+C++11则解决了以上问题，但是又出了新问题值得注意
+
+```cpp
+template<int N>
+class X{};
+X <1 >> 3>x;
+```
+
+在C++11中，`2>>3`不会被识别，而是`>`与前面的`<`匹配相当于`(X<1>)>3>x`,解决办法是
+
+```cpp
+X<(1>>3)> x;
+```
+
+而且此类问题还设计模板编程，例如
+
+```cpp
+#include <iostream>
+using namespace std;
+
+template <int I>
+struct X
+{
+    static int const c = 2;
+};
+
+template <>
+struct X<0>
+{
+    typedef int c;
+};
+
+template <typename T>
+struct Y
+{
+    static int const c = 3;
+};
+
+static int const c = 4;
+
+int main(int argc, char **argv)
+{
+    std::cout << (Y<X<1> >::c > ::c > ::c) << std::endl;//0
+    std::cout << (Y<X< 1>>::c > ::c > ::c) << std::endl;//0
+    return 0;
+}
+```
+
+上面代码C++11会输出两个0，之前则会输出0和3
+
+```cpp
+//C++11
+std::cout << (Y<(X<1> )>::c > ::c > ::c) << std::endl;//0
+std::cout << (Y<(X< 1>)>::c > ::c > ::c) << std::endl;//0
+// 即 3 > 4 > 4 即 0 > 4 则结果为0
+//C++11之前
+std::cout << (Y<(X<1> )>::c > ::c > ::c) << std::endl;//0
+std::cout << (Y<X< （1>>::c) > ::c > ::c) << std::endl;//0
+// Y<X<0> ::c > ::c
+// Y<(X<0>::c)::c 故为3
+```
+
+总之这样太扯淡了，还是小心微妙，以最新C++标准为准。
 
 ## friend声明模板形参
 
-TODO
+在C++11标准中，将一个类声明为另一个类的友元，可以忽略前者的class关键字，这里忽略前面class关键字还有一个大前提，必须
+提前声明该类，例如：
+
+```cpp
+#include <iostream>
+using namespace std;
+
+class C;
+
+class X1
+{
+    friend class C; // C++11前后都能编译成功
+};
+
+class X2
+{
+    friend C; // C++11及其之后才能编译成功
+};
+
+int main(int argc, char **argv)
+{
+    return 0;
+}
+```
+
+这里重中之重 `友元声明可以户端class关键字`。这一特性使得friend可以多做很多事情，比如声明基本类型、用friend声明别名、用friend声明模板参数：
+
+```cpp
+#include <iostream>
+using namespace std;
+
+class C;
+typedef C Ct;
+
+class X1
+{
+    friend C;
+    friend Ct;
+    friend void;
+    friend int;
+};
+
+template <typename T>
+class R
+{
+    friend T;
+};
+
+int main(int argc, char **argv)
+{
+    R<C> rc;
+    R<Ct> rct;
+    R<int> ri;
+    R<void> rv;
+    return 0;
+}
+```
+
+虽然上面代码可以编译通过，但是对基本类型，如上面的friend void 和 friend int,编译器会忽略它们。R也同理，例如类`R<int>`没有友元。
+
+还有个比较骚的操作
+
+```cpp
+#include <iostream>
+using namespace std;
+
+class InnerVisitor
+{
+};
+
+template <typename T>
+class SomeDatabase
+{
+    friend T;
+    // 内部数据...
+public:
+    // 外部接口...
+};
+
+using DiagDatabase = SomeDatabase<InnerVisitor>;
+
+using StandardDatabase = SomeDatabase<void>;
+
+int main(int argc, char **argv)
+{
+    DiagDatabase d1;
+    // d1是可以被InnerVistor访问内部数据的
+    StandardDatabase d2;
+    // d2则没有友元关系
+    return 0;
+}
+```
