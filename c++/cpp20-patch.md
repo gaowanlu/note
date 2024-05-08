@@ -3559,6 +3559,8 @@ int main(int argc, char **argv)
 
 ## 概念和约束
 
+本贾尼·斯特劳斯特卢普的一句话：“尝试使用概念！它们将极大地改善读者的通用编程，并让当前使用的变通方法（例如traits类）和 低级技术（例如基于enable_if的重载）感觉就像是容易出错和烦琐的汇编编程”。
+
 ### 使用std::enable_if约束模板
 
 ```cpp
@@ -4269,19 +4271,325 @@ std::same_as<decltype((a + b)), int>
 
 #### 嵌套要求
 
-TODO
+下面的代码中概念里套了概念，requires表达式中嵌入了概念。
+
+```cpp
+#include <iostream>
+using namespace std;
+
+template <class T>
+concept Check = requires(T a, T b) {
+    requires std::same_as<decltype((a + b)), int>;
+};
+
+template <Check c>
+class UsingCheck
+{
+};
+
+int main(int argc, char **argv)
+{
+    UsingCheck<int> c;
+    return 0;
+}
+```
+
+上面的Check要求，表达式`a + b`的结果类型是int，可以等同于。
+
+```cpp
+#include <iostream>
+using namespace std;
+
+// 复合要求
+template <class T>
+concept Check = requires(T a, T b) {
+     { a + b } -> std::same_as<int>;
+};
+
+template <Check c>
+class UsingCheck
+{
+};
+
+int main(int argc, char **argv)
+{
+    UsingCheck<int> c;
+    return 0;
+}
+```
+
+局部形参是不能参与运算的操作数，例如
+
+```cpp
+#include <iostream>
+using namespace std;
+
+template <typename T>
+concept Check = requires(T a) {
+    requires sizeof(a) == 4;
+    // requires a == 0; // 局部形参不是可运算的操作数
+};
+
+template <Check C>
+struct X
+{
+    C c;
+};
+
+int main(int argc, char **argv)
+{
+    X<int> x{0};
+    std::cout << x.c << std::endl; // 0
+    return 0;
+}
+```
 
 ### 约束可变参数模板
 
-TODO
+也就是讨论如何在模板参数包上使用约束呢。使用概念约束可变参数模板实际上就是将各个实参替换到概念的约束表达式后合取各个结果。
+
+```cpp
+#include <iostream>
+#include <string>
+using namespace std;
+
+template <class T>
+concept C1 = true;
+
+template <C1... T>
+struct X
+{
+};
+
+int main(int argc, char **argv)
+{
+    X<int, double, std::string> x;
+    // 约束检查等价于 (X<int> && X<double> && X<std::string>)
+    return 0;
+}
+```
+
+上面代码情况比较简单，有时代码会更加复杂，但展开规则是不变的，例如
+
+```cpp
+#include <iostream>
+using namespace std;
+
+template <class T, class U>
+concept C = true;
+
+// 经过替换实际的约束为C<T, int>
+template <C<int> T>
+struct X
+{
+};
+
+// 约束实际为C<T,int> && ...
+template <C<int>... T>
+struct Y
+{
+};
+
+int main(int argc, char **argv)
+{
+    return 0;
+}
+
+```
 
 ### 约束类模板特化
 
-TODO
+约束可以影响类模板特化的结果，在模板实例化的时候编译器会自动选择更满足约束条件的特化版本进行实例化，比如：
+
+```cpp
+#include <iostream>
+using namespace std;
+
+template <typename T>
+concept C = true;
+
+template <typename T>
+struct X
+{
+    X()
+    {
+        std::cout << "template <typename T> struct X" << std::endl;
+    }
+};
+
+template <typename T>
+struct X<T *>
+{
+    X()
+    {
+        std::cout << "template <typename T> struct X<T *>" << std::endl;
+    }
+};
+
+template <C T>
+struct X<T>
+{
+    X()
+    {
+        std::cout << R"(template <C T> struct X<T>)" << std::endl;
+    }
+};
+
+int main(int argc, char **argv)
+{
+    X<int *> x1;
+    // template <typename T> struct X<T *>
+    X<int> x2;
+    // template <C T> struct X<T>
+    std::cout << __cplusplus << std::endl; // 202002
+    return 0;
+}
+```
+
+对于`X<int *>`明显模板类特化`struct X<T*>`更符合，但是`X<int>`选择了有概念约束的。这里只是说明了约束对类模板特化的影响。
+
+实际上约束在类模板特化上可以发挥很大的作用。
+
+```cpp
+#include <iostream>
+using namespace std;
+
+template <typename T>
+concept C = requires(T t) {
+    t.f();
+};
+
+template <typename T>
+struct X
+{
+    X()
+    {
+        std::cout << R"(
+template <typename T>
+struct X)" << std::endl;
+    }
+};
+
+template <C T>
+struct X<T>
+{
+    X()
+    {
+        std::cout << R"(
+template <C T>
+struct X)" << std::endl;
+    }
+};
+
+struct Args
+{
+    void f();
+};
+
+int main(int argc, char **argv)
+{
+    X<int> s1;
+    X<Args> s2;
+    // template <typename T>
+    // struct X
+    // template <C T>
+    // struct X
+    return 0;
+}
+```
+
+如果之约束构造函数的话，还有s更简洁的骚操作。真实小刀划屁股开了眼了。
+
+```cpp
+#include <iostream>
+using namespace std;
+
+template <typename T>
+struct S
+{
+    S()
+    {
+        std::cout << "S::S()" << std::endl;
+    }
+    S()
+    requires requires(T t) { t.f(); } {
+        std::cout << "S::S() requires" << std::endl;
+    }
+};
+
+struct X
+{
+    void f();
+};
+
+int main(int argc, char **argv)
+{
+    S<int> s1; // S::S()
+    S<X> s2;   // S::S() requires
+    return 0;
+}
+```
 
 ### 约束auto
 
-TODO
+概念约束可以对auto和`decltype(auto)`的作用扩展到普遍情况，例如
+
+```cpp
+#include <iostream>
+using namespace std;
+
+template <class C>
+concept IntegerType = std::is_integral_v<C>;
+
+// 编译失败
+// IntegerType auto foo1()
+// {
+//     return 1.1;
+// }
+
+IntegerType auto foo2()
+{
+    return 0;
+}
+
+int main(int argc, char **argv)
+{
+    // IntegerType auto i1 = 5.2; // 编译失败
+    IntegerType auto i2 = 11;
+
+    // IntegerType decltype(auto) i3 = 4.8; // 编译失败
+    IntegerType decltype(auto) i4 = 7;
+
+    // 编译失败
+    // auto bar1 = []() -> IntegerType auto
+    // { return 1.0; };
+
+    auto bar2 = []() -> IntegerType auto
+    {
+        return 1;
+    };
+
+    return 0;
+}
+```
+
+要约束的auto或`decltype(auto)`总是紧随约束之后，因此cv限定符和概念标识符不能随意混用。
+
+```cpp
+#include <iostream>
+using namespace std;
+
+template <class C>
+concept IntegerType = std::is_integral_v<C>;
+
+int main(int argc, char **argv)
+{
+    const IntegerType auto i5 = 23;
+    IntegerType auto const i6 = 9;
+    // IntegerType const auto i7 = 9; // 编译错误auto没有紧跟约束
+    return 0;
+}
+```
 
 ## explicit(bool)
 
