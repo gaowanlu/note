@@ -1045,6 +1045,71 @@ function(raii, otherFunction(199));
 
 ### 18、让接口容易被正确使用，不易被误用
 
+设计一个组件，那么设计外部接口是非常重要的，正常使用的情况下，还应该做到不易用错，例如
+
+```cpp
+class Date
+{
+public:
+    Date(int month, int day, int year);
+};
+```
+
+外部调用Date很容易将三个参数写错，或者写反，造成目的与实际效果不同，很难排查。上面的例子，可以为每类参数设计一个类，如
+
+```cpp
+struct Day
+{
+    explicit Day(int d) : val(d)
+    {
+    }
+    int val;
+}
+struct Month()
+{
+    static Month Jan() { return Month(1); }
+    ...
+};
+struct Year()...
+class Date
+{
+public:
+    Date(const Month& month, const Day& day, const Year& year);
+};
+```
+
+例如工厂函数
+
+```cpp
+Investment* createInvestment();
+void getRidOfInvestment(Investment);
+```
+
+这样很容易内存泄露，所以要使用智能指针
+
+```cpp
+std::shared_ptr<Investment> createInvestment();
+```
+
+关于使用智能指针则可以为智能指针指定销毁函数，解决跨DLL问题(例如再某个申请的内存指针地址传到另一个DLL使用了另一个DLL的delete,我们尽可能遵循那个DLL申请的内存则由那个DLL的销毁函数进行释放)
+
+```cpp
+std::shared_ptr<Investment> createInvestment()
+{
+    Investment *ptr = new Investment;
+    std::shared_ptr<Investment> ret(ptr, [](Investment *ptr) -> void
+                                    { delete ptr; });
+    return ret;
+}
+```
+
+请记住
+
+- 好的接口很容易被正确使用，不容易被误用。你应该在你的所有接口中努力达成这些性质。
+- "促进正确使用”的办法包括接口的一致性，以及与内置类型的行为兼容。
+- "阻止误用”的办法包括建立新类型、限制类型上的操作，束缚对象值，以及消除客户的资源管理责任。
+- 智能指针支持定制型删除器，可防范DLL问题。
+
 ### 19、设计 class 犹如设计 type
 
 ### 20、宁以 pass-by-reference-to-const 替换 pass-by-value
