@@ -1112,6 +1112,32 @@ std::shared_ptr<Investment> createInvestment()
 
 ### 19、设计 class 犹如设计 type
 
+设计新的class应该带着“语言设计者当初设计语言内置类型时”一样的严谨来讨论class的设计。
+
+- 新type的对象应该如何被创建和销毁?  
+构造函数和析构函数以及内存分配函数和释放函数`operator new`、`operator new[]`、`operator delete`、`operator delete[]`。
+
+- 对象的初始化和对象的赋值该有什么样的差别?  
+决定构造函数和赋值操作符的行为。
+- 对象如果被以值传递，意味着什么？
+- 什么是新type的和法值?   
+构造函数，赋值操作符，setter等。
+- 新类型需要配合某个继承图系吗？  
+受到函数是virtual或non-virtual的影响，如果允许其他class继承，则会影响所声明的函数尤其是析构函数，是否为virtual。
+- 新类型需要什么样的转换？  
+写转换函数`operator TYPE`或者写non explicit one argument构造函数等。
+- 什么样的操作符和函数对新类型是合理的？  
+应该声明哪些函数，操作符成员函数del 自定义功能等等。
+- 什么样的标准函数应该驳回？ 
+声明为private。
+- 谁该取用新类型的成员？  
+决定合理设计成员的public、protected、private。
+- 什么是新类型读的未声明接口？
+- 新class有多么一般化？  
+合理使用模板编程。
+- 你真的需要一个新class吗？  
+根据功能实际情况合理设计。
+
 ### 20、宁以 pass-by-reference-to-const 替换 pass-by-value
 
 ### 21、必须返回对象时，别妄想返回其 reference

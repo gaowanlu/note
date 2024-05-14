@@ -10,9 +10,9 @@ I have a dream. Keep going.
 
 ## 🚲
 
-* [ ] Efective C++(设计与声明)
+* [ ] Efective C++(设计与声明 instance 20)
 * [ ] SQL经典实例第2版(第2章 查询结果排序)
-* [ ] 高性能MySQL(第1章MySQL架构)
+* [ ] 高性能MySQL(第1章MySQL架构 并发控制)
 * [ ] C++并发编程实战 第2版(第2章 线程管理)
 * [ ] Redis设计与实现第2版(简单动态字符串)
 * [ ] 3D数学(第5章 矩阵变换) <https://gamemath.com/book/matrixtransforms.html>
