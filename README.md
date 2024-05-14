@@ -10,18 +10,19 @@ I have a dream. Keep going.
 
 ## 🚲
 
-* [ ] C++并发编程实战 第2版
-* [ ] 3D数学 <https://gamemath.com/book/matrixtransforms.html>  
-* [ ] Redis设计与实现第2版
-* [ ] SQL经典实例第2版
-* [ ] libevent <https://aceld.gitbook.io/libevent>
-* [ ] 高性能MySQL 第1章MySQL架构
-* [ ] PulsarDocs <https://pulsar.apache.org/docs>
+* [ ] Efective C++(设计与声明)
+* [ ] SQL经典实例第2版(第2章 查询结果排序)
+* [ ] 高性能MySQL(第1章MySQL架构)
+* [ ] C++并发编程实战 第2版(第2章 线程管理)
+* [ ] Redis设计与实现第2版(简单动态字符串)
+* [ ] 3D数学(第5章 矩阵变换) <https://gamemath.com/book/matrixtransforms.html>
 
 ## MAYBE
 
 可能会读的有趣读物
 
+* [ ] libevent <https://aceld.gitbook.io/libevent>
+* [ ] PulsarDocs <https://pulsar.apache.org/docs>
 * [ ] 腾讯游戏开发精粹Ⅰ服务器部分
 * [ ] 腾讯游戏开发精粹 Ⅱ 服务器部分
 * [ ] Effective Modern C++
