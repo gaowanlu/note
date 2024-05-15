@@ -1140,6 +1140,68 @@ std::shared_ptr<Investment> createInvestment()
 
 ### 20、宁以 pass-by-reference-to-const 替换 pass-by-value
 
+- C++ 尽量以pass-by-reference-to-const替换pass-by-value。前者通常比较高效(尽可能少发生拷贝、构造函数与析构函数调用)，并可避免切割问题(slicingproblem)。
+- 以上规则并不适用内置类型，以及STL的迭代器和函数对象。对它们而言，pass-by-value往往比较适当。
+
+```cpp
+#include <iostream>
+using namespace std;
+
+class A
+{
+public:
+    // big content...
+};
+
+void dosomething(const A &a)
+{
+}
+
+int main(int argc, char **argv)
+{
+    A a;
+    dosomething(a);
+    return 0;
+}
+```
+
+切割问题
+
+```cpp
+#include <iostream>
+using namespace std;
+
+class A
+{
+public:
+    virtual void run()
+    {
+        std::cout << "A::run" << std::endl;
+    }
+};
+
+class B : public A
+{
+public:
+    void run() override
+    {
+        std::cout << "A::run" << std::endl;
+    }
+};
+
+int main(int argc, char **argv)
+{
+    A a;
+    // B *b_ptr = dynamic_cast<B *>(&a); // 会报错
+    B *b_ptr = (B *)&a; // 不会报错
+    b_ptr->run();       // 产生切割问题 输出A::run
+    B b_instance;
+    A a_copy_from_b = b_instance; // 产生切割问题 只拷贝了基类部分
+    a_copy_from_b.run();          // A::run
+    return 0;
+}
+```
+
 ### 21、必须返回对象时，别妄想返回其 reference
 
 ### 22、将成员变量声明为 private
