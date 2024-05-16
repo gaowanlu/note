@@ -1204,6 +1204,126 @@ int main(int argc, char **argv)
 
 ### 21、必须返回对象时，别妄想返回其 reference
 
+- 绝对不要返回pointer或reference指向一个local stack对象，或返回reference指向一个heap-allocated对象，或返回pointer或reference指向一个local static对象而有可能同时需要多个这样对象。
+
+如下面的场景返回值类型就挺好的
+
+```cpp
+#include <iostream>
+using namespace std;
+
+class Rational;
+const Rational operator*(const Rational &lhs, const Rational &rhs);
+
+class Rational
+{
+public:
+    Rational(int numberator = 0, int denominator = 1);
+
+private:
+    int n, d;
+    friend const Rational operator*(const Rational &lhs, const Rational &rhs);
+};
+
+Rational::Rational(int numberator, int denominator) : n(numberator), d(denominator)
+{
+}
+
+// 比较好的方式
+const Rational operator*(const Rational &lhs, const Rational &rhs)
+{
+    return Rational(lhs.n * rhs.n, lhs.d * rhs.d);
+}
+
+int main(int argc, char **argv)
+{
+    return 0;
+}
+```
+
+下面返回了local stack 的引用，则会core
+
+```cpp
+#include <iostream>
+using namespace std;
+
+class Rational;
+const Rational &operator*(const Rational &lhs, const Rational &rhs);
+
+class Rational
+{
+public:
+    Rational(int numberator = 0, int denominator = 1);
+
+private:
+    int n, d;
+    friend const Rational &operator*(const Rational &lhs, const Rational &rhs);
+};
+
+Rational::Rational(int numberator, int denominator) : n(numberator), d(denominator)
+{
+}
+
+const Rational &operator*(const Rational &lhs, const Rational &rhs)
+{
+    Rational ret(lhs.n * rhs.n, lhs.d * rhs.d);
+    return ret;
+}
+
+int main(int argc, char **argv)
+{
+    Rational r1, r2;
+    Rational r3 = r1 * r2;
+    return 0;
+}
+```
+
+返回local static的引用，也会存在一定问题
+
+```cpp
+#include <iostream>
+using namespace std;
+
+class Rational;
+const Rational &operator*(const Rational &lhs, const Rational &rhs);
+
+class Rational
+{
+public:
+    Rational(int numberator = 0, int denominator = 1);
+    bool operator==(const Rational &other) const
+    {
+        return this->n == other.n && this->d == other.d;
+    }
+
+private:
+    int n,
+        d;
+    friend const Rational &operator*(const Rational &lhs, const Rational &rhs);
+};
+
+Rational::Rational(int numberator, int denominator) : n(numberator), d(denominator)
+{
+}
+
+// 比较好的方式
+const Rational &operator*(const Rational &lhs, const Rational &rhs)
+{
+    static Rational ret;
+    ret.n = lhs.n * rhs.n;
+    ret.d = lhs.d * rhs.d;
+    return ret;
+}
+
+int main(int argc, char **argv)
+{
+    Rational r1(1, 2), r2(3, 4);
+    Rational r3(5, 6), r4(7, 9);
+    std::cout << boolalpha << ((r1 * r2) == (r3 * r4)) << std::endl; // 总是返回true因为比较的是同一个Rational对象当然总是相等
+    return 0;
+}
+```
+
 ### 22、将成员变量声明为 private
 
 ### 23、宁以 non-member、non-friend 替换 number 函数
