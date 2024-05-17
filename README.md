@@ -13,7 +13,7 @@ I have a dream. Keep going.
 * [x] 🤡Efective C++(设计与声明 instance 23)
 * [x] 🤡Redis设计与实现第2版(字典)
 * [x] 🤡SQL经典实例第2版(第3章 使用多张表)
-* [ ] 🤡C++并发编程实战 第2版(第2章 线程管理)
+* [x] 🤡C++并发编程实战 第2版(第3章 共享数据)
 * [ ] 🤡高性能MySQL(第1章MySQL架构 并发控制)
 * [ ] 🤡3D数学(第5章 矩阵变换) <https://gamemath.com/book/matrixtransforms.html>
 
