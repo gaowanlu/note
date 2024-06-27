@@ -167,6 +167,7 @@
 * [中间件](zhongjianjian/README.md)
   * [MySQL](db/mysql.md)
   * [SQL实例](db/sql.md)
+  * [MySQL高阶](db/deep_mysql.md)
   * [Redis API](redis/redis.md)
   * [Redis设计与实现](redis/deep_redis.md)
   * [Nginx](nginx/nginx.md)
