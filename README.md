@@ -18,6 +18,7 @@ I have a dream. Keep going.
 * [ ] 🤡3D数学(第5章 矩阵变换) <https://gamemath.com/book/matrixtransforms.html>
 * [ ] 🤡MySQL是怎样运行的
 * [ ] 🤡消息队列（https://www.kuangstudy.com/zl/rabbitmq）（https://www.bilibili.com/video/BV1dX4y1V73G/）
+* [ ] 🤡高考3500、生活分类、俞敏洪雅思绿皮乱序、流利美国口语、情景美国口语、完全图解生活英语口语、完全图解出国英语口语、完全图解职场英语
 
 ## MAYBE
 
