@@ -10,16 +10,16 @@ I have a dream. Keep going.
 
 ## 🚲
 
-* [x] 🤡Efective C++(设计与声明 instance 23)
-* [x] 🤡Redis设计与实现第2版(字典)
-* [x] 🤡SQL经典实例第2版(第3章 使用多张表)
-* [x] 🤡C++并发编程实战 第2版(第3章 共享数据)
+* [ ] 🤡Efective C++(设计与声明 instance 23)
+* [ ] 🤡Redis设计与实现第2版(字典)
+* [ ] 🤡SQL经典实例第2版(第3章 使用多张表)
+* [ ] 🤡C++并发编程实战 第2版(第3章 共享数据)
 * [ ] 🤡高性能MySQL(第1章MySQL架构 并发控制)
 * [ ] 🤡3D数学(第5章 矩阵变换) <https://gamemath.com/book/matrixtransforms.html>
+* [ ] 🤡MySQL是怎样运行的
+* [ ] 🤡消息队列（https://www.kuangstudy.com/zl/rabbitmq）（https://www.bilibili.com/video/BV1dX4y1V73G/）
 
 ## MAYBE
-
-可能会读的有趣读物
 
 * [ ] libevent <https://aceld.gitbook.io/libevent>
 * [ ] PulsarDocs <https://pulsar.apache.org/docs>
@@ -32,9 +32,8 @@ I have a dream. Keep going.
 * [ ] 高效C/C++调试
 * [ ] C++高性能编程
 * [ ] C++高效编程:内存与性能优化
-
 * [ ] leveldb、libevent、memcached 源码分析，cpp 服务器开发(<https://cppguide.cn/>)
-* [ ] 8钩(<https://xiaolincoding.com/>)
+* [ ] 8股(<https://xiaolincoding.com/>)
 
 ## LIFE
 
