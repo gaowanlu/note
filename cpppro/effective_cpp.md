@@ -1343,6 +1343,71 @@ int main(int argc, char **argv)
 
 ### 23、宁以 non-member、non-friend 替换 number 函数
 
+- 宁可拿non-member non-friend 函数替换member函数。这样做可以增加封装性、包裹弹性(packaging flexibility)和技能扩充性。
+
+```cpp
+class WebBrowser
+{
+public:
+    // ...
+    void clearCache();
+    void clearHistory();
+    void removeCookies();
+    void clearEveryhing()
+    {
+        clearCache();
+        clearHistory();
+        removeCookies();
+    }
+    // ...
+};
+```
+
+不如写为
+
+```cpp
+namespace WebBrowserStuff
+{
+    class WebBrowser
+    {
+    public:
+        // ...
+        void clearCache();
+        void clearHistory();
+        void removeCookies();
+        // ...
+    };
+
+    void clearBrowser(WebBrowser &wb)
+    {
+        wb.clearCache();
+        wb.clearHistory();
+        wb.removeCookies();
+    }
+}
+```
+
+还可以根据功能划分与重要成都写到不同的头文件中
+
+```cpp
+// webbrowser.h
+namespace WebBrowserStuff
+{
+	class WebBrowser{...};
+	// ... 核心机能，如几乎所有客户端需要的non-member函数
+}
+// webbrowserbookmarks.h
+namespace WebBrowserStuff
+{
+	// ... 与书签相关的便利函数
+}
+// 头文件 webbrowsercookies.h
+namspace WebBrowserStuff
+{
+	// ... 与cookie相关的便利函数
+}
+```
+
 ### 24、若所有参数皆需要类型转换，请为此采用 non-member 函数
 
 ### 25、考虑写出一个不抛异常的 swap 函数
