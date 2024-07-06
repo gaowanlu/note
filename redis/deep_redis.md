@@ -12,6 +12,8 @@
 
 主要介绍了redis中的字符串类型实现原理，以及redis哪些内容是使用字符串类型存储的。内存空间，扩容，内存大小，已使用大小等等规则。
 
+![SDS示例](../.gitbook/assets/2024-07-06161814.png)
+
 - SDS的定义 （已读）
 - SDS与C字符串的区别 （已读）
 - SDS API （已读）
@@ -19,6 +21,38 @@
 ## 链表
 
 主要介绍了redis中的链表类型实现原理list,背后是双向链表实现，且带有头节点指针和尾节点指针，节点数量等。
+
+```cpp
+// 每个链表节点使用一个adlist.h/listNode结构来表示
+typedef struct listNode {
+    // 前置节点
+    struct listNode *prev;
+    // 后置节点
+    struct listNode *next;
+    // 节点的值
+    void *value;
+} listNode;
+```
+
+```cpp
+// 链表结构 adlist.h/list
+typedef struct list {
+    // 表头节点
+    listNode *head;
+    // 表尾节点
+    listNode *tail;
+    // 链表所包含的节点数量
+    unsigned long len;
+    // 节点值复制函数
+    void *(*dup)(void *ptr);
+    // 节点值释放函数
+    void (*free)(void *ptr);
+    // 节点值对比函数
+    int (*match)(void *ptr, void *key);
+} list;
+```
+
+![由list结构和listNode结构组成的链表](../.gitbook/assets/2024-07-06162441.png)
 
 - 链表和链表节点的实现 （已读）
 - 链表和链表节点的API （已读）
@@ -29,11 +63,76 @@ key-value结构，Redis 的字典使用哈希表作为底层实现， 一个哈�
 
 结构有哈希表数组（一个二维指针，数组每个元素存储的是内存地址）、哈希表大小、大小掩码总是等于哈希表大小减去1、哈希表已有的节点数量。
 
+```cpp
+// redis字典所使用的哈希表由dict.h/dictht结构定义
+typedef struct dictht {
+    // 哈希表数组
+    dictEntry **table;
+    // 哈希表大小
+    unsigned long size;
+    // 哈希表大小掩码，用于计算索引值
+    // 总是等于 size - 1
+    unsigned long sizemask;
+    // 该哈希表已有节点的数量
+    unsigned long used;
+} dictht;
+```
+
+![一个空的哈希表](../.gitbook/assets/2024-07-06162753.png)
+
 每个节点有key、union类型value、还有一个存储下一个节点地址的指针next，可以形成链表（解决键冲突问题）。
+
+```cpp
+typedef struct dictEntry {
+    // 键
+    void *key;
+    // 值
+    union {
+        void *val;
+        uint64_t u64;
+        int64_t s64;
+    } v;
+    // 指向下个哈希表节点，形成链表
+    struct dictEntry *next;
+} dictEntry;
+```
+
+![连接在一起的键k1和键k0](../.gitbook/assets/2024-07-06163055.png)
 
 redis中一个字典内置有多个哈希表（可以缓解哈希冲突与单个哈希表过大的问题），dictType类型指针，私有数据void类型指针privdata,rehash索引int rehashidx，dictType内部存储了许多key相关的函数指针，如计算哈希值函数、复制键的函数、复制值得函数、对比键得函数、销毁键销毁值得函数等。
 
+```cpp
+// redis中的字典由dict.h/dict结构表示
+typedef struct dict {
+    // 类型特定函数
+    dictType *type;
+    // 私有数据
+    void *privdata;
+    // 哈希表
+    dictht ht[2];
+    // rehash 索引
+    // 当 rehash 不在进行时，值为 -1
+    int rehashidx; /* rehashing not in progress if rehashidx == -1 */
+} dict;
+typedef struct dictType {
+    // 计算哈希值的函数
+    unsigned int (*hashFunction)(const void *key);
+    // 复制键的函数
+    void *(*keyDup)(void *privdata, const void *key);
+    // 复制值的函数
+    void *(*valDup)(void *privdata, const void *obj);
+    // 对比键的函数
+    int (*keyCompare)(void *privdata, const void *key1, const void *key2);
+    // 销毁键的函数
+    void (*keyDestructor)(void *privdata, void *key);
+    // 销毁值的函数
+    void (*valDestructor)(void *privdata, void *obj);
+} dictType;
+```
+
 第2个哈希表只在第一个哈希表进行rehash时使用。rehashidx记录了rehash目前得进度，目前没有进行rehash则其值为-1。
+
+![普通状态下的字典 没进行rehash的字典](../.gitbook/assets/2024-07-06163504.png)
 
 哈希算法,redis用了MurmurHash2算法来计算键得哈希值，其优点是即使输入得键是有规律的，算法仍可以给出一个很好得随机分布性。
 
@@ -45,8 +144,16 @@ index = hash & dict->ht[x].sizemask;
 解决键冲突，两个或两个以上被分配到哈希表数组的同一个索引上面时，称这些键发生了冲突。每个哈希表节点都有一个next指针，使用单向链表连接起来解决冲突。
 为了效率高，程序使用的是链表前插法。
 
+![使用链表解决k2和k1的冲突](../.gitbook/assets/2024-07-06163715.png)
+
 rehash,当单个哈希表保存的键值数量太多或太少时，程序需要对哈希表的大小进行扩展或者收缩，使得负载因子维持在一个合理的范围之内。
 为ht1哈希表分配空间，进行一定程度的扩展收缩策略确定ht1大小,将ht0已有的键值rehash到ht1，然后把ht1设置为ht0。
+
+![执行rehash之前的字典](../.gitbook/assets/2024-07-06164009.png)
+
+![rehash过程](../.gitbook/assets/2024-07-06164154.png)
+
+![完成rehash之后的字典](../.gitbook/assets/2024-07-06164404.png)
 
 哈希表的扩展与收缩，当满足任意一个条件，程序会自动开始对哈希表执行扩展操作：
 
@@ -77,7 +184,7 @@ load_factor = ht[0].used / ht[0].size
 
 渐进式rehash执行期间的哈希表操作：在进行渐进式rehash过程中，字典同时有ht0和ht1两个哈希表，在此期间字典的删除 查找 更新等操作会在
 两个哈希表上进行，比如说，要在字典里面查找一个键会现在ht0中查找，没找到再在ht1里面查找。
-在渐进式 rehash 执行期间， 新添加到字典的键值对一律会被保存到 ht1 里面， 而 ht0 则不再进行任何添加操作： 
+在渐进式 rehash 执行期间， 新添加到字典的键值对一律会被保存到 ht1 里面， 而 ht0 则不再进行任何添加操作：
 这一措施保证了 ht0 包含的键值对数量会只减不增， 并随着 rehash 操作的执行而最终变成空表。
 
 - 字典的实现 （已读）
@@ -96,8 +203,29 @@ load_factor = ht[0].used / ht[0].size
 跳跃表skiplist是一种有序数据结构，它通过在每个节点中维持多个指向其他节点的指针，从而达到快速访问节点的目的。
 跳跃表支持平均 O(log N) 最坏 O(N) 复杂度的节点查找， 还可以通过顺序性操作来批量处理节点。
 
+![一个跳跃表](../.gitbook/assets/2024-07-06164551.png)
+
 Redis 只在两个地方用到了跳跃表， 一个是实现有序集合键， 另一个是在集群节点中用作内部数据结构。
 维护跳跃表相关基础信息的结构为zskiplist结构，其包含属性:
+
+```cpp
+// 跳跃表节点的实现由redis.h/zskiplistNode
+typedef struct zskiplistNode {
+    // 后退指针
+    struct zskiplistNode *backward;
+    // 分值
+    double score;
+    // 成员对象
+    robj *obj;
+    // 层
+    struct zskiplistLevel {
+        // 前进指针
+        struct zskiplistNode *forward;
+        // 跨度
+        unsigned int span;
+    } level[];
+} zskiplistNode;
+```
 
 1. header 指向跳跃表的表头节点
 2. tail 指向跳跃表的表尾节点
@@ -117,16 +245,24 @@ zkiplistNode结构
 层：跳跃表节点的level数组可以包含多个元素，每个元素都包含一个指向其他节点的指针，程序可以使用这些层加快访问其他节点的速度，一般来说层的数量越多，访问
 其他节点的速度就越快(空间换时间没有免费的午餐)。
 
+![带有不同层高的节点](../.gitbook/assets/2024-07-06164848.png)
+
 每次创建一个新跳跃表节点的时候， 程序都根据幂次定律 （power law，越大的数出现的概率越小）
 随机生成一个介于 1 和 32 之间的值作为 level 数组的大小， 这个大小就是层的“高度”。
 
 遍历操作只是用前进指针就可以完成了，跨度实际上是用来计算排位rank的，在查找某个节点的过程中，将沿途访问过的所有层的跨度累计
 起来，得到的结果就是目标节点在跳跃表中的排位。
 
+![遍历整个跳跃表](../.gitbook/assets/2024-07-06165013.png)
+
+![计算节点的排位](../.gitbook/assets/2024-07-06165204.png)
+
 节点的后退指针（backward 属性）用于从表尾向表头方向访问节点： 跟可以一次跳过多个节点的前进指针不同，
 因为每个节点只有一个后退指针， 所以每次只能后退至前一个节点。
 
 节点的成员对象是一个指针，指向一个字符串对象，而字符串对象则保存着一个SDS值。
+
+![带有zskiplist结构的跳跃表](../.gitbook/assets/2024-07-06165452.png)
 
 - 跳跃表（已读）
 - 跳跃表的实现（已读）
@@ -143,14 +279,16 @@ zkiplistNode结构
 ```cpp
 typedef struct intset
 {
-	// 编码方式
-	uint32_t encoding;
-	// 集合包含的元素数量
-	uint32_t length;
-	// 保存元素的数组
-	int8_t contents[];
+ // 编码方式
+ uint32_t encoding;
+ // 集合包含的元素数量
+ uint32_t length;
+ // 保存元素的数组
+ int8_t contents[];
 } intset;
 ```
+
+![一个包含五个int16_t类型数值的整数集合](../.gitbook/assets/2024-07-06165602.png)
 
 元素存在contents数组中，元素按值大小从小到大有序排列，并不会包含任何重复项。
 contents元素类型取决于encoding属性的值
@@ -179,6 +317,77 @@ contents元素类型取决于encoding属性的值
 - 降级（已读）
 
 ## 压缩列表
+
+压缩列表ziplist 是列表键和哈希键的底层实现之一。
+
+当一个列表键只包含少量列表项，并且每个列表项要么是小整数值，要么是长度比较短的字符串，redis就会使用压缩列表
+来做列表键的底层实现。
+
+```cpp
+redis> RPUSH lst 1 3 5 10086 "hello" "world"
+(integer) 6
+redis> OBJECT ENCODING lst
+"ziplist"
+```
+
+另外，当一个哈希键只包含少量键值对，并且每个键值对的键和值要么就是小整数值，要么就是长度比较短的字符串，
+要么redis就会使用压缩列表来做哈希键的底层实现。
+
+```cpp
+redis》 HMSET profile "name" "Jack" "age" 28 "job" "Programmer"
+OK
+redis> OBJECT ENCODING profile
+"ziplist"
+```
+
+压缩列表的构成：
+
+压缩列表是redis为了节约内存开发的，由一系列特殊编码的连续内存块组成的顺序型(sequential)数据结构。
+一个压缩列表可以包含任意多个节点(entry),每个节点可以保存一个字节数组或者一个整数值。
+
+![压缩列表的各个组成部分](../.gitbook/assets/2024-07-06160430.png)
+
+```bash
+属性 类型 长度 用途
+
+zlbytes uint32_t 4 字节 记录整个压缩列表占用的内存字节数：在对压缩列表进行内存重分配， 或者计算 zlend 的位置时使用。
+
+zltail uint32_t 4 字节 记录压缩列表表尾节点距离压缩列表的起始地址有多少字节：通过这个偏移量，程序无须遍历整个压缩列表就可以确定表尾节点的地址。
+
+zllen uint16_t 2 字节 记录了压缩列表包含的节点数量： 当这个属性的值小于 UINT16_MAX （65535）时， 这个属性的值就是压缩列表包含节点的数量； 当这个值等于 UINT16_MAX 时， 节点的真实数量需要遍历整个压缩列表才能计算得出。
+
+entryX 列表节点 不定 压缩列表包含的各个节点，节点的长度由节点保存的内容决定。
+
+zlend uint8_t 1 字节 特殊值 0xFF （十进制 255 ），用于标记压缩列表的末端。
+```
+
+![包含五个节点的压缩列表](../.gitbook/assets/2024-07-06160754.png)
+
+压缩列表节点的构成：
+
+每个压缩列表节点可以保存一个字节数组或者一个整数值，其中字节数组可以是以下三种长度的其中一种
+
+1. 长度小于等于63 （2^{6}-1）字节的字节数组；
+2. 长度小于等于 16383 （2^{14}-1） 字节的字节数组；
+3. 长度小于等于 4294967295 （2^{32}-1）字节的字节数组；
+
+整数值则可以是以下六种长度的其中一种：
+
+1. 4位长，介于 0 至 12 之间的无符号整数；  
+2. 1 字节长的有符号整数；
+3. 3 字节长的有符号整数；
+4. int16_t 类型整数；
+5. int32_t 类型整数；
+6. int32_t 类型整数；
+
+每个压缩列表节点都由以下三部分组成
+
+![压缩列表节点的各个组成部分](../.gitbook/assets/2024-07-06161515.png)
+
+- 压缩列表（已读）
+- 压缩列表的构成（已读）
+- 压缩列表节点的构成
+- 连锁更新
 
 ## 对象
 
