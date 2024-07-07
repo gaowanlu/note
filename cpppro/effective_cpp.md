@@ -1410,6 +1410,70 @@ namspace WebBrowserStuff
 
 ### 24、若所有参数皆需要类型转换，请为此采用 non-member 函数
 
+- 如果你需要位某个函数的所有参数（包括被this指针所指的那个隐喻参数）进行类型转换，那么这个函数必须是个non-member。
+
+只看描述是很难理解的，看代码的例子，就好很多。
+
+```cpp
+class Rational
+{
+public:
+	Rational(int numerator = 0,
+			 int denominator = 1); // 构造函数刻意不位explicit 允许int-to-Rational隐式转换
+	int numerator() const;
+	int denominator() const;
+	
+private:
+	...
+};
+```
+
+自定义乘法运算符
+
+```cpp
+class Rational
+{
+public:
+	...
+	const Rational operator* (const Rational& rhs) const;
+};
+```
+
+```cpp
+Rational oneEighth(1, 8);
+Rational oneHalf(1, 2);
+Rational result = oneHalf * oneEighth;
+result = result * oneEighth;
+result = oneHalf.operator*(2);
+result = 2.operator*(oneHalf); // 错误
+result = operator*(2, oneHalf); // 错误
+```
+
+上面的`oneHalf.operator*(2)`相当于做了隐式转换
+
+```cpp
+const Rational temp(2);
+result = oneHalf * temp; // Rational 构造函数是非explicit的
+```
+
+想要支持混合式算术运算，让`operator*`成为一个non-member函数，允许编译器在每一个实参上执行隐式类型转换：
+
+```cpp
+class Rational
+{
+	... // 不包括operator*
+};
+// 定义为non-member函数
+const Rational operator*(const Rational& lhs, const Rational& rhs)
+{
+	return Rational(lhs.numberator() * rhs.numberator(), lhs.denominator() * rhs.denominator());
+}
+Rational oneFourth(1, 4);
+Rational result;
+result = oneFourth * 2;
+result = 2 * oneFourth;
+```
+
 ### 25、考虑写出一个不抛异常的 swap 函数
 
 ## 实现
