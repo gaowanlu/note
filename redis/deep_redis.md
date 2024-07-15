@@ -440,8 +440,243 @@ content属性负责保存节点的值，节点值可以是一个字节数组或�
 
 ## 对象
 
-- 对象
-- 对象的类型与编码
+对象：
+
+前面介绍了redis中所用主要数据结构，如简单动态字符串SDS、双端链表、字典、压缩列表、整数集合，等等。
+
+redis并没有直接使用这些数据结构实现键值对数据库，而是基于这些数据结构创建了一个对象系统，对象系统包含了5种类型的对象。
+
+1. 字符串对象
+2. 列表对象
+3. 哈希对象
+4. 集合对象
+5. 有序集合对象
+
+redis的对象系统还实现了基于引用技术技术的内存回收机制；还通过引用计数技术实现了对象共享机制，通过让多个数据库键共享同一个对象来节约内存。
+
+redis的对象带有访问时间记录信息，该信息可以用于计算数据库键的空转时长，在服务器启用了maxmemory功能情况下，空转时长较大
+的哪些键可能会被优先被服务器删除。
+
+对象的类型与编码：
+
+redis使用对象来表示数据库种的键和值，至少会创建两个对象，一个对象用作键值对的键（键对象），另一个对象用作键值对的值（值对象）。
+
+```bash
+redis> SET msg "hello world"
+OK
+```
+
+每个对象都由一个redisObject结构表示，结构中有三个属性分别是type属性、encoding属性和ptr属性。
+
+```cpp
+typedef struct redisObject
+{
+	// 类型
+	unsigned type:4;
+	// 编码
+	unsigned encoding:4;
+	// 指向底层实现数据结构的指针
+	void *ptr;
+	// ...
+} robj;
+```
+
+类型
+
+```cpp
+类型常量	对象的名称
+REDIS_STRING	字符串对象
+REDIS_LIST	列表对象
+REDIS_HASH	哈希对象
+REDIS_SET	集合对象
+REDIS_ZSET	有序集合对象
+```
+
+type查看键对应的值对象的类型，键对象类型永远是string类型
+
+```bash
+# 字符串对象
+127.0.0.1:6379> set msg "hello world"
+OK
+127.0.0.1:6379> keys *
+1) "msg"
+127.0.0.1:6379> type msg
+string
+# 列表对象
+127.0.0.1:6379> rpush numbers 1 3 5
+(integer) 3
+127.0.0.1:6379> type numbers
+list
+# 哈希对象
+127.0.0.1:6379> hmset profile name Tome age 25 career Programmer
+OK
+127.0.0.1:6379> type profile
+hash
+# 集合对象
+127.0.0.1:6379> sadd fruits apple banana cherry
+(integer) 3
+127.0.0.1:6379> type fruits
+set
+# 有序集合对象
+127.0.0.1:6379> zadd price 8.5 apple 5.0 banana 6.0 cherry
+(integer) 3
+127.0.0.1:6379> type price
+zset
+```
+
+编码和底层实现
+
+对象的ptr指针指向对象的底层数据结构，数据结构由对象的encoding属性决定，encoding属性记录了对象使用了什么数据结构作为对象的底层实现。
+
+```cpp
+编码常量						编码所对应的底层数据结构
+REDIS_ENCODING_INT			long 类型的整数 int
+REDIS_ENCODING_EMBSTR		embstr 编码的简单动态字符串 embstr
+REDIS_ENCODING_RAW			简单动态字符串 raw
+REDIS_ENCODING_HT			字典 hashtable
+REDIS_ENCODING_LINKEDLIST	双端链表 linkedlist
+REDIS_ENCODING_ZIPLIST		压缩列表 ziplist
+REDIS_ENCODING_INTSET		整数集合 intset
+REDIS_ENCODING_SKIPLIST		跳跃表和字典 skiplist
+```
+
+每种类型的对象至少使用了两种不同的编码。下面列出了每种类型的对象可以使用的编码。
+
+```cpp
+类型	编码	对象
+REDIS_STRING	REDIS_ENCODING_INT			使用整数值实现的字符串对象。
+REDIS_STRING	REDIS_ENCODING_EMBSTR		使用 embstr 编码的简单动态字符串实现的字符串对象。
+REDIS_STRING	REDIS_ENCODING_RAW			使用简单动态字符串实现的字符串对象。
+REDIS_LIST		REDIS_ENCODING_ZIPLIST		使用压缩列表实现的列表对象。
+REDIS_LIST		REDIS_ENCODING_LINKEDLIST	使用双端链表实现的列表对象。
+REDIS_HASH		REDIS_ENCODING_ZIPLIST		使用压缩列表实现的哈希对象。
+REDIS_HASH		REDIS_ENCODING_HT			使用字典实现的哈希对象。
+REDIS_SET		REDIS_ENCODING_INTSET		使用整数集合实现的集合对象。
+REDIS_SET		REDIS_ENCODING_HT			使用字典实现的集合对象。
+REDIS_ZSET		REDIS_ENCODING_ZIPLIST		使用压缩列表实现的有序集合对象。
+REDIS_ZSET		REDIS_ENCODING_SKIPLIST		使用跳跃表和字典实现的有序集合对象。
+```
+
+object encoding命令查看一个数据库键的值对象的编码
+
+```bash
+# embstr
+127.0.0.1:6379> set msg "hello world"
+OK
+127.0.0.1:6379> object encoding msg
+"embstr"
+
+# raw
+127.0.0.1:6379> set story "long long brfuierbvdjfkkcdnsdcnwoejowifjoirejfoeoreggtghtruuibrivndlfnvkdfnvndfkncskdjcnkdcscdscvdbgfbfgbffew"
+OK
+127.0.0.1:6379> object encoding story
+"raw"
+
+# intset
+127.0.0.1:6379> sadd numbers 1 3 5
+(integer) 3
+127.0.0.1:6379> object encoding numbers
+"intset"
+
+# hashtable
+127.0.0.1:6379> sadd numbers "seven"
+(integer) 1
+127.0.0.1:6379> object encoding numbers
+"hashtable"
+```
+
+redis可以根据不同的使用场景为一个对象设置不同的编码，从而优化对象在某一个场景下的效率。如
+在列表对象包含的元素比较少时，使用压缩列表作为列表对象的底层实现：
+
+1. 因为压缩列表比双端链表更节约内存， 并且在元素数量较少时， 在内存中以连续块方式保存的压缩列表比起双端链表可以更快被载入到缓存中；
+2. 随着列表对象包含的元素越来越多， 使用压缩列表来保存元素的优势逐渐消失时， 对象就会将底层实现从压缩列表转向功能更强、也更适合保存大量元素的双端链表上面；
+
+字符串对象：
+
+字符串编码可以是int、raw、embstr，一个字符串对象保存的是整数值， 并且这个整数值可以用 long 类型来表示， 
+那么字符串对象会将整数值保存在字符串对象结构的 ptr属性里面（将 void* 转换成 long ）， 并将字符串对象的编码设置为 int 。
+
+```cpp
+127.0.0.1:6379> set number 10086
+OK
+127.0.0.1:6379> object encoding number
+"int"
+
+127.0.0.1:6379> set num 32948398498938493849384934394
+OK
+127.0.0.1:6379> object encoding num
+"embstr"
+```
+
+如果字符串对象保存的是一个字符串值，并且这个字符串值的长度大于39字节，那么将使用一个`简单动态字符串SDS`保存这个字符串值，并将对象编码设置为raw。
+
+```cpp
+127.0.0.1:6379> set jack "cnf12345678901234567890123456789012345678901234567890"
+OK
+127.0.0.1:6379> strlen jack
+(integer) 53
+127.0.0.1:6379> object encoding jack
+"raw"
+```
+
+![raw编码的字符串对象](../.gitbook/assets/deep_redis_vndfkvnkjdnbkjgfnbkfg.PNG)
+
+如果字符串对象保存的是一个字符串值， 并且这个字符串值的长度小于等于 39 字节， 那么字符串对象将使用 `embstr` 编码的方式来保存这个字符串值。
+
+embstr 编码是专门用于保存短字符串的一种优化编码方式， 这种编码和 raw 编码一样， 
+都使用 redisObject 结构和 sdshdr 结构来表示字符串对象， 
+但 raw 编码会调用两次内存分配函数来分别创建 redisObject 结构和 sdshdr 结构，
+而 embstr 编码则通过调用一次内存分配函数来分配一块连续的空间，
+空间中依次包含 redisObject 和 sdshdr 两个结构。
+
+![emstr编码创建的内存块结构](../.gitbook/assets/deep_redis_fuf389f93h.PNG)
+
+emstr的好处
+
+1. embstr 编码将创建字符串对象所需的内存分配次数从 raw 编码的两次降低为一次。
+2. 释放 embstr 编码的字符串对象只需要调用一次内存释放函数， 而释放 raw 编码的字符串对象需要调用两次内存释放函数。
+3. 因为 embstr 编码的字符串对象的所有数据都保存在一块连续的内存里面， 所以这种编码的字符串对象比起 raw 编码的字符串对象能够更好地利用缓存带来的优势。
+
+![emstr编码的字符串对象](../.gitbook/assets/deep_redis_bfdhvbdfjv.PNG)
+
+long double类型表示的浮点数在redis种也是作为字符串值来保存的， 如果我们要保存一个浮点数到字符串对象里面，
+那么程序会先将这个浮点数转换成字符串值， 然后再保存起转换所得的字符串值。
+
+```bash
+127.0.0.1:6379> set pi 3.14
+OK
+127.0.0.1:6379> object encoding pi
+"embstr"
+```
+
+在有需要的时候，程序会将字符串对象里的字符串值转换回浮点数值，执行某些操作，然后再将执行操作所得的浮点数值转换回字符串值，并继续保存在字符串对象里面。
+
+```cpp
+127.0.0.1:6379> incrbyfloat pi 2.0
+"5.14"
+127.0.0.1:6379> object encoding pi
+"embstr"
+```
+
+字符串对象保存各类型值的编码方式
+
+```cpp
+值									编码
+
+可以用 long 类型保存的整数。				int
+
+可以用 long double 类型保存的浮点数。	embstr 或者 raw
+
+字符串值， 或者因为长度太大而没办法用
+long 类型表示的整数， 又或者因为长度
+太大而没办法用long double 类型表示的	embstr 或者 raw
+浮点数。	
+```
+
+编码的转换
+
+- 对象（已读）
+- 对象的类型与编码（对象）
 - 字符串对象
 - 列表对象
 - 哈希对象
