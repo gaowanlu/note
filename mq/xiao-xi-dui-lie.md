@@ -2,8 +2,12 @@
 
 ## 简介
 
-* ACTIVEMQ
 * RABBITMQ
+* ACTIVEMQ
 * ROCKETMQ
 * KAFKA
 * PULSAR
+
+## RabbitMQ
+
+先学习RabbitMQ，比较经典。

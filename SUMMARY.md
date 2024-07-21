@@ -170,8 +170,9 @@
   * [MySQL高阶](db/deep_mysql.md)
   * [Redis API](redis/redis.md)
   * [Redis设计与实现](redis/deep_redis.md)
-  * [Nginx](nginx/nginx.md)
   * [消息队列](mq/xiao-xi-dui-lie.md)
+  * [LibEvent](libevent/libevent.md)
+  * [Nginx](nginx/nginx.md)
 
 ## 🪅 Shell
 
