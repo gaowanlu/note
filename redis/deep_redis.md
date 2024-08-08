@@ -760,11 +760,78 @@ embstr转换为raw,然后再执行修改命令。
 
 哈希对象：
 
+哈希对象的编码可以是 ziplist 或者 hashtable 。
+
+ziplist编码的哈希对象：每当有新的键值对要加入到哈希对象时， 程序会先将保存了键的压缩列表节点推入到压缩列表表尾， 然后再将保存了值的压缩列表节点推入到压缩列表表尾。
+
+```bash
+redis-18686.c290.ap-northeast-1-2.ec2.redns.redis-cloud.com:18686> HSET profile name "Tom"
+(integer) 1
+redis-18686.c290.ap-northeast-1-2.ec2.redns.redis-cloud.com:18686> HSET profile age 25
+(integer) 1
+redis-18686.c290.ap-northeast-1-2.ec2.redns.redis-cloud.com:18686> HSET profile career "Programmer"
+(integer) 1
+redis-18686.c290.ap-northeast-1-2.ec2.redns.redis-cloud.com:18686> HGETALL profile
+1) "name"
+2) "Tom"
+3) "age"
+4) "25"
+5) "career"
+6) "Programmer"
+```
+
+ziplist编码的profile哈希对象
+
+![ziplist编码的profile哈希对象](../.gitbook/assets/c5440150fab1335c32a3ff1c039cf0fa.png)
+
+profile哈希对象的压缩列表底层实现
+
+![profile哈希对象的压缩列表底层实现](../.gitbook/assets/2fd21fc85a68ac19ae2bcfe801be5ca8.png)
+
+hashtable编码的哈希对象
+
+哈希对象中的每个键值对都使用一个字典键值对来保存：
+
+![hash编码的profile哈希对象](../.gitbook/assets/4fea4a815f75e9c23068fd10a4279c47.png)
+
+哈希对象编码转换：
+
+当哈希对象可以同时满足以下两个条件时， 哈希对象使用 ziplist 编码：
+
+1. 哈希对象保存的所有键值对的键和值的字符串长度都小于 64 字节；（hash-max-ziplist-value配置选项可修改上限）
+2. 哈希对象保存的键值对数量小于 512 个；（hash-max-ziplist-entries配置选项可修改上限）
+
+不能同时满足这两个条件的哈希对象需要使用 hashtable 编码。
+
+```bash
+redis-18686.c290.ap-northeast-1-2.ec2.redns.redis-cloud.com:18686> HSET book name "Mastering C++ in 21 days"
+(integer) 1
+redis-18686.c290.ap-northeast-1-2.ec2.redns.redis-cloud.com:18686> OBJECT ENCODING book
+"listpack"
+redis-18686.c290.ap-northeast-1-2.ec2.redns.redis-cloud.com:18686> HSET book long_long_long_long_long_long_long_long_long_long_long_description "content"
+(integer) 1
+redis-18686.c290.ap-northeast-1-2.ec2.redns.redis-cloud.com:18686> OBJECT ENCODING book
+"hashtable"
+redis-18686.c290.ap-northeast-1-2.ec2.redns.redis-cloud.com:18686> 
+```
+
+哈希命令的实现：用于哈希键的所有命令都是针对哈希对象来构建的。
+
+|命令|ziplist编码实现方法|hashtable编码实现方法|
+|---|---|---|
+|HSET|首先调用 ziplistPush 函数， 将键推入到压缩列表的表尾， 然后再次调用 ziplistPush 函数， 将值推入到压缩列表的表尾。|调用 dictAdd 函数， 将新节点添加到字典里面。|
+|HGET|首先调用 ziplistFind 函数， 在压缩列表中查找指定键所对应的节点， 然后调用 ziplistNext 函数， 将指针移动到键节点旁边的值节点， 最后返回值节点。|调用 dictFind 函数， 在字典中查找给定键， 然后调用dictGetVal 函数， 返回该键所对应的值。|
+|HEXISTS|调用 ziplistFind 函数， 在压缩列表中查找指定键所对应的节点， 如果找到的话说明键值对存在， 没找到的话就说明键值对不存在。|调用 dictFind 函数， 在字典中查找给定键， 如果找到的话说明键值对存在， 没找到的话就说明键值对不存在。|
+|HDEL|调用 ziplistFind 函数， 在压缩列表中查找指定键所对应的节点， 然后将相应的键节点、 以及键节点旁边的值节点都删除掉。|调用 dictDelete 函数， 将指定键所对应的键值对从字典中删除掉。|
+|HLEN|调用 ziplistLen 函数， 取得压缩列表包含节点的总数量， 将这个数量除以 2 ， 得出的结果就是压缩列表保存的键值对的数量。|调用 dictSize 函数， 返回字典包含的键值对数量， 这个数量就是哈希对象包含的键值对数量。|
+|HGETALL|遍历整个压缩列表， 用 ziplistGet 函数返回所有键和值（都是节点）。|遍历整个字典， 用 dictGetKey 函数返回字典的键， 用dictGetVal 函数返回字典的值。|
+
+
 - 对象（已读）
 - 对象的类型与编码（已读）
 - 字符串对象（已读）
 - 列表对象（已读）
-- 哈希对象
+- 哈希对象（已读）
 - 集合对象
 - 有序集合对象
 - 类型检查与命令多态
@@ -774,32 +841,67 @@ embstr转换为raw,然后再执行修改命令。
 
 ## 数据库
 
+- 数据库键空间
+
 ## RDB持久化
+
+- RDB文件结构
 
 ## AOF持久化
 
+- AOF持久化的实现
+
 ## 事件
+
+- 文件事件
 
 ## 客户端
 
+- 客户端属性
+
 ## 服务器
+
+- 命令请求的执行过程
 
 ## 复制
 
+- 旧版复制功能的实现
+
 ## Sentinel
+
+- 启动并初始化Sentinel
 
 ## 集群
 
+- 节点
+
 ## 发布与订阅
+
+- 频道的订阅与退订
 
 ## 事务
 
+- 事务的实现
+
 ## Lua脚本
+
+- 创建并修改Lua环境
 
 ## 排序
 
+- SORT命令的实现
+
 ## 二进制位数组
+
+- GETBIT命令的实现
 
 ## 慢查询日志
 
+- 慢查询记录的保存
+- 慢查询日志的阅览和删除
+- 添加新日志
+
 ## 监视器
+
+- 成为监视器
+- 向监视器发送命令信息
