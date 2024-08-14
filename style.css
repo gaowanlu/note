@@ -1,0 +1,31 @@
+@media (min-width: 768px) {
+    html {
+        margin: 0;
+        padding: 0;
+    }
+
+    #TOC {
+        position: fixed;
+        top: 5vh;
+        right: 2vw;
+        left: auto;
+        max-width: 45vw;
+        max-height: 88vh;
+        overflow-x: auto;
+        overflow-y: auto;
+    }
+
+    body {
+        width: 50vw;
+    }
+
+    img {
+        max-width: 40vw;
+    }
+}
+
+@media (max-width: 768px) {
+    img {
+        max-width: 80vw;
+    }
+}

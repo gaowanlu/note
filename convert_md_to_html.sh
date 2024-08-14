@@ -5,7 +5,7 @@
 convert_to_html() {
   local input_file="$1"
   local output_file="${input_file%.md}.html"
-  pandoc "$input_file" -o "$output_file" --toc --css style.css
+  pandoc "$input_file" --toc -s -o "$output_file" --css style.css
   echo "Converted $input_file to $output_file"
 }
 
