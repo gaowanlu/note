@@ -382,3 +382,96 @@ int main(int argc, char **argv)
     return 0;
 }
 ```
+
+### 请不要造构造函数代码块中调用所属类型其他构造函数
+
+什么意思呢请看代码
+
+```cpp
+#include <iostream>
+using namespace std;
+
+class A
+{
+public:
+    A()
+    {
+        cout << "A()" << std::endl;
+        ptr = new int;
+    }
+    A(const A &a)
+    {
+        A();
+    }
+    ~A()
+    {
+        delete ptr;
+    }
+    int *ptr{nullptr};
+};
+
+int main(int argc, char **argv)
+{
+    {
+        A a;
+        A b(a);
+        cout << a.ptr << std::endl; // 0xf79a28
+        cout << b.ptr << std::endl; // 0
+    }
+    cout << "over" << std::endl; // over
+    return 0;
+}
+```
+
+上面b的ptr属性并没有被初始化，所以可以验证
+
+```cpp
+    A(const A &a)
+    {
+        A(); // 这里只是构造了一个类型A临时对象
+    }
+```
+
+怎么做,可以使用委托构造函数
+
+```cpp
+#include <iostream>
+using namespace std;
+
+class A
+{
+public:
+    A()
+    {
+        cout << "A()" << std::endl;
+        ptr = new int;
+    }
+    A(const A &a) : A()
+    {
+        std::cout << "A(const A &a) " << this->ptr << std::endl;
+    }
+    ~A()
+    {
+        delete ptr;
+    }
+    int *ptr{nullptr};
+};
+
+int main(int argc, char **argv)
+{
+    {
+        A a;
+        A b(a);
+        cout << a.ptr << std::endl;
+        cout << b.ptr << std::endl;
+    }
+    cout << "over" << std::endl;
+    // A()
+    // A()
+    // A(const A &a) 0x1099aa8
+    // 0x1099a48
+    // 0x1099aa8
+    // over
+    return 0;
+}
+```

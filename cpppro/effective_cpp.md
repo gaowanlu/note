@@ -1105,43 +1105,43 @@ std::shared_ptr<Investment> createInvestment()
 
 请记住
 
-- 好的接口很容易被正确使用，不容易被误用。你应该在你的所有接口中努力达成这些性质。
-- "促进正确使用”的办法包括接口的一致性，以及与内置类型的行为兼容。
-- "阻止误用”的办法包括建立新类型、限制类型上的操作，束缚对象值，以及消除客户的资源管理责任。
-- 智能指针支持定制型删除器，可防范DLL问题。
+* 好的接口很容易被正确使用，不容易被误用。你应该在你的所有接口中努力达成这些性质。
+* "促进正确使用”的办法包括接口的一致性，以及与内置类型的行为兼容。
+* "阻止误用”的办法包括建立新类型、限制类型上的操作，束缚对象值，以及消除客户的资源管理责任。
+* 智能指针支持定制型删除器，可防范DLL问题。
 
 ### 19、设计 class 犹如设计 type
 
 设计新的class应该带着“语言设计者当初设计语言内置类型时”一样的严谨来讨论class的设计。
 
-- 新type的对象应该如何被创建和销毁?  
+* 新type的对象应该如何被创建和销毁?  
 构造函数和析构函数以及内存分配函数和释放函数`operator new`、`operator new[]`、`operator delete`、`operator delete[]`。
 
-- 对象的初始化和对象的赋值该有什么样的差别?  
+* 对象的初始化和对象的赋值该有什么样的差别?  
 决定构造函数和赋值操作符的行为。
-- 对象如果被以值传递，意味着什么？
-- 什么是新type的和法值?   
+* 对象如果被以值传递，意味着什么？
+* 什么是新type的和法值?
 构造函数，赋值操作符，setter等。
-- 新类型需要配合某个继承图系吗？  
+* 新类型需要配合某个继承图系吗？  
 受到函数是virtual或non-virtual的影响，如果允许其他class继承，则会影响所声明的函数尤其是析构函数，是否为virtual。
-- 新类型需要什么样的转换？  
+* 新类型需要什么样的转换？  
 写转换函数`operator TYPE`或者写non explicit one argument构造函数等。
-- 什么样的操作符和函数对新类型是合理的？  
+* 什么样的操作符和函数对新类型是合理的？  
 应该声明哪些函数，操作符成员函数del 自定义功能等等。
-- 什么样的标准函数应该驳回？ 
+* 什么样的标准函数应该驳回？
 声明为private。
-- 谁该取用新类型的成员？  
+* 谁该取用新类型的成员？  
 决定合理设计成员的public、protected、private。
-- 什么是新类型读的未声明接口？
-- 新class有多么一般化？  
+* 什么是新类型读的未声明接口？
+* 新class有多么一般化？  
 合理使用模板编程。
-- 你真的需要一个新class吗？  
+* 你真的需要一个新class吗？  
 根据功能实际情况合理设计。
 
 ### 20、宁以 pass-by-reference-to-const 替换 pass-by-value
 
-- C++ 尽量以pass-by-reference-to-const替换pass-by-value。前者通常比较高效(尽可能少发生拷贝、构造函数与析构函数调用)，并可避免切割问题(slicingproblem)。
-- 以上规则并不适用内置类型，以及STL的迭代器和函数对象。对它们而言，pass-by-value往往比较适当。
+* C++ 尽量以pass-by-reference-to-const替换pass-by-value。前者通常比较高效(尽可能少发生拷贝、构造函数与析构函数调用)，并可避免切割问题(slicingproblem)。
+* 以上规则并不适用内置类型，以及STL的迭代器和函数对象。对它们而言，pass-by-value往往比较适当。
 
 ```cpp
 #include <iostream>
@@ -1204,7 +1204,7 @@ int main(int argc, char **argv)
 
 ### 21、必须返回对象时，别妄想返回其 reference
 
-- 绝对不要返回pointer或reference指向一个local stack对象，或返回reference指向一个heap-allocated对象，或返回pointer或reference指向一个local static对象而有可能同时需要多个这样对象。
+* 绝对不要返回pointer或reference指向一个local stack对象，或返回reference指向一个heap-allocated对象，或返回pointer或reference指向一个local static对象而有可能同时需要多个这样对象。
 
 如下面的场景返回值类型就挺好的
 
@@ -1326,8 +1326,8 @@ int main(int argc, char **argv)
 
 ### 22、将成员变量声明为 private
 
-- 切记将成员变量声明为private。这可赋予客户访问数据的一致性、可细微划分访问控制、允诺约束条件获得保证，并提供class作者以充分的实现弹性。
-- protected并不比public更具封装性, 派生类使用基类的字段，基类想要轻松改字段可不是那么容易的。
+* 切记将成员变量声明为private。这可赋予客户访问数据的一致性、可细微划分访问控制、允诺约束条件获得保证，并提供class作者以充分的实现弹性。
+* protected并不比public更具封装性, 派生类使用基类的字段，基类想要轻松改字段可不是那么容易的。
 
 假设我们有一个public成员变量，而我们最终取消了它。多少代码可能会被破坏呢？所有使用它的客户代码都会被破坏，而那是一个不可知的大量。因此public成员变量完全没有封装性。
 
@@ -1343,7 +1343,7 @@ int main(int argc, char **argv)
 
 ### 23、宁以 non-member、non-friend 替换 number 函数
 
-- 宁可拿non-member non-friend 函数替换member函数。这样做可以增加封装性、包裹弹性(packaging flexibility)和技能扩充性。
+* 宁可拿non-member non-friend 函数替换member函数。这样做可以增加封装性、包裹弹性(packaging flexibility)和技能扩充性。
 
 ```cpp
 class WebBrowser
@@ -1393,24 +1393,24 @@ namespace WebBrowserStuff
 // webbrowser.h
 namespace WebBrowserStuff
 {
-	class WebBrowser{...};
-	// ... 核心机能，如几乎所有客户端需要的non-member函数
+ class WebBrowser{...};
+ // ... 核心机能，如几乎所有客户端需要的non-member函数
 }
 // webbrowserbookmarks.h
 namespace WebBrowserStuff
 {
-	// ... 与书签相关的便利函数
+ // ... 与书签相关的便利函数
 }
 // 头文件 webbrowsercookies.h
 namspace WebBrowserStuff
 {
-	// ... 与cookie相关的便利函数
+ // ... 与cookie相关的便利函数
 }
 ```
 
 ### 24、若所有参数皆需要类型转换，请为此采用 non-member 函数
 
-- 如果你需要位某个函数的所有参数（包括被this指针所指的那个隐喻参数）进行类型转换，那么这个函数必须是个non-member。
+* 如果你需要位某个函数的所有参数（包括被this指针所指的那个隐喻参数）进行类型转换，那么这个函数必须是个non-member。
 
 只看描述是很难理解的，看代码的例子，就好很多。
 
@@ -1418,13 +1418,13 @@ namspace WebBrowserStuff
 class Rational
 {
 public:
-	Rational(int numerator = 0,
-			 int denominator = 1); // 构造函数刻意不位explicit 允许int-to-Rational隐式转换
-	int numerator() const;
-	int denominator() const;
-	
+ Rational(int numerator = 0,
+    int denominator = 1); // 构造函数刻意不位explicit 允许int-to-Rational隐式转换
+ int numerator() const;
+ int denominator() const;
+ 
 private:
-	...
+ ...
 };
 ```
 
@@ -1434,8 +1434,8 @@ private:
 class Rational
 {
 public:
-	...
-	const Rational operator* (const Rational& rhs) const;
+ ...
+ const Rational operator* (const Rational& rhs) const;
 };
 ```
 
@@ -1461,12 +1461,12 @@ result = oneHalf * temp; // Rational 构造函数是非explicit的
 ```cpp
 class Rational
 {
-	... // 不包括operator*
+ ... // 不包括operator*
 };
 // 定义为non-member函数
 const Rational operator*(const Rational& lhs, const Rational& rhs)
 {
-	return Rational(lhs.numberator() * rhs.numberator(), lhs.denominator() * rhs.denominator());
+ return Rational(lhs.numberator() * rhs.numberator(), lhs.denominator() * rhs.denominator());
 }
 Rational oneFourth(1, 4);
 Rational result;
@@ -1475,6 +1475,256 @@ result = 2 * oneFourth;
 ```
 
 ### 25、考虑写出一个不抛异常的 swap 函数
+
+* 当`std::swap`对你的类型效率不高时，提供一个swap成员函数，并确定这个函数不抛出异常。
+* 如果你提供了一个member swap,也应提供一个non-member swap用来调用前者。对于classes(而非templates),也请特化`std::swap`。
+* 调用swap时应针对`std::swap`使用using生命，然后调用swap并且不带任何“命明空间资格修饰”
+* 为用户定义类型 进行 std templates 全特化是好的，但千万不要尝试在`std`内加入某些对std而言全新的东西。
+
+所谓swap（置换）两个对象值，意思是将两对象的值彼此赋予对方。缺省情况下swap动作可由标准程序库提供的swap算法完成。
+
+```cpp
+namespace std
+{
+    template <typename T>
+    void swap(T &a, T &b)
+    {
+        T temp(a);
+        a = b;
+        b = temp;
+    }
+}
+```
+
+只要类型T支持copying(通过拷贝构造函数和拷贝赋值操作符完成)。
+
+```cpp
+#include <iostream>
+#include <vector>
+using namespace std;
+
+class AImpl
+{
+public:
+    int a, b, c;
+    std::vector<int> vec;
+};
+
+class A
+{
+public:
+    A()
+    {
+        implPtr = new AImpl;
+    }
+    ~A()
+    {
+        if (implPtr)
+        {
+            delete implPtr;
+        }
+    }
+    A(const A &a)
+    {
+  implPtr = new AImpl(*a.implPtr);
+    }
+    A &operator=(const A &a)
+    {
+        // 深拷贝 不然默认只拷贝地址有问题
+        *implPtr = *a.implPtr;
+        return *this;
+    }
+    AImpl *implPtr;
+};
+
+int main(int argc, char **argv)
+{
+    A a1;
+    A a2 = a1;
+    return 0;
+}
+```
+
+如上面的例子，因为需要拷贝我们必须写深拷贝，不然默认进行地址拷贝会出问题。但是使用`std::swap`时就显得有些鸡肋，明明只交换二者的
+implPtr存储的地址即可，却使用的拷贝。但是我们对`std::swap`针对A进行特化。
+
+```cpp
+namespace std
+{
+    template <>
+    void swap<A>(A &a, A &b)
+    {
+        swap(a.implPtr, b.implPtr);
+    }
+}
+```
+
+上面可以实现，是因为implPtr属性是public的，如果为私有的时应该怎么做
+
+```cpp
+#include <iostream>
+#include <vector>
+using namespace std;
+
+class A;
+class AImpl;
+void swap(A &a, A &b) noexcept;
+
+class AImpl
+{
+public:
+    int a, b, c;
+    std::vector<int> vec;
+};
+
+class A
+{
+public:
+    A()
+    {
+        implPtr = new AImpl;
+    }
+    ~A()
+    {
+        if (implPtr)
+        {
+            delete implPtr;
+        }
+    }
+    A(const A &a)
+    {
+  implPtr = new AImpl(*a.implPtr);
+    }
+    A &operator=(const A &a)
+    {
+        // 深拷贝 不然默认只拷贝地址有问题
+        *implPtr = *a.implPtr;
+        return *this;
+    }
+
+public:
+    friend void swap(A &a, A &b) noexcept;
+    void swap(A &b) noexcept
+    {
+        ::swap(*this, b);
+    }
+
+private:
+    AImpl *implPtr;
+};
+
+void swap(A &a, A &b) noexcept
+{
+    std::cout << "my swap" << std::endl;
+    std::swap(a.implPtr, b.implPtr);
+}
+
+namespace std
+{
+    template <>
+    void swap<A>(A &a, A &b) noexcept
+    {
+        ::swap(a, b);
+    }
+}
+
+int main(int argc, char **argv)
+{
+    A a1;
+    A a2 = a1;
+    std::swap(a1, a2); // my swap
+    swap(a1, a2);      // my swap
+    return 0;
+}
+```
+
+如果A是一个模板类是，情况则有些麻烦。在C++中，模板的特例化不能放在std命名空间中，除非标准库特意允许。因为直接在std命名空间中特例化会导致不确定行为。
+
+```cpp
+#include <iostream>
+#include <vector>
+using namespace std;
+
+namespace ASpace
+{
+
+    template <typename T>
+    class A;
+
+    class AImpl;
+
+    template <typename T>
+    void swap(A<T> &a, A<T> &b) noexcept;
+
+    class AImpl
+    {
+    public:
+        int a, b, c;
+        std::vector<int> vec;
+    };
+
+    template <typename T>
+    class A
+    {
+    public:
+        A()
+        {
+            implPtr = new AImpl;
+        }
+        ~A()
+        {
+            delete implPtr;
+        }
+        A(const A &a)
+        {
+            implPtr = new AImpl(*a.implPtr);
+        }
+        A &operator=(const A &a)
+        {
+            if (this == &a)
+            {
+                return *this; // nothing todo
+            }
+            // 深拷贝 不然默认只拷贝地址有问题
+            *implPtr = *a.implPtr;
+            return *this;
+        }
+
+    public:
+        friend void swap<>(A<T> &a, A<T> &b) noexcept;
+
+        void swap(A &b) noexcept
+        {
+            std::swap(implPtr, b.implPtr);
+        }
+
+    private:
+        AImpl *implPtr;
+    };
+
+    template <typename T>
+    void swap(A<T> &a, A<T> &b) noexcept
+    {
+        std::cout << "my swap" << std::endl;
+        a.swap(b);
+    }
+
+} // ASpace
+
+int main(int argc, char **argv)
+{
+    ASpace::A<ASpace::AImpl> a1;
+    ASpace::A<ASpace::AImpl> a2 = a1;
+    swap(a1, a2); // my swap // 触发（argument-dependentlookup或Koenig lookup法则）
+    // std::swap(a1,a2);//error
+
+    {
+        using std::swap;
+        swap(a1, a2); // ADL（Argument Dependent Lookup，参数依赖查找） 调用ASpace::swap
+    }
+    return 0;
+}
+```
 
 ## 实现
 
