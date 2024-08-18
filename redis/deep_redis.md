@@ -471,25 +471,25 @@ OK
 ```cpp
 typedef struct redisObject
 {
-	// 类型
-	unsigned type:4;
-	// 编码
-	unsigned encoding:4;
-	// 指向底层实现数据结构的指针
-	void *ptr;
-	// ...
+ // 类型
+ unsigned type:4;
+ // 编码
+ unsigned encoding:4;
+ // 指向底层实现数据结构的指针
+ void *ptr;
+ // ...
 } robj;
 ```
 
 类型
 
 ```cpp
-类型常量	对象的名称
-REDIS_STRING	字符串对象
-REDIS_LIST	列表对象
-REDIS_HASH	哈希对象
-REDIS_SET	集合对象
-REDIS_ZSET	有序集合对象
+类型常量 对象的名称
+REDIS_STRING 字符串对象
+REDIS_LIST 列表对象
+REDIS_HASH 哈希对象
+REDIS_SET 集合对象
+REDIS_ZSET 有序集合对象
 ```
 
 type查看键对应的值对象的类型，键对象类型永远是string类型
@@ -529,32 +529,32 @@ zset
 对象的ptr指针指向对象的底层数据结构，数据结构由对象的encoding属性决定，encoding属性记录了对象使用了什么数据结构作为对象的底层实现。
 
 ```cpp
-编码常量						编码所对应的底层数据结构
-REDIS_ENCODING_INT			long 类型的整数 int
-REDIS_ENCODING_EMBSTR		embstr 编码的简单动态字符串 embstr
-REDIS_ENCODING_RAW			简单动态字符串 raw
-REDIS_ENCODING_HT			字典 hashtable
-REDIS_ENCODING_LINKEDLIST	双端链表 linkedlist
-REDIS_ENCODING_ZIPLIST		压缩列表 ziplist
-REDIS_ENCODING_INTSET		整数集合 intset
-REDIS_ENCODING_SKIPLIST		跳跃表和字典 skiplist
+编码常量      编码所对应的底层数据结构
+REDIS_ENCODING_INT   long 类型的整数 int
+REDIS_ENCODING_EMBSTR  embstr 编码的简单动态字符串 embstr
+REDIS_ENCODING_RAW   简单动态字符串 raw
+REDIS_ENCODING_HT   字典 hashtable
+REDIS_ENCODING_LINKEDLIST 双端链表 linkedlist
+REDIS_ENCODING_ZIPLIST  压缩列表 ziplist
+REDIS_ENCODING_INTSET  整数集合 intset
+REDIS_ENCODING_SKIPLIST  跳跃表和字典 skiplist
 ```
 
 每种类型的对象至少使用了两种不同的编码。下面列出了每种类型的对象可以使用的编码。
 
 ```cpp
-类型	编码	对象
-REDIS_STRING	REDIS_ENCODING_INT			使用整数值实现的字符串对象。
-REDIS_STRING	REDIS_ENCODING_EMBSTR		使用 embstr 编码的简单动态字符串实现的字符串对象。
-REDIS_STRING	REDIS_ENCODING_RAW			使用简单动态字符串实现的字符串对象。
-REDIS_LIST		REDIS_ENCODING_ZIPLIST		使用压缩列表实现的列表对象。
-REDIS_LIST		REDIS_ENCODING_LINKEDLIST	使用双端链表实现的列表对象。
-REDIS_HASH		REDIS_ENCODING_ZIPLIST		使用压缩列表实现的哈希对象。
-REDIS_HASH		REDIS_ENCODING_HT			使用字典实现的哈希对象。
-REDIS_SET		REDIS_ENCODING_INTSET		使用整数集合实现的集合对象。
-REDIS_SET		REDIS_ENCODING_HT			使用字典实现的集合对象。
-REDIS_ZSET		REDIS_ENCODING_ZIPLIST		使用压缩列表实现的有序集合对象。
-REDIS_ZSET		REDIS_ENCODING_SKIPLIST		使用跳跃表和字典实现的有序集合对象。
+类型 编码 对象
+REDIS_STRING REDIS_ENCODING_INT   使用整数值实现的字符串对象。
+REDIS_STRING REDIS_ENCODING_EMBSTR  使用 embstr 编码的简单动态字符串实现的字符串对象。
+REDIS_STRING REDIS_ENCODING_RAW   使用简单动态字符串实现的字符串对象。
+REDIS_LIST  REDIS_ENCODING_ZIPLIST  使用压缩列表实现的列表对象。
+REDIS_LIST  REDIS_ENCODING_LINKEDLIST 使用双端链表实现的列表对象。
+REDIS_HASH  REDIS_ENCODING_ZIPLIST  使用压缩列表实现的哈希对象。
+REDIS_HASH  REDIS_ENCODING_HT   使用字典实现的哈希对象。
+REDIS_SET  REDIS_ENCODING_INTSET  使用整数集合实现的集合对象。
+REDIS_SET  REDIS_ENCODING_HT   使用字典实现的集合对象。
+REDIS_ZSET  REDIS_ENCODING_ZIPLIST  使用压缩列表实现的有序集合对象。
+REDIS_ZSET  REDIS_ENCODING_SKIPLIST  使用跳跃表和字典实现的有序集合对象。
 ```
 
 object encoding命令查看一个数据库键的值对象的编码
@@ -593,7 +593,7 @@ redis可以根据不同的使用场景为一个对象设置不同的编码，从
 
 字符串对象：
 
-字符串编码可以是int、raw、embstr，一个字符串对象保存的是整数值， 并且这个整数值可以用 long 类型来表示， 
+字符串编码可以是int、raw、embstr，一个字符串对象保存的是整数值， 并且这个整数值可以用 long 类型来表示，
 那么字符串对象会将整数值保存在字符串对象结构的 ptr属性里面（将 void* 转换成 long ）， 并将字符串对象的编码设置为 int 。
 
 ```cpp
@@ -623,8 +623,8 @@ OK
 
 如果字符串对象保存的是一个字符串值， 并且这个字符串值的长度小于等于 39 字节， 那么字符串对象将使用 `embstr` 编码的方式来保存这个字符串值。
 
-embstr 编码是专门用于保存短字符串的一种优化编码方式， 这种编码和 raw 编码一样， 
-都使用 redisObject 结构和 sdshdr 结构来表示字符串对象， 
+embstr 编码是专门用于保存短字符串的一种优化编码方式， 这种编码和 raw 编码一样，
+都使用 redisObject 结构和 sdshdr 结构来表示字符串对象，
 但 raw 编码会调用两次内存分配函数来分别创建 redisObject 结构和 sdshdr 结构，
 而 embstr 编码则通过调用一次内存分配函数来分配一块连续的空间，
 空间中依次包含 redisObject 和 sdshdr 两个结构。
@@ -661,16 +661,16 @@ OK
 字符串对象保存各类型值的编码方式
 
 ```cpp
-值									编码
+值         编码
 
-可以用 long 类型保存的整数。				int
+可以用 long 类型保存的整数。    int
 
-可以用 long double 类型保存的浮点数。	embstr 或者 raw
+可以用 long double 类型保存的浮点数。 embstr 或者 raw
 
 字符串值， 或者因为长度太大而没办法用
 long 类型表示的整数， 又或者因为长度
-太大而没办法用long double 类型表示的	embstr 或者 raw
-浮点数。	
+太大而没办法用long double 类型表示的 embstr 或者 raw
+浮点数。 
 ```
 
 编码的转换：
@@ -826,13 +826,86 @@ redis-18686.c290.ap-northeast-1-2.ec2.redns.redis-cloud.com:18686>
 |HLEN|调用 ziplistLen 函数， 取得压缩列表包含节点的总数量， 将这个数量除以 2 ， 得出的结果就是压缩列表保存的键值对的数量。|调用 dictSize 函数， 返回字典包含的键值对数量， 这个数量就是哈希对象包含的键值对数量。|
 |HGETALL|遍历整个压缩列表， 用 ziplistGet 函数返回所有键和值（都是节点）。|遍历整个字典， 用 dictGetKey 函数返回字典的键， 用dictGetVal 函数返回字典的值。|
 
+集合对象：
+
+集合对象的编码可以是 intset 或者 hashtable
+
+inset编码的集合对象：集合对象包含的所有元素都被保存在整数集合里面。
+
+```bash
+redis> SADD number 1 3 5
+(integer) 3
+```
+
+![inset编码的numbers集合对象](../.gitbook/assets/22c872ee291efc3919fa5cce300ea63f.png)
+
+hashtable编码的对象集合：使用字典作为底层实现，字典的每个键都是一个字符串对象，每个字符串对象包含了一个集合元素，而字典的值则全部被设置为NULL。
+
+```bash
+redis> SADD fruits "apple" "banana" "cherry"
+(integer) 3
+```
+
+![hashtable编码的fruits集合对象](../.gitbook/assets/1a80a40bd9e1184e200c48b3931fd154.png)
+
+编码的转换：
+
+当集合对象可以同时满足以下两个条件时，对象使用intset编码
+
+1. 集合对象保存的所有元素都是整数值
+2. 集合对象保存的元素数量不超过512个（可使用set-max-intset-entries选项修改）
+
+不能满足上面两个条件的集合对象需要使用hashtable编码。当intset编码的不满足上面时则会编码从intset变为hashtable。
+
+```bash
+redis> SADD numbers 1 3 5
+(integer) 3
+redis> OBJECT ENCODING numbers
+"intset"
+```
+
+```bash
+redis> SADD numbers 1 3 5
+(integer) 3
+redis> OBJECT ENCODING numbers
+"intset"
+```
+
+512个元素限制
+
+```bash
+redis> EVAL "for i=1, 512 do redis.call('SADD', KEYS[1], i) end" 1 integers
+(nil)
+redis> SCARD integers
+(integer) 512
+redis> OBJECT ENCODING integers
+"intset"
+redis> SADD integers 10086
+(integer) 1
+redis> SCARD integers
+(integer) 513
+redis> OBJECT ENCODING integers
+"hashtable"
+```
+
+集合命令的实现
+
+|命令|intset编码实现方法|hashtable编码实现方法|
+|---|---|---|
+|SADD|调用 intsetAdd 函数， 将所有新元素添加到整数集合里面。|调用 dictAdd ， 以新元素为键， NULL 为值， 将键值对添加到字典里面。|
+|SCARD|调用 intsetLen 函数， 返回整数集合所包含的元素数量， 这个数量就是集合对象所包含的元素数量。|调用 dictSize 函数， 返回字典所包含的键值对数量， 这个数量就是集合对象所包含的元素数量。|
+|SISMEMBER|调用 intsetFind 函数， 在整数集合中查找给定的元素， 如果找到了说明元素存在于集合， 没找到则说明元素不存在于集合。|调用 dictFind 函数， 在字典的键中查找给定的元素， 如果找到了说明元素存在于集合， 没找到则说明元素不存在于集合。|
+|SMEMBERS|遍历整个整数集合， 使用 intsetGet 函数返回集合元素。|遍历整个字典， 使用 dictGetKey 函数返回字典的键作为集合元素。|
+|SRANDMEMBER|调用 intsetRandom 函数， 从整数集合中随机返回一个元素。|调用 dictGetRandomKey 函数， 从字典中随机返回一个字典键。|
+|SPOP|调用 intsetRandom 函数， 从整数集合中随机取出一个元素， 在将这个随机元素返回给客户端之后， 调用 intsetRemove 函数， 将随机元素从整数集合中删除掉。|调用 dictGetRandomKey 函数， 从字典中随机取出一个字典键， 在将这个随机字典键的值返回给客户端之后， 调用dictDelete 函数， 从字典中删除随机字典键所对应的键值对。|
+|SREM|调用 intsetRemove 函数， 从整数集合中删除所有给定的元素。|调用 dictDelete 函数， 从字典中删除所有键为给定元素的键值对。|
 
 - 对象（已读）
 - 对象的类型与编码（已读）
 - 字符串对象（已读）
 - 列表对象（已读）
 - 哈希对象（已读）
-- 集合对象
+- 集合对象（已读）
 - 有序集合对象
 - 类型检查与命令多态
 - 内存回收
