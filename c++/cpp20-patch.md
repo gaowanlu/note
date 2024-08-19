@@ -1496,6 +1496,295 @@ int main(int argc, char **argv)
 */
 ```
 
+### 用协程写个简单的并发server(待改进待勘误)
+
+main.cpp
+
+```cpp
+#include <iostream>
+#include <coroutine>
+#include <sys/epoll.h>
+#include <netinet/in.h>
+#include <fcntl.h>
+#include <unistd.h>
+#include <cstring>
+#include <vector>
+
+constexpr int PORT = 20023;
+constexpr int MAX_EVENTS = 100000;
+
+int epoll_fd;
+
+class Task
+{
+public:
+    struct promise_type
+    {
+        Task get_return_object()
+        {
+            return Task{std::coroutine_handle<promise_type>::from_promise(*this)};
+        }
+        std::suspend_never initial_suspend() { return {}; }
+        std::suspend_always final_suspend() noexcept { return {}; }
+        void return_void() {}
+        void unhandled_exception()
+        {
+            std::cout << "unhandled_exception" << std::endl;
+            std::terminate();
+        }
+    };
+
+    Task(std::coroutine_handle<promise_type> h) : coro_handle(h) {}
+    ~Task()
+    {
+        std::cout << "~Task" << std::endl;
+        // if (coro_handle)
+        //     coro_handle.destroy();
+    }
+
+    std::coroutine_handle<promise_type> coro_handle;
+};
+
+class SocketAwaiter
+{
+public:
+    SocketAwaiter(int fd, uint32_t events) : fd(fd), events(events) {}
+
+    bool await_ready() const noexcept { return false; }
+    void await_suspend(std::coroutine_handle<> h)
+    {
+        epoll_event event;
+        event.data.ptr = static_cast<void *>(h.address());
+        event.events = events | EPOLLONESHOT;
+        epoll_ctl(epoll_fd, EPOLL_CTL_MOD, fd, &event);
+    }
+    void await_resume() noexcept {}
+
+private:
+    int fd;
+    uint32_t events;
+};
+
+void set_non_blocking(int fd)
+{
+    int flags = fcntl(fd, F_GETFL, 0);
+    fcntl(fd, F_SETFL, flags | O_NONBLOCK);
+}
+
+Task handle_client(int client_socket)
+{
+    std::cout << "handle_client(" << client_socket << ")" << std::endl;
+
+    char buffer[1024];
+    std::string send_buffer;
+    bool closed = false;
+
+    while (true)
+    {
+        if (closed)
+        {
+            break;
+        }
+        // 等待可读事件
+        SocketAwaiter read_awaiter{client_socket, EPOLLIN};
+        co_await read_awaiter;
+
+        int bytes_read = recv(client_socket, buffer, sizeof(buffer), 0);
+        if (bytes_read == 0)
+        {
+            epoll_ctl(epoll_fd, EPOLL_CTL_DEL, client_socket, nullptr);
+            close(client_socket);
+            closed = true;
+            break;
+        }
+
+        if (bytes_read < 0)
+        {
+            if (errno != EAGAIN && errno != EWOULDBLOCK && errno != EINTR)
+            {
+                epoll_ctl(epoll_fd, EPOLL_CTL_DEL, client_socket, nullptr);
+                close(client_socket);
+                closed = true;
+                break;
+            }
+        }
+
+        // 将收到的数据加入发送缓冲区
+        if (bytes_read > 0)
+        {
+            std::cout << "bytes_read " << bytes_read << std::endl;
+            send_buffer.append(buffer, bytes_read);
+        }
+
+        // 当有数据需要发送时，进入发送逻辑
+        while (!send_buffer.empty())
+        {
+            // 等待可写事件
+            SocketAwaiter write_awaiter{client_socket, EPOLLOUT};
+            co_await write_awaiter;
+
+            int bytes_sent = send(client_socket, send_buffer.c_str(), send_buffer.size(), 0);
+
+            if (bytes_sent == 0)
+            {
+                std::cerr << "Send error" << std::endl;
+                epoll_ctl(epoll_fd, EPOLL_CTL_DEL, client_socket, nullptr);
+                close(client_socket);
+                closed = true;
+                break;
+            }
+
+            if (bytes_sent < 0)
+            {
+                if (errno != EAGAIN && errno != EWOULDBLOCK && errno != EINTR)
+                {
+                    epoll_ctl(epoll_fd, EPOLL_CTL_DEL, client_socket, nullptr);
+                    close(client_socket);
+                    closed = true;
+                    break;
+                }
+                else
+                {
+                    continue;
+                }
+            }
+
+            // 删除已经发送的数据
+            if (bytes_sent > 0)
+            {
+                send_buffer.erase(0, bytes_sent);
+            }
+        }
+    }
+}
+
+Task server()
+{
+    int server_fd = socket(AF_INET, SOCK_STREAM, 0);
+    if (server_fd == 0)
+    {
+        std::cerr << "Socket creation failed\n";
+        co_return; // 使用 co_return 来返回 Task
+    }
+
+    set_non_blocking(server_fd);
+
+    sockaddr_in address;
+    address.sin_family = AF_INET;
+    address.sin_addr.s_addr = INADDR_ANY;
+    address.sin_port = htons(PORT);
+
+    if (bind(server_fd, (sockaddr *)&address, sizeof(address)) < 0)
+    {
+        std::cerr << "Bind failed\n";
+        co_return; // 使用 co_return 来返回 Task
+    }
+
+    if (listen(server_fd, 3) < 0)
+    {
+        std::cerr << "Listen failed\n";
+        co_return; // 使用 co_return 来返回 Task
+    }
+
+    epoll_fd = epoll_create1(0);
+    if (epoll_fd == -1)
+    {
+        std::cerr << "Epoll creation failed\n";
+        co_return; // 使用 co_return 来返回 Task
+    }
+
+    epoll_event event;
+    event.data.fd = server_fd;
+    event.events = EPOLLIN;
+    epoll_ctl(epoll_fd, EPOLL_CTL_ADD, server_fd, &event);
+
+    std::vector<epoll_event> events(MAX_EVENTS);
+
+    while (true)
+    {
+        int n = epoll_wait(epoll_fd, events.data(), MAX_EVENTS, -1);
+        for (int i = 0; i < n; i++)
+        {
+            if (events[i].data.fd == server_fd)
+            {
+                int client_socket = accept(server_fd, nullptr, nullptr);
+                if (client_socket >= 0)
+                {
+                    std::cout << "new client_socket " << client_socket << std::endl;
+                    set_non_blocking(client_socket);
+                    epoll_event client_event;
+                    client_event.data.fd = client_socket;
+                    client_event.events = EPOLLIN | EPOLLET;
+                    epoll_ctl(epoll_fd, EPOLL_CTL_ADD, client_socket, &client_event);
+                    auto handle = handle_client(client_socket).coro_handle;
+                    handle.resume();
+                }
+                std::cout << "handle_client(client_socket).coro_handle.resume() over" << std::endl;
+            }
+            else
+            {
+                std::cout << "event client " << reinterpret_cast<uint64_t>(events[i].data.ptr) << std::endl;
+                auto handle = std::coroutine_handle<>::from_address(events[i].data.ptr);
+                if (handle.done())
+                {
+                    std::cout << "handle done" << std::endl;
+                }
+                else
+                {
+                    handle.resume();
+                }
+                if (handle.done())
+                {
+                    std::cout << "handle done" << std::endl;
+                    handle.destroy();
+                }
+            }
+        }
+    }
+
+    close(server_fd);
+    close(epoll_fd);
+}
+
+int main()
+{
+    server().coro_handle.resume();
+    return 0;
+}
+```
+
+CMakeLists.txt
+
+```cpp
+# 设置最低 CMake 版本要求
+cmake_minimum_required(VERSION 2.8.12.2)
+
+# 设置项目名称和版本
+project(main.exe)
+
+# 指定 C++ 编译器路径
+set(CMAKE_CXX_COMPILER "/opt/rh/devtoolset-11/root/usr/bin/g++")
+set(CMAKE_C_COMPILER "/opt/rh/devtoolset-11/root/usr/bin/gcc")
+
+# 设置 C++ 标准
+set(CMAKE_CXX_STANDARD 20)
+set(CMAKE_CXX_STANDARD_REQUIRED True)
+
+# 查找当前目录下的所有源文件
+file(GLOB SOURCES "*.cpp")
+
+# 查找当前目录下的所有头文件
+file(GLOB HEADERS "*.h")
+
+# 添加可执行文件，假设要生成的可执行文件名为 MyExecutable
+add_executable(main.exe ${SOURCES} ${HEADERS})
+
+target_compile_options(main.exe PRIVATE -fcoroutines)
+
+# 如果需要链接库，可以使用 target_link_libraries 函数
+target_link_libraries(main.exe PRIVATE pthread)
+```
+
 ## C++20关于constexpr的优化
 
 ### 允许constexpr虚函数
