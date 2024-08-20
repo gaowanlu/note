@@ -8,6 +8,8 @@ coverY: 0
 
 I have a dream. Keep going.
 
+![It's me](./.gitbook/assets/57703023.jpg)
+
 ## 🚲
 
 * [ ] 🤡Efective C++(设计与声明 instance 23)
