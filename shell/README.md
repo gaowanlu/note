@@ -55,3 +55,44 @@ Shell 脚本通常包含了一系列的命令、控制结构和变量定义，�
 ## 创建与数据库、web及电子邮件相关的脚本
 
 ## 一些小有意思的脚本
+
+## ssh密钥免密登录
+
+在 Linux 系统上设置 SSH 密钥免密登录可以使你在登录远程服务器时不需要输入密码。以下是具体步骤：
+
+1. 生成SSH密钥对
+
+```bash
+ssh-keygen -t rsa -b 4096 -C "your_email@example.com"
+```
+
+2. 将公钥复制到远程服务器
+
+```bash
+ssh-copy-id user@remote_host
+```
+
+3. 执行该命令后，系统会提示你输入远程服务器的密码。成功后，公钥将被添加到远程服务器上的 `~/.ssh/authorized_keys` 文件中。
+
+```bash
+ssh user@remote_host
+```
+
+如果设置正确，应该能够直接登录到远程服务器，不需要输入密码。
+
+4. 远程主机上删除SSH免密登录的方法
+
+删除公钥，SSH 免密登录是通过将公钥添加到远程主机上的 `~/.ssh/authorized_keys` 文件中实现的。要删除免密登录，你需要从这个文件中删除相关的公钥。
+`~/.ssh/authorized_keys`中一行就是一条公钥，找到目标把那行删除即可。
+
+5. 手动添加公钥到目标主机
+
+可以将用户下的`~/.ssh/id_rsa.pub`内容加到remote_host user下的`~/.ssh/authorized_keys`中，一行。有时需要设置文件权限才能生效。
+
+```bash
+# 在remote_host user下
+chmod 700 ~/.ssh
+chmod 600 ~/.ssh/authorized_keys
+# 在remote_host root下
+service sshd restart
+```
