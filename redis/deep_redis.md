@@ -959,6 +959,76 @@ zset中zsl跳跃表按分值从小到大保存了所有集合元素，每个跳�
 |ZREM|遍历压缩列表， 删除所有包含给定成员的节点， 以及被删除成员节点旁边的分值节点。|遍历跳跃表， 删除所有包含了给定成员的跳跃表节点。 并在字典中解除被删除元素的成员和分值的关联。|
 |ZSCORE|遍历压缩列表，查找包含了给定成员的节点，然后取出成员节点旁边的分值节点保存的元素分值|直接从字典中取出给定成员的分值|
 
+类型检查与命令多态：
+
+Redis中用于操作键的命令基本可以分为两种类型。
+
+一种是可以对任何类型的键执行 如 DEL、EXPIRE、RENAME、TYPE、OBJECT等。
+
+```bash
+# 字符串键
+redis> SET msg "hello"
+OK
+
+#列表键
+redis> RPUSH numbers 1 2 3
+(integer) 3
+
+#集合键
+redis> SADD fruits apple banana cherry
+(integer) 3
+
+redis> DEL msg
+(integer) 1
+
+redis> DEL numbers
+(integer) 1
+
+redis> DEL fruits
+(integer) 1
+```
+
+另一种命令只能对特定类型的键执行，如
+
+1. SET、GET、APPEND、STRLEN等命令只能对字符串键执行
+2. HDEL、HSET、HGET、HLEN等命令只能对哈希键执行
+3. RPUSH、LPOP、LINSERT、LLEN等命令只能对列表键执行
+4. SADD、SPOP、SINTER、SCARD等命令只能对集合键执行
+5. ZADD、ZCARD、ZRANK、ZSCORE等命令只能对有序集合键执行
+
+```bash
+redis> SET msg "hello world"
+OK
+
+redis> GET msg
+"hello world"
+
+redis> APPEND msg " again!"
+(integer) 18
+
+redis> GET msg
+"hello world again!"
+
+redis> LLEN msg
+(error) WRONGTYPE Operation against a key holding the wrong kind of value
+# LLEN不能用于字符串键
+```
+
+类型检查的实现：
+
+类型特定命令所进行的类型检查是通过redisObject结构的type属性来实现的。
+
+![LLEN命令执行时的类型检查过程](../.gitbook/assets/d68581b725423355767ba0182f78c522.png)
+
+多态命令的实现：
+
+redis除了根据值对象的类型来判断键是否能够执行指定名另外，还会根据值对象的编码方式，选择正确的命令实现代码来执行命令。
+
+![LLEN命令的执行过程](../.gitbook/assets/55bbfa63f503fd93aa5c151a0332d1c1.png)
+
+DEL、EXPIRE、TYPE等命令也称为多态命令，无论输入的键是什么类型，命令都可以执行。
+
+DEL、EXPIRE等命令和LLEN命令的区别在于，前者是基于类型的多态（一个命令可以同时用于处理多种不同类型的键），后者是基于编码的多态（一个命令可以同时用于处理多种不同编码）。
 
 - 对象（已读）
 - 对象的类型与编码（已读）
@@ -967,7 +1037,7 @@ zset中zsl跳跃表按分值从小到大保存了所有集合元素，每个跳�
 - 哈希对象（已读）
 - 集合对象（已读）
 - 有序集合对象（已读）
-- 类型检查与命令多态
+- 类型检查与命令多态（已读）
 - 内存回收
 - 对象共享
 - 对象的空转时长
