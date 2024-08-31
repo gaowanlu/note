@@ -137,6 +137,7 @@
   * [画布](computer_graphics/huabu.md)
   * [光线追踪](computer_graphics/guangxianzhuizong.md)
   * [光](computer_graphics/light.md)
+  * [阴影和反射](computer_graphics/yinying_he_fanshe.md)
 
 ## 💻 操作系统
 
