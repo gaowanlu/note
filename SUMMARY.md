@@ -133,6 +133,10 @@
   * [多个坐标空间](gamemath/chapter3.md)
   * [矩阵简介](gamemath/chapter4.md)
   * [矩阵和线性变换](gamemath/chapter5.md)
+* [计算机图形学](computer_graphics/README.md)
+  * [画布](computer_graphics/huabu.md)
+  * [光线追踪](computer_graphics/guangxianzhuizong.md)
+  * [光](computer_graphics/light.md)
 
 ## 💻 操作系统
 
