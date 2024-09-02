@@ -138,6 +138,7 @@
   * [光线追踪](computer_graphics/guangxianzhuizong.md)
   * [光](computer_graphics/light.md)
   * [阴影和反射](computer_graphics/yinying_he_fanshe.md)
+  * [扩展光线追踪渲染器](computer_graphics/kuozhan_guangxian_zhuizong_xuanranqi.md)
 
 ## 💻 操作系统
 
