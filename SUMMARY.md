@@ -141,6 +141,7 @@
   * [扩展光线追踪渲染器](computer_graphics/kuozhan_guangxian_zhuizong_xuanranqi.md)
   * [直线](computer_graphics/zhixian.md)
   * [填充三角形](computer_graphics/fill_the_triangle.md)
+  * [着色三角形](computer_graphics/shaded_triangle.md)
 
 ## 💻 操作系统
 
