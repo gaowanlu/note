@@ -1161,6 +1161,116 @@ redis> OBJECT IDLETIME msg
 
 - 数据库键空间
 
+redis是一个键值对数据库服务器，服务器中的每个数据库都由一个`redis.h/redisDb`结构表示，其中，redisDb结构的dict字典保存了数据库中的所有键值对，我们将这个字典称为键空间。
+
+```c
+typedef struct redisDb
+{
+    // ...
+    
+    // 数据库键空间，保存着数据库中的所有键值对
+    dict *dict;
+
+    // ...
+}redisDb;
+```
+
+键空间和用户所见的数据库是直接对应的：
+
+- 键空间的键也就是数据库的键， 每个键都是一个字符串对象。
+- 键空间的值也就是数据库的值， 每个值可以是字符串对象、列表对象、哈希表对象、集合对象和有序集合对象在内的任意一种 Redis 对象。
+
+```bash
+redis> SET message "hello world"
+OK
+redis> RPUSH alphabet "a" "b" "c"
+(integer) 3
+redis> HSET book name "Redis in Action
+(integer) 1
+redis> HSET book author "Josiah L. Carlson"
+(integer) 1
+redis> HSET book publisher "Manning"
+(integer) 1
+```
+
+经过上面操作后变成如下样子
+
+![数据库键空间例子](../.gitbook/assets/68c80807a705e039ab3db74f6da1c1db.png)
+
+添加新的键：
+
+添加一个新键值对到数据库， 实际上就是将一个新键值对添加到键空间字典里面， 其中键为字符串对象， 而值则为任意一种类型的 Redis 对象。
+
+```bash
+redis> SET date "2013.12.1"
+OK
+```
+
+![添加date键之后的键空间](../.gitbook/assets/c608a93938bd911bbb779c1f3ab4c11d.png)
+
+删除键：
+
+删除数据库中的一个键， 实际上就是在键空间里面删除键所对应的键值对对象。
+
+```bash
+redis> DEL book
+(integer) 1
+```
+
+![删除book键之后的键空间](../.gitbook/assets/1af6ef22ee8f51feb9c583da0e2df40e.png)
+
+更新键：
+
+对一个数据库键进行更新， 实际上就是对键空间里面键所对应的值对象进行更新， 根据值对象的类型不同， 更新的具体方法也会有所不同。
+
+```bash
+redis> SET message "blah blah"
+OK
+```
+
+![使用SET命令更新message键](../.gitbook/assets/fd86a5390821d342bfe4754e4e0bf341.png)
+
+```bash
+redis> HSET book page 320
+(integer) 1
+```
+
+![使用HSET更新book键](../.gitbook/assets/4d2db75892c876090eea3606033297bb.png)
+
+对键取值：
+
+对一个数据库键进行取值， 实际上就是在键空间中取出键所对应的值对象， 根据值对象的类型不同， 具体的取值方法也会有所不同。
+
+```bash
+redis> GET message
+"hello world"
+```
+
+![使用GET命令取值的过程](../.gitbook/assets/46b376a9553c7e54496d70898363d73c.png)
+
+```bash
+redis> LEANGE alphabet 0 -1
+1) "a"
+2) "b"
+3) "c"
+```
+
+其他键空间操作：
+
+- 比如清空整个数据库的命令FLUSHDB,就是通过删除键空间中的所有键值对来实现的。  
+- 用于随机返回数据库中某个键的RANDOMKEY命令，就是通过在键空间中随机返回一个键来实现的。
+- 返回数据库键数量的DBSIZE命令。
+- 类似还有 EXISTS、RANGE、KEYS等等。
+
+读写键空间时的维护操作：
+
+1. 在读取一个键之后（读操作和写操作都要对键进行读取）， 服务器会根据键是否存在， 以此来更新服务器的键空间命中（hit）次数或键空间不命中（miss）次数， 这两个值可以在 INFO stats 命令的 keyspace_hits 属性和 keyspace_misses 属性中查看。
+2. 在读取一个键之后， 服务器会更新键的 LRU （最后一次使用）时间， 这个值可以用于计算键的闲置时间， 使用命令 OBJECT idletime  命令可以查看键 key 的闲置时间。
+3. 如果服务器在读取一个键时， 发现该键已经过期， 那么服务器会先删除这个过期键， 然后才执行余下的其他操作， 本章稍后对过期键的讨论会详细说明这一点。
+4. 如果有客户端使用 WATCH 命令监视了某个键， 那么服务器在对被监视的键进行修改之后， 会将这个键标记为脏（dirty）， 从而让事务程序注意到这个键已经被修改过， 《事务》一章会详细说明这一点。
+5. 服务器每次修改一个键之后， 都会对脏（dirty）键计数器的值增一， 这个计数器会触发服务器的持久化以及复制操作执行， 《RDB 持久化》、《AOF 持久化》和《复制》这三章都会说到这一点。
+6. 如果服务器开启了数据库通知功能， 那么在对键进行修改之后， 服务器将按配置发送相应的数据库通知， 本章稍后讨论数据库通知功能的实现时会详细说明这一点。
+
 ## RDB持久化
 
 - RDB文件结构
