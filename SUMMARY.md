@@ -142,6 +142,7 @@
   * [直线](computer_graphics/zhixian.md)
   * [填充三角形](computer_graphics/fill_the_triangle.md)
   * [着色三角形](computer_graphics/shaded_triangle.md)
+  * [透视投影](computer_graphics/perspective_projection.md)
 
 ## 💻 操作系统
 
