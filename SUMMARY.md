@@ -255,5 +255,5 @@
 ## 🍔 英语
 
 * [英语](english/README.md)
-  * [高考3500](english/cihui3500.md)
+  * [初恋3500](english/cihui3500.md)
   * [生活分类词汇](english/shenghuofenleicihui.md)
