@@ -1509,6 +1509,86 @@ always宕机最多丢失一个事件循环数据，everysec最多丢失一秒的
 
 - 文件事件
 
+Redis 基于 Reactor 模式开发了自己的网络事件处理器： 这个处理器被称为文件事件处理器（file event handler）：
+
+![文件事件处理器的四个组成部分](../.gitbook/assets/ecb31036551d6042d899dd728e138564.png)
+
+![I/O多路复用程序通过队列向文件事件分派器传送套接字](../.gitbook/assets/4347cd6a49a10764e6f69af22c49a0d5.png)
+
+I/O多路复用程序的实现：
+
+Redis的I/O多路复用程序的所有功能都是通过包装常见的select、epoll、evport、kqueue这些I/O多路复用函数库来实现的。
+每个 I/O 多路复用函数库在 Redis 源码中都对应一个单独的文件， 比如 ae_select.c 、 ae_epoll.c 、 ae_kqueue.c ， 诸如此类。
+
+Redis 为每个 I/O 多路复用函数库都实现了相同的 API ， 所以 I/O 多路复用程序的底层实现是可以互换的。
+
+![Redis的I/O多路复用程序有多个I/O多路复用库实现可选](../.gitbook/assets/6c7eb1e478fa93692eb937bab7c8fd77.png)
+
+```c
+/* Include the best multiplexing layer supported by this system.
+ * The following should be ordered by performances, descending. */
+#ifdef HAVE_EVPORT
+#include "ae_evport.c"
+#else
+    #ifdef HAVE_EPOLL
+    #include "ae_epoll.c"
+    #else
+        #ifdef HAVE_KQUEUE
+        #include "ae_kqueue.c"
+        #else
+        #include "ae_select.c"
+        #endif
+    #endif
+#endif
+```
+
+事件类型：
+
+I/O 多路复用程序可以监听多个套接字的 `ae.h/AE_READABLE` 事件和 `ae.h/AE_WRITABLE` 事件， 这两类事件和套接字操作之间的对应关系如下：
+
+- 当套接字变得可读时（客户端对套接字执行 write 操作，或者执行 close 操作）， 或者有新的可应答（acceptable）套接字出现时（客户端对服务器的监听套接字执行 connect 操作）， 套接字产生 AE_READABLE 事件。
+- 当套接字变得可写时（客户端对套接字执行 read 操作）， 套接字产生 AE_WRITABLE 事件。
+
+API:
+
+- `ae.c/aeCreateFileEvent` 函数接受一个套接字描述符、 一个事件类型、 以及一个事件处理器作为参数， 将给定套接字的给定事件加入到 I/O 多路复用程序的监听范围之内， 并对事件和事件处理器进行关联。
+- `ae.c/aeDeleteFileEvent` 函数接受一个套接字描述符和一个监听事件类型作为参数， 让 I/O 多路复用程序取消对给定套接字的给定事件的监听， 并取消事件和事件处理器之间的关联。
+- `ae.c/aeGetFileEvents` 函数接受一个套接字描述符， 返回该套接字正在被监听的事件类型：AE_NONE、AE_READABLE、AE_WRITABLE、AE_READABLE|AE_WRITABLE。
+- `ae.c/aeWait` 函数接受一个套接字描述符、一个事件类型和一个毫秒数为参数， 在给定的时间内阻塞并等待套接字的给定类型事件产生， 当事件成功产生， 或者等待超时之后， 函数返回。
+- `ae.c/aeApiPoll` 函数接受一个 `sys/time.h/struct timeval` 结构为参数， 并在指定的时间內， 阻塞并等待所有被 aeCreateFileEvent 函数设置为监听状态的套接字产生文件事件， 当有至少一个事件产生， 或者等待超时后， 函数返回。
+- `ae.c/aeProcessEvents` 函数是文件事件分派器， 它先调用 aeApiPoll 函数来等待事件产生， 然后遍历所有已产生的事件， 并调用相应的事件处理器来处理这些事件。
+- `ae.c/aeGetApiName` 函数返回 I/O 多路复用程序底层所使用的 I/O 多路复用函数库的名称： 返回 "epoll" 表示底层为 epoll 函数库， 返回"select" 表示底层为 select 函数库， 诸如此类。
+
+文件事件的处理器：
+
+Redis 为文件事件编写了多个处理器， 这些事件处理器分别用于实现不同的网络通讯需求， 比如说：
+
+- 为了对连接服务器的各个客户端进行应答， 服务器要为监听套接字关联连接应答处理器。
+- 为了接收客户端传来的命令请求， 服务器要为客户端套接字关联命令请求处理器。
+- 为了向客户端返回命令的执行结果， 服务器要为客户端套接字关联命令回复处理器。
+- 当主服务器和从服务器进行复制操作时， 主从服务器都需要关联特别为复制功能编写的复制处理器。
+- 等等。
+
+连接应答处理器：
+
+`networking.c/acceptTcpHandler`函数是对`sys/socket.h/accept`函数的包装。
+
+![服务器对客户端的连接请求进行应答](../.gitbook/assets/31bade2668989698095e8518fc001ccc.png)
+
+命令请求处理器：
+
+`networking.c/readQueryFromClient`是对`unistd.h/read`函数的包装。
+
+![服务器接收客户端发来的命令请求](../.gitbook/assets/b5d23973e01a047e92d2e570d0b36f1a.png)
+
+命令回复处理器:
+
+`networking.c/sendReplyToClient`是对`unistd.h/write`函数的包装。
+
+![服务器向客户端发送命令回复](../.gitbook/assets/de6fb37209012f92ec78028a271b2fb2.png)
+
+当命令回复发送完毕之后， 服务器就会解除命令回复处理器与客户端套接字的 AE_WRITABLE 事件之间的关联。当再次有内容需要TCP发送时再次注册事件关联等待触发。
+
 ## 客户端
 
 - 客户端属性
