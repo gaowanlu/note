@@ -1435,6 +1435,76 @@ sorted_set_size 记录了有序集合的大小， 也即是这个有序集合保
 
 - AOF持久化的实现
 
+AOF持久化功能的实现可以分为命令追加(append)、文件写入、文件同步(sync)三个步骤。
+
+命令追加:
+
+当AOF持久化功能处于打开状态时，服务器在执行完一个写命令之后，会以协议格式将被执行的写命令追加到服务器状态的aof_buf缓冲区的末尾。
+
+```c
+struct redisServer{
+    // ...
+
+    // AOF缓冲区
+    sds aof_buf;
+
+    // ...
+};
+```
+
+例如客户端向服务器发送以下命令
+
+```bash
+redis> SET KEY VALUE
+OK
+```
+
+服务器在执行这个SET命令之后，会将以下协议内容追加到aof_buf缓冲区的末尾。
+
+```bash
+*3\r\n$3\r\nSET\r\n$3\r\nKEY\r\n$5\r\nVALUE\r\n
+```
+
+```bash
+redis> RPUSH NUMBERS ONE TWO THREE
+(integer) 3
+```
+
+```bash
+*5\r\n$5\r\nRPUSH\r\n$7\r\nNUMBERS\r\n$3\r\nONE\r\n$3\r\nTWO\r\n$5\r\nTHREE\r\n
+```
+
+AOF文件的写入与同步：
+
+Redis的服务器进程就是一个事件循环(Loop),这个循环中的文件事件负责接收客户端的命令请求，以及向客户端发送命令回复，而时间时间则负责执行像serverCron函数这样需要定时运行的函数。
+
+```bash
+# 伪代码
+def eventLoop():
+    while True:
+        # 处理文件事件，接收命令请求以及发送命令回复
+        # 处理命令请求时可能会有新内容被追加到aof_buf缓冲区中
+        processFileEvents()
+        # 处理时间事件
+        processTimeEvents()
+        # 考虑是否要将aof_buf中的内容写入和保存到AOF文件里面
+        flushAppendOnlyFile()
+```
+
+flushAppendOnlyFile函数的形为由服务器配置的appendfsync选项的值来决定
+
+|appendfsync选项的值|flushAppendOnlyFile函数的行为|
+|---|---|
+|always|将aof_buf缓冲区中的所有内容写入并同步到 AOF 文件。|
+|everysec|将 aof_buf 缓冲区中的所有内容写入到 AOF 文件， 如果上次同步 AOF 文件的时间距离现在超过一秒钟， 那么再次对 AOF 文件进行同步， 并且这个同步操作是由一个线程专门负责执行的。|
+|no|将 aof_buf 缓冲区中的所有内容写入到 AOF 文件， 但并不对 AOF 文件进行同步， 何时同步由操作系统来决定。|
+
+appendfsync的默认值为everysec。
+
+AOF文件同步其实就是，对文件描述符进行fsync和fdatasync,它们可以强制让操作系统立即将缓冲区中的数据写入到硬盘里面。
+
+always宕机最多丢失一个事件循环数据，everysec最多丢失一秒的数据，no就不知道了由操作系统决定。
+
 ## 事件
 
 - 文件事件
