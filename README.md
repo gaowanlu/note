@@ -8,7 +8,7 @@ coverY: 0
 
 I have a dream. Keep going.
 
-![It's me](./.gitbook/assets/57703023.jpg)
+![It's me](./.gitbook/assets/57703023.jpg){:width="60px" height="60px"}
 
 ## 最近想看的一些书
 
