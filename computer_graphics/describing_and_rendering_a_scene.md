@@ -2,7 +2,260 @@
 
 ## 表示一个立方体
 
+如何表示和操作立方体，目标是找到一种更通用的方法。就是使用三角形表示。如立方体可以用12个三角形表示，每面从对角线将面分为两个三角形。
+
+实现效果
+
+![scene stepup demo1](../.gitbook/assets/fvhdif_2323_cd290d9203.png)
+
+源码
+
+```html
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Scene setup demo 1</title>
+</head>
+
+<div class="centered">
+    <canvas id="canvas" width=600 height=600 style="border: 1px grey solid"></canvas>
+</div>
+<script>
+    "use strict";
+
+    // ======================================================================
+    //  Low-level canvas access.
+    // ======================================================================
+
+    let canvas = document.getElementById("canvas");
+    let canvas_context = canvas.getContext("2d");
+    let canvas_buffer = canvas_context.getImageData(0, 0, canvas.width, canvas.height);
+
+    // A color.
+    function Color(r, g, b) {
+        return {
+            r, g, b,
+            mul: function (n) { return new Color(this.r * n, this.g * n, this.b * n); },
+        };
+    }
+
+    // The PutPixel() function.
+    function PutPixel(x, y, color) {
+        x = canvas.width / 2 + (x | 0);
+        y = canvas.height / 2 - (y | 0) - 1;
+
+        if (x < 0 || x >= canvas.width || y < 0 || y >= canvas.height) {
+            return;
+        }
+
+        let offset = 4 * (x + canvas_buffer.width * y);
+        canvas_buffer.data[offset++] = color.r;
+        canvas_buffer.data[offset++] = color.g;
+        canvas_buffer.data[offset++] = color.b;
+        canvas_buffer.data[offset++] = 255; // Alpha = 255 (full opacity)
+    }
+
+
+    // Displays the contents of the offscreen buffer into the canvas.
+    function UpdateCanvas() {
+        canvas_context.putImageData(canvas_buffer, 0, 0);
+    }
+
+
+    // ======================================================================
+    //  Data model.
+    // ======================================================================
+
+    // A Point.
+    function Pt(x, y, h) {
+        return { x, y, h };
+    }
+
+
+    // A 3D vertex.
+    function Vertex(x, y, z) {
+        return { x, y, z };
+    }
+
+
+    // A Triangle.
+    function Triangle(v0, v1, v2, color) {
+        return { v0, v1, v2, color };
+    }
+
+
+    // ======================================================================
+    //  Rasterization code.
+    // ======================================================================
+
+    // Scene setup.
+    let viewport_size = 1;
+    let projection_plane_z = 1;
+
+
+    function Interpolate(i0, d0, i1, d1) {
+        if (i0 == i1) {
+            return [d0];
+        }
+
+        let values = [];
+        let a = (d1 - d0) / (i1 - i0);
+        let d = d0;
+        for (let i = i0; i <= i1; i++) {
+            values.push(d);
+            d += a;
+        }
+
+        return values;
+    }
+
+
+    function DrawLine(p0, p1, color) {
+        let dx = p1.x - p0.x, dy = p1.y - p0.y;
+
+        if (Math.abs(dx) > Math.abs(dy)) {
+            // The line is horizontal-ish. Make sure it's left to right.
+            if (dx < 0) { let swap = p0; p0 = p1; p1 = swap; }
+
+            // Compute the Y values and draw.
+            let ys = Interpolate(p0.x, p0.y, p1.x, p1.y);
+            for (let x = p0.x; x <= p1.x; x++) {
+                PutPixel(x, ys[(x - p0.x) | 0], color);
+            }
+        } else {
+            // The line is verical-ish. Make sure it's bottom to top.
+            if (dy < 0) { let swap = p0; p0 = p1; p1 = swap; }
+
+            // Compute the X values and draw.
+            let xs = Interpolate(p0.y, p0.x, p1.y, p1.x);
+            for (let y = p0.y; y <= p1.y; y++) {
+                PutPixel(xs[(y - p0.y) | 0], y, color);
+            }
+        }
+    }
+
+
+    function DrawWireframeTriangle(p0, p1, p2, color) {
+        DrawLine(p0, p1, color);
+        DrawLine(p1, p2, color);
+        DrawLine(p0, p2, color);
+    }
+
+
+    // Converts 2D viewport coordinates to 2D canvas coordinates.
+    function ViewportToCanvas(p2d) {
+        return new Pt(
+            p2d.x * canvas.width / viewport_size,
+            p2d.y * canvas.height / viewport_size);
+    }
+
+
+    function ProjectVertex(v) {
+        return ViewportToCanvas(new Pt(
+            v.x * projection_plane_z / v.z,
+            v.y * projection_plane_z / v.z));
+    }
+
+
+    function RenderTriangle(triangle, projected) {
+        DrawWireframeTriangle(projected[triangle.v0],
+            projected[triangle.v1],
+            projected[triangle.v2],
+            triangle.color);
+    }
+
+
+    function RenderObject(vertices, triangles) {
+        let projected = [];
+        // 将物体顶点映射到画布
+        for (let i = 0; i < vertices.length; i++) {
+            projected.push(ProjectVertex(vertices[i]));
+        }
+        // 在画布上将三角形根据顶点连起来
+        for (let i = 0; i < triangles.length; i++) {
+            RenderTriangle(triangles[i], projected);
+        }
+    }
+
+    // 物体顶点
+    const vertices = [
+        new Vertex(1, 1, 1),
+        new Vertex(-1, 1, 1),
+        new Vertex(-1, -1, 1),
+        new Vertex(1, -1, 1),
+        new Vertex(1, 1, -1),
+        new Vertex(-1, 1, -1),
+        new Vertex(-1, -1, -1),
+        new Vertex(1, -1, -1)
+    ];
+
+    // 颜色
+    const RED = new Color(255, 0, 0);
+    const GREEN = new Color(0, 255, 0);
+    const BLUE = new Color(0, 0, 255);
+    const YELLOW = new Color(255, 255, 0);
+    const PURPLE = new Color(255, 0, 255);
+    const CYAN = new Color(0, 255, 255);
+
+    // 用顶点表示三角形
+    const triangles = [
+        new Triangle(0, 1, 2, RED),
+        new Triangle(0, 2, 3, RED),
+        new Triangle(4, 0, 3, GREEN),
+        new Triangle(4, 3, 7, GREEN),
+        new Triangle(5, 4, 7, BLUE),
+        new Triangle(5, 7, 6, BLUE),
+        new Triangle(1, 5, 6, YELLOW),
+        new Triangle(1, 6, 2, YELLOW),
+        new Triangle(4, 5, 1, PURPLE),
+        new Triangle(4, 1, 0, PURPLE),
+        new Triangle(2, 6, 7, CYAN),
+        new Triangle(2, 7, 3, CYAN)
+    ];
+
+    // 平移物体所有顶点
+    for (let i = 0; i < vertices.length; i++) {
+        vertices[i].x -= 1.5;
+        vertices[i].z += 7;
+    }
+
+    RenderObject(vertices, triangles);
+
+    UpdateCanvas();
+
+</script>
+
+</html>
+```
+
 ## 模型和模型实例
+
+更好的表示方法是模型 model 和 实例 instance的角度进行思考。
+
+```bash
+model {
+	name = cube
+	vertices {
+		...
+	}
+	triangles {
+		...
+	}
+}
+
+instance {
+	model = cube
+	position = (0, 0, 5)
+}
+
+instance {
+	model = cube
+	position = (1, 2, 3)
+}
+```
 
 ## 模型变换
 
