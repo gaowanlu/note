@@ -243,3 +243,137 @@
     n.环境
 
 ## 3500第3单元
+
+- [ ] `character [ˈkærəktə]`
+    n.字符；性格；特征 【例】a Chinese character一个汉字//He has a strong but gentlecharacter.他性格坚强而又温柔。
+
+- [ ] `insect [ˈɪnsekt]`
+    n.昆虫 【例】Most people think cockroaches are disgusting insects.大多数人认为蟑螂是一种令人恶心的昆虫。
+
+- [ ] `part [pɑːt]`
+    n.部分；角色 v.分离，分别 【例】If a small part of the plane were to fail, the plane wouldexplode in the sky.飞机上一个小零件出了问题都会使飞机在空中爆炸。
+
+- [ ] `bear [beə]`
+    v.（bore, borne/born, bearing）承担；忍受 n.熊 【例】Who will bear the losses caused by pollution?谁将承担污染所造成的损失？//I can't bear sad music.我受不了悲伤的音乐。
+
+- [ ] `angle [ˈæŋɡl]`
+    n.角，角度 【例】The reporter wrote the story from the political angle.记者从政治角度写了这篇报道。
+
+- [ ] `outgoing [ˈaʊtɡəʊɪŋ]`
+    adj.好交际的，外向的；即将离职的 【例】She is an outgoing girl.她是个外向的女孩。
+
+- [ ] `give [ɡɪv]`
+    v.（gave, given, giving）给，付出 【例】Collecting coins gives him great pleasure.收集硬币给他带来了很多乐趣。
+
+- [ ] `wander [ˈwɒndə]`
+    v.游荡；漫步；流浪 【例】As I moved up the hill, my attention wandered for a fewminutes.上山途中我有几分钟走神了。
+    【参】wandering（adj.流浪的）；wanderer（n.漫游者；流浪汉）
+
+- [ ] `idea [aɪˈdɪə]`
+    n.主意，意见；打算，想法 【例】I had no idea what to do when I faced the difficult mathproblem.当我面对这道数学难题时，我不知道该怎么办。
+
+- [ ] `sort [sɔːt]`
+    v.分类，拣选 n.种类，类别
+
+- [ ] `call [kɔːl]`
+    n.叫；电话 v.称呼；呼唤；叫；呼叫 【参】recall（vt.回忆，记起）
+
+- [ ] `how [haʊ]`
+    adv.怎样，如何；多少；多么 【例】Edward didn't know how to express his love when facing thebeautiful girl.爱德华面对那个漂亮女孩时不知道怎么表达他的爱意。
+
+- [ ] `early [ˈɜːli]`
+    adj.早的，早期的 adv.早，在早期 【例】In order not to miss the first bus, Tom got up very early.为了不错过首班车，汤姆起得很早。
+
+- [ ] `independent [ˌɪndɪˈpendənt]`
+    adj.独立的，有主见的 【例】Symbols and the things they stand for are all independent ofeach other.符号与它们代表的事物之间是相互独立的。
+    【参】independently（adv.独立地）；independence（n.独立）
+
+- [ ] `dismiss [dɪsˈmɪs]`
+    v.解雇；解散 【例】He was so irresponsible that I decided to dismiss him.他太不负责了，我决定解雇他。
+
+- [ ] `content [kənˈtent][ˈkɒntent]`
+    adj.满意的 n.内容；含量 【例】After a good meal, we were all content.美餐一顿之后，我们都心满意足了。//This dessert has a high fat content.这种甜点脂肪含量很高。
+
+- [ ] `permit [pəˈmɪt]`
+    v.（permitted, permitted, permitting）许可，允许 n.许可证，执照
+    【例】You need a permit to park here.在这里停车需要许可证。
+    【参】permission（n.允许，许可，同意）
+
+- [ ] `court [kɔːt]`
+    n.法庭，法院；球场 【例】football courts足球场 【参】courtyard（n.庭院，院子）
+
+- [ ] `youth [juːθ]`
+    n.青春；青年 【例】The twins played and studied together in their youth.这对双胞胎年少时在一起玩耍和学习。
+    【参】youthful（adj.年轻的
+
+- [ ] `possession [pəˈzeʃn]`
+    n.所有，拥有；财产，所有物 【例】The photo of her husband is Mary's most precious possession.玛丽丈夫的这张照片是她最珍爱的物品。
+    【参】possessive（adj.所有的，占有的）
+
+- [ ] `arrive [əˈraɪv]`
+    vi.到达，达到 【参】arrival（n.到来，到达）
+
+- [ ] `unless [ənˈles]`
+    conj.如果不，除非 【例】It is known to all that unless you exercise regularly, you won'tkeep good health.众所周知，经常锻炼才会保持健康。
+
+- [ ] `risk [rɪsk]`
+    n.冒险，风险 vt.冒...的危险 【例】He got well-prepared for the job interview,for he couldn't risk losing the good opportunity.他为面试做了充分准备，因为他不能冒险失去这个好机会。
+
+- [ ] `harvest [ˈhɑːvɪst]`
+    n./v.收割；收获（物） 【例】A skilled worker can harvest9-14kilograms of tea leaves a day.一名娴熟的工人每天可以采9~14公斤的茶叶。
+
+- [ ] `mental [ˈmentl]`
+    adj.精神的，脑力的 【例】Forgiveness can be helpful to your mental and physical health.宽容有助于你的身心健康。//mental disorders精神错乱
+
+- [ ] `electric [Iˈlektrɪk]`
+    adj.电的 【例】an electric clock电子钟
+
+- [ ] `fall [fɔːl]`
+    vi.（fell, fallen, falling）落（下），降落；跌倒（英autumn） n.秋季
+
+- [ ] `hand [hænd]`
+    n.手；指针 vt.交付；传递 【例】hand luggage手提行李
+
+- [ ] `relief [rɪˈliːf]`
+    n.缓解（疼痛）；轻松 【例】This persuasive girl can bring some relief to low-spirit people.这个有说服力的女孩能够带给情绪低落的人一些慰藉。
+
+- [ ] `figure [ˈfɪɡə]`
+    n.数字；人物；画像；身材 v.认为；（在心里）描绘
+    figure out计算出；弄明白：I cannot figure out why he quittedhis job.我弄不明白他为什么辞职。
+
+- [ ] `extra [ˈekstrə]`
+    adj.额外的，外加的 【例】I had to work extra hours to finish the report.我得加班几小时来完成这个报告。
+
+- [ ] `clear [klɪə]`
+    adj.清晰的；明亮的；清楚的 【例】Professor Green gave a clear explanation of the difficultproblem.格林教授对这个难题做了清楚的讲解。
+
+- [ ] `luggage [ˈlʌɡɪdʒ]`
+    n.〈总称〉行李
+    【例】My luggage was stolen at the bus station.我的行李在公交车站被偷了。
+
+- [ ] `govern [ˈɡʌvn]`
+    v.统治；管理 【例】The Liberal Democratic Party governed Japan fornearly40years.自由民主党统治了日本将近40年。
+    【参】government（n.政府）
+
+- [ ] `lovely [ˈlʌvli]`
+    adj.美好的，可爱的 【例】The little girl looked lovely in a white long dress.那个小女孩穿着白色的长裙，看上去很可爱。
+
+- [ ] `familiar [fəˈmɪliə]`
+    adj.熟悉的
+
+- [ ] `somewhere [ˈsʌmweə]`
+    adv.在某处，到某处
+    【例】I've seen her somewhere before.我以前在什么地方见过她。
+
+- [ ] `forgive [fəˈɡɪv]`
+    v.（forgave, forgiven, forgiving）原谅，宽恕
+    Tom cannot forgive himself for not seeing his motherbefore she died.汤姆永远不能原谅自己，因为他未能在他的母亲去世前见她一面。
+
+- [ ] `corporation [ˌkɔːpəˈreɪʃn]`
+    n.团体；公司，企业
+    【例】Mary works for a corporation that produces computers.玛丽在一家生产计算机的公司工作。
+
+- [ ] `back [bæk]`
+    adv.回（原处）；向后 adj.后面的 n.背后，后部；背
+
+## 3500第4单元
