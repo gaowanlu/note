@@ -377,3 +377,152 @@
     adv.回（原处）；向后 adj.后面的 n.背后，后部；背
 
 ## 3500第4单元
+
+- [ ] `free [friː]`
+    adj.自由的，空闲的；免费的
+
+- [ ] `very [ˈveri]`
+    adv.很，非常 adj.恰好的，正好的 That's the very thing I'vebeen looking for.那正是我一直在找的东西。
+
+- [ ] `land [lænd]`
+    n.陆地 v.登陆；（使）降落 The pilot landed the plane safely.驾驶员使飞机安全降落了。
+
+- [ ] `flame [fleɪm]`
+    n.火焰，光辉 【例】The sticks burst into flames.木柴很快烧了起来。
+
+- [ ] `political [pəˈlɪtɪkl]`
+    adj.政治的 【例】He is a political leader.他是一名政治领袖。
+    【参】politician（n.政治家，政客）；politics〔n.政治（学）〕
+
+- [ ] `bit [bɪt]`
+    n.一点，一些，少量
+
+- [ ] `journey [ˈdʒɜːni]`
+    n.旅行，路程 【例】The journey around the world took the old sailor nine months.老水手用9个月的时间完成了环球旅行。
+
+- [ ] `lie [laI]`
+    n.谎言 vi.（lay, lain, lying）躺，卧，平放；位于 vt.（lied, lied, lying）说谎  
+    //The newspaper is lying next to the bed.报纸在床旁边。//Lie still and don't make any noise.躺着别动，也不要发出任何声音。
+
+- [ ] `merciful [ˈmɜːsɪfl]`
+    adj.仁慈的；宽大的 【例】The merciful king set the prisoner free at the end of the story.故事的最后，仁慈的国王释放了那个囚犯。
+
+- [ ] `bend [bend]`
+    v.（bent, bent, bending）弯曲；弯腰，屈身  
+    【例】Bend your arms and touch your shoulders.曲臂触摸双肩。//He bent over the sink to do the dishes.他弯下腰在水槽里面洗碗。  
+    【参】bent（adj.弯的）  
+
+- [ ] `cycle [ˈsaɪkl]`
+    n.周期；循环 vi.骑自行车，循环 vt.使循环  
+    I cannot cycle to school today becausemy bike is broken.今天我不能骑车上学，因为我的车坏了。  
+    【参】bicycle（n.自行车）；recycle（v.回收）；tricycle（n.三轮车）；cyclist（n.骑自行车的人）  
+
+- [ ] `annoy [əˈnɔI]`
+    vt.使烦恼，使生气；骚扰  
+    【例】John's little brother annoyed him by changing the TV channels.约翰的弟弟总是换台，弄得他很烦。
+    【参】annoyance（n.烦恼）；annoying（adj.烦人的）；annoyingly（adv.烦人地）
+
+- [ ] `mind [maɪnd]`
+    n.思想 v.介意
+
+- [ ] `die [daI]`
+    v.（died, died, dying）死亡；消失；熄灭  
+    The fire became weak and finally diedout.火变得微弱，最终熄灭了。  
+
+- [ ] `fact [fækt]`
+    n.事实，现实  
+    I'm going there tomorrow, as a matter of fact.实际上我明天就要去那儿。
+
+- [ ] `declare [dɪˈkleə]`
+    v.宣布，声明；断言；申报（应纳税品）
+    【例】If you have nothing to declare, go through the Green Channel.如果你没有物品需要申报，请走绿色通道。
+
+- [ ] `warn [wɔːn]`
+    v.警告；预告 【参】warning（n.警告）
+
+- [ ] `obey [əˈbeI]`
+    v.服从，顺从 【例】A soldier's duty is to obey orders.服从命令是士兵的职责。
+    【参】disobey（v.违抗，不服从）
+
+- [ ] `grade [ɡreɪd]`
+    n.等级；（中小学的）学年；成绩，分数
+    【例】Jim's elder brother will enter the sixth grade this autumn.吉姆的哥哥今年秋季将升入六年级。
+
+- [ ] `expensive [Ikˈspensɪv]`
+    adj.昂贵的，高消费的  
+    【例】expensive region高消费区//The house rent is expensive.房租很贵。  
+    【参】inexpensive（adj.便宜的）
+
+- [ ] `announce [əˈnaʊns]`
+    v.宣布，宣告  
+    【例】John and Mary announced their engagement last night.昨天晚上约翰和玛丽宣布了他们订婚的消息。  
+    【参】announcement（n.通告，声明）
+
+- [ ] `nowhere [ˈnəʊweə]`
+    adv.任何地方都不；无处
+    【例】The new novel Henry writes can be bought nowhere.亨利写的那本新小说什么地方都买不到。
+
+- [ ] `persuade [pəˈsweɪd]`
+    v.说服，劝说；使相信 【例】I persuaded her that what I had said was true.我使她相信了我的话。
+
+- [ ] `decision [dɪˈsɪʒn]`
+    n.决定；决议
+
+- [ ] `real [rɪəl]`
+    adj.真实的，确实的 【参】really（adv.真正地）；reality（n.真实，现实）
+
+- [ ] `seldom [ˈseldəm]`
+    adv.很少，不常
+    We couldhardly move.我们几乎不能动
+
+- [ ] `need [niːd]`
+    vt.需要modal v.必须 n.需要，需求
+    【例】You don't need to describe her, because I have met her severaltimes.你不用给我形容她长什么样子，我已经见过她好几次了。
+
+- [ ] `spot [spɒt]`
+    n.斑点，污点；场所，地点
+    vt.（spotted, spotted, spotting）沾上污渍，弄脏；认出，发现
+    【例】spot mistakes发现错误
+
+- [ ] `anyway [ˈeniweI]`
+    adv.不管怎样  
+    【例】I'm sorry about that.Anyway, I think I'll be able to get to worktomorrow.对此我感到抱歉。但不管怎样，我想明天我就能开始工作了。
+
+- [ ] `punish [ˈpʌnɪʃ]`
+    v.惩罚，处罚
+    His parents punished himfor coming home late.因为回家晚了，他的父母惩罚了他。  
+    【参】punishment（n.惩罚）
+
+- [ ] `challenge [ˈtʃælɪndʒ]`
+    n.挑战；挑战性 vt.挑战
+    He challenged me to a game of chess.他向我挑战下棋。
+
+- [ ] `situation [ˌsɪtʃuˈeɪʃn]`
+    n.形势，情况
+
+- [ ] `extraordinary [Ikˈstrɔːdnri]`
+    adj.非常的；非凡的
+
+- [ ] `frost [frɒst]`
+    n.霜
+    【例】The grass was covered with frost.草被霜覆盖。
+
+- [ ] `convince [kənˈvɪns]`
+    vt.使确信，使信服
+    【例】What can I do to convince you of the truth?我要怎么做才能让你相信这是事实？
+
+- [ ] `shock [ʃɒk]`
+    vt.使震惊 n.震动，冲击
+    【参】shocking（adj.令人震惊的；令人厌恶的；非常糟的）；shocked（adj.感到震惊的）
+
+- [ ] `slight [slaɪt]`
+    adj.轻微的，细小的 【参】slightly（adv.轻微地）
+
+- [ ] `unfair [ˌʌnˈfeə]`
+    adj.不公平的，不公正的
+    【参】unfairly（adv.不公正地）
+
+- [ ] `on [ɒn]`
+    prep.在...上；在...时候；在...地方；关于 adv.继续
+
+## 3500第5单元
