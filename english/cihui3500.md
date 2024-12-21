@@ -526,3 +526,172 @@
     prep.在...上；在...时候；在...地方；关于 adv.继续
 
 ## 3500第5单元
+
+- [ ] `screen [skriːn]`
+    n.幕，荧光屏
+    【例】TV screen电视荧屏
+
+- [ ] `pay [peI]`
+    v.（paid, paid, paying）付钱，偿还
+    n.工资
+    【例】People in Sweden pay taxes on everything.在瑞典，人们对所有东西都纳税。//I paid10yuan for the book.我买这本书花了十元钱。
+
+- [ ] `goal [ɡəʊl]`
+    n.目标；进球得分；（足球）球门
+    【例】He kicked the ball straight into the goal.他直接把球踢入了球门。
+
+- [ ] `consider [kənˈsɪdə]`
+    v.考虑；认为
+    Have you considered goingabroad?你考虑过出国吗？
+    【参】consideration（n.考虑；关心）
+
+- [ ] `simple [ˈsɪmpl]`
+    adj.简单的，简易的
+    【例】The question is so simple that everyone can answer it.这个问题很简单，每个人都能回答出来。
+
+- [ ] `select [sɪˈlekt]`
+    vt.选择，挑选，选拔
+    adj.精选的
+    【例】Our shops only select the product of the best quality.我们商店只选质量最好的产品。
+    【参】selection（n.选择）
+
+- [ ] `only [ˈəʊnli]`
+    adj.唯一的，仅有的
+    adv.只，仅仅
+    【例】I am an only child.我是独生子。//She's only15and shebecomes a famous movie star.她只有15岁就成了著名影星。
+
+- [ ] `drive [draɪv]`
+    v.驾驶，开（车）；驱赶
+    【例】You must not drive after drinking.酒后禁止驾车。
+
+- [ ] `basement [ˈbeɪsmənt]`
+    n.地下室
+    【例】We stored all our old things in the basement.我们把所有的旧物都存放在地下室里。
+
+- [ ] `identity [aɪˈdentəti]`
+    n.身份；一致；特性
+    【例】Only when your identity has been checked, will you be allowedin.核实身份后你才可以进入。
+
+- [ ] `hammer [ˈhæmə]`
+    n.锤子，锣锤 v.敲，锤击
+    【例】It is easy to do the repair.All you need is a hammer and somenails.把它修好很容易。你只需要一把锤子和一些钉子。//Shehammered on the door with her hands.她用手锤打着门。
+
+- [ ] `thr ow [θrəʊ]`
+    v.（threw, thrown, throwing）投，掷，扔
+    【例】She told her naughty son not to throw stones at the window.她告诉淘气的儿子不要往窗户上扔石子。
+
+- [ ] `embarrass [Imˈbærəs]`
+    vt.使困窘，使尴尬，使局促不安
+    【参】embarrassing（adj.令人尴尬的）；embarrassed（adj.尴尬的）
+
+- [ ] `bite [baɪt]`
+    v.（bit, bitten, biting）咬，叮
+    n.咬；一口
+    【例】Their dog bit a hole in my trousers.他们的狗把我的裤子咬了一个窟窿。//He ate the bread at one bite.他一口吃掉了那块面包。
+
+- [ ] `energy [ˈenədʒi]`
+    n.精力；能量；能源
+    【例】energy sources能源//energy conservation节能
+
+- [ ] `festival [ˈfestɪvl]`
+    n.节日
+    adj.节日的，喜庆的
+    【例】the Spring Festival春节
+
+- [ ] `expect [Ikˈspekt]`
+    v.预料；期望；要求
+    【参】unexpected（adj.意外的，想不到的）；expectedly（adv.预料之中地）；unexpectedly（adv.出乎意料地）；expectation（n.预料；期望）
+
+- [ ] `camp [kæmp]`
+    n./v.野营，宿营
+    【例】summer camp夏令营
+    【参】campsite（n.宿营地）；campfire（n.营火）
+
+- [ ] `analysis [əˈnæləsɪs]`
+    n.分析；解析
+    【例】The boss was pleased with John's analysis of the currenteconomic situation.老板很满意约翰对当前经济形势的分析。
+    【参】analyse（v.分析；研究）；analyst（n.分析者；化验员）
+
+- [ ] `evident [ˈevɪdənt]`
+    adj.明显的，显然的
+    【例】It is evident that you are not telling me the truth.很明显，你没和我说实话。
+
+- [ ] `smoke [sməʊk]`
+    n.烟 v.冒烟；吸烟
+    【例】The“No Smoking”sign in the room means that smokers mustgo outside for a smoke.房间中的禁止吸烟标志表明吸烟者要去外面吸烟。
+
+- [ ] `deaf [def]`
+    adj.聋的
+    【例】a deaf-and-dumb man聋哑人
+    【参】blind（adj.瞎的）；lame（adj.瘸的）；dumb（adj.哑的）
+
+- [ ] `dial [ˈdaɪəl]`
+    v.拨（电话号码）
+    【例】I dialed several times, but I got a busy signal each time.我拨了好几次电话，但每次都是忙音。
+
+- [ ] `repeat [rɪˈpiːt]`
+    vt.重说，重做；重复
+    【例】Mary asked the man to repeat because she did not hear himclearly.玛丽让那个男人再重复一遍，因为她没听清楚。
+
+- [ ] `plenty [ˈplenti]`
+    n.充足，大量，丰富
+    【例】Now, there is plenty of food and water for people who sufferfrom flood.现在，遭受洪灾的人有充足的食物和水。
+    【参】plentiful（adj.许多的，大量的）
+
+- [ ] `humorous [ˈhjuːmərəs]`
+    adj.幽默的
+    【例】The group of young students were creative, energetic, andhumorous.这群年轻的学生富有创造力、精力充沛而且幽默。
+
+- [ ] `geography [dʒiˈɒɡrəfi]`
+    n.地理学
+    【例】a geography textbook地理课本
+
+- [ ] `correction [kəˈrekʃn]`
+    n.改正
+    【例】corrections of the errors改错
+
+- [ ] `bare [beə]`
+    vt.使赤裸；露出 adj.赤裸的；光秃的
+    【例】The dog bared its teeth and growled.那条狗龇着牙咆哮着。
+
+- [ ] `action [ˈækʃn]`
+    n.行动
+    Immediateaction should be taken to stop the spreading of the fire.必须采取紧急措施阻止火势蔓延。
+
+- [ ] `laugh [lɑːf]`
+    n.笑，大笑，笑声；嘲笑
+    vi.笑，大笑
+    【例】It's impolite for students to laugh at their poor classmates.学生们嘲笑贫困的同学是不礼貌的。
+
+- [ ] `request [rɪˈkwest]`
+    n./vt.要求，请求
+    【例】These materials are in great request.对这些材料的需求量很大。//Visitors are requested not to touch the exhibits.游客们被要求不要触摸展览品。
+
+- [ ] `cause [kɔːz]`
+    n.原因，起因    vt.促使，引起
+    【例】The public have known a great deal about the causes of heartdisease.人们对于导致心脏病的原因已颇为了解。//This disease maycause memory loss.这种病可能会导致记忆丧失。
+
+- [ ] `destroy [dɪˈstrɔI]`
+    v.破坏，毁坏
+    【例】destroy forests破坏森林//destroy trust破坏信任
+
+- [ ] `forward [ˈfɔːwəd]`
+    adj.早的；前进的 adv.向前，前进
+    【例】They moved the meeting forward from the20th to the18th.他们把会议日期从20号提前到了18号。
+
+- [ ] `distinction [dɪˈstɪŋkʃn]`
+    n.区别；差别
+
+- [ ] `limit [ˈlɪmɪt]`
+    vt.限制，限定；减少
+    【例】My mother limits the amount of food that I eat.我母亲限制我的饭量。
+
+- [ ] `expand [Ikˈspænd]`
+    vt.扩张 vi.发展
+    【例】expand markets拓展市场//Metals expand when they areheated.金属遇热膨胀。
+
+- [ ] `custom [ˈkʌstəm]`
+    n.习惯，习俗
+    【例】Eating roast turkey is a Thanksgiving custom.感恩节吃烤火鸡是一种习俗。
+
+## 3500第6单元
