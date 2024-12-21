@@ -144,6 +144,11 @@
   * [着色三角形](computer_graphics/shaded_triangle.md)
   * [透视投影](computer_graphics/perspective_projection.md)
   * [场景的描述和渲染](computer_graphics/describing_and_rendering_a_scene.md)
+  * [裁剪](computer_graphics/clipping.md)
+  * [移除隐藏表面](computer_graphics/hidden_surface_removal.md)
+  * [着色](computer_graphics/shading.md)
+  * [纹理](computer_graphics/texture.md)
+  * [扩展光栅化渲染器](computer_graphics/extended_rasterization_renderer.md)
 
 ## 💻 操作系统
 
