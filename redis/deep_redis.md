@@ -2045,7 +2045,7 @@ Redis的复制功能分为同步(sync)和命令传播(command propagate)两个�
 
 ## Sentinel
 
-youtube Raft <http://v.youku.com/v_show/id_XNjQxOTk5MTk2.html>
+youku Raft <http://v.youku.com/v_show/id_XNjQxOTk5MTk2.html>
 
 Redis Sentinel 是 Redis 的高可用性解决方案。它的主要功能包括：
 
