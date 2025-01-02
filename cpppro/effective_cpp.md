@@ -1730,6 +1730,82 @@ int main(int argc, char **argv)
 
 ### 26、尽可能延后变量定义式的出现时间
 
+* 尽可能延后变量定义式的出现，这样做可增加程序的清晰度并改善程序效率。
+
+只要定义了一个变量其类型带有一个构造函数或析构函数，当程序控制流到达这个变量定义式时就得承受构造成本。
+离开作用域时就得承受析构成本 即使变量最终并未被使用。
+
+```cpp
+#include <iostream>
+#include <string>
+
+constexpr int MinimumPasswordLength = 10;
+
+std::string encryptPassword(const std::string& password)
+{
+    using namespace std;
+    std::string encrypted;
+    if(password.length()<MinimumPasswordLength)
+    {
+        throw logic_error("Password is too short");
+    }
+    //..
+    return encrypted;
+}
+
+int main()
+{
+    return 0;
+}
+```
+
+下面方式更好
+
+```cpp
+#include <iostream>
+#include <string>
+
+constexpr int MinimumPasswordLength = 10;
+
+std::string encryptPassword(const std::string& password)
+{
+    using namespace std;
+    if(password.length()<MinimumPasswordLength)
+    {
+        throw logic_error("Password is too short");
+    }
+    std::string encrypted;
+    //..
+    return encrypted;
+}
+
+int main()
+{
+    return 0;
+}
+```
+
+例如下面的循环场景
+
+```cpp
+// 方法A
+Widget w;
+for(int i=0;i<n;i++)
+{
+	// w=i;
+}
+// 方法B
+for(int i=0;i<n;++i)
+{
+	Widget w(i);
+}
+```
+
+A:1个构造函数+1个析构函数+n个赋值操作
+B:n个构造函数+n个构造函数
+
+具体用那种方法，要根据具体情况评估。
+
 ### 27、尽量少做转型动作
 
 ### 28、避免返回 handles 指向对象内部成分
