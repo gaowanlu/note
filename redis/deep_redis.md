@@ -2300,6 +2300,164 @@ sentinel failover-timeout master2 450000
 
 - 节点
 
+一个Redis集群通常由多个节点组成，刚开始每个节点都是相互独立的，它们各自处于只包含自己的集群当中，要组建一个真正可工作的集群，
+必须将各个独立的节点连接起来，构成一个包含多个节点的集群。
+
+```bash
+# 连接各个节点可以使用CLUSTER MEET命令
+CLUSTER MEET <ip> <port>
+```
+
+向一个节点 node 发送 CLUSTER MEET 命令， 可以让 node 节点与 ip 和 port 所指定的节点进行握手（handshake）， 当握手成功时， node节点就会将 ip 和 port 所指定的节点添加到 node 节点当前所在的集群中。
+
+比如现在有三个独立的节点 `127.0.0.1:7000` `127.0.0.1:7001` `127.0.0.1:7002`
+
+```bash
+$ redis-cli -c -p 7000
+127.0.0.1:7000> CLUSTER NODES
+51549e625cfda318ad27423a31e7476fe3cd2939 :0 myself,master - 0 0 0 connected
+# 向节点7000发送，将节点7001添加到节点7000所在的集群里面
+127.0.0.1:7000> CLUSTER MEET 127.0.0.1 7001
+OK
+127.0.0.1:7000> CLUSTER NODES
+68eef66df23420a5862208ef5b1a7005b806f2ff 127.0.0.1:7001 master - 0 1388204746210 0 connected
+51549e625cfda318ad27423a31e7476fe3cd2939 :0 myself,master - 0 0 0 connected
+# 向节点7000发送，将节点7002添加到节点7000所在的集群里面
+127.0.0.1:7000> CLUSTER MEET 127.0.0.1 7002
+OK
+127.0.0.1:7000> CLUSTER NODES
+68eef66df23420a5862208ef5b1a7005b806f2ff 127.0.0.1:7001 master - 0 1388204848376 0 connected
+9dfb4c4e016e627d9769e4c9bb0d4fa208e65c26 127.0.0.1:7002 master - 0 1388204847977 0 connected
+51549e625cfda318ad27423a31e7476fe3cd2939 :0 myself,master - 0 0 0 connected
+```
+
+- 启动节点
+
+一个节点就是一个运行在集群模式下的Redis服务器，Redis服务器在启动时会根据cluster-enabled配置选项的是否为yes,来决定是否
+开启服务器的集群模式。
+
+```bash
+启动服务器->cluster-enabled选项的值为yes?--->是--->开启服务器的集群模式成为一个节点
+                                       --->否--->开启服务器的单机(stand alone)模式成为一个普通的Redis服务器
+```
+
+节点(运行在集群模式下的Redis服务器)会继续使用所有在单机模式中使用的服务器组件。
+
+1. 节点会继续使用文件事件处理器来处理命令请求和返回命令回复
+2. 节点会继续使用时间事件处理器来执行 serverCron 函数， 而 serverCron 函数又会调用集群模式特有的 clusterCron 函数： clusterCron函数负责执行在集群模式下需要执行的常规操作， 比如向集群中的其他节点发送 Gossip 消息， 检查节点是否断线； 又或者检查是否需要对下线节点进行自动故障转移， 等等。
+3. 节点会继续使用数据库来保存键值对数据，键值对依然会是各种不同类型的对象。
+4. 节点会继续使用 RDB 持久化模块和 AOF 持久化模块来执行持久化工作。
+5. 节点会继续使用发布与订阅模块来执行 PUBLISH 、 SUBSCRIBE 等命令。
+6. 节点会继续使用复制模块来进行节点的复制工作。
+7. 节点会继续使用 Lua 脚本环境来执行客户端输入的 Lua 脚本。
+
+等等。此外，节点会继续使用 redisServer 结构来保存服务器的状态， 使用 redisClient 结构来保存客户端的状态， 至于那些只有在集群模式下才会用到的数据， 节点将它们保存到了 `cluster.h/clusterNode` 结构， `cluster.h/clusterLink` 结构， 以及 `cluster.h/clusterState` 结构里面。
+
+- 集群数据结构
+
+clusterNode结构保存了一个节点的当前状态，如节点创建事件，节点的名字，节点当前的配置纪元，节点的IP和地址等等。  
+每个节点都会使用一个clusterNode结构来记录自己的状态，并为集群中的所有其他节点(包括主节点和从节点)都创建一个相应的clusterNode结构，以此来记录其他节点的状态。
+
+```cpp
+struct clusterNode {
+
+    // 创建节点的时间
+    mstime_t ctime;
+
+    // 节点的名字，由 40 个十六进制字符组成
+    // 例如 68eef66df23420a5862208ef5b1a7005b806f2ff
+    char name[REDIS_CLUSTER_NAMELEN];
+
+    // 节点标识
+    // 使用各种不同的标识值记录节点的角色（比如主节点或者从节点），
+    // 以及节点目前所处的状态（比如在线或者下线）。
+    int flags;
+
+    // 节点当前的配置纪元，用于实现故障转移
+    uint64_t configEpoch;
+
+    // 节点的 IP 地址
+    char ip[REDIS_IP_STR_LEN];
+
+    // 节点的端口号
+    int port;
+    // 保存连接节点所需的有关信息
+    clusterLink *link;
+
+    // ...
+};
+```
+
+clusterNode结构的link属性是一个clusterLink结构，该结构保存了连接节点所需的有关信息，比如套接字描述符，输入缓冲区和输出缓冲区。
+
+```cpp
+typedef struct clusterLink {
+    // 连接的创建时间
+    mstime_t ctime;
+    // TCP 套接字描述符
+    int fd;
+
+    // 输出缓冲区，保存着等待发送给其他节点的消息（message）。
+    sds sndbuf;
+
+    // 输入缓冲区，保存着从其他节点接收到的消息。
+    sds rcvbuf;
+
+    // 与这个连接相关联的节点，如果没有的话就为 NULL
+    struct clusterNode *node;
+} clusterLink;
+```
+
+redisClient结构和clusterLink结构都有自己的套接字描述符和输入、输出缓冲区，这两个结构区别在于一个是用于连接客户端的，一个用于连接节点的。
+
+每个节点都保存着一个clusterState结构，结构记录了在当下节点的视角下，集群目前所处的状态。比如集群是在线还是下线，包含多少节点，集群
+当前的配置纪元，等。
+
+```cpp
+typedef struct clusterState {
+
+    // 指向当前节点的指针
+    clusterNode *myself;
+
+    // 集群当前的配置纪元，用于实现故障转移
+    uint64_t currentEpoch;
+    // 集群当前的状态：是在线还是下线
+    int state;
+
+    // 集群中至少处理着一个槽的节点的数量
+    int size;
+
+    // 集群节点名单（包括 myself 节点）
+    // 字典的键为节点的名字，字典的值为节点对应的 clusterNode 结构
+    dict *nodes;
+
+    // ...
+
+} clusterState;
+```
+
+![节点7000创建的clusterState结构](../.gitbook/assets/11ec5f9f25c724986b8e94fc6455443a.png)
+
+- CLUSTER MEET 命令的实现
+
+通过向节点A发送CLUSTER MEET命令，客户端可以让接受命令的节点A将另一个节点B添加到节点A当前所在的集群里面。
+
+```bash
+CLUSTER MEET <ip> <port>
+```
+
+1. 节点 A 会为节点 B 创建一个 clusterNode 结构， 并将该结构添加到自己的 clusterState.nodes 字典里面。
+2. 节点 A 将根据 CLUSTER MEET 命令给定的 IP 地址和端口号， 向节点 B 发送一条 MEET 消息（message）。
+3. 如果一切顺利， 节点 B 将接收到节点 A 发送的 MEET 消息， 节点 B 会为节点 A 创建一个 clusterNode 结构， 并将该结构添加到自己的 clusterState.nodes 字典里面。
+4. 节点 B 将向节点 A 返回一条 PONG 消息。
+5. 节点 A 将接收到节点 B 返回的 PONG 消息， 通过这条 PONG 消息节点 A 可以知道节点 B 已经成功地接收到了自己发送的 MEET 消息。
+6. 节点 A 将向节点 B 返回一条 PING 消息。
+7. 节点 B 将接收到节点 A 返回的 PING 消息， 通过这条 PING 消息节点 B 可以知道节点 A 已经成功地接收到了自己返回的 PONG 消息， 握手完成。
+
+![IMAGE_HANDSHAKE节点的握手过程](../.gitbook/assets/1ee8b191f404d14f141f0d47cbbb8189.png)
+
+之后，节点A会将节点B的信息通过Gossip协议传播给集群中的其他节点，让其他节点也与B进行握手，最终，经过一段事件后，节点B会被集群中的所有节点认识。
+
 ## 发布与订阅
 
 - 频道的订阅与退订
