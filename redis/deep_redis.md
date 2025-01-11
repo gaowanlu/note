@@ -2462,6 +2462,49 @@ CLUSTER MEET <ip> <port>
 
 - 频道的订阅与退订
 
+当一个客户端执行SUBSCRIBE命令、订阅某个或某些频道的时候，这个客户端与被订阅频道之间就建立起了一种订阅关系。
+
+Redis将所有频道的订阅关系都保存在服务器状态的pubsub_channels字典里面，这个字典的键是某个被订阅的频道，而键的值则是一个链表，链表里面记录了所有
+订阅这个频道的客户端。
+
+```cpp
+struct redisServer
+{
+    // ...
+
+    // 保存所有频道的订阅关系
+    dict *pubsub_channels;
+
+    // ...
+};
+```
+
+![一个pubsub_channels字典示例](../.gitbook/assets/369292a4dbc05e114d39ebba23f9e653.png)
+
+- 订阅频道
+
+每当客户端执行 SUBSCRIBE 命令， 订阅某个或某些频道的时候， 服务器都会将客户端与被订阅的频道在 pubsub_channels 字典中进行关联。
+
+1. 如果频道已经有其他订阅者， 那么它在 pubsub_channels 字典中必然有相应的订阅者链表， 程序唯一要做的就是将客户端添加到订阅者链表的末尾。
+2. 如果频道还未有任何订阅者， 那么它必然不存在于 pubsub_channels 字典， 程序首先要在 pubsub_channels 字典中为频道创建一个键， 并将这个键的值设置为空链表， 然后再将客户端添加到链表， 成为链表的第一个元素。
+
+```bash
+# 订阅 news.sport news.movie 两个频道
+SUBSCRIBE "news.sport" "news.movie"
+```
+
+- 退订频道
+
+UNSUBSCRIBE 命令的行为和 SUBSCRIBE 命令的行为正好相反 —— 当一个客户端退订某个或某些频道的时候， 服务器将从 pubsub_channels 中解除客户端与被退订频道之间的关联：
+
+1. 程序会根据被退订频道的名字， 在 pubsub_channels 字典中找到频道对应的订阅者链表， 然后从订阅者链表中删除退订客户端的信息。
+2. 如果删除退订客户端之后， 频道的订阅者链表变成了空链表， 那么说明这个频道已经没有任何订阅者了， 程序将从 pubsub_channels 字典中删除频道对应的键。
+
+```bash
+# 推定频道 "news.sport" "news.movie"
+UNSUBSCRIBE "news.sport" "news.movie"
+```
+
 ## 事务
 
 - 事务的实现
