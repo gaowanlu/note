@@ -2509,6 +2509,123 @@ UNSUBSCRIBE "news.sport" "news.movie"
 
 - 事务的实现
 
+一个事务开始到结束通常会经历以下三个阶段
+
+1. 事务开始
+2. 命令入队
+3. 事务执行
+
+- 事务开始
+
+MULTI命令的执行标志着事务的开始
+
+```bash
+redis> MULTI
+OK
+```
+
+MULTI命令可以将执行该命令的客户端从非事务状态切换至事务状态，这一切换是通过在客户端状态的flags属性中打开REDIS_MULTI标志来完成的。
+
+```bash
+# 伪代码
+def MULTI():
+    # 打开事务标识
+    client.flags |= REDIS_MULTI
+    # 返回 OK 回复
+    replyOK()
+```
+
+- 命令入队
+
+当一个客户端处于非事务状态时，这个客户端发送的命令会立即被服务器执行
+
+```bash
+redis> SET "name" "Practical Common Lisp"
+OK
+redis> GET "name"
+"Practical Common Lisp"
+redis> SET "author" "Peter Seibel"
+OK
+redis> GET "author"
+"Peter Seibel"
+```
+
+1. 如果客户端发送的命令为 EXEC 、 DISCARD 、 WATCH 、 MULTI 四个命令的其中一个， 那么服务器立即执行这个命令。
+2. 与此相反， 如果客户端发送的命令是 EXEC 、 DISCARD 、 WATCH 、 MULTI 四个命令以外的其他命令， 那么服务器并不立即执行这个命令， 而是将这个命令放入一个事务队列里面， 然后向客户端返回 QUEUED 回复。
+
+![服务器判断命令是该入队还是被执行的过程](../.gitbook/assets/501e52852cb2d46d11f35fdcd7429e5c.png)
+
+- 事务队列
+
+每个Redis客户端都有自己的事务状态，这个事务状态保存在客户端状态的mstate属性里面：
+
+```cpp
+typedef struct redisClient
+{
+    // ...
+    // 事务状态
+    multiState mstate;
+    // ...
+};
+```
+
+事务状态包含一个事务队列，以及一个已入队命令的计数器。
+
+```cpp
+typedef struct multiState
+{
+    // 事务队列，FIFO顺序
+    multiCmd *commands;
+    // 已入队命令计数
+    int count;
+} multiState;
+typedef struct multiCmd
+{
+    // 参数
+    robj **argv;
+    // 参数数量
+    int argc;
+    // 命令指针
+    struct redisCommand *cmd;
+} multiCmd;
+```
+
+示例
+
+```bash
+redis> MULTI
+OK
+redis> SET "name" "Practical Common Lisp"
+QUEUED
+redis> GET "name"
+QUEUED
+redis> SET "author" "Peter Seibel"
+QUEUED
+redis> GET "author"
+QUEUED
+```
+
+![事务状态](../.gitbook/assets/0619498e57d228318fab6e5b252973ae.png)
+
+- 执行事务
+
+当一个处于事务状态的客户端向服务器发送EXEC命令时，这个EXEC命令将立即被服务器执行：服务器会遍历这个客户端的事务队列，执行队列中保存的所有命令，最后将执行命令所得的结果全部返回给客户端。
+
+```bash
+redis> EXEC
+1) OK
+2) "Practical Common Lisp"
+3) OK
+4) "Peter Seibel"
+```
+
+1. 事务提供了一种将多个命令打包， 然后一次性、有序地执行的机制。
+2. 多个命令会被入队到事务队列中， 然后按先进先出（FIFO）的顺序执行。
+3. 事务在执行过程中不会被中断， 当事务队列中的所有命令都被执行完毕之后， 事务才会结束。
+4. 带有 WATCH 命令的事务会将客户端和被监视的键在数据库的 watched_keys 字典中进行关联， 当键被修改时， 程序会将所有监视被修改键的客户端的 REDIS_DIRTY_CAS 标志打开。
+5. 只有在客户端的 REDIS_DIRTY_CAS 标志未被打开时， 服务器才会执行客户端提交的事务， 否则的话， 服务器将拒绝执行客户端提交的事务。
+6. Redis 的事务总是保证 ACID 中的原子性、一致性和隔离性， 当服务器运行在 AOF 持久化模式下， 并且 appendfsync 选项的值为always 时， 事务也具有耐久性。
+
 ## Lua脚本
 
 - 创建并修改Lua环境
