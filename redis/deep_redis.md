@@ -2630,21 +2630,480 @@ redis> EXEC
 
 - 创建并修改Lua环境
 
+为了在Redis服务器中执行Lua脚本，Redis在服务器内嵌入了一个Lua环境，并对这个Lua环境进行了一系列修改，从而确保这个Lua环境可以满足Redis
+服务器的需要。
+
+- 创建Lua环境
+
+最开始的一步，服务器首先调用Lua的C API函数lua_open,创建一个新的Lua环境。
+因为lua_open函数创建的只是一个基本的Lua环境，为了让这个Lua环境可以满足Redis的操作要求，接下来服务器将对这个Lua环境进行一系列修改。
+
+- 载入函数库
+
+将以下函数库载入到Lua环境里面：
+
+1. 基础库： 这个库包含 Lua 的核心（core）函数， 比如 assert 、 error 、 pairs 、 tostring 、 pcall ， 等等。 另外， 为了防止用户从外部文件中引入不安全的代码， 库中的 loadfile 函数会被删除。
+2. 表格库（table library）： 这个库包含用于处理表格的通用函数， 比如 table.concat 、 table.insert 、 table.remove 、 table.sort， 等等。
+3. 字符串库（string library）： 这个库包含用于处理字符串的通用函数， 比如用于对字符串进行查找的 string.find 函数， 对字符串进行格式化的 string.format 函数， 查看字符串长度的 string.len 函数， 对字符串进行翻转的 string.reverse 函数， 等等。
+4. 数学库（math library）： 这个库是标准 C 语言数学库的接口， 它包括计算绝对值的 math.abs 函数， 返回多个数中的最大值和最小值的 math.max 函数和 math.min 函数， 计算二次方根的 math.sqrt 函数， 计算对数的 math.log 函数， 等等。
+5. 调试库（debug library）： 这个库提供了对程序进行调试所需的函数， 比如对程序设置钩子和取得钩子的 debug.sethook 函数和debug.gethook 函数， 返回给定函数相关信息的 debug.getinfo 函数， 为对象设置元数据的 debug.setmetatable 函数， 获取对象元数据的debug.getmetatable 函数， 等等。
+6. Lua CJSON 库（<http://www.kyne.com.au/~mark/software/lua-cjson.php）：> 这个库用于处理 UTF-8 编码的 JSON 格式， 其中cjson.decode 函数将一个 JSON 格式的字符串转换为一个 Lua 值， 而 cjson.encode 函数将一个 Lua 值序列化为 JSON 格式的字符串。
+7. Struct 库（<http://www.inf.puc-rio.br/~roberto/struct/）：> 这个库用于在 Lua 值和 C 结构（struct）之间进行转换， 函数struct.pack 将多个 Lua 值打包成一个类结构（struct-like）字符串， 而函数 struct.unpack 则从一个类结构字符串中解包出多个 Lua 值。
+8. Lua cmsgpack 库（<https://github.com/antirez/lua-cmsgpack）：> 这个库用于处理 MessagePack 格式的数据， 其中 cmsgpack.pack 函数将 Lua 值转换为 MessagePack 数据， 而 cmsgpack.unpack 函数则将 MessagePack 数据转换为 Lua 值。
+
+通过使用这些功能强大的函数库，Lua脚本可以直接对执行Redis命令获得的数据进行复杂的操作。
+
+- 创建redis全局表格
+
+服务器将在Lua环境中创建一个redis表格，并将它设为全局变量。
+
+这个redis表格包含以下函数：
+
+1. 用于执行Redis命令的redis.call和redis.pcall函数。
+2. 用于记录Redis日志的redis.log函数，以及相应的日志级别level常量:redis.LOG_DEBUG, redis.LOG_VERBOSE, redis.LOG_NOTICE,以及 redis.LOG_WARNING。
+3. 用于计算SHA1校验和的redis.sha1hex函数。
+4. 用于返回错误信息的redis.error_reply函数和redis.status_reply函数。
+
+在这些函数里面，最长用也最重要的函数 redis.call函数和redis.pcall函数，通过这两个函数，用于可以直接在Lua脚本中执行Redis命令。
+
+```bash
+redis> EVAL "return redis.call('PING')" 0
+PONG
+```
+
+- 使用Redis自制的随机函数来代替Lua原有的随机函数
+
+为了保证相同的脚本可以在不同的机器上产生相同的结果，Redis要求所有传入服务器的Lua脚本以及Lua环境中的所有函数，都必须是无副作用(side effect)的纯函数(pure function)。
+
+之前载入到Lua环境的math函数库中，用于生成随机数的math.random函数和math.randomseed函数都是带有副作用的，它们不符合Redis对Lua环境的无副作用要求。
+
+因为这个原因，Redis使用自制的函数替换了math库中原有的math.random函数和math.randomseed函数，替换后的两个函数有以下特征。
+
+1. 对于相同的seed来说，math.random总产生相同的随机数序列，这个函数是一个纯函数。
+2. 除非在脚本中使用math.randomseed显式地修改seed,否则每次运行脚本时，Lua环境都使用固定地math.randomseed(0)语句来初始化seed。
+
+无论执行这个脚本多少次，产生地值都是相同的：
+
+```bash
+$ redis-cli --eval random-with-default-seed.lua
+1) (integer) 1
+2) (integer) 2
+3) (integer) 2
+4) (integer) 3
+5) (integer) 4
+6) (integer) 4
+7) (integer) 7
+8) (integer) 1
+9) (integer) 7
+10) (integer) 2
+```
+
+但是，如果我们在另一个脚本里面，调用math.randomseed将seed修改为10086。那么这个脚本生成的随机数序列将和使用默认seed值0时生成的随机序列不同。
+
+```bash
+$ redis-cli --eval random-with-new-seed.lua
+1) (integer) 1
+2) (integer) 1
+3) (integer) 2
+4) (integer) 1
+5) (integer) 1
+6) (integer) 3
+7) (integer) 1
+8) (integer) 1
+9) (integer) 3
+10) (integer) 1
+```
+
+- 创建排序辅助函数
+
+上面提到，为了防止带有副作用的函数令脚本产生不一致的数据，Redis对math库的math.random函数和math.randomseed函数进行了替换。
+对于Lua脚本来说，对于可能产生不一致数据的地方是哪些带有不确定性质的命令。
+
+比如对于一个集合键来说，因为集合元素的排列是无序的，所以即使两个集合的元素完全相同，它们的输出结果也可能并不相同。
+
+```bash
+redis> SADD fruit apple banana cherry
+(integer) 3
+redis> SMEMBERS fruit
+1) "cherry"
+2) "banana"
+3) "apple"
+redis> SADD another-fruit cherry banana apple
+(integer) 3
+redis> SMEMBERS another-fruit
+1) "apple"
+2) "banana"
+3) "cherry"
+```
+
+上面例子的fruit集合和another-fruit集合包含的元素是完全相同的，只是因为集合添加元素的顺序不同，SMEMBERS命令的输出就产生了不同的结果。
+
+Redis将SMEMBERS这种在相同数据集上可能会产生不同输出的命令称为"带有不确定性的命令"，这些命令包括：
+
+1. SINTER
+2. SUNION
+3. SMEMBERS
+4. HKEYS
+5. HVALS
+6. KEYS
+
+为了消除这些命令带来的不确定性，服务器会为Lua环境创建一个排序辅助函数`__redis__compare_helper`,当Lua脚本执行完一个带有不确定性的命令之后，程序会使用`__redis__compare_helper`作为对比函数，自动调用table.sort函数对命令的返回值做一次排序，以此来保证相同的数据集总是产生相同的输出。
+
+```bash
+redis> EVAL "return redis.call('SMEMBERS', KEYS[1])" 1 fruit
+1) "apple"
+2) "banana"
+3) "cherry"
+
+redis> EVAL "return redis.call('SMEMBERS', KEYS[1])" 1 another-fruit
+1) "apple"
+2) "banana"
+3) "cherry"
+```
+
+- 创建redis.pcall函数的错误报告辅助函数
+
+在这一步， 服务器将为 Lua 环境创建一个名为 `__redis__err__handler`的错误处理函数，当脚本调用redis.pcall函数执行Redis命令，
+并且被执行的命令出现错误时，`__redis__err__handler`就会打印出错代码的来源和发生错误的行数，为程序的调试提供方便。
+
+```bash
+$ redis-cli --eval wrong-command.lua
+(error) @user_script: 4: Unknown Redis command called from Lua script
+```
+
+其中 @user_script 说明这是一个用户定义的函数， 而之后的 4 则说明出错的代码位于 Lua 脚本的第四行。
+
+- 保护Lua的全局环境
+
+这一步，服务器将对Lua环境中的全局环境进行保护，确保传入服务器的脚本不会因为忘记使用local关键字而将额外的全局变量添加到Lua环境里面。
+因为全局变量保护的原因，当一个脚本试图创建一个全局变量时，服务器将报告一个错误。
+
+```bash
+redis> EVAL "x = 10" 0
+(error) ERR Error running script
+(call to f_df1ad3745c2d2f078f0f41377a92bb6f8ac79af0):
+@enable_strict_lua:7: user_script:1:
+Script attempted to create global variable 'x'
+```
+
+除此之外， 试图获取一个不存在的全局变量也会引发一个错误：
+
+```bash
+redis> EVAL "return x" 0
+(error) ERR Error running script
+(call to f_03c387736bb5cc009ff35151572cee04677aa374):
+@enable_strict_lua:14: user_script:1:
+Script attempted to access unexisting global variable 'x'
+```
+
+不过Redis并未禁止用户修改已存在的全局变量，所以在执行Lua脚本的时候，必须非常小心，以免错误地修改了已存在地全局变量。
+
+```bash
+redis> EVAL "redis = 10086; return redis 0"
+(integer) 10086
+```
+
+- 将Lua环境保存到服务器状态的lua属性里面
+
+经过以上地一系列修改，Redis服务器对Lua环境的修改工作到此就结束了，在最后地这一步，服务器会将Lua环境和服务器状态的lua属性关联起来。
+
+![服务器状态中的Lua环境](../.gitbook/assets/aa5b98b8c2c4a7d767c4f05eaedb29ae.png)
+
+因为Redis使用串行化的方式来执行Redis命令，所以在任何特定时间里，最多都只会有一个脚本能被放进Lua环境里面进行，因此，
+整个Redis服务器只需要创建一个Lua环境即可。
+
+1. Redis 服务器在启动时， 会对内嵌的 Lua 环境执行一系列修改操作， 从而确保内嵌的 Lua 环境可以满足 Redis 在功能性、安全性等方面的需要。
+2. Redis 服务器专门使用一个伪客户端来执行 Lua 脚本中包含的 Redis 命令。
+3. Redis 使用脚本字典来保存所有被 EVAL 命令执行过， 或者被 SCRIPT_LOAD 命令载入过的 Lua 脚本， 这些脚本可以用于实现SCRIPT_EXISTS 命令， 以及实现脚本复制功能。
+4. EVAL 命令为客户端输入的脚本在 Lua 环境中定义一个函数， 并通过调用这个函数来执行脚本。
+5. EVALSHA 命令通过直接调用 Lua 环境中已定义的函数来执行脚本。
+6. SCRIPT_FLUSH 命令会清空服务器 lua_scripts 字典中保存的脚本， 并重置 Lua 环境。
+7. SCRIPT_EXISTS 命令接受一个或多个 SHA1 校验和为参数， 并通过检查 lua_scripts 字典来确认校验和对应的脚本是否存在。
+8. SCRIPT_LOAD 命令接受一个 Lua 脚本为参数， 为该脚本在 Lua 环境中创建函数， 并将脚本保存到 lua_scripts 字典中。
+9. 服务器在执行脚本之前， 会为 Lua 环境设置一个超时处理钩子， 当脚本出现超时运行情况时， 客户端可以通过向服务器发送SCRIPT_KILL 命令来让钩子停止正在执行的脚本， 或者发送 SHUTDOWN nosave 命令来让钩子关闭整个服务器。
+10. 主服务器复制 EVAL 、 SCRIPT_FLUSH 、 SCRIPT_LOAD 三个命令的方法和复制普通 Redis 命令一样 —— 只要将相同的命令传播给从服务器就可以了。
+11. 主服务器在复制 EVALSHA 命令时， 必须确保所有从服务器都已经载入了 EVALSHA 命令指定的 SHA1 校验和所对应的 Lua 脚本， 如果不能确保这一点的话， 主服务器会将 EVALSHA 命令转换成等效的 EVAL 命令， 并通过传播 EVAL 命令来获得相同的脚本执行效果。
+
 ## 排序
 
 - SORT命令的实现
+
+SORT命令的最简单执行形式为
+
+```bash
+SORT <key>
+```
+
+这个命令可以对一个包含数字值的键key进行排序。
+
+```bash
+redis> RPUSH numbers 3 1 2
+(integer) 3
+
+redis> SORT numbers
+1) "1"
+2) "2"
+3) "3"
+```
+
+服务器执行SORT numbers命令的详细步骤为：
+
+1. 创建一个和 numbers 列表长度相同的数组， 该数组的每个项都是一个 redis.h/redisSortObject 结构， 如图 IMAGE_CREATE_ARRAY 所示。
+2. 遍历数组， 将各个数组项的 obj 指针分别指向 numbers 列表的各个项， 构成 obj 指针和列表项之间的一对一关系， 如图 IMAGE_POINT_OBJ 所示。
+3. 遍历数组， 将各个 obj 指针所指向的列表项转换成一个 double 类型的浮点数， 并将这个浮点数保存在相应数组项的 u.score 属性里面， 如图 IMAGE_SET_SCORE 所示。
+4. 根据数组项 u.score 属性的值， 对数组进行数字值排序， 排序后的数组项按 u.score 属性的值从小到大排列， 如图 IMAGE_SORTED 所示。
+5. 遍历数组， 将各个数组项的 obj 指针所指向的列表项作为排序结果返回给客户端。
+
+![IMAGE_CREATE_ARRAY](../.gitbook/assets/281d3f20b5718b5fca7a8db6256fb743.png)
+
+![IMAGE_POINT_OBJ](../.gitbook/assets/b29b076a068305066ca0dec2076702e4.png)
+
+![IMAGE_SET_SCORE](../.gitbook/assets/2e7db9eedda925392bea84914fe02ba6.png)
+
+![IMAGE_SORTED](../.gitbook/assets/f474341ae752e2561a976f6f49a459e4.png)
+
+```cpp
+typedef struct _redisSortObject
+{
+    // 被排序键的值
+    robj *obj;
+    // 权重
+    union{
+        // 排序数字值时使用
+        double score;
+        // 排序带有BY 选项的字符串值时使用
+        robj* cmpobj;
+    } u;
+} redisSortObject；
+```
+
+1. SORT 命令通过将被排序键包含的元素载入到数组里面， 然后对数组进行排序来完成对键进行排序的工作。
+2. 在默认情况下， SORT 命令假设被排序键包含的都是数字值， 并且以数字值的方式来进行排序。
+3. 如果 SORT 命令使用了 ALPHA 选项， 那么 SORT 命令假设被排序键包含的都是字符串值， 并且以字符串的方式来进行排序。
+4. SORT 命令的排序操作由快速排序算法实现。
+5. SORT 命令会根据用户是否使用了 DESC 选项来决定是使用升序对比还是降序对比来比较被排序的元素， 升序对比会产生升序排序结果， 被排序的元素按值的大小从小到大排列， 降序对比会产生降序排序结果， 被排序的元素按值的大小从大到小排列。
+6. 当 SORT 命令使用了 BY 选项时， 命令使用其他键的值作为权重来进行排序操作。
+7. 当 SORT 命令使用了 LIMIT 选项时， 命令只保留排序结果集中 LIMIT 选项指定的元素。
+8. 当 SORT 命令使用了 GET 选项时， 命令会根据排序结果集中的元素， 以及 GET 选项给定的模式， 查找并返回其他键的值， 而不是返回被排序的元素。
+9. 当 SORT 命令使用了 STORE 选项时， 命令会将排序结果集保存在指定的键里面。
+10. 当 SORT 命令同时使用多个选项时， 命令先执行排序操作（可用的选项为 ALPHA 、 ASC 或 DESC 、 BY ）， 然后执行 LIMIT 选项， 之后执行 GET 选项， 再之后执行 STORE 选项， 最后才将排序结果集返回给客户端。
+11. 除了 GET 选项之外， 调整选项的摆放位置不会影响 SORT 命令的排序结果。
 
 ## 二进制位数组
 
 - GETBIT命令的实现
 
+GETBIT命令用于返回位数组bitarray在offset偏移量上的二进制位的值：
+
+```bash
+GETBIT <bitarray> <offset>
+```
+
+```bash
+GETBIT <bitarray> 3
+# 将执行以下操作
+1. 3/8 = 0
+2. ( 3 mod 8 ) + 1 = 4
+3. 定位到buf[0]字节上面，然后取出该字节上的第4个二进制位(从左向右数)的值。
+4. 向客户端返回二进制位的值1
+```
+
+因为GETBIT命令执行的所有操作都可以在长数时间内完成，所以该命令的算法复杂度位O(1)。
+
 ## 慢查询日志
 
+Redis 的慢查询日志功能用于记录执行时间超过给定时长的命令请求， 用户可以通过这个功能产生的日志来监视和优化查询速度。
+
+服务器配置有两个和慢查询日志相关的选项：
+
+1. slowlog-log-slower-than 选项指定执行时间超过多少微秒（1 秒等于 1,000,000 微秒）的命令请求会被记录到日志上。
+2. slowlog-max-len 选项指定服务器最多保存多少条慢查询日志。服务器使用先进先出的方式保存多条慢查询日志： 当服务器储存的慢查询日志数量等于 slowlog-max-len 选项的值时， 服务器在添加一条新的慢查询日志之前， 会先将最旧的一条慢查询日志删除。
+
+```bash
+redis> CONFIG SET slowlog-log-slower-than 0
+OK
+redis> CONFIG SET slowlog-max-len 5
+OK
+redis> SET msg "hello world"
+OK
+redis> SET number 10086
+OK
+redis> SET database "Redis"
+OK
+# 使用SLOWLOG GET命令查看服务器所保存的慢查询日志
+redis> SLOWLOG GET
+1) 1) (integer) 4               # 日志的唯一标识符（uid）
+   2) (integer) 1378781447      # 命令执行时的 UNIX 时间戳
+   3) (integer) 13              # 命令执行的时长，以微秒计算
+   4) 1) "SET"                  # 命令以及命令参数
+      2) "database"
+      3) "Redis"
+2) 1) (integer) 3
+   2) (integer) 1378781439
+   3) (integer) 10
+   4) 1) "SET"
+      2) "number"
+      3) "10086"
+3) 1) (integer) 2
+   2) (integer) 1378781436
+   3) (integer) 18
+   4) 1) "SET"
+      2) "msg"
+      3) "hello world"
+4) 1) (integer) 1
+   2) (integer) 1378781425
+   3) (integer) 11
+   4) 1) "CONFIG"
+   2) "SET"
+   3) "slowlog-max-len"
+   4) "5"
+```
+
 - 慢查询记录的保存
+
+服务器状态中包含了几个和慢查询日志功能有关的属性。
+
+```cpp
+struct redisServer
+{
+    // ...
+
+    // 下一条慢查询日志的ID 自增 默认为0则第一条日志id为0
+    long long slowlog_entry_id;
+    // 保存了所有慢查询日志的链表
+    list *slowlog;
+    // 服务器配置 slowlog-log-slower-than 选项的值
+    long long slowlog_log_slower_than;
+    // 服务器配置slowlog-max-len选项的值
+    unsigned long slowlog_max_len;
+    // ...
+};
+```
+
+slowlog链表保存了服务器中的所有慢查询日志，链表中的每个节点都保存了一个slowlogEntry结构，每个slowlogEntry结构代表了一条
+慢查询日志。
+
+```cpp
+typedef struct slowlogEntry
+{
+    // 唯一标识符
+    long long id;
+    // 命令执行时的时间，格式为UNIX事件戳
+    time_t time;
+    // 执行命令消耗的时间，以微妙为单位
+    long long duration;
+    // 命令与命令参数
+    robj **argv;
+    // 命令与命令参数的数量
+    int argc;
+
+} slowlogEntry;
+```
+
+举个例子，对于以下慢查询日志来说：
+
+```bash
+1) (integer) 3
+2) (integer) 1378781439
+3) (integer) 10
+4) 1) "SET"
+   2) "number"
+   3) "10086"
+```
+
+![slowlogEntry结构示例](../.gitbook/assets/79ab0094d92696679cedeadac5ab5637.png)
+
 - 慢查询日志的阅览和删除
+
+1. SLOWLOG GET
+2. SLOWLOG LEN
+3. SLOWLOG RESET
+
 - 添加新日志
+
+```cpp
+# 记录执行命令前的时间
+before = unixtime_now_in_us()
+# 执行命令
+execute_command(argv, argc, client)
+# 记录执行命令后的时间
+after = unixtime_now_in_us()
+# 检查是否需要创建新的慢查询日志
+slowlogPushEntryIfNeeded(argv, argc, before-after)
+```
+
+```cpp
+void slowlogPushEntryIfNeeded(robj **argv, int argc, long long duration) {
+
+    // 慢查询功能未开启，直接返回
+    if (server.slowlog_log_slower_than < 0) return;
+
+    // 如果执行时间超过服务器设置的上限，那么将命令添加到慢查询日志
+    if (duration >= server.slowlog_log_slower_than)
+        // 新日志添加到链表表头
+        listAddNodeHead(server.slowlog,slowlogCreateEntry(argv,argc,duration));
+
+    // 如果日志数量过多，那么进行删除
+    while (listLength(server.slowlog) > server.slowlog_max_len)
+        listDelNode(server.slowlog,listLast(server.slowlog));
+}
+```
 
 ## 监视器
 
+通过执行MONITOR命令，客户端可以将自己变为一个监视器，实时地接收并打印出服务器当前处理地命令请求的相关信息。
+
+```bash
+redis> MONITOR
+OK
+1378822099.421623 [0 127.0.0.1:56604] "PING"
+1378822105.089572 [0 127.0.0.1:56604] "SET" "msg" "hello world"
+1378822109.036925 [0 127.0.0.1:56604] "SET" "number" "123"
+1378822140.649496 [0 127.0.0.1:56604] "SADD" "fruits" "Apple" "Banana" "Cherry"
+1378822154.117160 [0 127.0.0.1:56604] "EXPIRE" "msg" "10086"
+1378822257.329412 [0 127.0.0.1:56604] "KEYS" "*"
+1378822258.690131 [0 127.0.0.1:56604] "DBSIZE"
+```
+
+每当一个客户端向服务器发送一条命令请求时，服务器除了会处理这条命令请求之外，还会将关于这条命令请求的信息发送给所有监视器。
+
+![命令的接收和信息的发送](../.gitbook/assets/fffa4d6544ed2d7a04c8ec63dd1f8b83.png)
+
 - 成为监视器
+
+服务器处理客户端发来的MONITOR伪代码
+
+```cpp
+def MONITOR():
+
+    # 打开客户端的监视器标志
+    client.flags |= REDIS_MONITOR
+
+    # 将客户端添加到服务器状态的 monitors 链表的末尾
+    server.monitors.append(client)
+
+    # 向客户端返回 OK
+    send_reply("OK")
+```
+
+在reidsServer中有一个monitors链表，存储监视器状态的client信息
+
 - 向监视器发送命令信息
+
+服务器在每次处理命令请求之前，都会调用replicationFeedMonitors函数，由这个函数将被处理命令请求的相关信息发送给各个监视器。
+
+伪代码
+
+```cpp
+def replicationFeedMonitors(client, monitors, dbid, argv, argc):
+
+    # 根据执行命令的客户端、当前数据库的号码、命令参数、命令参数个数等参数
+    # 创建要发送给各个监视器的信息
+    msg = create_message(client, dbid, argv, argc)
+
+    # 遍历所有监视器
+    for monitor in monitors:
+
+        # 将信息发送给监视器
+        send_message(monitor, msg)
+```

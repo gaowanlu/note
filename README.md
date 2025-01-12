@@ -14,15 +14,19 @@ I have a dream. Keep going.
 
 农历新年前努力结束
 
-* [ ] 🤡Redis设计与实现第2版(集群)
 * [ ] 🤡计算机图形学入门：3D渲染指南 瑞士 加布里埃尔 甘贝塔
 * [ ] 🤡Efective C++(实现 尽可能延后变量定义式的出现时间 instance 26)
 
 ## 2025计划
 
+优先：
+
 * [ ] 🤡MySQL是怎样运行的
 * [ ] 🤡libevent <https://aceld.gitbook.io/libevent>
 * [ ] 🤡消息队列（<https://www.kuangstudy.com/zl/rabbitmq）（https://www.bilibili.com/video/BV1dX4y1V73G/）>
+
+后续：
+
 * [ ] 🤡C++并发编程实战 第2版(第3章 共享数据)
 * [ ] 🤡Linux命令行与shell脚本编程大全（第3版）
 * [ ] 🤡高考3500、俞敏洪雅思绿皮乱序
@@ -32,14 +36,11 @@ I have a dream. Keep going.
 * [ ] 🤡重温《数据结构与算法》
 * [ ] 🤡重新系统地整理C++笔记
 * [ ] 🤡用自己的avant服务器与计算机图形学内容写一个在线网页版本方块沙盒
-
-## 待定推迟
-
-* [ ] 🤡高性能MySQL(第1章MySQL架构 并发控制)
 * [ ] 🤡3D数学(第5章 矩阵变换) <https://gamemath.com/book/matrixtransforms.html>
 
 ## 未来可能会看的一些书
 
+* [ ] 🤡高性能MySQL(第1章MySQL架构 并发控制)
 * [ ] JavaScript权威指南
 * [ ] PulsarDocs <https://pulsar.apache.org/docs>
 * [ ] 腾讯游戏开发精粹Ⅰ服务器部分
