@@ -1808,6 +1808,33 @@ B:n个构造函数+n个构造函数
 
 ### 27、尽量少做转型动作
 
+回顾C风格的转型
+
+```cpp
+(T)expression // 将expression转型为T
+T(expression) // 将expression转型为T
+```
+
+两种形式并无差别，存粹是小括号的摆放位置不同而已。称此为旧式转型 old-style casts.
+
+C++还提供了四种新式转型
+
+```cpp
+const_cast<T>(expression)
+dynamic_cast<T>(expression)
+reinterpret_cast<T>(expression)
+static_cast<T>(expression)
+```
+
+1. const_cast 通常被用来将对象的常量性转除(castaway the constness)。
+2. dynamic_cast 主要用来执行“安全向下转型”(safe downcasting)。 dynamic_cast调用会进行字符串比较，需要考虑效率成本。
+3. reinterpret_cast 意图执行低级转型，实际动作（及结果）可能取决千编译器，这也就表示它不可移植。
+4. static_cast用来强迫隐式转换。
+
+- 如果可以，尽量避免转型，特别是在注重效率的代码中避免dynarnic_cas七s。如果有个设计需要转型动作，试着发展无需转型的替代设计。
+- 如果转型是必要的，试着将它隐藏千某个函数背后。客户随后可以调用该函数，而不需将转型放进他们自己的代码内。
+- 宁可使用C++-style（新式）转型，不要使用旧式转型。前者很容易辨识出来，而且也比较有着分门别类的职掌。
+
 ### 28、避免返回 handles 指向对象内部成分
 
 ### 29、为异常安全而努力是值得的
