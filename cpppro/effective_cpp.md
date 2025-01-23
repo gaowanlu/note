@@ -1951,6 +1951,142 @@ int main(int argc, char **argv)
 
 ### 29、为异常安全而努力是值得的
 
+- 异常安全函数(Exception-safefunctions)即使发生异常也不会泄漏资源或允许任何数据结构败坏。这样的函数区分为三种可能的保证：基本型、强烈型、不抛异常型。
+- "强烈保证”往往能够以copy-and-swap实现出来，但“强烈保证”并非对所有函数都可实现或具备现实意义。
+- 函数提供的“异常安全保证“通常最高只等千其所调用之各个函数的“异常安全保证”中的最弱者。
+
+1. 基本保证
+
+即使函数在执行中抛出异常，程序的状态仍然是有效的（不会造成资源泄漏或数据结构损坏），但可能无法保证状态是原始状态。
+
+示例：资源的简单释放
+
+假设一个函数在处理动态内存分配，尽管抛出异常，也确保释放了已分配的资源。
+
+```cpp
+#include <iostream>
+#include <stdexcept>
+
+void basicGuaranteeExample() {
+    int* resource = new int[10]; // 动态分配资源
+
+    try {
+        // 模拟某些可能抛出异常的操作
+        throw std::runtime_error("Something went wrong!");
+    } catch (...) {
+        // 捕获异常并确保释放资源
+        delete[] resource;
+        std::cout << "Basic guarantee: Resource cleaned up." << std::endl;
+        throw; // 重新抛出异常
+    }
+}
+```
+
+结果：即使函数抛出异常，动态分配的资源仍然会被释放，程序状态有效。
+
+2. 强烈保证
+
+函数提供强烈保证：若函数抛出异常，程序的状态会回到调用函数之前的状态，不会有任何更改。
+可以通过 copy-and-swap 技术实现。
+
+示例：swap 技术在容器的异常安全中应用
+
+```cpp
+#include <vector>
+#include <stdexcept>
+
+class ExceptionSafeVector {
+    std::vector<int> data;
+
+public:
+    void addElement(int element) {
+        // 创建临时副本，保证异常发生时不会修改原数据
+        std::vector<int> temp(data);
+        temp.push_back(element); // 操作可能抛出异常
+
+        // 若无异常，完成 swap 替换
+        data.swap(temp); // 强烈保证：要么成功，要么不修改 data
+    }
+
+    void print() const {
+        for (int val : data) {
+            std::cout << val << " ";
+        }
+        std::cout << std::endl;
+    }
+};
+
+int main() {
+    ExceptionSafeVector vec;
+    try {
+        vec.addElement(1);
+        vec.addElement(2);
+        vec.addElement(3); // 无异常时更新数据
+    } catch (...) {
+        std::cout << "Strong guarantee: No changes to the original state!" << std::endl;
+    }
+
+    vec.print(); // 打印已添加的元素
+}
+```
+
+结果：如果 addElement 抛出异常，data 保持调用前的状态。
+
+3. 不抛异常保证
+
+函数绝对不会抛出异常，通常用于析构函数或一些保证不会失败的操作。
+
+示例：提供强制的 noexcept 保证
+
+```cpp
+#include <iostream>
+#include <utility>
+
+class NoThrowClass {
+    int* resource;
+
+public:
+    NoThrowClass() : resource(new int(42)) {}
+
+    // noexcept 保证函数不会抛出异常
+    ~NoThrowClass() noexcept {
+        delete resource; // 确保资源被释放，不抛异常
+    }
+
+    // noexcept 移动操作：在发生资源转移时，确保不抛异常
+    NoThrowClass(NoThrowClass&& other) noexcept : resource(nullptr) {
+        resource = other.resource;
+        other.resource = nullptr;
+    }
+
+    // 赋值操作符 noexcept
+    NoThrowClass& operator=(NoThrowClass&& other) noexcept {
+        if (this != &other) {
+            delete resource; // 释放已有资源
+            resource = other.resource;
+            other.resource = nullptr;
+        }
+        return *this;
+    }
+};
+
+int main() {
+    NoThrowClass obj1;
+    NoThrowClass obj2 = std::move(obj1); // 不抛异常
+
+    std::cout << "No-throw guarantee: Successful resource transfer without exceptions!" << std::endl;
+}
+```
+
+结果：析构函数和移动操作通过 noexcept 保证不会抛出异常。
+
+假设有三个函数 A、B 和 C，它们分别提供不同级别的异常安全保证：
+
+- 函数 A 提供 强烈保证。
+- 函数 B 提供 基本保证。
+- 函数 C 调用 A 和 B，它尝试提供 强烈保证。
+- 由于 B 只能提供 基本保证，因此 C 的最高异常安全保证只能是 基本保证。
+
 ### 30、透彻了解 inlining 的里里外外
 
 ### 31、将文件间的编译依存关系降到最低
