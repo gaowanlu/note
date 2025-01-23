@@ -2158,6 +2158,88 @@ public:
 
 ### 31、将文件间的编译依存关系降到最低
 
+- 支持“编译依存性最小化”的一般构想是：相依于声明式，不要相依于定义式。基于此构想的两个手段是Handle classes 和 Interface classes。
+- 程序库头文件应该以“完全且仅有声明式”的形式存在。这种做法不论是否涉及templates都适用。
+
+如A.h内定义了class A, class A中使用了 class B和class C,class B定义在 B.h class C在 C.h,如果 A.h include了B.h C.h,那么修了B.h或者C.h A的实现需要重新编译，因为A.h也发生了变化。所有可以在A.h中使用前置声明。
+
+```cpp
+// A.h
+#include "B.h"
+#include "C.h"
+class A{
+public:
+    A(B&b,C&c);
+};
+```
+
+上面代码依存密切，容易引起编译灾难。
+
+```cpp
+// A.h
+class B;
+class C;
+class A{
+public:
+   A(B&b,C&c);
+};
+```
+
+想要使用某个类型就需要知道分配多少内存，如
+
+```cpp
+int main()
+{
+    int x; // 定义一个int
+    Person p; // 定义一个Person对象，需要include到Person的定义式，不然编译不过
+    ...
+}
+```
+
+有一种 pointer to implementation的骚操作。
+
+```cpp
+// A.h
+class AImpl;
+class B;
+class C;
+class A
+{
+public:
+    A(B&b, C&c);
+    // ...
+private:
+    std::shared_ptr<AImpl> pImpl;
+};
+```
+
+这样的设计之下，Person的客户完全与A,B以及A的实现细目分离了。include了A.h的cpp，即使B.h C.h修改了东西，也不会令include A.h的源代码重新编译。
+
+1. 如果使用 object references或object pointers可以完成任务，就不要使用objects。你可以只靠一个类型声明式就定义出指向该类型的references和pointers；但如果定义某类型的objects，就需要用到该类型的定义式。
+2. 如果能够，尽量以class声明式替换class定义式。
+3. 为声明式和定义式子提供不同的头文件。
+
+注意，当你声明一个函数而它用到某个class时，你并不需要该class的定义；纵使函数以byvalue方式传递该类型的参数（或返回值）亦然：
+
+```cpp
+// A.h
+#include "Bfwd.h"
+#include "Cfwd.h"
+B bfunc();
+void showC(C c);
+```
+
+```cpp
+#include "A.h"
+#include "AImpl.h"
+A::A(const B&b,const C&c,const std::string&str):AImpl(new AImpl(b,c,str))
+{}
+std::string A::name() const
+{
+    return pImpl->name();
+}
+```
+
 ## 继承与面向对象设计
 
 ### 32、确定你的 public 继承塑膜出 is-a 关系
