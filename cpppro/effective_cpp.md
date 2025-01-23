@@ -1837,6 +1837,118 @@ static_cast<T>(expression)
 
 ### 28、避免返回 handles 指向对象内部成分
 
+- 避免返回handles 包括 引用、指针、迭代器，指向对象内部。遵守这个条款可以增加封装性，帮助const成员函数的行为像个const，并将发生“虚吊号码牌” 
+（dangling handles）的可能性降至最低。
+
+```cpp
+class A
+{
+public:
+    int n1;
+    int n2;
+};
+
+class B
+{
+public:
+    B()
+    {
+        a = make_shared<A>();
+    }
+    inline int &Getn1() const // 这里封装性被破坏，外部可以修改n1
+    {
+        return a->n1;
+    }
+    inline int &Getn2() const // 这里封装性被破坏，外部可以修改n2
+    {
+        return a->n2;
+    }
+
+private:
+    std::shared_ptr<A> a;
+};
+```
+
+虽然Getn1与Getn2有限制const,但是返回值不是const的
+
+```cpp
+class B
+{
+public:
+    B()
+    {
+        a = make_shared<A>();
+    }
+    inline const int &Getn1() const
+    {
+        return a->n1;
+    }
+    inline const int &Getn2() const
+    {
+        return a->n2;
+    }
+
+private:
+    std::shared_ptr<A> a;
+};
+```
+
+还有一种是，返回了随时可能被销毁的资源
+
+```cpp
+#include <iostream>
+#include <memory>
+using namespace std;
+
+class A
+{
+public:
+    A(int n1, int n2) : n1(n1), n2(n2) {};
+    int n1;
+    int n2;
+};
+
+class B
+{
+public:
+    B(int n1, int n2)
+    {
+        a = make_shared<A>(n1, n2);
+    }
+    inline const int &Getn1() const
+    {
+        return a->n1;
+    }
+    inline const int &Getn2() const
+    {
+        return a->n2;
+    }
+
+    void destoryA()
+    {
+        a.reset();
+    }
+
+private:
+    std::shared_ptr<A> a;
+};
+
+int main(int argc, char **argv)
+{
+    B b(1, 2);
+    const int &n1 = b.Getn1();
+    const int &n2 = b.Getn2();
+    std::cout << n1 << " " << n2 << std::endl; // 1 2
+    b.destoryA();
+
+    *const_cast<int *>(&n1) = 100;
+    // Segmentation fault (core dumped)
+    std::cout << b.Getn1() << std::endl;
+
+    return 0;
+}
+```
+
 ### 29、为异常安全而努力是值得的
 
 ### 30、透彻了解 inlining 的里里外外
