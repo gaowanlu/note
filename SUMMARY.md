@@ -150,6 +150,7 @@
   * [着色](computer_graphics/shading.md)
   * [纹理](computer_graphics/texture.md)
   * [扩展光栅化渲染器](computer_graphics/extended_rasterization_renderer.md)
+  * [展望高级知识](computer_graphics/more_in_future.md)
 
 ## 💻 操作系统
 
