@@ -162,7 +162,108 @@ $$
 
 ## 裁剪过程的伪代码
 
+使用一组裁剪平面对场景进行裁剪的算法
+
+```cpp
+ClipScene(scene, planes) {
+    clipped_instances = []
+    for I in scene.instances { // 遍历所以场景
+        clipped_instance = ClipInstance(I, planes) // 对每个场景处理，返回处理后的数据
+        if clipped_instance != NULL {
+            clipped_instances.append(clipped_instance)
+        }
+    }
+    clipped_scene = Copy(scene)
+    clipped_scene.instances = clipped_instances
+    return clipped_scene
+}
+```
+
+使用一组裁剪平面对实例进行裁剪的算法
+
+```cpp
+ClipInstance(instance, planes) {
+    for P in planes { // 每个面都对场景实例处理，很显然ClipInstanceAgainstPlane会修改instance数据
+        instance = ClipInstanceAgainstPlane(instance, plane)
+        if instance == NULL {
+            return NULL
+        }
+    }
+    return instance // 返回裁剪后的实例
+}
+ClipInstanceAgainstPlane(instance, plane) {
+    // 计算场景球球心到平面的距离
+    d = SignedDistance(plane, instance.bounding_sphere.center)
+
+    if d > r {
+        return instance // 场景内部
+    } else if d < -r { // 场景外部
+        return NULL
+    } else { // 难以确定裁剪管线处理
+        clipped_instance = Copy(instance)
+        // 裁剪三角形
+        clipped_instance.triangles =
+            ClipTrianglesAgainstPlane(instance.triangles, plane)
+        return clipped_instance
+    }
+}
+```
+
+计算从平面到点的有符号距离的函数
+
+```cpp
+SignedDistance(plane, vertex) {
+    normal = plane.normal
+    return (vertex.x * normal.x)
+        + (vertex.y * normal.y)
+        + (vertex.z * normal.z)
+        + plane.D
+}
+```
+
+使用一个裁剪平面对一组三角形进行裁剪的算法
+
+```cpp
+ClipTrianglesAgainstPlane(triangles, plane) {
+    clipped_triangles = []
+    for T in triangles { // 都每个三角形基于平面 plane 都裁剪管线处理
+        clipped_triangles.append(ClipTriangle(T, plane))
+    }
+    return clipped_triangles
+}
+
+ClipTriangle(triangle, plane) {
+    // 计算三个顶点的有符号距离
+    d0 = SignedDistance(plane, triangle.v0)
+    d1 = SignedDistance(plane, triangle.v1)
+    d2 = SignedDistance(plane, triangle.v2)
+
+    // 所有都是正值则全部都在裁剪面内部
+    if {d0, d1, d2} are all positive {
+        return [triangle]
+    // 所有都是负值全部都在裁剪面外部
+    } else if {d0, d1, d2} are all negative {
+        return []
+    // 三者只有一个为正值
+    } else if only one of {d0, d1, d2} is positive {
+        let A be the vertex with a positive distance
+        compute B' = Intersection(AB, plane)
+        compute C' = Intersection(AC, plane)
+        return [Triangle(A, B', C')]
+    // 三者有一个为负值
+    } else /* only one of {d0, d1, d2} is negative */ {
+        let C be the vertex with a negative distance
+        compute A' = Intersection(AC, plane)
+        compute B' = Intersection(BC, plane)
+        return [Triangle(A, B, A'), Triangle(A', B, B')]
+    }
+}
+```
+
 ## 渲染管线中的裁剪过程
+
+裁剪是一种3D操作，它获取场景中的3D物体并在场景中生成一组新的3D物体，或者更准确地说，它计算场景和裁剪体的交集。因此，必须在将物体放置在场景中之后
+（即使用模型和相机变换之后的顶点），且在透视投影之前进行裁剪。
 
 ## 代码实现
 
