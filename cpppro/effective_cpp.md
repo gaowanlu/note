@@ -2244,6 +2244,66 @@ std::string A::name() const
 
 ### 32、确定你的 public 继承塑膜出 is-a 关系
 
+- "public继承“意味is-a。适用千baseclasses身上的每一件事情一定也适用千derived classes身上，因为每一个derivedclass对象也都是一个baseclass对象。
+
+如果你令 class D以public形式继承class B，那么当你看到class D的某个对象时，你便知道它也是个class B。反之不成立。
+
+我来用一个简单的例子来解释"public继承"中的is-a关系。
+
+```cpp
+class Animal {
+public:
+    virtual void makeSound() {
+        std::cout << "动物发出声音" << std::endl;
+    }
+    
+    void eat() {
+        std::cout << "动物在进食" << std::endl;
+    }
+};
+
+class Dog : public Animal {  // Dog "是一个" Animal
+public:
+    void makeSound() override {  // 重写基类的方法
+        std::cout << "汪汪汪！" << std::endl;
+    }
+    
+    void fetchBall() {
+        std::cout << "狗狗去捡球" << std::endl;
+    }
+};
+
+int main() {
+    Dog dog;
+    Animal* animal_ptr = &dog;  // 这是合法的，因为 Dog "是一个" Animal
+    
+    // 下面这些操作都是合法的
+    dog.makeSound();      // 输出："汪汪汪！"
+    dog.eat();           // 输出："动物在进食"
+    
+    animal_ptr->makeSound();  // 输出："汪汪汪！"
+    animal_ptr->eat();       // 输出："动物在进食"
+}
+```
+
+让我解释这个例子：
+
+1. `Animal` 是基类，定义了所有动物共有的行为：`makeSound()` 和 `eat()`。
+
+2. `Dog` 通过 `public` 继承自 `Animal`，这表明"狗是一个动物"（is-a关系）。
+   - 狗继承了动物的所有特性（`makeSound` 和 `eat`）
+   - 狗可以重写某些行为（这里重写了 `makeSound`）
+   - 狗还可以添加自己特有的行为（`fetchBall`）
+
+3. 因为存在 is-a 关系：
+   - 任何需要 `Animal` 的地方都可以使用 `Dog`
+   - 可以把 `Dog` 对象的指针赋值给 `Animal` 指针（向上转型）
+   - 所有适用于 `Animal` 的操作都适用于 `Dog`
+
+这就是为什么说"适用于基类的每一件事情一定也适用于派生类"。因为派生类对象在任何情况下都可以被当作基类对象来使用，这是 public 继承的核心特性。
+
+相反，如果这种关系不成立，就不应该使用 public 继承。例如，"房子有一个门"这种关系就不应该用 public 继承，而应该用组合（composition）来实现，因为门不是房子的一种类型。
+
 ### 33、避免遮掩继承而来的名称
 
 ### 34、区分接口继承和实现继承
