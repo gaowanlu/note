@@ -1,6 +1,6 @@
 # 初恋3500
 
-## 3500第1单元
+## 第1单元
 
 - [ ] `firm [fɜːm]`
    n.公司，企业 adj.坚固的；坚定的 Tom works in a big firm.汤姆在一家大公司工作。a firm belief坚定的信念。
@@ -122,7 +122,7 @@
 - [ ] `shot [ʃɒt]`
     n.射击，开枪，开炮，射击声；子弹；拍摄 It's reported that the police fired a warning shot at thegangsters.据报道，警察向歹徒鸣枪示警。【参】shoot（v.射击）
 
-## 3500第2单元
+## 第2单元
 
 - [ ] `band [bænd]`
     n.乐队；带子；镶边 【例】a jazz band一支爵士乐队
@@ -242,7 +242,7 @@
 - [ ] `environment [Inˈvaɪrənmənt]`
     n.环境
 
-## 3500第3单元
+## 第3单元
 
 - [ ] `character [ˈkærəktə]`
     n.字符；性格；特征 【例】a Chinese character一个汉字//He has a strong but gentlecharacter.他性格坚强而又温柔。
@@ -376,7 +376,7 @@
 - [ ] `back [bæk]`
     adv.回（原处）；向后 adj.后面的 n.背后，后部；背
 
-## 3500第4单元
+## 第4单元
 
 - [ ] `free [friː]`
     adj.自由的，空闲的；免费的
@@ -525,7 +525,7 @@
 - [ ] `on [ɒn]`
     prep.在...上；在...时候；在...地方；关于 adv.继续
 
-## 3500第5单元
+## 第5单元
 
 - [ ] `screen [skriːn]`
     n.幕，荧光屏
@@ -694,4 +694,41 @@
     n.习惯，习俗
     【例】Eating roast turkey is a Thanksgiving custom.感恩节吃烤火鸡是一种习俗。
 
-## 3500第6单元
+## 第6单元
+
+- [ ] `tense [tens]`
+    adj.紧张的，紧张不安的
+    n.时态
+    【例】He was tense and nervous.他很紧张，很不安。
+
+- [ ] `puzzle [ˈpʌzl]`
+    n.难题；（字、画）谜
+    v.（使）迷惑，困扰
+    【例】I like doing crossword puzzles.我喜欢玩填字游戏。
+    【参】puzzled（adj.迷惑不解的）
+
+- [ ] `affair [əˈfɛər]`
+    n.事件；（尤指）风流韵事
+    【例】a love affair一段恋情 I have a few affairs to take care of this week.我这周有几件事要处理。
+
+- [ ] `cheer [ʃɪər]`
+    n./v.欢呼，喝彩
+    【例】The spectators are cheering for the winner.观众们正在为冠军喝彩。
+
+- [ ] `admire [ədˈmaɪə]`
+    vt.钦佩；羡慕
+    【例】I admire his courage.我钦佩他的勇气。
+    【参】admirer（n.钦佩者）admirable（adj.值得钦佩的）
+
+- [ ] `suspect [səˈspekt][ˈsʌspekt]`
+    v.怀疑
+    n.犯罪嫌疑人
+    【例】I suspect she is lying.我怀疑她在说谎。
+    【参】suspected（adj.被怀疑的）
+
+- [ ] `piece [piːs]`
+    n.一块（片，张，件）；小的部分
+    【例】Down fell the mirror, breaking into pieces.镜子掉下来，摔碎了。
+
+TODO TODO ...
+pull 
