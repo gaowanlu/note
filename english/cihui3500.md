@@ -730,5 +730,148 @@
     n.一块（片，张，件）；小的部分
     【例】Down fell the mirror, breaking into pieces.镜子掉下来，摔碎了。
 
-TODO TODO ...
-pull 
+- [ ] `pull [pʊl]`
+    v.拉，拖，拽
+    n.拉力,引力
+    【例】He pulled the door open.他拉开了门。
+    【参】pulled（v.拉，拖，拽）；pulling（v.拉，拖，拽）；pulled（v.拉，拖，拽）；push（v.推）
+
+- [ ] `lamp [læmp]`
+    n.灯,油灯；光源
+    【例】a desk lamp台灯 the electric lamp 电灯
+
+- [ ] `sale [seɪl]`
+    n. 卖，出售
+    【例】Nowadays, there has been no sale for black and white TV setsin the supermarkets.如今，超市都不卖黑白电视机了。
+
+- [ ] `assume [əˈsjuːm]`
+    vt. 假定，设想；承担
+    【例】Mary mistakenly assumed that she would get the job.玛丽错认为她会得到那份工作。
+    【参】assumption（n.假定，设想）
+
+- [ ] `miss [mɪs]`
+    v.错过；想念
+    【例】I miss my parents so much.我十分想念我的父母。
+    【参】missing（adj.丢失的，迷路的，不见了的）；unmissable（adj.不能错过的）
+
+- [ ] `partly [ˈpɑːtli]`
+    adv.部分地，在一定程度上
+    【例】The police thought that what the boy said was partly true.警方认为那个男孩所说的有一部分是实话。
+
+- [ ] `key [kiː]`
+    n.[C]钥匙；答案；键；关键（常与to连用）
+    【例】The thief opened Mr.White's door with his lost key.小偷用怀特先生丢的钥匙打开了他家的门。
+
+- [ ] `determine [dɪˈtɜːmɪn]`
+    v.决定；测定；确定
+    【例】Our social positions determine the way we are dressed.我们的社会地位决定我们的穿着方式。//I was very grateful and determined torepay him one day.我非常感激他，决定以后报答他。
+    【参】determined（adj.坚决的）；determination（n.决定，决心）
+
+- [ ] `disaster [dɪˈzɑːstə]`
+    n.灾难，祸患
+    【例】a natural disaster自然灾害
+
+- [ ] `example [Iɡˈzɑːmpl]`
+    n.例子，范例；榜样
+    【例】The teacher wrote an example on the blackboard.老师在黑板上写了一个例子。
+
+- [ ] `punctual [ˈpʌŋktʃuəl]`
+    adj.准时的
+    【例】Please try to be more punctual in the future.以后请尽量准时。
+
+- [ ] `prohibit [prəˈhɪbɪt]`
+    vt.禁止，阻止
+
+- [ ] `overcome [ˌəʊvəˈkʌm]`
+    v.战胜，克服，胜过
+    【例】If we work with a strong will, we can overcome any difficulty.只要我们有毅力，就能克服任何困难。
+
+- [ ] `address [əˈdres]`
+    n.地址
+    v.讲话；发表演说
+    【例】The actress told her friends her new address and hoped theycould come to visit her.那个女演员告诉了朋友们她的新地址，希望他们能够来做客。
+
+- [ ] `donate [dəʊˈneɪt]`
+    v.捐赠，赠送
+    【例】The school calls on the students to donate their bloodvoluntarily.学校号召学生义务献血。
+
+- [ ] `focus [ˈfəʊkəs]`
+    v.聚焦，集中
+    n.中心，焦点
+    【例】The passage focuses onexamination and equity.这篇文章的主题是考试与公平。
+
+- [ ] `disadvantage [ˌdɪsədˈvɑːntɪdʒ]`
+    n.不利条件；弱点
+    【例】the advantages and disadvantages利弊
+
+- [ ] `matter [ˈmætə]`
+    n.事情，物质；原因
+    vi.要紧，有重大关系
+    【用】no matter无论（与疑问词连用，引导让步状语从句）:Nomatter where you go, I will follow you.无论你去哪儿，我都会跟着你。
+    【例】What's the matter?什么事？//It doesn't matter to me what you do.你做什么对我并不重要。
+
+- [ ] `especially [Iˈspeʃəli]`
+    adv.特别，尤其
+    【例】You should improve your English, especially your spokenEnglish.你应该提高你的英语水平，尤其是口语。
+
+- [ ] `wear [weə]`
+    v.（wore, worn, wearing）穿，戴；留，蓄；磨损，使变旧
+    【例】He always wears green.他总是穿着绿色的衣服。//John likesto wear long hair.约翰喜欢留长发。
+    【参】wearable（adj.可穿戴的；耐磨的）；wearer（n.穿戴者，佩带者）；worn（adj.用旧的；疲倦的）
+
+- [ ] `about [əˈbaʊt]`
+    adv.大约；到处，周围
+    prep.关于；在附近，在周围
+    【例】He is somewhere about the office.他在办公室附近。//He likesreading books about travelling.他喜欢读关于旅行的书。
+
+- [ ] `praise [preɪz]`
+    n./vt.赞扬，表扬
+    【例】The police officer waspraised for his bravery.这名警官因为英勇而受到表扬。
+
+- [ ] `but [bʌt]`
+    conj.但是，可是
+    prep.除了，除...外
+    【例】But for my brother's help, I would not have finished.要不是我哥哥帮忙，我是无法完成的。
+
+- [ ] `afraid [əˈfreɪd]`
+    adj.害怕的；担心的
+    【参】frightened（adj.害怕的，受惊的）；scared（adj.害怕的，恐惧的）
+
+- [ ] `family [ˈfæməli]`
+    n.家；家人
+    【例】All my family like watching movies.我的家人都喜欢看电影。
+
+- [ ] `importance [Imˈpɔːtns]`
+    n.重要性
+    【例】They place great importance on children getting good studyresults.他们十分重视孩子取得优异的学习成绩。
+
+- [ ] `health [helθ]`
+    n.健康，卫生
+    【例】He is in poor health.他的健康状况很差。
+    【参】healthy（adj.健康的，健壮的）；healthful（adj.有益于健康的）；unhealthy（adj.不健康的，对健康有害的）
+
+- [ ] `or [ɔː]`
+    conj.或者；还是，否则
+    【例】I just don't care about whether you believe it or not.我才不在乎你信还是不信呢。
+
+- [ ] `distance [ˈdɪstəns]`
+    n.距离
+    【参】distant（adj.在远处的）
+
+- [ ] `take [teɪk]`
+    v.（took, taken, taking）拿走；接受，接纳
+    【例】Don't forget to take your umbrella.别忘了带上你的雨伞。
+     //take action采取行动
+     //take medicine吃药
+     //take the bus乘公共汽车
+     //You should take her advice.你应当接受她的建议。
+
+- [ ] `leave [liːv]`
+    v.（left, left, leaving）离开；留下；遗忘
+    【例】I left my bag at home.我把包忘在家里了。
+
+- [ ] `guidance [ˈɡaɪdns]`
+    n.引导，指导
+    【例】marriage guidance service婚姻咨询服务
+
+## 第7单元
