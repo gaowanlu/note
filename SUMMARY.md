@@ -184,12 +184,12 @@
 
 * [中间件](zhongjianjian/README.md)
   * [MySQL](db/mysql.md)
+  * [MySQL高阶](db/deep_mysql.md)
+  * [MangoDB](db/mongodb.md)
   * [Redis API](redis/redis.md)
   * [Redis设计与实现](redis/deep_redis.md)
-  * [MySQL高阶](db/deep_mysql.md)
   * [LibEvent](libevent/libevent.md)
   * [消息队列](mq/xiao-xi-dui-lie.md)
-  * [SQL实例](db/sql.md)
   * [Nginx](nginx/nginx.md)
 
 ## 🪅 Shell
