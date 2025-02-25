@@ -2242,6 +2242,83 @@ std::string A::name() const
 
 ## 继承与面向对象设计
 
+三种继承方式
+
+1. public继承表示派生类"is-a"基类，这意味着派生类应该能完全替代基类使用（里氏替换原则 LSP）。
+
+```cpp
+class Animal {
+public:
+    virtual void makeSound() { std::cout << "某种声音" << std::endl; }
+protected:
+    int age;
+private:
+    std::string dna;
+};
+
+class Dog : public Animal {
+    // Animal的public成员在Dog中仍然是public
+    // Animal的protected成员在Dog中仍然是protected
+    // Animal的private成员在Dog中不可访问
+};
+```
+
+2. private继承表示"根据某物实现出"，"has-a",是一种实现技术而非设计关系。它通常用于实现复用，而不是表达类之间的概念关系。
+
+```cpp
+class Engine {
+public:
+    void start() { std::cout << "引擎启动" << std::endl; }
+    void stop() { std::cout << "引擎停止" << std::endl; }
+protected:
+    void inject_fuel() {}
+private:
+    void internal_process() {}
+};
+
+class Car : private Engine {  // private继承
+    // Engine的public和protected成员在Car中变成private
+    // Engine的private成员在Car中不可访问
+public:
+    void start_car() {
+        start();  // 可以访问Engine的方法，但只能在Car的内部使用
+    }
+};
+
+int main() {
+    Car car;
+    // car.start();  // 错误：Engine的方法对外不可见
+    car.start_car(); // 正确：通过Car的公共接口访问
+}
+```
+
+3. protected继承介于public继承（is-a）和private继承（has-a）之间，它表示一种"在实现中是一种"（implemented-in-terms-of）的关系。
+
+```cpp
+class Base {
+public:
+    void publicFunc() {}
+protected:
+    void protectedFunc() {}
+private:
+    void privateFunc() {}
+};
+
+class Derived : protected Base {
+    // Base的public成员在Derived中变成protected
+    // Base的protected成员在Derived中保持protected
+    // Base的private成员在Derived中不可访问
+};
+
+class Further : public Derived {
+    void func() {
+        publicFunc();     // 可以访问，因为在Derived中是protected
+        protectedFunc();  // 可以访问，因为在Derived中是protected
+        // privateFunc(); // 不能访问
+    }
+};
+```
+
 ### 32、确定你的 public 继承塑膜出 is-a 关系
 
 - "public继承“意味is-a。适用千baseclasses身上的每一件事情一定也适用千derived classes身上，因为每一个derivedclass对象也都是一个baseclass对象。
@@ -2305,6 +2382,132 @@ int main() {
 相反，如果这种关系不成立，就不应该使用 public 继承。例如，"房子有一个门"这种关系就不应该用 public 继承，而应该用组合（composition）来实现，因为门不是房子的一种类型。
 
 ### 33、避免遮掩继承而来的名称
+
+- derived classses 内的名称会遮掩base classes内的名称。在public继承下从来没有人希望如此。
+- 为了让被遮掩的名称在见天日，可使用using声明式或转交函数(forwarding functions)
+
+C++有种现象为名字遮掩。在C++中，当派生类声明了一个与基类同名的函数时，基类中所有同名函数（无论参数如何）都会被遮掩，只要原因有：
+
+名称查找规则:
+
+- C++的名称查找遵循最近作用域优先的规则
+- 一旦在派生类中找到了某个名称，就会停止在基类中继续查找
+- 这种机制是为了避免命名冲突合确保代码的可预测性
+
+```cpp
+#include <iostream>
+
+class Base
+{
+private:
+    int x;
+
+public:
+    virtual void mf1() = 0;
+    virtual void mf1(int);
+    virtual void mf2();
+    void mf3();
+    void mf3(double);
+    virtual ~Base();
+};
+
+Base::~Base() {}
+void Base::mf1(int x)
+{
+    std::cout << "Base::mf1(int x)" << std::endl;
+}
+void Base::mf2()
+{
+    std::cout << "Base::mf2()" << std::endl;
+}
+void Base::mf3()
+{
+    std::cout << "Base::mf3()" << std::endl;
+}
+void Base::mf3(double x)
+{
+    std::cout << "Base::mf3(double x)" << std::endl;
+}
+
+class Derived : public Base
+{
+public:
+    virtual void mf1();
+    void mf3();
+    void mf4();
+};
+
+void Derived::mf1()
+{
+    std::cout << "Derived::mf1()" << std::endl;
+}
+
+void Derived::mf3()
+{
+    std::cout << "Derived::mf3()" << std::endl;
+}
+
+void Derived::mf4()
+{
+    std::cout << "Derived::mf4()" << std::endl;
+}
+
+int main()
+{
+    Derived d;
+    d.mf1(); // Derived::mf1()
+    // d.mf1(12); // 错误：Derived::mf1(int) 遮掩了 Base::mf1(int)
+    d.mf2(); // Base::mf2()
+    d.mf3(); // Derived::mf3()
+    // d.mf3(1);// 错误：Derived::mf3遮掩了Base::mf3
+    return 0;
+}
+```
+
+解决方法 
+
+1. 使用using声明式
+
+```cpp
+class Derived : public Base
+{
+public:
+    using Base::mf1; // 在Base class内名为mf1和mf3的所有东西
+    using Base::mf3; // 在Derived作用域内都可看见 并且public
+    virtual void mf1();
+    void mf3();
+    void mf4();
+};
+```
+
+2. 通过作用域解析运算符显式调用
+
+```cpp
+Derived d;
+d.Base::mf1(12);
+```
+
+3. 转交函数
+
+- private继承的主要目的是实现"has-a"关系，基类的公有成员在派生类中默认变成私有成员
+- 使用using声明无法改变继承来的函数的访问级别
+- 而转交函数可以精确控制哪些函数对外可见，以及它们的访问级别
+
+```cpp
+// 不好的方式：using声明在private继承中
+class Derived : private Base {
+private:
+    using Base::mf1;  // 这样无法将mf1暴露为public接口
+};
+
+// 好的方式：使用转交函数
+class Derived : private Base {
+public:
+    // 可以选择性地只转发某些重载版本
+    void mf1() { Base::mf1(); }  // 显式转发到基类版本
+    void mf1(int x) { Base::mf1(x); }  // 可以控制访问级别为public
+};
+```
 
 ### 34、区分接口继承和实现继承
 
